@@ -1,0 +1,109 @@
+services:
+  # ===========================================
+  # Ghana Audit Service Frontend (Nuxt 3)
+  # ===========================================
+  frontend:
+    build:
+      context: ./ghana-audit-service
+      dockerfile: Dockerfile
+      args:
+        - NUXT_PUBLIC_SITE_URL=${NUXT_PUBLIC_SITE_URL:-https://audit.gov.gh}
+    container_name: gas-frontend
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - HOST=0.0.0.0
+      - PORT=3000
+      # Database connection
+      - DB_HOST=mysql
+      - DB_PORT=3306
+      - DB_USER=${DB_USER:-gas_user}
+      - DB_PASSWORD=${DB_PASSWORD:-gas_password}
+      - DB_NAME=${DB_NAME:-ghana_audit_service}
+      # Application settings
+      - NUXT_PUBLIC_SITE_URL=${NUXT_PUBLIC_SITE_URL:-https://audit.gov.gh}
+      - NUXT_PUBLIC_SITE_NAME=${NUXT_PUBLIC_SITE_NAME:-Ghana Audit Service}
+      - NUXT_PUBLIC_CONTACT_EMAIL=${NUXT_PUBLIC_CONTACT_EMAIL:-info@audit.gov.gh}
+      - NUXT_PUBLIC_CONTACT_PHONE=${NUXT_PUBLIC_CONTACT_PHONE:-+233 (302) 664929}
+      - NUXT_API_SECRET=${NUXT_API_SECRET:-change-me-in-production}
+      # JWT
+      - JWT_SECRET=${JWT_SECRET:-change-this-jwt-secret}
+      # Sentry (optional)
+      - NUXT_PUBLIC_SENTRY_DSN=${NUXT_PUBLIC_SENTRY_DSN:-}
+    # volumes:
+    # - ./ghana-audit-service:/app
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - gas-network
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "wget",
+          "--no-verbose",
+          "--tries=1",
+          "--spider",
+          "http://localhost:3000/",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+  # ===========================================
+  # MySQL Database
+  # ===========================================
+  mysql:
+    image: mysql:8.0
+    container_name: gas-mysql
+    restart: unless-stopped
+    ports:
+      - "3306:3306"
+    environment:
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD:-root_password}
+      - MYSQL_DATABASE=${DB_NAME:-ghana_audit_service}
+      - MYSQL_USER=${DB_USER:-gas_user}
+      - MYSQL_PASSWORD=${DB_PASSWORD:-gas_password}
+    volumes:
+      - mysql-data:/var/lib/mysql
+      # - ./init-db:/docker-entrypoint-initdb.d:ro
+    networks:
+      - gas-network
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "mysqladmin",
+          "ping",
+          "-h",
+          "localhost",
+          "-u",
+          "root",
+          "-p${MYSQL_ROOT_PASSWORD:-root_password}",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+      - --default-authentication-plugin=mysql_native_password
+
+# ===========================================
+# Volumes
+# ===========================================
+volumes:
+  mysql-data:
+    driver: local
+
+# ===========================================
+# Networks
+# ===========================================
+networks:
+  gas-network:
+    driver: bridge
