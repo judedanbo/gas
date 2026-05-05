@@ -1,0 +1,164 @@
+{
+  "common": {
+    "home": "Home",
+    "about": "About Us",
+    "reports": "A-G's Reports",
+    "publications": "Publications",
+    "media": "Media Centre",
+    "careers": "Careers",
+    "contact": "Contact Us",
+    "search": "Search",
+    "subscribe": "Subscribe",
+    "subscribing": "Subscribing...",
+    "readMore": "Read More",
+    "viewAll": "View All",
+    "viewDetails": "View Details",
+    "download": "Download",
+    "downloadPdf": "Download PDF",
+    "loading": "Loading...",
+    "error": "Error",
+    "success": "Success",
+    "menu": "Menu",
+    "closeMenu": "Close menu",
+    "launchCitizensEye": "Launch CitizensEye",
+    "previous": "Previous",
+    "next": "Next",
+    "clearAll": "Clear all",
+    "activeFilters": "Active filters",
+    "allCategories": "All Categories",
+    "allYears": "All Years",
+    "category": "Category",
+    "year": "Year"
+  },
+  "nav": {
+    "theService": "The Service",
+    "pastAuditorsGeneral": "Past Auditors-General",
+    "managementTeam": "Management Team",
+    "departmentalProfile": "Departmental Profile",
+    "pressStatements": "Press Statements",
+    "bulletins": "Bulletins",
+    "guidelines": "Auditing Guidelines",
+    "amisManuals": "AMIS Manuals",
+    "pfmStrategy": "PFM Strategy",
+    "applicableLaws": "Applicable Laws",
+    "news": "News",
+    "events": "Events",
+    "gallery": "Photo Gallery",
+    "videos": "Videos",
+    "vacancies": "Vacancies",
+    "tenders": "Tenders & Procurement"
+  },
+  "home": {
+    "title": "Ghana Audit Service",
+    "tagline": "Protecting the Public Purse",
+    "heroTitle": "Ensuring Accountability in Public Finance",
+    "heroSubtitle": "The Ghana Audit Service has a constitutional mandate to audit all public accounts and report to Parliament.",
+    "whoWeAre": "Who We Are",
+    "ourMission": "Our Mission",
+    "ourVision": "Our Vision",
+    "ourMandate": "Our Mandate",
+    "latestReports": "Latest Audit Reports",
+    "latestNews": "Latest News",
+    "stats": {
+      "years": "Years of Service",
+      "staff": "Staff Members",
+      "regions": "Regions",
+      "districts": "Districts"
+    }
+  },
+  "footer": {
+    "description": "The Ghana Audit Service has a constitutional mandate to audit all public accounts and report to Parliament, ensuring accountability in the use of public resources.",
+    "quickLinks": "Quick Links",
+    "resources": "Resources",
+    "contactUs": "Contact Us",
+    "newsletterTitle": "Stay Updated",
+    "newsletterDesc": "Subscribe to our newsletter for the latest audit reports, news, and updates from the Ghana Audit Service.",
+    "emailPlaceholder": "Enter your email address",
+    "affiliations": "Affiliations",
+    "relatedLinks": "Related Links",
+    "copyright": "All Rights Reserved.",
+    "privacyPolicy": "Privacy Policy",
+    "termsOfUse": "Terms of Use",
+    "accessibility": "Accessibility"
+  },
+  "accessibility": {
+    "highContrast": "High Contrast",
+    "textSize": "Text Size",
+    "increase": "Increase",
+    "decrease": "Decrease",
+    "reset": "Reset"
+  },
+  "search": {
+    "title": "Search Results",
+    "placeholder": "Search reports, publications, news...",
+    "noResults": "No results found",
+    "resultsFor": "Showing results for",
+    "filters": "Filters",
+    "type": "Content Type",
+    "dateRange": "Date Range",
+    "from": "From",
+    "to": "To",
+    "clearFilters": "Clear Filters",
+    "applyFilters": "Apply Filters"
+  },
+  "contact": {
+    "title": "Contact Us",
+    "subtitle": "Get in touch with the Ghana Audit Service",
+    "form": {
+      "name": "Full Name",
+      "email": "Email Address",
+      "phone": "Phone Number",
+      "subject": "Subject",
+      "message": "Your Message",
+      "submit": "Send Message",
+      "sending": "Sending..."
+    }
+  },
+  "reports": {
+    "title": "Audit Reports",
+    "searchReports": "Search Reports",
+    "searchPlaceholder": "Search by title or keywords...",
+    "filterBy": "Filter by",
+    "noReports": "No reports found",
+    "categories": {
+      "financial": "Financial Audit",
+      "performance": "Performance Audit",
+      "compliance": "Compliance Audit",
+      "special": "Special Audit",
+      "it": "IT Audit",
+      "forensic": "Forensic Audit",
+      "technical": "Technical Audit"
+    }
+  },
+  "newsletter": {
+    "title": "Stay Updated",
+    "description": "Subscribe to our newsletter for the latest audit reports, news, and updates from the Ghana Audit Service.",
+    "placeholder": "Enter your email address",
+    "success": "Thank you for subscribing!",
+    "error": "Subscription failed. Please try again."
+  },
+  "searchTypes": {
+    "report": "Audit Report",
+    "publication": "Publication",
+    "news": "News",
+    "page": "Page"
+  },
+  "errors": {
+    "notFound": "Page Not Found",
+    "notFoundDesc": "The page you're looking for doesn't exist or has been moved.",
+    "serverError": "Something Went Wrong",
+    "serverErrorDesc": "We're experiencing technical difficulties. Please try again later.",
+    "networkError": "Connection Error",
+    "networkErrorDesc": "Please check your internet connection and try again.",
+    "goHome": "Go to Homepage",
+    "goBack": "Go Back",
+    "tryAgain": "Try Again",
+    "errorCode": "Error Code"
+  },
+  "pagination": {
+    "page": "Page",
+    "of": "of",
+    "showing": "Showing",
+    "results": "results"
+  }
+}

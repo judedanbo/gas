@@ -1,0 +1,521 @@
+/**
+ * Ghana Audit Service - TailwindCSS Entry Point
+ */
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ============================================
+   BASE LAYER - Global element styles
+   ============================================ */
+@layer base {
+  html {
+    @apply scroll-smooth;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    @apply font-sans text-gray-900 bg-white leading-normal;
+    @apply dark:text-gray-100 dark:bg-gray-900;
+    /* Font feature settings for better typography */
+    font-feature-settings:
+      'kern' 1,
+      'liga' 1,
+      'calt' 1;
+  }
+
+  /* Tabular numbers for data display */
+  .tabular-nums {
+    font-feature-settings: 'tnum' 1;
+  }
+
+  /* Headings - using fluid typography for smooth scaling */
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    @apply font-heading font-bold leading-tight text-gray-900 dark:text-white text-balance;
+  }
+
+  h1 {
+    @apply text-display-2xl tracking-tighter;
+  }
+  h2 {
+    @apply text-display-xl tracking-tight;
+  }
+  h3 {
+    @apply text-display-lg;
+  }
+  h4 {
+    @apply text-display-md;
+  }
+  h5 {
+    @apply text-display-sm;
+  }
+  h6 {
+    @apply text-base md:text-lg;
+  }
+
+  /* Links */
+  a {
+    @apply text-primary hover:text-primary-dark transition-colors;
+    @apply dark:text-primary-light dark:hover:text-primary;
+  }
+
+  /* Focus styles for accessibility */
+  :focus-visible {
+    @apply outline-2 outline-offset-2 outline-primary;
+  }
+
+  /* Enhanced focus for text links - more visible background highlight */
+  a:focus-visible {
+    @apply outline-2 outline-offset-2 outline-primary
+           bg-primary/10 rounded-sm;
+  }
+
+  /* Focus for buttons and interactive elements */
+  button:focus-visible,
+  [role='button']:focus-visible {
+    @apply outline-2 outline-offset-2 outline-primary ring-2 ring-primary/20;
+  }
+}
+
+/* ============================================
+   COMPONENTS LAYER - Reusable component classes
+   ============================================ */
+@layer components {
+  /* Container */
+  .container {
+    @apply mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl;
+  }
+
+  /* Buttons */
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 px-6 py-3
+           font-semibold rounded-lg transition-all duration-normal
+           focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2
+           disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  .btn-primary {
+    @apply btn focus-visible:ring-primary
+           bg-primary text-white hover:bg-primary-dark 
+           hover:text-white focus:ring-primary dark:bg-primary 
+           dark:hover:bg-primary-light dark:text-white 
+           dark:hover:text-gray-900;
+  }
+
+  .btn-secondary {
+    @apply btn bg-secondary text-white hover:bg-secondary-dark
+           focus-visible:ring-secondary;
+  }
+
+  .btn-accent {
+    @apply btn bg-accent text-gray-900 hover:bg-accent-dark
+           focus-visible:ring-accent;
+  }
+
+  .btn-outline {
+    @apply btn border-2 border-primary text-primary bg-transparent
+           hover:bg-primary hover:text-white focus-visible:ring-primary
+           dark:border-primary-light dark:text-primary-light
+           dark:hover:bg-primary-light dark:hover:text-white;
+  }
+
+  .btn-ghost {
+    @apply btn bg-transparent text-primary hover:bg-gray-100
+           focus-visible:ring-primary
+           dark:text-primary-light dark:hover:bg-gray-700;
+  }
+  .btn-xs {
+    @apply px-4 py-2 text-xs;
+  }
+
+  .btn-sm {
+    @apply px-4 py-2 text-sm;
+  }
+
+  .btn-lg {
+    @apply px-8 py-4 text-lg;
+  }
+
+  /* Cards */
+  .card {
+    @apply bg-white rounded-lg border border-gray-200 shadow-sm;
+    @apply dark:bg-gray-800 dark:border-gray-700;
+  }
+
+  .card-hover {
+    @apply transition-all hover:shadow-lg hover:-translate-y-1 hover:border-primary;
+  }
+
+  .card-body {
+    @apply p-6;
+  }
+
+  .card-header {
+    @apply px-6 py-4 border-b border-gray-200 dark:border-gray-700;
+  }
+
+  .card-footer {
+    @apply px-6 py-4 border-t border-gray-200 bg-gray-50 rounded-b-lg;
+    @apply dark:border-gray-700 dark:bg-gray-900;
+  }
+
+  /* Form Elements */
+  .form-group {
+    @apply mb-4;
+  }
+
+  .form-label {
+    @apply block mb-2 font-medium text-gray-700 dark:text-gray-300;
+  }
+
+  .form-input {
+    @apply w-full px-4 py-3 border border-gray-300 rounded-lg
+           focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary
+           transition-colors;
+    @apply dark:bg-gray-800 dark:border-gray-600 dark:text-white;
+  }
+
+  .form-input::placeholder {
+    @apply text-gray-500 dark:text-gray-400;
+  }
+
+  /* Badges */
+  .badge {
+    @apply inline-flex items-center px-3 py-1 text-xs font-semibold
+           uppercase tracking-wide rounded-full;
+  }
+
+  .badge-primary {
+    @apply badge bg-primary/10 text-primary;
+  }
+
+  .badge-secondary {
+    @apply badge bg-secondary/10 text-secondary;
+  }
+
+  .badge-accent {
+    @apply badge bg-accent/20 text-amber-700;
+  }
+
+  /* Section styles */
+  .section {
+    @apply py-12 lg:py-16;
+  }
+
+  .section-sm {
+    @apply py-8 lg:py-10;
+  }
+
+  .section-lg {
+    @apply py-16 lg:py-20;
+  }
+
+  .section-light {
+    @apply bg-gray-50 dark:bg-gray-800;
+  }
+
+  .section-dark {
+    @apply bg-gray-900 text-white;
+  }
+
+  .section-primary {
+    @apply bg-primary text-white;
+  }
+
+  .section-header {
+    @apply mb-10;
+  }
+
+  .section-title {
+    @apply text-3xl md:text-4xl font-bold mb-4;
+  }
+
+  .section-subtitle {
+    @apply text-lg text-gray-600 dark:text-gray-400;
+  }
+
+  /* Page Header */
+  .page-header {
+    @apply bg-gradient-to-br from-primary to-primary-dark text-white
+           py-16 text-center;
+  }
+
+  .page-header h1 {
+    @apply text-white mb-4;
+  }
+
+  .page-subtitle {
+    @apply text-lg text-white/90 max-w-2xl mx-auto;
+  }
+
+  /* Footer Heading - with accent underline */
+  .footer-heading {
+    @apply text-lg font-semibold text-white mb-6 pb-3 relative;
+  }
+
+  .footer-heading::after {
+    content: '';
+    @apply absolute bottom-0 left-0 w-10 h-0.5 bg-accent;
+  }
+
+  /* Tag/Pill Component */
+  .tag {
+    @apply inline-flex items-center px-3 py-1 rounded text-sm
+           bg-gray-100 text-gray-700
+           dark:bg-gray-700 dark:text-gray-300
+           transition-colors;
+  }
+
+  .tag-primary {
+    @apply bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary-light;
+  }
+
+  .tag-secondary {
+    @apply bg-secondary/10 text-secondary dark:bg-secondary/20 dark:text-secondary-light;
+  }
+
+  .tag-accent {
+    @apply bg-accent/20 text-amber-700 dark:bg-accent/30 dark:text-accent;
+  }
+
+  .tag-sm {
+    @apply px-2 py-0.5 text-xs;
+  }
+
+  .tag-lg {
+    @apply px-4 py-1.5 text-base;
+  }
+
+  /* ============================================
+     SEMANTIC TYPOGRAPHY CLASSES
+     ============================================ */
+
+  /* Display text - for heroes and major headings */
+  .text-display-hero {
+    @apply text-display-2xl font-heading font-bold tracking-tighter text-balance;
+  }
+
+  .text-display-title {
+    @apply text-display-lg font-heading font-bold tracking-tight;
+  }
+
+  /* Heading hierarchy - use when overriding default heading styles */
+  .text-title-lg {
+    @apply text-display-xl font-heading font-bold tracking-tight;
+  }
+
+  .text-title-md {
+    @apply text-display-lg font-heading font-bold;
+  }
+
+  .text-title-sm {
+    @apply text-display-md font-heading font-semibold;
+  }
+
+  /* Body text variants */
+  .text-body-lg {
+    @apply text-lg leading-relaxed text-gray-700 dark:text-gray-300;
+  }
+
+  .text-body-md {
+    @apply text-base leading-relaxed text-gray-600 dark:text-gray-400;
+  }
+
+  .text-body-sm {
+    @apply text-sm leading-normal text-gray-500 dark:text-gray-400;
+  }
+
+  /* Supporting text */
+  .text-caption {
+    @apply text-xs leading-normal text-gray-500 dark:text-gray-400;
+  }
+
+  .text-overline {
+    @apply text-xs font-semibold uppercase tracking-wider text-primary dark:text-primary-light;
+  }
+
+  .text-label {
+    @apply text-sm font-medium text-gray-700 dark:text-gray-300;
+  }
+
+  /* Lead paragraph - for introductory text */
+  .text-lead {
+    @apply text-xl leading-relaxed text-gray-600 dark:text-gray-400;
+  }
+
+  /* Prose container - for long-form content without plugin */
+  .prose-container {
+    @apply max-w-prose mx-auto;
+  }
+
+  /* Text truncation utilities */
+  .text-truncate-1 {
+    @apply line-clamp-1;
+  }
+
+  .text-truncate-2 {
+    @apply line-clamp-2;
+  }
+
+  .text-truncate-3 {
+    @apply line-clamp-3;
+  }
+
+  .text-truncate-4 {
+    @apply line-clamp-4;
+  }
+}
+
+/* ============================================
+   UTILITIES LAYER - Custom utilities
+   ============================================ */
+@layer utilities {
+  /* Text utilities */
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  /* Touch target utilities - WCAG 2.5.5 minimum 44x44px */
+  .touch-target {
+    min-width: 44px;
+    min-height: 44px;
+  }
+
+  .touch-target-sm {
+    min-width: 36px;
+    min-height: 36px;
+  }
+
+  .touch-target-lg {
+    min-width: 48px;
+    min-height: 48px;
+  }
+
+  /* Ensure clickable area without changing visual size */
+  .touch-target-area {
+    position: relative;
+  }
+
+  .touch-target-area::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    min-width: 44px;
+    min-height: 44px;
+    width: 100%;
+    height: 100%;
+  }
+
+  /* Department color utilities */
+  .bg-department-central {
+    background-color: #006b3f;
+  }
+  .bg-department-local {
+    background-color: #1e40af;
+  }
+  .bg-department-education {
+    background-color: #7c3aed;
+  }
+  .bg-department-commercial {
+    background-color: #ea580c;
+  }
+  .bg-department-performance {
+    background-color: #0891b2;
+  }
+  .bg-department-it {
+    background-color: #4f46e5;
+  }
+  .bg-department-technical {
+    background-color: #be185d;
+  }
+  .bg-department-corporate {
+    background-color: #059669;
+  }
+
+  .text-department-central {
+    color: #006b3f;
+  }
+  .text-department-local {
+    color: #1e40af;
+  }
+  .text-department-education {
+    color: #7c3aed;
+  }
+  .text-department-commercial {
+    color: #ea580c;
+  }
+  .text-department-performance {
+    color: #0891b2;
+  }
+  .text-department-it {
+    color: #4f46e5;
+  }
+  .text-department-technical {
+    color: #be185d;
+  }
+  .text-department-corporate {
+    color: #059669;
+  }
+
+  /* Animation utilities */
+  .animate-fade-in {
+    animation: fadeIn 0.3s ease-in-out;
+  }
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  /* Transition utilities */
+  .transition-fast {
+    @apply transition-all duration-150 ease-in-out;
+  }
+
+  .transition-normal {
+    @apply transition-all duration-250 ease-in-out;
+  }
+
+  .transition-slow {
+    @apply transition-all duration-350 ease-in-out;
+  }
+}
+
+/* ============================================
+   ACCESSIBILITY - Keep from original
+   ============================================ */
+.skip-link {
+  @apply sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4
+         focus:z-tooltip focus:px-4 focus:py-2 focus:bg-primary focus:text-white
+         focus:rounded-md focus:font-semibold;
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Screen reader only - already in Tailwind as sr-only, but keeping for compatibility */
+.visually-hidden {
+  @apply sr-only;
+}

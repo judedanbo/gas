@@ -1,0 +1,218 @@
+import type { H3Event } from 'h3'
+import { eq, and, isNull, sql, desc } from 'drizzle-orm'
+import { getDatabase, schema } from '../../../database'
+import {
+  requirePermission,
+  getCurrentUser,
+  parsePagination,
+  buildPaginationMeta
+} from '../../../utils/adminHelpers'
+import { logAuditAction, sanitizeForAudit } from '../../../utils/auditLogger'
+import { auditReportSchema, validateBody, createValidationError } from '../../../utils/validation'
+
+export default defineEventHandler(async (event) => {
+  const method = event.method
+
+  if (method === 'GET') {
+    return handleList(event)
+  } else if (method === 'POST') {
+    return handleCreate(event)
+  }
+
+  throw createError({
+    statusCode: 405,
+    statusMessage: 'Method Not Allowed'
+  })
+})
+
+async function handleList(event: H3Event) {
+  requirePermission(event, 'read')
+
+  const query = getQuery(event)
+  const { page, perPage, offset } = parsePagination(query as Record<string, unknown>)
+  const db = getDatabase()
+
+  // Build where conditions
+  const conditions = []
+
+  // Filter by deleted status (only admins can see deleted)
+  if (query.includeDeleted !== 'true') {
+    conditions.push(isNull(schema.auditReports.deletedAt))
+  }
+
+  // Filter by category
+  if (query.category && typeof query.category === 'string') {
+    conditions.push(
+      eq(schema.auditReports.category, query.category as typeof schema.auditReports.category._.data)
+    )
+  }
+
+  // Filter by year
+  if (query.year) {
+    conditions.push(eq(schema.auditReports.year, Number(query.year)))
+  }
+
+  // Filter by published status
+  if (query.isPublished === 'true') {
+    conditions.push(eq(schema.auditReports.isPublished, true))
+  } else if (query.isPublished === 'false') {
+    conditions.push(eq(schema.auditReports.isPublished, false))
+  }
+
+  // Search in translations
+  // TODO: Implement search filtering after fetching due to join complexity
+  // if (query.search && typeof query.search === 'string') { ... }
+
+  const whereClause = conditions.length > 0 ? and(...conditions) : undefined
+
+  // Get total count
+  const [{ count }] = await db
+    .select({ count: sql<number>`count(*)` })
+    .from(schema.auditReports)
+    .where(whereClause)
+
+  // Fetch reports with translations
+  const reports = await db
+    .select()
+    .from(schema.auditReports)
+    .where(whereClause)
+    .orderBy(desc(schema.auditReports.publishedAt))
+    .limit(perPage)
+    .offset(offset)
+
+  // Fetch translations for each report
+  const reportIds = reports.map((r) => r.id)
+  const translations =
+    reportIds.length > 0
+      ? await db
+          .select()
+          .from(schema.auditReportTranslations)
+          .where(
+            sql`${schema.auditReportTranslations.auditReportId} IN (${sql.join(reportIds, sql`, `)})`
+          )
+      : []
+
+  // Group translations by report
+  const translationsByReport = translations.reduce(
+    (acc, t) => {
+      if (!acc[t.auditReportId]) {
+        acc[t.auditReportId] = {}
+      }
+      acc[t.auditReportId][t.locale] = {
+        title: t.title,
+        summary: t.summary
+      }
+      return acc
+    },
+    {} as Record<number, Record<string, { title: string; summary: string | null }>>
+  )
+
+  // Combine reports with translations
+  const data = reports.map((report) => ({
+    ...report,
+    translations: translationsByReport[report.id] || {}
+  }))
+
+  return {
+    data,
+    meta: buildPaginationMeta(Number(count), page, perPage)
+  }
+}
+
+async function handleCreate(event: H3Event) {
+  requirePermission(event, 'create')
+
+  const user = getCurrentUser(event)
+  const body = await readBody(event)
+
+  // Validate input
+  const input = validateBody(auditReportSchema, body)
+  const db = getDatabase()
+
+  // Check for duplicate slug
+  const [existing] = await db
+    .select({ id: schema.auditReports.id })
+    .from(schema.auditReports)
+    .where(eq(schema.auditReports.slug, input.slug))
+    .limit(1)
+
+  if (existing) {
+    throw createValidationError({ slug: 'A report with this slug already exists' })
+  }
+
+  // Insert report and translations in a transaction
+  const pool = (await import('../../../database')).getPool()
+  const connection = await pool.getConnection()
+
+  try {
+    await connection.beginTransaction()
+
+    // Insert main report
+    const [result] = await connection.execute(
+      `INSERT INTO audit_reports (slug, category, published_at, year, file_url, file_size, thumbnail, is_published, created_by, updated_by)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        input.slug,
+        input.category,
+        new Date(input.publishedAt),
+        input.year,
+        input.fileUrl,
+        input.fileSize,
+        input.thumbnail || null,
+        input.isPublished,
+        user.id,
+        user.id
+      ]
+    )
+
+    const reportId = (result as { insertId: number }).insertId
+
+    // Insert translations
+    for (const [locale, trans] of Object.entries(input.translations)) {
+      if (trans) {
+        await connection.execute(
+          `INSERT INTO audit_report_translations (audit_report_id, locale, title, summary)
+           VALUES (?, ?, ?, ?)`,
+          [reportId, locale, trans.title, trans.summary || null]
+        )
+      }
+    }
+
+    await connection.commit()
+
+    // Fetch the created report
+    const [report] = await db
+      .select()
+      .from(schema.auditReports)
+      .where(eq(schema.auditReports.id, reportId))
+      .limit(1)
+
+    const translations = await db
+      .select()
+      .from(schema.auditReportTranslations)
+      .where(eq(schema.auditReportTranslations.auditReportId, reportId))
+
+    const translationsMap = translations.reduce(
+      (acc, t) => {
+        acc[t.locale] = { title: t.title, summary: t.summary }
+        return acc
+      },
+      {} as Record<string, { title: string; summary: string | null }>
+    )
+
+    // Log audit action
+    await logAuditAction(event, 'create', 'audit_report', reportId, {
+      after: sanitizeForAudit({ ...report, translations: translationsMap })
+    })
+
+    return {
+      ...report,
+      translations: translationsMap
+    }
+  } catch (error) {
+    await connection.rollback()
+    throw error
+  } finally {
+    connection.release()
+  }
+}

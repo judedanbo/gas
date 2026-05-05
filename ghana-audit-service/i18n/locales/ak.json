@@ -1,0 +1,164 @@
+{
+  "common": {
+    "home": "Fie",
+    "about": "Fa Yɛn Ho",
+    "reports": "Nsɛmhwɛfo Amanneɛbɔ",
+    "publications": "Nwoma",
+    "media": "Mfomsoɔ",
+    "careers": "Adwuma",
+    "contact": "Ka Yɛn",
+    "search": "Hwehwɛ",
+    "subscribe": "Kyerɛw wo din",
+    "subscribing": "Ɛrekyerɛw...",
+    "readMore": "Kenkan Bio",
+    "viewAll": "Hwɛ Ne Nyinaa",
+    "viewDetails": "Hwɛ Mu",
+    "download": "Twe",
+    "downloadPdf": "Twe PDF",
+    "loading": "Ɛreload...",
+    "error": "Mfomsoɔ",
+    "success": "Ɛyɛ",
+    "menu": "Menu",
+    "closeMenu": "To menu no mu",
+    "launchCitizensEye": "Bue CitizensEye",
+    "previous": "Ɛkan",
+    "next": "Ɛdi akyiri",
+    "clearAll": "Yi nyinaa",
+    "activeFilters": "Filters a ɛwɔ hɔ",
+    "allCategories": "Nkyekyɛmu Nyinaa",
+    "allYears": "Mfeɛ Nyinaa",
+    "category": "Nkyekyɛmu",
+    "year": "Afe"
+  },
+  "nav": {
+    "theService": "Dwumadie No",
+    "pastAuditorsGeneral": "Tete Nsɛmhwɛfo Mpanyimfo",
+    "managementTeam": "Ahwɛsofo Kuo",
+    "departmentalProfile": "Branches Ho Nsɛm",
+    "pressStatements": "Dawurobɔ",
+    "bulletins": "Nsɛm Krataa",
+    "guidelines": "Akwankyerɛ",
+    "amisManuals": "AMIS Nhyehyɛe",
+    "pfmStrategy": "PFM Nhyehyɛe",
+    "applicableLaws": "Mmara",
+    "news": "Nsɛm",
+    "events": "Nneɛma A Ɛbɛba",
+    "gallery": "Mfonini",
+    "videos": "Vidio",
+    "vacancies": "Adwuma Beae",
+    "tenders": "Adetɔ"
+  },
+  "home": {
+    "title": "Ghana Nsɛm Hwɛfo",
+    "tagline": "Yɛbɔ Ɔman Sika Ho Ban",
+    "heroTitle": "Yɛhwɛ Sɛ Ɔman Sika Di Dwuma",
+    "heroSubtitle": "Ghana Nsɛm Hwɛfo wɔ tumi a ɔman ahyɛ wɔn sɛ wɔnhwɛ ɔman akontaabu nyinaa na wɔnka nkyerɛ Asantefohene.",
+    "whoWeAre": "Yɛyɛ Hwan",
+    "ourMission": "Yɛn Botaeɛ",
+    "ourVision": "Yɛn Anisoadehunu",
+    "ourMandate": "Yɛn Tumi",
+    "latestReports": "Amanneɛbɔ Foforɔ",
+    "latestNews": "Nsɛm Foforɔ",
+    "stats": {
+      "years": "Mfeɛ Adwuma Mu",
+      "staff": "Adwumayɛfoɔ",
+      "regions": "Aman Nkuro",
+      "districts": "Mman"
+    }
+  },
+  "footer": {
+    "description": "Ghana Nsɛm Hwɛfo wɔ tumi a ɔman ahyɛ wɔn sɛ wɔnhwɛ ɔman akontaabu nyinaa na wɔnka nkyerɛ Asantefohene.",
+    "quickLinks": "Nkitahodi Ntɛm",
+    "resources": "Mfasoɔ",
+    "contactUs": "Ka Yɛn",
+    "newsletterTitle": "Te Nsɛm Foforɔ",
+    "newsletterDesc": "Kyerɛw wo din na woanya nsɛm foforɔ fi Ghana Nsɛm Hwɛfo hɔ.",
+    "emailPlaceholder": "Kyerɛw wo email",
+    "affiliations": "Yɛne Obiara",
+    "relatedLinks": "Nkitahodi Foforɔ",
+    "copyright": "Hokwan Nyinaa Yɛ Yɛn Dea.",
+    "privacyPolicy": "Kokoamsɛm Ho Mmara",
+    "termsOfUse": "Dwedie Mmara",
+    "accessibility": "Ɔkwan A Obiara Betumi Adi Dwuma"
+  },
+  "accessibility": {
+    "highContrast": "Nsesae Kɛse",
+    "textSize": "Nkyerɛwde Kɛse",
+    "increase": "Ma Ɛnyɛ Kɛse",
+    "decrease": "Ma Ɛnyɛ Ketewa",
+    "reset": "San Hyɛ"
+  },
+  "search": {
+    "title": "Hwehwɛ Nsɛm",
+    "placeholder": "Hwehwɛ amanneɛbɔ, nwoma, nsɛm...",
+    "noResults": "Yɛanhunu hwee",
+    "resultsFor": "Ɛkyerɛ nsɛm a ɛfa ho",
+    "filters": "Nneɛma A Ɛhwehwɛ",
+    "type": "Nsɛm No Sɛso",
+    "dateRange": "Da Ntamu",
+    "from": "Firi",
+    "to": "Kɔsi",
+    "clearFilters": "Yi Filters",
+    "applyFilters": "Fa Filters Di Dwuma"
+  },
+  "contact": {
+    "title": "Ka Yɛn",
+    "subtitle": "Bɔ yɛn amaneɛ wɔ Ghana Nsɛm Hwɛfo",
+    "form": {
+      "name": "Wo Din Nyinaa",
+      "email": "Wo Email",
+      "phone": "Wo Fon Nɔma",
+      "subject": "Asɛm Ti",
+      "message": "Wo Nsɛm",
+      "submit": "Mena Nsɛm No",
+      "sending": "Ɛremena..."
+    }
+  },
+  "reports": {
+    "title": "Nsɛmhwɛfo Amanneɛbɔ",
+    "searchReports": "Hwehwɛ Amanneɛbɔ",
+    "searchPlaceholder": "Hwehwɛ din anaa nsɛm...",
+    "filterBy": "Hwehwɛ denam",
+    "noReports": "Yɛanhu amanneɛbɔ biara",
+    "categories": {
+      "financial": "Sika Ho Nsɛmhwɛ",
+      "performance": "Adwumayɛ Nsɛmhwɛ",
+      "compliance": "Mmara So Di Nsɛmhwɛ",
+      "special": "Nsɛmhwɛ Soronko",
+      "it": "IT Nsɛmhwɛ",
+      "forensic": "Forensic Nsɛmhwɛ",
+      "technical": "Technical Nsɛmhwɛ"
+    }
+  },
+  "newsletter": {
+    "title": "Te Nsɛm Foforɔ",
+    "description": "Kyerɛw wo din na woanya nsɛm foforɔ fi Ghana Nsɛm Hwɛfo hɔ.",
+    "placeholder": "Kyerɛw wo email",
+    "success": "Yɛda wo ase sɛ woakyerɛw wo din!",
+    "error": "Ɛanyɛ yiye. Bɔ mmɔden bio."
+  },
+  "searchTypes": {
+    "report": "Nsɛmhwɛfo Amanneɛbɔ",
+    "publication": "Nwoma",
+    "news": "Nsɛm",
+    "page": "Krataafa"
+  },
+  "errors": {
+    "notFound": "Yɛanhu Krataafa No",
+    "notFoundDesc": "Krataafa a worehwehwɛ no nni hɔ anaa wɔatutuw no.",
+    "serverError": "Biribi Akɔ Basaa",
+    "serverErrorDesc": "Yɛwɔ ɔhaw bi wɔ yɛn nhyehyɛe mu. Bɔ mmɔden bio akyiri yi.",
+    "networkError": "Nkitahodi Haw",
+    "networkErrorDesc": "Hwɛ wo intanɛt na bɔ mmɔden bio.",
+    "goHome": "Kɔ Fie Krataafa",
+    "goBack": "San kɔ akyiri",
+    "tryAgain": "Bɔ mmɔden bio",
+    "errorCode": "Mfomsoɔ Nɔma"
+  },
+  "pagination": {
+    "page": "Krataafa",
+    "of": "wɔ mu",
+    "showing": "Ɛkyerɛ",
+    "results": "nsɛm"
+  }
+}

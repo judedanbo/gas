@@ -1,0 +1,88 @@
+{
+  "name": "ghana-audit-service",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "nuxt build",
+    "dev": "nuxt dev",
+    "generate": "nuxt generate",
+    "preview": "nuxt preview",
+    "postinstall": "nuxt prepare",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "typecheck": "vue-tsc --noEmit",
+    "test": "vitest",
+    "test:run": "vitest run",
+    "test:coverage": "vitest run --coverage",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit push",
+    "db:studio": "drizzle-kit studio",
+    "db:seed": "npx tsx --env-file=.env server/database/seed.ts",
+    "db:seed:management-team": "npx tsx server/database/seeds/management-team.ts",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "prepare": "husky"
+  },
+  "dependencies": {
+    "@nuxt/image": "^2.0.0",
+    "@nuxtjs/color-mode": "^4.0.0",
+    "@nuxtjs/i18n": "^10.2.1",
+    "@nuxtjs/sitemap": "^7.5.0",
+    "@nuxtjs/tailwindcss": "^6.14.0",
+    "@tailwindcss/typography": "^0.5.19",
+    "@vite-pwa/nuxt": "^1.1.0",
+    "bcrypt": "^6.0.0",
+    "better-sqlite3": "^12.5.0",
+    "drizzle-orm": "^0.45.1",
+    "jsonwebtoken": "^9.0.3",
+    "mysql2": "^3.16.0",
+    "nuxt": "^3.20.2",
+    "validator": "^13.15.23",
+    "vue": "^3.5.25",
+    "vue-router": "^4.6.3",
+    "zod": "^4.3.5"
+  },
+  "devDependencies": {
+    "@iconify-json/heroicons": "^1.2.3",
+    "@iconify-json/simple-icons": "^1.2.66",
+    "@nuxt/eslint": "^0.7.4",
+    "@nuxt/icon": "^1.15.0",
+    "@nuxt/test-utils": "^3.19.1",
+    "@nuxtjs/google-fonts": "^3.2.0",
+    "@playwright/test": "^1.57.0",
+    "@types/bcrypt": "^6.0.0",
+    "@types/better-sqlite3": "^7.6.13",
+    "@types/jsonwebtoken": "^9.0.10",
+    "@types/validator": "^13.15.10",
+    "@vitejs/plugin-vue": "^6.0.3",
+    "@vitest/coverage-v8": "^3.2.4",
+    "@vue/test-utils": "^2.4.6",
+    "@vueuse/nuxt": "^12.0.0",
+    "drizzle-kit": "^0.31.8",
+    "eslint-config-prettier": "^10.1.8",
+    "happy-dom": "^20.0.11",
+    "husky": "^9.1.7",
+    "lint-staged": "^16.2.7",
+    "prettier": "^3.7.4",
+    "tsx": "^4.21.0",
+    "typescript": "^5.9.3",
+    "vitest": "^3.2.4",
+    "vue-tsc": "^3.1.8"
+  },
+  "lint-staged": {
+    "*.{js,ts,vue}": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "*.{json,css,md,yml,yaml}": [
+      "prettier --write"
+    ]
+  },
+  "overrides": {
+    "esbuild": "^0.25.0",
+    "@vercel/nft": "^0.27.4"
+  }
+}

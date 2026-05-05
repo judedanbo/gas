@@ -1,0 +1,20 @@
+{
+  "version": "7",
+  "dialect": "mysql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "5",
+      "when": 1767786598529,
+      "tag": "0000_stale_bloodstrike",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "5",
+      "when": 1768384056787,
+      "tag": "0001_groovy_mojo",
+      "breakpoints": true
+    }
+  ]
+}

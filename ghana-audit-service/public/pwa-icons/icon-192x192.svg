@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192" width="192" height="192">
+  <!-- Background -->
+  <rect width="192" height="192" fill="#006B3F" rx="24"/>
+
+  <!-- Shield shape -->
+  <path d="M96 28 L148 48 L148 100 C148 132 124 156 96 168 C68 156 44 132 44 100 L44 48 Z" fill="#ffffff" opacity="0.15"/>
+
+  <!-- Inner shield -->
+  <path d="M96 40 L136 56 L136 96 C136 120 116 140 96 148 C76 140 56 120 56 96 L56 56 Z" fill="#ffffff"/>
+
+  <!-- Star (Ghana symbol) -->
+  <polygon points="96,60 102,80 122,80 106,92 112,112 96,100 80,112 86,92 70,80 90,80" fill="#006B3F"/>
+
+  <!-- GAS text -->
+  <text x="96" y="138" text-anchor="middle" font-family="Arial, sans-serif" font-size="18" font-weight="bold" fill="#ffffff">GAS</text>
+</svg>

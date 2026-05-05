@@ -1,0 +1,59 @@
+# Dependencies
+node_modules
+.pnpm-store
+
+# Build outputs
+.output
+.nuxt
+dist
+
+# Development files
+.git
+.gitignore
+.github
+
+# IDE and editor files
+.vscode
+.idea
+*.swp
+*.swo
+*~
+
+# Test files
+coverage
+.nyc_output
+*.test.ts
+*.spec.ts
+tests/
+e2e/
+playwright-report/
+test-results/
+
+# Documentation
+*.md
+!README.md
+docs/
+
+# Environment files (will be mounted or passed as env vars)
+.env
+.env.*
+!.env.example
+
+# Logs
+logs
+*.log
+npm-debug.log*
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Docker files (no need to copy these into the image)
+Dockerfile*
+docker-compose*.yml
+.docker/
+
+# Misc
+.eslintcache
+.prettiercache
+*.local
