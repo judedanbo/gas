@@ -271,7 +271,7 @@
   const { create, saving, error, fieldErrors } = useAdminCrud<AdminVacancy>('vacancies')
   const { items: departments, fetchAll: fetchDepartments } =
     useAdminCrud<AdminDepartment>('departments')
-  const { errors, validate, setErrors, rules } = useFormValidation()
+  const { errors, validate, setErrors, clearFieldError, rules } = useFormValidation()
 
   // Slug checking state
   const isCheckingSlug = ref(false)

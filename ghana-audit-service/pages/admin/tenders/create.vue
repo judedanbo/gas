@@ -174,7 +174,7 @@
 
   const router = useRouter()
   const { create, saving, error, fieldErrors } = useAdminCrud<AdminTender>('tenders')
-  const { errors, validate, setErrors, rules } = useFormValidation()
+  const { errors, validate, setErrors, clearFieldError, rules } = useFormValidation()
 
   // Slug checking state
   const isCheckingSlug = ref(false)
