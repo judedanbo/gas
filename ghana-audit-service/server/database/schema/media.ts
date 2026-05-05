@@ -23,7 +23,7 @@ export const galleryImages = mysqlTable(
     category: varchar('category', { length: 100 }),
     uploadedAt: datetime('uploaded_at')
       .notNull()
-      .default(sql`CURRENT_TIMESTAMP`),
+      .default(sql`(CURRENT_TIMESTAMP)`),
     createdBy: int('created_by').references(() => users.id, { onDelete: 'set null' }),
     deletedAt: datetime('deleted_at')
   },
@@ -67,7 +67,7 @@ export const videos = mysqlTable(
     isPublished: boolean('is_published').notNull().default(false),
     createdAt: datetime('created_at')
       .notNull()
-      .default(sql`CURRENT_TIMESTAMP`),
+      .default(sql`(CURRENT_TIMESTAMP)`),
     updatedAt: datetime('updated_at')
       .notNull()
       .default(sql`CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP`),

@@ -29,7 +29,7 @@ export const newsArticles = mysqlTable(
     isPublished: boolean('is_published').notNull().default(false),
     createdAt: datetime('created_at')
       .notNull()
-      .default(sql`CURRENT_TIMESTAMP`),
+      .default(sql`(CURRENT_TIMESTAMP)`),
     updatedAt: datetime('updated_at')
       .notNull()
       .default(sql`CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP`),
@@ -87,7 +87,12 @@ export const newsArticleTags = mysqlTable(
       .notNull()
       .references(() => tags.id, { onDelete: 'cascade' })
   },
-  (table) => [primaryKey({ columns: [table.newsArticleId, table.tagId] })]
+  (table) => [
+    primaryKey({
+      name: 'news_article_tags_news_article_id_tag_id',
+      columns: [table.newsArticleId, table.tagId]
+    })
+  ]
 )
 
 // Type exports

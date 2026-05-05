@@ -45,7 +45,7 @@ export const rateLimitEntries = mysqlTable(
     resetTime: bigint('reset_time', { mode: 'number' }).notNull(),
     createdAt: datetime('created_at')
       .notNull()
-      .default(sql`CURRENT_TIMESTAMP`)
+      .default(sql`(CURRENT_TIMESTAMP)`)
   },
   (table) => [index('idx_rate_limit_identifier').on(table.identifier, table.route)]
 )

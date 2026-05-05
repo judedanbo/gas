@@ -25,7 +25,7 @@ export const users = mysqlTable(
     lastLoginAt: datetime('last_login_at'),
     createdAt: datetime('created_at')
       .notNull()
-      .default(sql`CURRENT_TIMESTAMP`),
+      .default(sql`(CURRENT_TIMESTAMP)`),
     updatedAt: datetime('updated_at')
       .notNull()
       .default(sql`CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP`),
@@ -57,7 +57,7 @@ export const auditLogs = mysqlTable(
     userAgent: varchar('user_agent', { length: 500 }),
     createdAt: datetime('created_at')
       .notNull()
-      .default(sql`CURRENT_TIMESTAMP`)
+      .default(sql`(CURRENT_TIMESTAMP)`)
   },
   (table) => [
     index('idx_audit_logs_user').on(table.userId),

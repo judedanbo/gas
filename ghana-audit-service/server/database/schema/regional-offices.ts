@@ -27,7 +27,7 @@ export const regionalOffices = mysqlTable(
     displayOrder: int('display_order').notNull().default(0),
     createdAt: datetime('created_at')
       .notNull()
-      .default(sql`CURRENT_TIMESTAMP`),
+      .default(sql`(CURRENT_TIMESTAMP)`),
     updatedAt: datetime('updated_at')
       .notNull()
       .default(sql`CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP`),

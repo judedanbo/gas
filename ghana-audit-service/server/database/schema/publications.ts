@@ -36,7 +36,7 @@ export const publications = mysqlTable(
     isPublished: boolean('is_published').notNull().default(false),
     createdAt: datetime('created_at')
       .notNull()
-      .default(sql`CURRENT_TIMESTAMP`),
+      .default(sql`(CURRENT_TIMESTAMP)`),
     updatedAt: datetime('updated_at')
       .notNull()
       .default(sql`CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP`),

@@ -25,7 +25,7 @@ export const departments = mysqlTable(
     displayOrder: int('display_order').notNull().default(0),
     createdAt: datetime('created_at')
       .notNull()
-      .default(sql`CURRENT_TIMESTAMP`),
+      .default(sql`(CURRENT_TIMESTAMP)`),
     updatedAt: datetime('updated_at')
       .notNull()
       .default(sql`CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP`),
@@ -100,7 +100,7 @@ export const teamMembers = mysqlTable(
     displayOrder: int('display_order').notNull().default(0),
     createdAt: datetime('created_at')
       .notNull()
-      .default(sql`CURRENT_TIMESTAMP`),
+      .default(sql`(CURRENT_TIMESTAMP)`),
     updatedAt: datetime('updated_at')
       .notNull()
       .default(sql`CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP`),
@@ -141,7 +141,7 @@ export const pastAuditorsGeneral = mysqlTable('past_auditors_general', {
   displayOrder: int('display_order').notNull().default(0),
   createdAt: datetime('created_at')
     .notNull()
-    .default(sql`CURRENT_TIMESTAMP`),
+    .default(sql`(CURRENT_TIMESTAMP)`),
   updatedAt: datetime('updated_at')
     .notNull()
     .default(sql`CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP`),
@@ -225,7 +225,7 @@ export const managementTeam = mysqlTable(
     isActive: boolean('is_active').notNull().default(true),
     createdAt: datetime('created_at')
       .notNull()
-      .default(sql`CURRENT_TIMESTAMP`),
+      .default(sql`(CURRENT_TIMESTAMP)`),
     updatedAt: datetime('updated_at')
       .notNull()
       .default(sql`CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP`),
