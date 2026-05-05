@@ -8,7 +8,8 @@ import {
   text,
   mysqlEnum,
   index,
-  uniqueIndex
+  uniqueIndex,
+  foreignKey
 } from 'drizzle-orm/mysql-core'
 import { sql } from 'drizzle-orm'
 import { users } from './users'
@@ -83,13 +84,18 @@ export const vacancyRequirementTranslations = mysqlTable(
   'vacancy_requirement_translations',
   {
     id: int('id').primaryKey().autoincrement(),
-    requirementId: int('requirement_id')
-      .notNull()
-      .references(() => vacancyRequirements.id, { onDelete: 'cascade' }),
+    requirementId: int('requirement_id').notNull(),
     locale: mysqlEnum('locale', ['en', 'ak']).notNull(),
     description: varchar('description', { length: 500 }).notNull()
   },
-  (table) => [uniqueIndex('idx_requirement_locale').on(table.requirementId, table.locale)]
+  (table) => [
+    uniqueIndex('idx_requirement_locale').on(table.requirementId, table.locale),
+    foreignKey({
+      name: 'vac_req_trans_req_id_fk',
+      columns: [table.requirementId],
+      foreignColumns: [vacancyRequirements.id]
+    }).onDelete('cascade')
+  ]
 )
 
 // Type exports

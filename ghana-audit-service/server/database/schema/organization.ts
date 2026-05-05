@@ -7,7 +7,8 @@ import {
   boolean,
   mysqlEnum,
   index,
-  uniqueIndex
+  uniqueIndex,
+  foreignKey
 } from 'drizzle-orm/mysql-core'
 import { sql } from 'drizzle-orm'
 import { regionalOffices } from './regional-offices'
@@ -71,13 +72,18 @@ export const departmentFunctionTranslations = mysqlTable(
   'department_function_translations',
   {
     id: int('id').primaryKey().autoincrement(),
-    functionId: int('function_id')
-      .notNull()
-      .references(() => departmentFunctions.id, { onDelete: 'cascade' }),
+    functionId: int('function_id').notNull(),
     locale: mysqlEnum('locale', ['en', 'ak']).notNull(),
     description: varchar('description', { length: 500 }).notNull()
   },
-  (table) => [uniqueIndex('idx_function_locale').on(table.functionId, table.locale)]
+  (table) => [
+    uniqueIndex('idx_function_locale').on(table.functionId, table.locale),
+    foreignKey({
+      name: 'dept_func_trans_function_id_fk',
+      columns: [table.functionId],
+      foreignColumns: [departmentFunctions.id]
+    }).onDelete('cascade')
+  ]
 )
 
 /**
@@ -178,13 +184,18 @@ export const pastAGAchievementTranslations = mysqlTable(
   'past_ag_achievement_translations',
   {
     id: int('id').primaryKey().autoincrement(),
-    achievementId: int('achievement_id')
-      .notNull()
-      .references(() => pastAGAchievements.id, { onDelete: 'cascade' }),
+    achievementId: int('achievement_id').notNull(),
     locale: mysqlEnum('locale', ['en', 'ak']).notNull(),
     description: varchar('description', { length: 500 }).notNull()
   },
-  (table) => [uniqueIndex('idx_achievement_locale').on(table.achievementId, table.locale)]
+  (table) => [
+    uniqueIndex('idx_achievement_locale').on(table.achievementId, table.locale),
+    foreignKey({
+      name: 'past_ag_achiev_trans_achiev_id_fk',
+      columns: [table.achievementId],
+      foreignColumns: [pastAGAchievements.id]
+    }).onDelete('cascade')
+  ]
 )
 
 /**
@@ -236,30 +247,41 @@ export const managementTeamTranslations = mysqlTable(
   'management_team_translations',
   {
     id: int('id').primaryKey().autoincrement(),
-    managementTeamId: int('management_team_id')
-      .notNull()
-      .references(() => managementTeam.id, { onDelete: 'cascade' }),
+    managementTeamId: int('management_team_id').notNull(),
     locale: mysqlEnum('locale', ['en', 'ak']).notNull(),
     name: varchar('name', { length: 255 }).notNull(),
-    title: varchar('title', { length: 255 }).notNull(), // "Auditor-General of Ghana" or portfolio name
+    title: varchar('title', { length: 255 }).notNull(),
     bio: text('bio')
   },
   (table) => [
     uniqueIndex('idx_management_team_locale').on(table.managementTeamId, table.locale),
-    index('idx_management_team_translations_locale').on(table.locale)
+    index('idx_management_team_translations_locale').on(table.locale),
+    foreignKey({
+      name: 'mgmt_team_trans_team_id_fk',
+      columns: [table.managementTeamId],
+      foreignColumns: [managementTeam.id]
+    }).onDelete('cascade')
   ]
 )
 
 /**
  * Management team responsibilities table - Key responsibilities for each member (mainly DAGs)
  */
-export const managementTeamResponsibilities = mysqlTable('management_team_responsibilities', {
-  id: int('id').primaryKey().autoincrement(),
-  managementTeamId: int('management_team_id')
-    .notNull()
-    .references(() => managementTeam.id, { onDelete: 'cascade' }),
-  displayOrder: int('display_order').notNull().default(0)
-})
+export const managementTeamResponsibilities = mysqlTable(
+  'management_team_responsibilities',
+  {
+    id: int('id').primaryKey().autoincrement(),
+    managementTeamId: int('management_team_id').notNull(),
+    displayOrder: int('display_order').notNull().default(0)
+  },
+  (table) => [
+    foreignKey({
+      name: 'mgmt_team_resp_team_id_fk',
+      columns: [table.managementTeamId],
+      foreignColumns: [managementTeam.id]
+    }).onDelete('cascade')
+  ]
+)
 
 /**
  * Management team responsibility translations table
@@ -268,13 +290,18 @@ export const managementTeamResponsibilityTranslations = mysqlTable(
   'management_team_responsibility_translations',
   {
     id: int('id').primaryKey().autoincrement(),
-    responsibilityId: int('responsibility_id')
-      .notNull()
-      .references(() => managementTeamResponsibilities.id, { onDelete: 'cascade' }),
+    responsibilityId: int('responsibility_id').notNull(),
     locale: mysqlEnum('locale', ['en', 'ak']).notNull(),
     description: varchar('description', { length: 500 }).notNull()
   },
-  (table) => [uniqueIndex('idx_responsibility_locale').on(table.responsibilityId, table.locale)]
+  (table) => [
+    uniqueIndex('idx_responsibility_locale').on(table.responsibilityId, table.locale),
+    foreignKey({
+      name: 'mgmt_resp_trans_resp_id_fk',
+      columns: [table.responsibilityId],
+      foreignColumns: [managementTeamResponsibilities.id]
+    }).onDelete('cascade')
+  ]
 )
 
 // Type exports

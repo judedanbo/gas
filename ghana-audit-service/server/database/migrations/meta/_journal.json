@@ -15,6 +15,13 @@
       "when": 1768384056787,
       "tag": "0001_groovy_mojo",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1778003460466,
+      "tag": "0002_opposite_malice",
+      "breakpoints": true
     }
   ]
 }
