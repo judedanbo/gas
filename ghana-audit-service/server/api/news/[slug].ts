@@ -1,6 +1,7 @@
 import { eq, and, isNull } from 'drizzle-orm'
 import { getDatabase, schema } from '../../database'
-import { transformNewsArticle, getLocaleFromRequest } from '../../utils/transformNews'
+import { transformNewsArticle } from '../../utils/transformNews'
+import { getLocaleFromRequest } from '../../utils/locale'
 
 export default defineEventHandler(async (event) => {
   const slug = getRouterParam(event, 'slug')

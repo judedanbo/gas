@@ -2,7 +2,8 @@ import type { Publication, PublicationType, PaginatedResponse } from '~/types'
 import { eq, and, isNull, sql, desc } from 'drizzle-orm'
 import { getDatabase, schema } from '../../database'
 import { buildPaginationMeta } from '../../utils/adminHelpers'
-import { transformPublications, getLocaleFromRequest } from '../../utils/transformPublication'
+import { transformPublications } from '../../utils/transformPublication'
+import { getLocaleFromRequest } from '../../utils/locale'
 
 export default defineEventHandler(async (event): Promise<PaginatedResponse<Publication>> => {
   const query = getQuery(event)

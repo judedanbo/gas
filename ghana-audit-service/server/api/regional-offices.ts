@@ -1,7 +1,8 @@
 import type { RegionalOffice } from '~/types'
 import { isNull, sql, asc } from 'drizzle-orm'
 import { getDatabase, schema } from '../database'
-import { transformRegionalOffices, getLocaleFromRequest } from '../utils/transformRegionalOffice'
+import { transformRegionalOffices } from '../utils/transformRegionalOffice'
+import { getLocaleFromRequest } from '../utils/locale'
 
 export default defineEventHandler(async (event): Promise<RegionalOffice[]> => {
   const query = getQuery(event)

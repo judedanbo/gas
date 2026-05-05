@@ -1,5 +1,4 @@
 import type { Vacancy } from '~/types'
-import { getLocaleFromRequest } from './transformReport'
 
 type SupportedLocale = 'en' | 'ak'
 type VacancyType = 'full-time' | 'part-time' | 'contract'
@@ -83,5 +82,3 @@ export function transformVacancies(
 ): Vacancy[] {
   return vacancies.map((vacancy) => transformVacancy(vacancy, locale))
 }
-
-export { getLocaleFromRequest }

@@ -2,7 +2,8 @@ import type { Vacancy, PaginatedResponse } from '~/types'
 import { eq, and, isNull, sql, desc } from 'drizzle-orm'
 import { getDatabase, schema } from '../../database'
 import { buildPaginationMeta } from '../../utils/adminHelpers'
-import { transformVacancies, getLocaleFromRequest } from '../../utils/transformVacancy'
+import { transformVacancies } from '../../utils/transformVacancy'
+import { getLocaleFromRequest } from '../../utils/locale'
 
 export default defineEventHandler(async (event): Promise<PaginatedResponse<Vacancy>> => {
   const query = getQuery(event)

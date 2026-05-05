@@ -1,5 +1,4 @@
 import type { Tender } from '~/types'
-import { getLocaleFromRequest } from './transformReport'
 
 type SupportedLocale = 'en' | 'ak'
 type TenderStatus = 'open' | 'closed' | 'awarded' | 'cancelled'
@@ -82,5 +81,3 @@ export function transformTenders(
 ): Tender[] {
   return tenders.map((tender) => transformTender(tender, locale))
 }
-
-export { getLocaleFromRequest }

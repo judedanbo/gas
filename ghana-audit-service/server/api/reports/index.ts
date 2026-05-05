@@ -2,7 +2,8 @@ import type { AuditReport, AuditCategory, PaginatedResponse } from '~/types'
 import { eq, and, isNull, sql, desc } from 'drizzle-orm'
 import { getDatabase, schema } from '../../database'
 import { buildPaginationMeta } from '../../utils/adminHelpers'
-import { transformReports, getLocaleFromRequest } from '../../utils/transformReport'
+import { transformReports } from '../../utils/transformReport'
+import { getLocaleFromRequest } from '../../utils/locale'
 
 export default defineEventHandler(async (event): Promise<PaginatedResponse<AuditReport>> => {
   const query = getQuery(event)

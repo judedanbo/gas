@@ -1,10 +1,8 @@
 import type { ManagementTeamMember } from '~/types'
 import { eq, and, isNull, sql } from 'drizzle-orm'
 import { getDatabase, schema } from '../database'
-import {
-  transformManagementTeamMembers,
-  getLocaleFromRequest
-} from '../utils/transformManagementTeam'
+import { transformManagementTeamMembers } from '../utils/transformManagementTeam'
+import { getLocaleFromRequest } from '../utils/locale'
 
 export default defineEventHandler(async (event): Promise<ManagementTeamMember[]> => {
   const locale = getLocaleFromRequest(event)

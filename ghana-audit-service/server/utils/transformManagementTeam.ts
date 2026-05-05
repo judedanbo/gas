@@ -1,5 +1,4 @@
 import type { ManagementTeamMember } from '~/types'
-import { getLocaleFromRequest } from './transformReport'
 
 type SupportedLocale = 'en' | 'ak'
 type ManagementRole = 'auditor-general' | 'deputy-auditor-general' | 'regional-auditor'
@@ -109,5 +108,3 @@ export function transformManagementTeamMembers(
 ): ManagementTeamMember[] {
   return members.map((member) => transformManagementTeamMember(member, locale))
 }
-
-export { getLocaleFromRequest }

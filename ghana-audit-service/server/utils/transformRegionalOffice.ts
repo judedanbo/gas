@@ -1,5 +1,4 @@
 import type { RegionalOffice } from '~/types'
-import { getLocaleFromRequest } from './transformReport'
 
 type SupportedLocale = 'en' | 'ak'
 
@@ -65,5 +64,3 @@ export function transformRegionalOffices(
 ): RegionalOffice[] {
   return offices.map((office) => transformRegionalOffice(office, locale))
 }
-
-export { getLocaleFromRequest }

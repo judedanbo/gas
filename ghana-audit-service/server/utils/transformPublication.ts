@@ -1,5 +1,4 @@
 import type { Publication, PublicationType } from '~/types'
-import { getLocaleFromRequest } from './transformReport'
 
 type SupportedLocale = 'en' | 'ak'
 
@@ -66,5 +65,3 @@ export function transformPublications(
 ): Publication[] {
   return publications.map((publication) => transformPublication(publication, locale))
 }
-
-export { getLocaleFromRequest }

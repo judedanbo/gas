@@ -2,7 +2,8 @@ import type { Tender, PaginatedResponse } from '~/types'
 import { eq, and, isNull, sql, desc } from 'drizzle-orm'
 import { getDatabase, schema } from '../database'
 import { buildPaginationMeta } from '../utils/adminHelpers'
-import { transformTenders, getLocaleFromRequest } from '../utils/transformTender'
+import { transformTenders } from '../utils/transformTender'
+import { getLocaleFromRequest } from '../utils/locale'
 
 export default defineEventHandler(async (event): Promise<PaginatedResponse<Tender>> => {
   const query = getQuery(event)

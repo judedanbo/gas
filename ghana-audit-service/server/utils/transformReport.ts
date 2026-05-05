@@ -1,7 +1,5 @@
-import type { H3Event } from 'h3'
 import type { AuditReport, AuditCategory } from '~/types'
-
-type SupportedLocale = 'en' | 'ak'
+import type { SupportedLocale } from './locale'
 
 interface DbAuditReport {
   id: number
@@ -48,18 +46,6 @@ function formatFileSize(size: string | null): string {
   }
 
   return `${value.toFixed(1)} ${units[unitIndex]}`
-}
-
-/**
- * Get the preferred locale from the request's Accept-Language header
- */
-export function getLocaleFromRequest(event: H3Event): SupportedLocale {
-  const acceptLang = getHeader(event, 'accept-language') || ''
-  // Check if Akan is preferred
-  if (acceptLang.toLowerCase().includes('ak')) {
-    return 'ak'
-  }
-  return 'en'
 }
 
 /**
