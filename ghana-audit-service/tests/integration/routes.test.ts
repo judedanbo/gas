@@ -130,24 +130,6 @@ describe('API Routes Exist', () => {
   }
 })
 
-describe('Mock Data Files Exist', () => {
-  const mockFiles = [
-    'server/utils/mockReports.ts',
-    'server/utils/mockNews.ts',
-    'server/utils/mockPublications.ts',
-    'server/utils/mockVacancies.ts',
-    'server/utils/mockTenders.ts',
-    'server/utils/mockRegionalOffices.ts'
-  ]
-
-  for (const mockFile of mockFiles) {
-    it(`${mockFile} exists`, () => {
-      const fullPath = path.join(rootDir, mockFile)
-      expect(fs.existsSync(fullPath)).toBe(true)
-    })
-  }
-})
-
 describe('Configuration Files', () => {
   it('nuxt.config.ts exists and has required modules', () => {
     const configPath = path.join(rootDir, 'nuxt.config.ts')

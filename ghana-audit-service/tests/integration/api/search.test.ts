@@ -3,9 +3,8 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import type { H3Event, EventHandlerRequest } from 'h3'
 
 // Helper to create mock event that works with type system
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const createMockEvent = () =>
-  ({ node: { req: {}, res: {} } }) as any as H3Event<EventHandlerRequest>
+  ({ node: { req: {}, res: {} } }) as unknown as H3Event<EventHandlerRequest>
 
 interface SearchResultItem {
   id: string
