@@ -19,6 +19,7 @@
     "test:e2e:ui": "playwright test --ui",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit push",
+    "db:apply": "tsx server/database/migrate.ts",
     "db:studio": "drizzle-kit studio",
     "db:seed": "npx tsx --env-file=.env server/database/seed.ts",
     "db:seed:management-team": "npx tsx server/database/seeds/management-team.ts",
