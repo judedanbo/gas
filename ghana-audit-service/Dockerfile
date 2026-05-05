@@ -8,15 +8,13 @@ FROM node:24-alpine AS deps
 
 WORKDIR /app
 
-# Install dependencies needed for native modules
-RUN apk add --no-cache libc6-compat python3 make g++
+RUN apk add --no-cache libc6-compat
 
 # Copy package files
 COPY package.json package-lock.json* ./
 
 # Install dependencies
-RUN npm ci --ignore-scripts && \
-    npm rebuild better-sqlite3
+RUN npm ci --ignore-scripts
 
 # ===========================================
 # Stage 2: Builder
