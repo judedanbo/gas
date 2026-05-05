@@ -38,7 +38,25 @@ RUN npm install
 RUN npm run build
 
 # ===========================================
-# Stage 3: Production Runner
+# Stage 3: Migrator (run as a one-shot Kubernetes Job)
+# ===========================================
+FROM node:24-alpine AS migrator
+
+WORKDIR /app
+
+RUN apk add --no-cache libc6-compat
+
+# node_modules from deps stage already includes drizzle-orm, mysql2, and tsx.
+COPY --from=deps /app/node_modules ./node_modules
+COPY package.json ./
+COPY server/database/migrations ./server/database/migrations
+COPY server/database/migrate.ts ./server/database/migrate.ts
+
+# DB_HOST, DB_PORT, DB_USER, DB_PASSWORD, DB_NAME come from the Job's envFrom.
+CMD ["npm", "run", "db:apply"]
+
+# ===========================================
+# Stage 4: Production Runner
 # ===========================================
 FROM node:24-alpine AS runner
 
