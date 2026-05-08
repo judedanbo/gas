@@ -1,0 +1,638 @@
+import { writeFileSync, mkdirSync } from 'node:fs'
+import { join } from 'node:path'
+
+function writeJson(filePath: string, data: unknown): void {
+  mkdirSync(join(filePath, '..'), { recursive: true })
+  writeFileSync(filePath, JSON.stringify(data, null, 2), 'utf-8')
+  console.log(`Done: Wrote ${filePath}`)
+}
+
+const BASE_URL = 'https://audit.gov.gh'
+const OUTPUT_PATH = join(process.cwd(), 'server/database/seeds/data/publications.json')
+
+interface PublicationItem {
+  slug: string
+  type: 'press-statement' | 'bulletin'
+  publishedAt: string
+  fileUrl: string | null
+  isPublished: boolean
+  translations: {
+    en: { title: string; excerpt: string; content: string }
+  }
+}
+
+const PRESS_STATEMENTS: PublicationItem[] = [
+  {
+    slug: 'public-hearing',
+    type: 'press-statement',
+    publishedAt: '2022-04-11',
+    fileUrl: `${BASE_URL}/demo/files/publications/Public_Hearing1344085564.pdf`,
+    isPublished: true,
+    translations: {
+      en: {
+        title: 'Public Hearing',
+        excerpt:
+          'PAC examined implementation status of 2018 Auditor-General report recommendations across public institutions, ministries, and statutory bodies.',
+        content:
+          '<p>PAC examined implementation status of 2018 Auditor-General report recommendations across public institutions, ministries, and statutory bodies.</p>'
+      }
+    }
+  },
+  {
+    slug: 're-ken-ofori-atta-gives-clearance-to-recruit-800-staff-for-audit-service',
+    type: 'press-statement',
+    publishedAt: '2021-09-23',
+    fileUrl: `${BASE_URL}/demo/files/publications/RE:_Ken_Ofori-Atta_gives_Clearance_to_recruit_800_Staff_for_Audit_Service474739593.pdf`,
+    isPublished: true,
+    translations: {
+      en: {
+        title: 'RE: Ken Ofori-Atta gives Clearance to recruit 800 Staff for Audit Service',
+        excerpt:
+          'Service clarified that reports claiming Finance Minister approval for recruitment were "false."',
+        content:
+          '<p>Service clarified that reports claiming Finance Minister approval for recruitment were "false."</p>'
+      }
+    }
+  },
+  {
+    slug: 'call-for-submission-and-publication-of-reports-2019-financial-year',
+    type: 'press-statement',
+    publishedAt: '2020-09-30',
+    fileUrl: `${BASE_URL}/demo/files/publications/A_call_for_the_submission_and_publication_of_reports_of_the_Auditor-General_for_2019_Financial_Year_by_the_Minority_caucus_in_Parliament1390361364.pdf`,
+    isPublished: true,
+    translations: {
+      en: {
+        title:
+          'A call for the submission and publication of reports of the Auditor-General for 2019 Financial Year by the Minority caucus in Parliament',
+        excerpt:
+          'Explained audit delays due to COVID-19 lockdown suspension; noted Bank of Ghana report submission.',
+        content:
+          '<p>Explained audit delays due to COVID-19 lockdown suspension; noted Bank of Ghana report submission.</p>'
+      }
+    }
+  },
+  {
+    slug: 'auditor-general-submits-report-to-parliament-petroleum-funds-2018',
+    type: 'press-statement',
+    publishedAt: '2020-06-17',
+    fileUrl: `${BASE_URL}/demo/files/audit_reports/Report_of_the_Auditor-General_on_the_management_of_Petroleum_Funds_for_the_financial_year_ended_31_December_2018.pdf`,
+    isPublished: true,
+    translations: {
+      en: {
+        title: 'Auditor-General submits Report to Parliament',
+        excerpt:
+          'Petroleum fund management report submitted for 2018 financial year.',
+        content:
+          '<p>Petroleum fund management report submitted for 2018 financial year.</p>'
+      }
+    }
+  },
+  {
+    slug: 'auditor-general-submits-report-to-parliament-capital-projects-ddf',
+    type: 'press-statement',
+    publishedAt: '2020-06-10',
+    fileUrl: `${BASE_URL}/demo/files/audit_reports/Performance_Audit_Report_of_the_Auditor-General_on_Capital_Projects_funded_through_DDF_in_30_MMDAs_in_Ghana_-_MLGRD.pdf`,
+    isPublished: true,
+    translations: {
+      en: {
+        title: 'Auditor-General submits Report to Parliament',
+        excerpt:
+          'Performance audit on capital projects funded through District Development Facility submitted.',
+        content:
+          '<p>Performance audit on capital projects funded through District Development Facility submitted.</p>'
+      }
+    }
+  },
+  {
+    slug: 'submission-of-assets-and-liabilities-declaration-forms-june-2020',
+    type: 'press-statement',
+    publishedAt: '2020-06-05',
+    fileUrl: `${BASE_URL}/demo/files/publications/Submission_of_Assets_and_Liabilities_Declaration_forms305069654.pdf`,
+    isPublished: true,
+    translations: {
+      en: {
+        title: 'Submission of Assets and Liabilities Declaration forms',
+        excerpt:
+          'Service resumed collection of completed asset declaration forms from public office holders.',
+        content:
+          '<p>Service resumed collection of completed asset declaration forms from public office holders.</p>'
+      }
+    }
+  },
+  {
+    slug: 'auditor-general-submits-reports-to-parliament-may-2020',
+    type: 'press-statement',
+    publishedAt: '2020-05-14',
+    fileUrl: `${BASE_URL}/demo/files/publications/Auditor-General_submits_Reports_to_Parliament579724749.pdf`,
+    isPublished: true,
+    translations: {
+      en: {
+        title: 'Auditor-General submits Reports to Parliament',
+        excerpt:
+          'Two reports submitted: payroll verification audit and sports stadia sustainability performance audit.',
+        content:
+          '<p>Two reports submitted: payroll verification audit and sports stadia sustainability performance audit.</p>'
+      }
+    }
+  },
+  {
+    slug: 'submission-of-assets-and-liabilities-declaration-forms-march-2020',
+    type: 'press-statement',
+    publishedAt: '2020-03-24',
+    fileUrl: `${BASE_URL}/demo/files/publications/Submission_of_Assets_And_Liabilities_Declaration_forms883748179.pdf`,
+    isPublished: true,
+    translations: {
+      en: {
+        title: 'Submission of Assets And Liabilities Declaration forms',
+        excerpt:
+          'Suspended collection of declaration forms to reduce COVID-19 transmission risk.',
+        content:
+          '<p>Suspended collection of declaration forms to reduce COVID-19 transmission risk.</p>'
+      }
+    }
+  },
+  {
+    slug: 'auditor-general-submits-reports-to-parliament-march-2020',
+    type: 'press-statement',
+    publishedAt: '2020-03-04',
+    fileUrl: `${BASE_URL}/demo/files/publications/Auditor-General_submits_Reports_to_Parliament1794744214.docx`,
+    isPublished: true,
+    translations: {
+      en: {
+        title: 'Auditor-General submits Reports to Parliament',
+        excerpt:
+          'Four reports submitted covering foreign exchange, veterinary services, and selected road works.',
+        content:
+          '<p>Four reports submitted covering foreign exchange, veterinary services, and selected road works.</p>'
+      }
+    }
+  },
+  {
+    slug: 'audit-service-not-conducting-aptitude-test',
+    type: 'press-statement',
+    publishedAt: '2018-10-26',
+    fileUrl: `${BASE_URL}/demo/files/publications/Statement:_Audit_Service_not_conducting_aptitude_test171990772.pdf`,
+    isPublished: true,
+    translations: {
+      en: {
+        title: 'Statement: Audit Service not conducting aptitude test',
+        excerpt:
+          'Service warned applicants to disregard fraudulent messages regarding paid aptitude tests.',
+        content:
+          '<p>Service warned applicants to disregard fraudulent messages regarding paid aptitude tests.</p>'
+      }
+    }
+  },
+  {
+    slug: 'notice-declaration-of-assets-and-liabilities-by-public-office-holders',
+    type: 'press-statement',
+    publishedAt: '2018-04-26',
+    fileUrl: `${BASE_URL}/demo/files/publications/NOTICE:_Declaration_of_Assets_&_Liabilities_by_Public_Office_Holders990432555.pdf`,
+    isPublished: true,
+    translations: {
+      en: {
+        title: 'NOTICE: Declaration of Assets & Liabilities by Public Office Holders',
+        excerpt:
+          'Reminder for public officers to declare assets and liabilities per constitutional requirement.',
+        content:
+          '<p>Reminder for public officers to declare assets and liabilities per constitutional requirement.</p>'
+      }
+    }
+  },
+  {
+    slug: 'notice-of-list-of-persons-surcharged-by-the-auditor-general',
+    type: 'press-statement',
+    publishedAt: '2018-04-26',
+    fileUrl: `${BASE_URL}/demo/files/publications/Notice_of_list_of_person(s)_surcharged_by_the_Auditor-General330536104.pdf`,
+    isPublished: true,
+    translations: {
+      en: {
+        title: 'Notice of list of person(s) surcharged by the Auditor-General',
+        excerpt:
+          'Announcement of individuals surcharge certificates issued for audit period violations.',
+        content:
+          '<p>Announcement of individuals surcharge certificates issued for audit period violations.</p>'
+      }
+    }
+  }
+]
+
+const BULLETINS: PublicationItem[] = [
+  {
+    slug: 'bulletin-1st-quarter-2026',
+    type: 'bulletin',
+    publishedAt: '2026-04-02',
+    fileUrl: `${BASE_URL}/files/publications/1st_Quarter_20261127406655.pdf`,
+    isPublished: true,
+    translations: {
+      en: {
+        title: '1st Quarter 2026',
+        excerpt:
+          'Workshop for Assistant Auditors-General on enhancing audit reports and their role in promoting transparency and accountability.',
+        content:
+          '<p>Workshop for Assistant Auditors-General on enhancing audit reports and their role in promoting transparency and accountability.</p>'
+      }
+    }
+  },
+  {
+    slug: 'bulletin-4th-quarter-2025',
+    type: 'bulletin',
+    publishedAt: '2025-12-25',
+    fileUrl: `${BASE_URL}/files/publications/4th_quarter_2025151202925.pdf`,
+    isPublished: true,
+    translations: {
+      en: {
+        title: '4th Quarter 2025',
+        excerpt:
+          'Seasonal greetings from the Auditor-General expressing gratitude to staff and stakeholders.',
+        content:
+          '<p>Seasonal greetings from the Auditor-General expressing gratitude to staff and stakeholders.</p>'
+      }
+    }
+  },
+  {
+    slug: 'bulletin-3rd-quarter-2025',
+    type: 'bulletin',
+    publishedAt: '2025-10-05',
+    fileUrl: `${BASE_URL}/files/publications/3rd_quarter_20251812887888.pdf`,
+    isPublished: true,
+    translations: {
+      en: {
+        title: '3rd Quarter 2025',
+        excerpt:
+          'Overview of the National Anti-Corruption Plan (NACAP) and Ghana Audit Service\'s role as an Anti-Corruption Agent.',
+        content:
+          '<p>Overview of the National Anti-Corruption Plan (NACAP) and Ghana Audit Service\'s role as an Anti-Corruption Agent.</p>'
+      }
+    }
+  },
+  {
+    slug: 'bulletin-2nd-quarter-2025',
+    type: 'bulletin',
+    publishedAt: '2025-07-08',
+    fileUrl: `${BASE_URL}/files/publications/2nd_Quarter_2025149671924.pdf`,
+    isPublished: true,
+    translations: {
+      en: {
+        title: '2nd Quarter 2025',
+        excerpt:
+          'Examination of substantive tests and controls in financial auditing procedures.',
+        content:
+          '<p>Examination of substantive tests and controls in financial auditing procedures.</p>'
+      }
+    }
+  },
+  {
+    slug: 'bulletin-1st-quarter-2025',
+    type: 'bulletin',
+    publishedAt: '2025-04-01',
+    fileUrl: `${BASE_URL}/files/publications/1st_Quarter_20251369366160.pdf`,
+    isPublished: true,
+    translations: {
+      en: {
+        title: '1st Quarter 2025',
+        excerpt:
+          'Discussion of robotic process automation (RPA) adoption in public sector auditing.',
+        content:
+          '<p>Discussion of robotic process automation (RPA) adoption in public sector auditing.</p>'
+      }
+    }
+  },
+  {
+    slug: 'bulletin-4th-quarter-2024',
+    type: 'bulletin',
+    publishedAt: '2024-12-31',
+    fileUrl: `${BASE_URL}/files/publications/4th_Quarter_20241517148827.pdf`,
+    isPublished: true,
+    translations: {
+      en: {
+        title: '4th Quarter 2024',
+        excerpt:
+          'Year-end message from Auditor-General acknowledging staff achievements and performance.',
+        content:
+          '<p>Year-end message from Auditor-General acknowledging staff achievements and performance.</p>'
+      }
+    }
+  },
+  {
+    slug: 'bulletin-3rd-quarter-2024',
+    type: 'bulletin',
+    publishedAt: '2024-10-02',
+    fileUrl: `${BASE_URL}/files/publications/3rd_Quarter_2024236363246.pdf`,
+    isPublished: true,
+    translations: {
+      en: {
+        title: '3rd Quarter 2024',
+        excerpt:
+          'CitizensEye sensitization campaign across five regional capitals promoting citizen participation.',
+        content:
+          '<p>CitizensEye sensitization campaign across five regional capitals promoting citizen participation.</p>'
+      }
+    }
+  },
+  {
+    slug: 'bulletin-2nd-quarter-2024',
+    type: 'bulletin',
+    publishedAt: '2024-06-30',
+    fileUrl: `${BASE_URL}/files/publications/2nd_quarter_2024455693312.pdf`,
+    isPublished: true,
+    translations: {
+      en: {
+        title: '2nd Quarter 2024',
+        excerpt:
+          'Emphasis on time consciousness and efficiency for auditors in completing tasks.',
+        content:
+          '<p>Emphasis on time consciousness and efficiency for auditors in completing tasks.</p>'
+      }
+    }
+  },
+  {
+    slug: 'bulletin-1st-quarter-2024',
+    type: 'bulletin',
+    publishedAt: '2024-04-08',
+    fileUrl: `${BASE_URL}/files/publications/1st_quarter_202450729145.jpg`,
+    isPublished: true,
+    translations: {
+      en: {
+        title: '1st Quarter 2024',
+        excerpt:
+          'Comprehensive overview of internal control policies and procedures with practical examples.',
+        content:
+          '<p>Comprehensive overview of internal control policies and procedures with practical examples.</p>'
+      }
+    }
+  },
+  {
+    slug: 'bulletin-4th-quarter-2023',
+    type: 'bulletin',
+    publishedAt: '2023-12-28',
+    fileUrl: `${BASE_URL}/files/publications/4th_quarter_20231611050174.pdf`,
+    isPublished: true,
+    translations: {
+      en: {
+        title: '4th Quarter 2023',
+        excerpt:
+          'Year-end message celebrating service achievements including award recognition and financial recoveries.',
+        content:
+          '<p>Year-end message celebrating service achievements including award recognition and financial recoveries.</p>'
+      }
+    }
+  },
+  {
+    slug: 'bulletin-3rd-quarter-2023',
+    type: 'bulletin',
+    publishedAt: '2023-10-09',
+    fileUrl: `${BASE_URL}/files/publications/3rd_quarter_2023618956406.pdf`,
+    isPublished: true,
+    translations: {
+      en: {
+        title: '3rd Quarter 2023',
+        excerpt:
+          'Educational material defining audit and explaining various audit types conducted by the service.',
+        content:
+          '<p>Educational material defining audit and explaining various audit types conducted by the service.</p>'
+      }
+    }
+  },
+  {
+    slug: 'bulletin-2nd-quarter-2023',
+    type: 'bulletin',
+    publishedAt: '2023-07-14',
+    fileUrl: `${BASE_URL}/files/publications/2nd_quarter_20231875676442.pdf`,
+    isPublished: true,
+    translations: {
+      en: {
+        title: '2nd Quarter 2023',
+        excerpt:
+          'Information on the Audit Management Information System (AMIS) automating audit methodologies.',
+        content:
+          '<p>Information on the Audit Management Information System (AMIS) automating audit methodologies.</p>'
+      }
+    }
+  },
+  {
+    slug: 'bulletin-1st-quarter-2023',
+    type: 'bulletin',
+    publishedAt: '2023-04-10',
+    fileUrl: `${BASE_URL}/files/publications/1st_quarter_20232072804535.pdf`,
+    isPublished: true,
+    translations: {
+      en: {
+        title: '1st Quarter 2023',
+        excerpt:
+          'Call from Auditor-General for staff diligence given increased public scrutiny of audit reports.',
+        content:
+          '<p>Call from Auditor-General for staff diligence given increased public scrutiny of audit reports.</p>'
+      }
+    }
+  },
+  {
+    slug: 'bulletin-4th-quarter-2022',
+    type: 'bulletin',
+    publishedAt: '2022-12-25',
+    fileUrl: `${BASE_URL}/files/publications/4th_quarter_2022470981421.pdf`,
+    isPublished: true,
+    translations: {
+      en: {
+        title: '4th Quarter 2022',
+        excerpt:
+          'Christmas message from Auditor-General thanking staff for dedication and commitment.',
+        content:
+          '<p>Christmas message from Auditor-General thanking staff for dedication and commitment.</p>'
+      }
+    }
+  },
+  {
+    slug: 'bulletin-3rd-quarter-2022',
+    type: 'bulletin',
+    publishedAt: '2022-10-26',
+    fileUrl: `${BASE_URL}/files/publications/3rd_quarter_20221917798635.pdf`,
+    isPublished: true,
+    translations: {
+      en: {
+        title: '3rd Quarter 2022',
+        excerpt:
+          'Discussion of audit report review processes for quality assurance compliance with standards.',
+        content:
+          '<p>Discussion of audit report review processes for quality assurance compliance with standards.</p>'
+      }
+    }
+  },
+  {
+    slug: 'bulletin-2nd-quarter-2022',
+    type: 'bulletin',
+    publishedAt: '2022-07-02',
+    fileUrl: `${BASE_URL}/files/publications/2nd_quarter_20221739182139.pdf`,
+    isPublished: true,
+    translations: {
+      en: {
+        title: '2nd Quarter 2022',
+        excerpt:
+          'Focus on validation of financial statements and independent audit opinion expression.',
+        content:
+          '<p>Focus on validation of financial statements and independent audit opinion expression.</p>'
+      }
+    }
+  },
+  {
+    slug: 'bulletin-1st-quarter-2022',
+    type: 'bulletin',
+    publishedAt: '2022-04-02',
+    fileUrl: `${BASE_URL}/files/publications/1st_quarter_20221414262116.pdf`,
+    isPublished: true,
+    translations: {
+      en: {
+        title: '1st Quarter 2022',
+        excerpt:
+          'Auditor-General urges public institution heads to strengthen supervisory oversight.',
+        content:
+          '<p>Auditor-General urges public institution heads to strengthen supervisory oversight.</p>'
+      }
+    }
+  },
+  {
+    slug: 'bulletin-4th-quarter-2021',
+    type: 'bulletin',
+    publishedAt: '2021-12-31',
+    fileUrl: `${BASE_URL}/files/publications/4th_quarter_2021592630226.pdf`,
+    isPublished: true,
+    translations: {
+      en: {
+        title: '4th Quarter 2021',
+        excerpt:
+          'Year-end reflection on achievements amid pandemic-related challenges.',
+        content:
+          '<p>Year-end reflection on achievements amid pandemic-related challenges.</p>'
+      }
+    }
+  },
+  {
+    slug: 'bulletin-3rd-quarter-2021',
+    type: 'bulletin',
+    publishedAt: '2021-09-30',
+    fileUrl: `${BASE_URL}/files/publications/3rd_quarter_2021248126834.jpg`,
+    isPublished: true,
+    translations: {
+      en: {
+        title: '3rd Quarter 2021',
+        excerpt:
+          'Analysis of COVID-19 pandemic impact on Ghana\'s economy and government spending.',
+        content:
+          '<p>Analysis of COVID-19 pandemic impact on Ghana\'s economy and government spending.</p>'
+      }
+    }
+  },
+  {
+    slug: 'bulletin-2nd-quarter-2021',
+    type: 'bulletin',
+    publishedAt: '2021-06-30',
+    fileUrl: `${BASE_URL}/files/publications/2nd_quarter_2021435707538.pdf`,
+    isPublished: true,
+    translations: {
+      en: {
+        title: '2nd Quarter 2021',
+        excerpt:
+          'Explanation of International Standards of Supreme Audit Institutions (ISSAIs) applied in audits.',
+        content:
+          '<p>Explanation of International Standards of Supreme Audit Institutions (ISSAIs) applied in audits.</p>'
+      }
+    }
+  },
+  {
+    slug: 'bulletin-1st-quarter-2021',
+    type: 'bulletin',
+    publishedAt: '2021-03-31',
+    fileUrl: `${BASE_URL}/files/publications/1st_quarter_20211478886516.pdf`,
+    isPublished: true,
+    translations: {
+      en: {
+        title: '1st Quarter 2021',
+        excerpt:
+          'Overview of 2020 Financial Year Audit launch and institutions to be audited.',
+        content:
+          '<p>Overview of 2020 Financial Year Audit launch and institutions to be audited.</p>'
+      }
+    }
+  },
+  {
+    slug: 'bulletin-4th-quarter-2020',
+    type: 'bulletin',
+    publishedAt: '2020-12-31',
+    fileUrl: `${BASE_URL}/files/publications/4th_quarter_20201854816478.pdf`,
+    isPublished: true,
+    translations: {
+      en: {
+        title: '4th Quarter 2020',
+        excerpt:
+          'Appreciation message acknowledging staff resilience during pandemic challenges.',
+        content:
+          '<p>Appreciation message acknowledging staff resilience during pandemic challenges.</p>'
+      }
+    }
+  },
+  {
+    slug: 'bulletin-3rd-quarter-2020',
+    type: 'bulletin',
+    publishedAt: '2020-09-30',
+    fileUrl: `${BASE_URL}/files/publications/3rd_quarter_20201887695841.pdf`,
+    isPublished: true,
+    translations: {
+      en: {
+        title: '3rd Quarter 2020',
+        excerpt:
+          'Citation of Audit Service Act requirements for adhering to international auditing practices.',
+        content:
+          '<p>Citation of Audit Service Act requirements for adhering to international auditing practices.</p>'
+      }
+    }
+  },
+  {
+    slug: 'bulletin-2nd-quarter-2020',
+    type: 'bulletin',
+    publishedAt: '2020-06-30',
+    fileUrl: `${BASE_URL}/files/publications/2nd_quarter_2020237107259.pdf`,
+    isPublished: true,
+    translations: {
+      en: {
+        title: '2nd Quarter 2020',
+        excerpt:
+          'Capacity building initiatives for staff to conduct audits in IT environments.',
+        content:
+          '<p>Capacity building initiatives for staff to conduct audits in IT environments.</p>'
+      }
+    }
+  },
+  {
+    slug: 'bulletin-1st-quarter-2020',
+    type: 'bulletin',
+    publishedAt: '2020-03-31',
+    fileUrl: `${BASE_URL}/files/publications/1st_quarter_20201104992042.pdf`,
+    isPublished: true,
+    translations: {
+      en: {
+        title: '1st Quarter 2020',
+        excerpt:
+          'Overview of the Office of the Auditor-General as Ghana\'s Supreme Audit Institution.',
+        content:
+          '<p>Overview of the Office of the Auditor-General as Ghana\'s Supreme Audit Institution.</p>'
+      }
+    }
+  }
+]
+
+async function main() {
+  console.log('=== Building Publications Seed Data ===\n')
+
+  const publications = [...PRESS_STATEMENTS, ...BULLETINS]
+  console.log(`  Press Statements: ${PRESS_STATEMENTS.length}`)
+  console.log(`  Bulletins: ${BULLETINS.length}`)
+  console.log(`  Total: ${publications.length}`)
+
+  writeJson(OUTPUT_PATH, publications)
+  console.log(`\n=== Done: ${publications.length} publications written ===`)
+}
+
+main().catch((err) => {
+  console.error('Crawl failed:', err)
+  process.exit(1)
+})

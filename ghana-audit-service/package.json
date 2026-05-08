@@ -33,7 +33,9 @@
     "crawl:events": "tsx scripts/crawlers/crawl-events.ts",
     "crawl:gallery": "tsx scripts/crawlers/crawl-gallery.ts",
     "crawl:videos": "tsx scripts/crawlers/crawl-videos.ts",
-    "crawl:all": "npm run crawl:news && npm run crawl:events && npm run crawl:gallery && npm run crawl:videos",
+    "crawl:publications": "tsx scripts/crawlers/crawl-publications.ts",
+    "crawl:all": "npm run crawl:news && npm run crawl:events && npm run crawl:gallery && npm run crawl:videos && npm run crawl:publications",
+    "db:seed:publications": "npx tsx server/database/seeds/publications.ts",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "prepare": "husky"
