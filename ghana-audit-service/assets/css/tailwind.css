@@ -519,3 +519,32 @@
 .visually-hidden {
   @apply sr-only;
 }
+
+/* ============================================
+   HIGH CONTRAST MODE - Global overrides
+   ============================================ */
+
+/* Links: underline all links (WCAG: don't rely on color alone to convey meaning) */
+:root.high-contrast a:not(.no-underline):not([class*="btn"]) {
+  text-decoration: underline;
+}
+
+/* Focus: enhanced visible focus indicators */
+:root.high-contrast :focus-visible {
+  outline: 3px solid rgb(var(--tw-primary));
+  outline-offset: 2px;
+}
+
+/* Shadows: remove decorative shadows, rely on borders for element separation */
+:root.high-contrast .shadow-sm,
+:root.high-contrast .shadow-md,
+:root.high-contrast .shadow-lg,
+:root.high-contrast .shadow-xl,
+:root.high-contrast .shadow-2xl {
+  box-shadow: none !important;
+}
+
+/* Cards: ensure visible borders when shadows are removed */
+:root.high-contrast .card {
+  border-width: 2px;
+}
