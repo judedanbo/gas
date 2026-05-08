@@ -53,7 +53,7 @@
       </section>
 
       <!-- Organization Chart -->
-      <section v-if="deputyAuditorsGeneral.length > 0" class="section bg-gray-50 dark:bg-gray-900">
+      <!-- <section v-if="deputyAuditorsGeneral.length > 0" class="section bg-gray-50 dark:bg-gray-900">
         <div class="container">
           <UiSectionHeader
             title="Organizational Structure"
@@ -90,7 +90,7 @@
             </div>
           </div>
         </div>
-      </section>
+      </section> -->
 
       <!-- Deputy Auditors-General Profiles -->
       <section v-if="deputyAuditorsGeneral.length > 0" class="section">
