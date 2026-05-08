@@ -104,7 +104,7 @@
             title="Deputy Auditors-General"
             description="Senior leadership overseeing key operational areas"
           />
-          <div class="flex flex-col gap-8">
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
             <div
               v-for="dag in deputyAuditorsGeneral"
               :key="dag.id"
@@ -249,7 +249,7 @@
     const sections = parseBioSections(bio)
     const content = sections.find((s) => s.heading === 'Career Background')?.content
     if (!content) return undefined
-    return content.length > 200 ? content.slice(0, 200).trimEnd() + '...' : content
+    return content.length > 200 ? content.slice(0, 196).trimEnd() + '...' : content
   }
 
   useHead({ title: 'Management Team' })
