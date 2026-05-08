@@ -1,13 +1,18 @@
 /**
  * Seed script for department data
  * Run with: npx tsx server/database/seeds/departments.ts
+ * Use --force to clear existing data and reseed:
+ *   npx tsx server/database/seeds/departments.ts --force
  * Must run BEFORE management-team.ts seed
  */
 
 import 'dotenv/config'
 import { drizzle } from 'drizzle-orm/mysql2'
+import { sql } from 'drizzle-orm'
 import mysql from 'mysql2/promise'
 import * as schema from '../schema/index'
+
+const force = process.argv.includes('--force')
 
 const dbConfig = {
   host: process.env.DB_HOST || 'localhost',
@@ -100,11 +105,14 @@ async function seed() {
   try {
     const existing = await db.select().from(schema.departments)
     if (existing.length > 0) {
-      console.log(`Found ${existing.length} existing departments.`)
-      console.log(
-        'Skipping seed to avoid duplicates. Delete existing data first if you want to reseed.'
-      )
-      return
+      if (!force) {
+        console.log(`Found ${existing.length} existing departments.`)
+        console.log('Skipping seed to avoid duplicates. Use --force to clear and reseed.')
+        return
+      }
+      console.log(`Clearing ${existing.length} existing departments (--force)...`)
+      await db.execute(sql`DELETE FROM ${schema.departmentTranslations}`)
+      await db.execute(sql`DELETE FROM ${schema.departments}`)
     }
 
     console.log('Seeding department data...')

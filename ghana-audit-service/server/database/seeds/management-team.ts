@@ -1,14 +1,18 @@
 /**
  * Seed script for management team data
  * Run with: npx tsx server/database/seeds/management-team.ts
+ * Use --force to clear existing data and reseed:
+ *   npx tsx server/database/seeds/management-team.ts --force
  * Requires departments seed to have been run first (departments.ts)
  */
 
 import 'dotenv/config'
 import { drizzle } from 'drizzle-orm/mysql2'
-import { eq } from 'drizzle-orm'
+import { eq, sql } from 'drizzle-orm'
 import mysql from 'mysql2/promise'
 import * as schema from '../schema/index'
+
+const force = process.argv.includes('--force')
 
 const dbConfig = {
   host: process.env.DB_HOST || 'localhost',
@@ -206,11 +210,16 @@ async function seed() {
   try {
     const existingMembers = await db.select().from(schema.managementTeam)
     if (existingMembers.length > 0) {
-      console.log(`Found ${existingMembers.length} existing management team members.`)
-      console.log(
-        'Skipping seed to avoid duplicates. Delete existing data first if you want to reseed.'
-      )
-      return
+      if (!force) {
+        console.log(`Found ${existingMembers.length} existing management team members.`)
+        console.log('Skipping seed to avoid duplicates. Use --force to clear and reseed.')
+        return
+      }
+      console.log(`Clearing ${existingMembers.length} existing management team members (--force)...`)
+      await db.execute(sql`DELETE FROM ${schema.managementTeamResponsibilityTranslations}`)
+      await db.execute(sql`DELETE FROM ${schema.managementTeamResponsibilities}`)
+      await db.execute(sql`DELETE FROM ${schema.managementTeamTranslations}`)
+      await db.execute(sql`DELETE FROM ${schema.managementTeam}`)
     }
 
     console.log('Seeding management team data...')
