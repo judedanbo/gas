@@ -15,49 +15,63 @@ export default {
     extend: {
       // Ghana Government Color Palette
       colors: {
-        // Ghana Flag Colors
-        'ghana-red': '#CE1126',
-        'ghana-gold': '#FCD116',
-        'ghana-green': '#006B3F',
+        // Ghana Flag Colors — via CSS variable bridge
+        'ghana-red': 'rgb(var(--tw-ghana-red) / <alpha-value>)',
+        'ghana-gold': 'rgb(var(--tw-ghana-gold) / <alpha-value>)',
+        'ghana-green': 'rgb(var(--tw-ghana-green) / <alpha-value>)',
 
         // Primary (Green)
         primary: {
-          DEFAULT: '#006B3F',
-          dark: '#004D2C',
-          light: '#008B52'
+          DEFAULT: 'rgb(var(--tw-primary) / <alpha-value>)',
+          dark: 'rgb(var(--tw-primary-dark) / <alpha-value>)',
+          light: 'rgb(var(--tw-primary-light) / <alpha-value>)',
         },
 
         // Secondary (Red)
         secondary: {
-          DEFAULT: '#CE1126',
-          dark: '#A50E1F',
-          light: '#E51D33'
+          DEFAULT: 'rgb(var(--tw-secondary) / <alpha-value>)',
+          dark: 'rgb(var(--tw-secondary-dark) / <alpha-value>)',
+          light: 'rgb(var(--tw-secondary-light) / <alpha-value>)',
         },
 
         // Accent (Gold)
         accent: {
-          DEFAULT: '#FCD116',
-          dark: '#D4AD00',
-          light: '#FFE14D'
+          DEFAULT: 'rgb(var(--tw-accent) / <alpha-value>)',
+          dark: 'rgb(var(--tw-accent-dark) / <alpha-value>)',
+          light: 'rgb(var(--tw-accent-light) / <alpha-value>)',
         },
 
         // Functional Colors
         success: {
-          DEFAULT: '#2E7D32',
-          light: '#4CAF50'
+          DEFAULT: 'rgb(var(--tw-success) / <alpha-value>)',
+          light: 'rgb(var(--tw-success-light) / <alpha-value>)',
         },
         warning: {
-          DEFAULT: '#F57C00',
-          light: '#FF9800'
+          DEFAULT: 'rgb(var(--tw-warning) / <alpha-value>)',
+          light: 'rgb(var(--tw-warning-light) / <alpha-value>)',
         },
         error: {
-          DEFAULT: '#C62828',
-          light: '#EF5350'
+          DEFAULT: 'rgb(var(--tw-error) / <alpha-value>)',
+          light: 'rgb(var(--tw-error-light) / <alpha-value>)',
         },
         info: {
-          DEFAULT: '#1565C0',
-          light: '#2196F3'
-        }
+          DEFAULT: 'rgb(var(--tw-info) / <alpha-value>)',
+          light: 'rgb(var(--tw-info-light) / <alpha-value>)',
+        },
+
+        // Gray scale
+        gray: {
+          50: 'rgb(var(--tw-gray-50) / <alpha-value>)',
+          100: 'rgb(var(--tw-gray-100) / <alpha-value>)',
+          200: 'rgb(var(--tw-gray-200) / <alpha-value>)',
+          300: 'rgb(var(--tw-gray-300) / <alpha-value>)',
+          400: 'rgb(var(--tw-gray-400) / <alpha-value>)',
+          500: 'rgb(var(--tw-gray-500) / <alpha-value>)',
+          600: 'rgb(var(--tw-gray-600) / <alpha-value>)',
+          700: 'rgb(var(--tw-gray-700) / <alpha-value>)',
+          800: 'rgb(var(--tw-gray-800) / <alpha-value>)',
+          900: 'rgb(var(--tw-gray-900) / <alpha-value>)',
+        },
       },
 
       // Typography
@@ -199,23 +213,22 @@ export default {
       typography: {
         DEFAULT: {
           css: {
-            '--tw-prose-body': '#374151', // gray-700
-            '--tw-prose-headings': '#111827', // gray-900
-            '--tw-prose-lead': '#4b5563', // gray-600
-            '--tw-prose-links': '#006B3F', // primary
-            '--tw-prose-bold': '#111827', // gray-900
-            '--tw-prose-counters': '#006B3F', // primary
-            '--tw-prose-bullets': '#006B3F', // primary
-            '--tw-prose-hr': '#e5e7eb', // gray-200
-            '--tw-prose-quotes': '#111827', // gray-900
-            '--tw-prose-quote-borders': '#006B3F', // primary
-            '--tw-prose-captions': '#6b7280', // gray-500
-            '--tw-prose-code': '#111827', // gray-900
-            '--tw-prose-pre-code': '#e5e7eb', // gray-200
-            '--tw-prose-pre-bg': '#1f2937', // gray-800
-            '--tw-prose-th-borders': '#d1d5db', // gray-300
-            '--tw-prose-td-borders': '#e5e7eb', // gray-200
-            // Custom heading styles with Plus Jakarta Sans
+            '--tw-prose-body': 'rgb(var(--tw-gray-700))',
+            '--tw-prose-headings': 'rgb(var(--tw-gray-900))',
+            '--tw-prose-lead': 'rgb(var(--tw-gray-600))',
+            '--tw-prose-links': 'rgb(var(--tw-primary))',
+            '--tw-prose-bold': 'rgb(var(--tw-gray-900))',
+            '--tw-prose-counters': 'rgb(var(--tw-primary))',
+            '--tw-prose-bullets': 'rgb(var(--tw-primary))',
+            '--tw-prose-hr': 'rgb(var(--tw-gray-200))',
+            '--tw-prose-quotes': 'rgb(var(--tw-gray-900))',
+            '--tw-prose-quote-borders': 'rgb(var(--tw-primary))',
+            '--tw-prose-captions': 'rgb(var(--tw-gray-500))',
+            '--tw-prose-code': 'rgb(var(--tw-gray-900))',
+            '--tw-prose-pre-code': 'rgb(var(--tw-gray-200))',
+            '--tw-prose-pre-bg': 'rgb(var(--tw-gray-800))',
+            '--tw-prose-th-borders': 'rgb(var(--tw-gray-300))',
+            '--tw-prose-td-borders': 'rgb(var(--tw-gray-200))',
             h1: {
               fontFamily: 'Plus Jakarta Sans, Inter, sans-serif',
               fontWeight: '700',
@@ -240,59 +253,54 @@ export default {
               marginTop: '1.5em',
               marginBottom: '0.5em'
             },
-            // Better link styling
             a: {
-              color: '#006B3F',
+              color: 'rgb(var(--tw-primary))',
               textDecoration: 'none',
               fontWeight: '500',
               '&:hover': {
-                color: '#004D2C',
+                color: 'rgb(var(--tw-primary-dark))',
                 textDecoration: 'underline'
               }
             },
-            // Better paragraph spacing
             p: {
               marginTop: '1.25em',
               marginBottom: '1.25em'
             },
-            // Better list styling
             'ul > li': {
               paddingLeft: '0.375em'
             },
             'ol > li': {
               paddingLeft: '0.375em'
             },
-            // Better blockquote styling
             blockquote: {
               fontStyle: 'italic',
-              borderLeftColor: '#006B3F',
+              borderLeftColor: 'rgb(var(--tw-primary))',
               borderLeftWidth: '4px'
             }
           }
         },
-        // Dark mode variant
         invert: {
           css: {
-            '--tw-prose-body': '#d1d5db', // gray-300
-            '--tw-prose-headings': '#ffffff', // white
-            '--tw-prose-lead': '#9ca3af', // gray-400
-            '--tw-prose-links': '#008B52', // primary-light
-            '--tw-prose-bold': '#ffffff', // white
-            '--tw-prose-counters': '#008B52', // primary-light
-            '--tw-prose-bullets': '#008B52', // primary-light
-            '--tw-prose-hr': '#374151', // gray-700
-            '--tw-prose-quotes': '#f3f4f6', // gray-100
-            '--tw-prose-quote-borders': '#008B52', // primary-light
-            '--tw-prose-captions': '#9ca3af', // gray-400
-            '--tw-prose-code': '#ffffff', // white
-            '--tw-prose-pre-code': '#e5e7eb', // gray-200
-            '--tw-prose-pre-bg': '#111827', // gray-900
-            '--tw-prose-th-borders': '#4b5563', // gray-600
-            '--tw-prose-td-borders': '#374151', // gray-700
+            '--tw-prose-body': 'rgb(var(--tw-gray-300))',
+            '--tw-prose-headings': '#ffffff',
+            '--tw-prose-lead': 'rgb(var(--tw-gray-400))',
+            '--tw-prose-links': 'rgb(var(--tw-primary-light))',
+            '--tw-prose-bold': '#ffffff',
+            '--tw-prose-counters': 'rgb(var(--tw-primary-light))',
+            '--tw-prose-bullets': 'rgb(var(--tw-primary-light))',
+            '--tw-prose-hr': 'rgb(var(--tw-gray-700))',
+            '--tw-prose-quotes': 'rgb(var(--tw-gray-100))',
+            '--tw-prose-quote-borders': 'rgb(var(--tw-primary-light))',
+            '--tw-prose-captions': 'rgb(var(--tw-gray-400))',
+            '--tw-prose-code': '#ffffff',
+            '--tw-prose-pre-code': 'rgb(var(--tw-gray-200))',
+            '--tw-prose-pre-bg': 'rgb(var(--tw-gray-900))',
+            '--tw-prose-th-borders': 'rgb(var(--tw-gray-600))',
+            '--tw-prose-td-borders': 'rgb(var(--tw-gray-700))',
             a: {
-              color: '#008B52',
+              color: 'rgb(var(--tw-primary-light))',
               '&:hover': {
-                color: '#006B3F'
+                color: 'rgb(var(--tw-primary))'
               }
             }
           }
