@@ -118,44 +118,106 @@
         </div>
       </section>
 
-      <!-- Bio Sections -->
+      <!-- Bio Sections + Sidebar -->
       <section class="section">
         <div class="container">
-          <div class="max-w-4xl mx-auto">
-            <div class="space-y-8">
-              <div
-                v-for="(section, index) in bioSections"
-                :key="index"
-                class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-8"
-              >
-                <h2
-                  v-if="section.heading"
-                  class="text-xl font-heading font-bold text-gray-900 dark:text-white mb-4"
-                >
-                  {{ section.heading }}
-                </h2>
+          <div class="max-w-6xl mx-auto flex flex-col lg:flex-row gap-10">
+            <!-- Bio Content -->
+            <div class="flex-1 min-w-0">
+              <div class="space-y-8">
                 <div
-                  class="prose prose-gray dark:prose-invert max-w-none whitespace-pre-line"
+                  v-for="(section, index) in bioSections"
+                  :key="index"
+                  class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-8"
                 >
-                  {{ section.content }}
+                  <h2
+                    v-if="section.heading"
+                    class="text-xl font-heading font-bold text-gray-900 dark:text-white mb-4"
+                  >
+                    {{ section.heading }}
+                  </h2>
+                  <div
+                    class="prose prose-gray dark:prose-invert max-w-none whitespace-pre-line"
+                  >
+                    {{ section.content }}
+                  </div>
                 </div>
+              </div>
+
+              <!-- Back Link -->
+              <div class="mt-10">
+                <NuxtLink
+                  to="/about/management-team"
+                  class="btn-outline inline-flex items-center gap-2"
+                >
+                  <Icon
+                    name="heroicons:arrow-left"
+                    class="w-5 h-5"
+                    aria-hidden="true"
+                  />
+                  Back to Management Team
+                </NuxtLink>
               </div>
             </div>
 
-            <!-- Back Link -->
-            <div class="mt-10">
-              <NuxtLink
-                to="/about/management-team"
-                class="btn-outline inline-flex items-center gap-2"
+            <!-- Team Sidebar -->
+            <aside
+              v-if="otherMembers.length > 0"
+              class="lg:w-72 flex-shrink-0"
+            >
+              <div
+                class="lg:sticky lg:top-24 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-5"
               >
-                <Icon
-                  name="heroicons:arrow-left"
-                  class="w-5 h-5"
-                  aria-hidden="true"
-                />
-                Back to Management Team
-              </NuxtLink>
-            </div>
+                <h3
+                  class="text-sm font-heading font-bold text-gray-900 dark:text-white uppercase tracking-wider mb-4"
+                >
+                  Management Team
+                </h3>
+                <nav aria-label="Management team members">
+                  <ul class="space-y-3">
+                    <li v-for="m in otherMembers" :key="m.id">
+                      <NuxtLink
+                        :to="`/about/management-team/${m.slug}`"
+                        class="flex items-center gap-3 p-2 rounded-md no-underline transition-colors hover:bg-gray-100 dark:hover:bg-gray-700"
+                      >
+                        <img
+                          v-if="m.photo"
+                          :src="m.photo"
+                          :alt="m.name"
+                          class="w-10 h-10 rounded-full object-cover flex-shrink-0"
+                        />
+                        <div
+                          v-else
+                          class="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-600 flex items-center justify-center flex-shrink-0"
+                        >
+                          <Icon
+                            name="heroicons:user"
+                            class="w-5 h-5 text-gray-400 dark:text-gray-500"
+                            aria-hidden="true"
+                          />
+                        </div>
+                        <div class="min-w-0">
+                          <p
+                            class="text-sm font-semibold text-gray-900 dark:text-white truncate m-0"
+                          >
+                            {{ m.name }}
+                          </p>
+                          <p
+                            class="text-xs text-gray-500 dark:text-gray-400 truncate m-0"
+                          >
+                            {{
+                              m.role === 'auditor-general'
+                                ? 'Auditor-General'
+                                : 'DAG'
+                            }}
+                          </p>
+                        </div>
+                      </NuxtLink>
+                    </li>
+                  </ul>
+                </nav>
+              </div>
+            </aside>
           </div>
         </div>
       </section>
@@ -175,6 +237,13 @@
     error,
   } = await useFetch<ManagementTeamMember>(
     `/api/management-team/${route.params.slug}`
+  )
+
+  const { data: allMembers } =
+    await useFetch<ManagementTeamMember[]>('/api/management-team')
+
+  const otherMembers = computed(() =>
+    (allMembers.value || []).filter((m) => m.slug !== route.params.slug)
   )
 
   const bioSections = computed(() => {
