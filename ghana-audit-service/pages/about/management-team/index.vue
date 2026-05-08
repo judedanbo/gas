@@ -26,28 +26,33 @@
       <section v-if="auditorGeneral" class="section">
         <div class="container">
           <div class="max-w-[900px] mx-auto">
-            <UiProfileCard
-              :name="auditorGeneral.name"
-              :title="auditorGeneral.title"
-              :description="auditorGeneral.bio"
-              :image="auditorGeneral.photo || '/images/ags/johnson_akuamoah_asiedu.jpg'"
-              size="lg"
-              featured
+            <NuxtLink
+              :to="`/about/management-team/${auditorGeneral.slug}`"
+              class="block no-underline text-inherit hover:no-underline"
             >
-              <template #default>
-                <UiBadge variant="accent" size="lg" class="mb-4">Auditor-General</UiBadge>
-              </template>
-              <template v-if="auditorGeneral.email" #actions>
-                <a
-                  :href="`mailto:${auditorGeneral.email}`"
-                  class="no-underline hover:text-primary transition-colors"
-                >
-                  <UiIconText icon="heroicons:envelope" color="default">{{
-                    auditorGeneral.email
-                  }}</UiIconText>
-                </a>
-              </template>
-            </UiProfileCard>
+              <UiProfileCard
+                :name="auditorGeneral.name"
+                :title="auditorGeneral.title"
+                :description="auditorGeneral.bio"
+                :image="auditorGeneral.photo || '/images/ags/johnson_akuamoah_asiedu.jpg'"
+                size="lg"
+                featured
+              >
+                <template #default>
+                  <UiBadge variant="accent" size="lg" class="mb-4">Auditor-General</UiBadge>
+                </template>
+                <template v-if="auditorGeneral.email" #actions>
+                  <a
+                    :href="`mailto:${auditorGeneral.email}`"
+                    class="no-underline hover:text-primary transition-colors"
+                  >
+                    <UiIconText icon="heroicons:envelope" color="default">{{
+                      auditorGeneral.email
+                    }}</UiIconText>
+                  </a>
+                </template>
+              </UiProfileCard>
+            </NuxtLink>
           </div>
         </div>
       </section>
@@ -105,18 +110,23 @@
               :key="dag.id"
               class="bg-gray-100 dark:bg-gray-800 rounded-lg p-6"
             >
-              <UiProfileCard
-                :name="dag.name"
-                :title="dag.title"
-                :description="dag.bio"
-                :image="dag.photo"
-                size="sm"
-                layout="horizontal"
+              <NuxtLink
+                :to="`/about/management-team/${dag.slug}`"
+                class="block no-underline text-inherit hover:no-underline"
               >
-                <template #default>
-                  <UiBadge variant="primary" size="sm" class="mb-2">Deputy Auditor-General</UiBadge>
-                </template>
-              </UiProfileCard>
+                <UiProfileCard
+                  :name="dag.name"
+                  :title="dag.title"
+                  :description="dag.bio"
+                  :image="dag.photo"
+                  size="sm"
+                  layout="horizontal"
+                >
+                  <template #default>
+                    <UiBadge variant="primary" size="sm" class="mb-2">Deputy Auditor-General</UiBadge>
+                  </template>
+                </UiProfileCard>
+              </NuxtLink>
               <div
                 v-if="dag.responsibilities.length > 0"
                 class="mt-4 ml-0 md:ml-[calc(150px+1.5rem)]"
