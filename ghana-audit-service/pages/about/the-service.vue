@@ -5,7 +5,7 @@
     <!-- Page Header -->
     <section class="page-header">
       <div class="container">
-        <h1>The Service</h1>
+        <h1 class="text-4xl md:text-5xl font-heading font-bold mb-4">The Service</h1>
         <p class="max-w-[600px] mx-auto text-lg text-white/90">
           Over a century of excellence in public sector auditing and accountability
         </p>
@@ -77,7 +77,7 @@
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div v-for="func in coreFunctions" :key="func.title" class="bg-gray-100 dark:bg-gray-800 rounded-lg p-6">
             <Icon :name="func.icon" class="w-10 h-10 text-primary dark:text-primary-light mb-4" aria-hidden="true" />
-            <h3 class="text-primary dark:text-primary-light mb-2 font-semibold">{{ func.title }}</h3>
+            <h3 class="text-base text-primary dark:text-primary-light mb-2 font-semibold">{{ func.title }}</h3>
             <p class="text-gray-600 dark:text-gray-400 mb-4">{{ func.description }}</p>
             <UiCheckList
               :items="func.items"
@@ -140,7 +140,7 @@
     <section class="section bg-gradient-to-br from-primary to-primary-dark">
       <div class="container">
         <div class="text-center max-w-[900px] mx-auto">
-          <h2 class="text-white mb-4">Our Independence</h2>
+          <h2 class="text-2xl md:text-3xl font-heading font-bold text-white mb-4">Our Independence</h2>
           <p class="text-white/90 text-lg leading-relaxed mb-10">
             The independence of the Auditor-General and the Ghana Audit Service is
             guaranteed under the 1992 Constitution. This constitutional protection
@@ -150,7 +150,7 @@
           <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div v-for="item in independencePoints" :key="item.title" class="bg-white/10 rounded-lg p-6 text-center">
               <Icon :name="item.icon" class="w-10 h-10 text-accent mx-auto mb-3" aria-hidden="true" />
-              <h4 class="text-accent mb-2 font-semibold">{{ item.title }}</h4>
+              <h4 class="text-sm text-accent mb-2 font-semibold">{{ item.title }}</h4>
               <p class="text-white/80 text-sm m-0">{{ item.description }}</p>
             </div>
           </div>
@@ -280,7 +280,7 @@ const strategicObjectives = [
 
 .timeline::before {
   content: '';
-  @apply absolute w-0.5 h-full bg-primary;
+  @apply absolute w-1 h-full bg-primary;
   left: 50%;
   transform: translateX(-50%);
 }

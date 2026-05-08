@@ -51,12 +51,12 @@
         <div class="lg:grid lg:grid-cols-4 lg:gap-8">
           <!-- Filters Sidebar -->
           <aside class="lg:col-span-1 mb-6 lg:mb-0">
-            <div class="bg-white rounded-lg border border-gray-200 p-5 sticky top-24">
+            <div class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-5 sticky top-24">
               <div class="flex items-center justify-between mb-4">
-                <h2 class="font-semibold text-gray-900">Filters</h2>
+                <h2 class="text-base font-semibold text-gray-900 dark:text-white">Filters</h2>
                 <button
                   v-if="hasActiveFilters"
-                  class="text-sm text-primary hover:text-primary-dark"
+                  class="text-sm text-primary dark:text-primary-light hover:text-primary-dark"
                   @click="clearFilters"
                 >
                   Clear all
@@ -65,7 +65,7 @@
 
               <!-- Type Filter -->
               <div class="mb-6">
-                <h3 class="text-sm font-medium text-gray-700 mb-3">Content Type</h3>
+                <h3 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Content Type</h3>
                 <div class="space-y-2">
                   <label
                     v-for="type in typeFilters"
@@ -76,31 +76,31 @@
                       v-model="selectedTypes"
                       :value="type.value"
                       type="checkbox"
-                      class="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary"
+                      class="w-4 h-4 text-primary border-gray-300 dark:border-gray-600 rounded focus:ring-primary dark:bg-gray-700"
                     />
-                    <span class="text-sm text-gray-600">{{ type.label }}</span>
+                    <span class="text-sm text-gray-600 dark:text-gray-400">{{ type.label }}</span>
                   </label>
                 </div>
               </div>
 
               <!-- Date Range Filter -->
               <div class="mb-6">
-                <h3 class="text-sm font-medium text-gray-700 mb-3">Date Range</h3>
+                <h3 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Date Range</h3>
                 <div class="space-y-3">
                   <div>
-                    <label class="block text-xs text-gray-500 mb-1">From</label>
+                    <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1">From</label>
                     <input
                       v-model="dateFrom"
                       type="date"
-                      class="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:border-primary"
+                      class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:border-primary bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                     />
                   </div>
                   <div>
-                    <label class="block text-xs text-gray-500 mb-1">To</label>
+                    <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1">To</label>
                     <input
                       v-model="dateTo"
                       type="date"
-                      class="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:border-primary"
+                      class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:border-primary bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                     />
                   </div>
                 </div>
@@ -122,11 +122,11 @@
             <!-- Error State -->
             <div
               v-else-if="error"
-              class="text-center py-12 bg-white rounded-lg border border-gray-200"
+              class="text-center py-12 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700"
               role="alert"
               aria-live="assertive"
             >
-              <p class="text-red-600 mb-4">{{ error }}</p>
+              <p class="text-red-600 dark:text-red-400 mb-4">{{ error }}</p>
               <button class="btn-primary" @click="performSearch">
                 {{ $t('errors.tryAgain') }}
               </button>
@@ -136,7 +136,7 @@
             <template v-else>
               <!-- Results Count and Active Filters -->
               <div class="flex flex-wrap items-center justify-between gap-4 mb-6">
-                <p class="text-sm text-gray-600">
+                <p class="text-sm text-gray-600 dark:text-gray-400">
                   <template v-if="searchQuery">
                     Found {{ meta.total }} result{{ meta.total !== 1 ? 's' : '' }} for "{{
                       searchQuery
@@ -167,22 +167,22 @@
               <!-- No Query State -->
               <div
                 v-if="!searchQuery"
-                class="text-center py-12 bg-white rounded-lg border border-gray-200"
+                class="text-center py-12 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700"
               >
                 <Icon
                   name="heroicons:magnifying-glass"
-                  class="w-10 h-10 text-primary mb-4 mx-auto"
+                  class="w-10 h-10 text-primary dark:text-primary-light mb-4 mx-auto"
                   aria-hidden="true"
                 />
-                <h3 class="text-lg font-semibold text-gray-900 mb-2">Start your search</h3>
-                <p class="text-gray-600 mb-4">
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">Start your search</h3>
+                <p class="text-gray-600 dark:text-gray-400 mb-4">
                   Search for audit reports, publications, news articles, and more.
                 </p>
                 <div class="flex flex-wrap justify-center gap-2">
                   <button
                     v-for="suggestion in searchSuggestions"
                     :key="suggestion"
-                    class="px-3 py-1 text-sm text-primary bg-white border border-gray-300 rounded-full hover:bg-primary hover:text-white hover:border-primary transition-colors"
+                    class="px-3 py-1 text-sm text-primary dark:text-primary-light bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-full hover:bg-primary hover:text-white hover:border-primary transition-colors"
                     @click="searchFor(suggestion)"
                   >
                     {{ suggestion }}
@@ -193,18 +193,18 @@
               <!-- Empty Results State -->
               <div
                 v-else-if="results.length === 0"
-                class="text-center py-12 bg-white rounded-lg border border-gray-200"
+                class="text-center py-12 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700"
               >
                 <Icon
                   name="heroicons:inbox"
-                  class="w-10 h-10 text-primary mb-4 mx-auto"
+                  class="w-10 h-10 text-primary dark:text-primary-light mb-4 mx-auto"
                   aria-hidden="true"
                 />
-                <h3 class="text-lg font-semibold text-gray-900 mb-2">No results found</h3>
-                <p class="text-gray-600 mb-4">
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">No results found</h3>
+                <p class="text-gray-600 dark:text-gray-400 mb-4">
                   We couldn't find any content matching "{{ searchQuery }}".
                 </p>
-                <p class="text-sm text-gray-500">Try different keywords or remove some filters.</p>
+                <p class="text-sm text-gray-500 dark:text-gray-400">Try different keywords or remove some filters.</p>
               </div>
 
               <!-- Results List -->

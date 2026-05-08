@@ -6,18 +6,17 @@
         v-for="(image, index) in images"
         :key="image.id"
         class="group relative aspect-square overflow-hidden rounded-lg bg-gray-100 dark:bg-gray-700"
+        :aria-label="`View photo: ${image.caption || image.alt}`"
         @click="openLightbox(index)"
       >
         <!-- Placeholder when no actual image -->
         <div class="absolute inset-0 bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center">
-          <span class="text-4xl opacity-50">📷</span>
+          <Icon name="heroicons:photo" class="w-10 h-10 text-primary/30 dark:text-primary/40" aria-hidden="true" />
         </div>
 
         <!-- Overlay -->
         <div class="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-          <svg class="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7" />
-          </svg>
+          <Icon name="heroicons:magnifying-glass-plus" class="w-10 h-10 text-white" aria-hidden="true" />
         </div>
 
         <!-- Caption -->
@@ -37,32 +36,29 @@
         <!-- Close Button -->
         <button
           class="absolute top-4 right-4 text-white/80 hover:text-white z-10"
+          aria-label="Close lightbox"
           @click="closeLightbox"
         >
-          <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-          </svg>
+          <Icon name="heroicons:x-mark" class="w-8 h-8" aria-hidden="true" />
         </button>
 
         <!-- Navigation -->
         <button
           v-if="currentIndex > 0"
           class="absolute left-4 text-white/80 hover:text-white"
+          aria-label="Previous image"
           @click.stop="prevImage"
         >
-          <svg class="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
-          </svg>
+          <Icon name="heroicons:chevron-left" class="w-12 h-12" aria-hidden="true" />
         </button>
 
         <button
           v-if="currentIndex < images.length - 1"
           class="absolute right-4 text-white/80 hover:text-white"
+          aria-label="Next image"
           @click.stop="nextImage"
         >
-          <svg class="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-          </svg>
+          <Icon name="heroicons:chevron-right" class="w-12 h-12" aria-hidden="true" />
         </button>
 
         <!-- Image Container -->
@@ -71,7 +67,7 @@
             <!-- Placeholder Image -->
             <div class="aspect-video bg-gradient-to-br from-gray-700 to-gray-800 flex items-center justify-center">
               <div class="text-center text-white">
-                <span class="text-6xl block mb-4">📷</span>
+                <Icon name="heroicons:photo" class="w-16 h-16 text-white/30 mx-auto mb-4" aria-hidden="true" />
                 <p class="text-lg">{{ currentImage?.alt }}</p>
               </div>
             </div>

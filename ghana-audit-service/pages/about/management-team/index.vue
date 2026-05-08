@@ -5,7 +5,7 @@
     <!-- Page Header -->
     <section class="page-header">
       <div class="container">
-        <h1>Management Team</h1>
+        <h1 class="text-4xl md:text-5xl font-heading font-bold mb-4">Management Team</h1>
         <p class="max-w-[600px] mx-auto text-lg text-white/90">
           Meet the leadership team driving accountability and transparency in Ghana
         </p>
@@ -205,7 +205,7 @@
           description="Our nationwide network of offices ensures comprehensive audit coverage"
         />
         <UiStatGrid :stats="regionalStats" :columns="4" class="mb-10" />
-        <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-3">
+        <div class="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-8 gap-3">
           <div
             v-for="region in regions"
             :key="region"
@@ -221,7 +221,7 @@
     <section class="section bg-gradient-to-br from-primary to-primary-dark">
       <div class="container">
         <div class="text-center max-w-[600px] mx-auto">
-          <h2 class="text-white mb-4">Contact Our Leadership</h2>
+          <h2 class="text-2xl md:text-3xl font-heading font-bold text-white mb-4">Contact Our Leadership</h2>
           <p class="text-white/90 leading-relaxed mb-8">
             For official inquiries or to reach our management team, please contact our Corporate
             Affairs unit.

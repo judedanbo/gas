@@ -30,22 +30,10 @@
                 <div
                   class="w-12 h-12 bg-primary/10 dark:bg-primary/20 rounded-lg flex items-center justify-center flex-shrink-0"
                 >
-                  <svg
-                    class="w-6 h-6 text-primary dark:text-primary-light"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                      d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"
-                    />
-                  </svg>
+                  <Icon name="heroicons:phone" class="w-6 h-6 text-primary dark:text-primary-light" aria-hidden="true" />
                 </div>
                 <div>
-                  <h3 class="font-semibold text-gray-900 dark:text-white mb-1">Phone</h3>
+                  <h3 class="text-base font-semibold text-gray-900 dark:text-white mb-1">Phone</h3>
                   <p class="text-gray-600 dark:text-gray-400">+233 (302) 664929</p>
                   <p class="text-gray-600 dark:text-gray-400">+233 (302) 664928</p>
                 </div>
@@ -56,22 +44,10 @@
                 <div
                   class="w-12 h-12 bg-primary/10 dark:bg-primary/20 rounded-lg flex items-center justify-center flex-shrink-0"
                 >
-                  <svg
-                    class="w-6 h-6 text-primary dark:text-primary-light"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                      d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
-                    />
-                  </svg>
+                  <Icon name="heroicons:envelope" class="w-6 h-6 text-primary dark:text-primary-light" aria-hidden="true" />
                 </div>
                 <div>
-                  <h3 class="font-semibold text-gray-900 dark:text-white mb-1">Email</h3>
+                  <h3 class="text-base font-semibold text-gray-900 dark:text-white mb-1">Email</h3>
                   <a
                     href="mailto:info@audit.gov.gh"
                     class="text-primary dark:text-primary-light hover:text-primary-dark dark:hover:text-primary"
@@ -85,28 +61,10 @@
                 <div
                   class="w-12 h-12 bg-primary/10 dark:bg-primary/20 rounded-lg flex items-center justify-center flex-shrink-0"
                 >
-                  <svg
-                    class="w-6 h-6 text-primary dark:text-primary-light"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                      d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
-                    />
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                      d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
-                    />
-                  </svg>
+                  <Icon name="heroicons:map-pin" class="w-6 h-6 text-primary dark:text-primary-light" aria-hidden="true" />
                 </div>
                 <div>
-                  <h3 class="font-semibold text-gray-900 dark:text-white mb-1">Physical Address</h3>
+                  <h3 class="text-base font-semibold text-gray-900 dark:text-white mb-1">Physical Address</h3>
                   <p class="text-gray-600 dark:text-gray-400">
                     No. 12 Starlets 91 Road<br />
                     Opposite African Union<br />
@@ -120,22 +78,10 @@
                 <div
                   class="w-12 h-12 bg-primary/10 dark:bg-primary/20 rounded-lg flex items-center justify-center flex-shrink-0"
                 >
-                  <svg
-                    class="w-6 h-6 text-primary dark:text-primary-light"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                      d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
-                    />
-                  </svg>
+                  <Icon name="heroicons:envelope" class="w-6 h-6 text-primary dark:text-primary-light" aria-hidden="true" />
                 </div>
                 <div>
-                  <h3 class="font-semibold text-gray-900 dark:text-white mb-1">Postal Address</h3>
+                  <h3 class="text-base font-semibold text-gray-900 dark:text-white mb-1">Postal Address</h3>
                   <p class="text-gray-600 dark:text-gray-400">
                     P.O. Box MB 96<br />
                     Accra, Ghana
@@ -148,24 +94,12 @@
                 <div
                   class="w-12 h-12 bg-primary/10 dark:bg-primary/20 rounded-lg flex items-center justify-center flex-shrink-0"
                 >
-                  <svg
-                    class="w-6 h-6 text-primary dark:text-primary-light"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                      d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                    />
-                  </svg>
+                  <Icon name="heroicons:clock" class="w-6 h-6 text-primary dark:text-primary-light" aria-hidden="true" />
                 </div>
                 <div>
-                  <h3 class="font-semibold text-gray-900 dark:text-white mb-1">Working Hours</h3>
+                  <h3 class="text-base font-semibold text-gray-900 dark:text-white mb-1">Working Hours</h3>
                   <p class="text-gray-600 dark:text-gray-400">Monday - Friday: 8:00 AM - 5:00 PM</p>
-                  <p class="text-gray-500 dark:text-gray-500 text-sm">
+                  <p class="text-gray-500 dark:text-gray-400 text-sm">
                     Closed on weekends and public holidays
                   </p>
                 </div>
@@ -334,9 +268,10 @@
 
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           <div
-            v-for="office in regionalOffices"
+            v-for="(office, index) in regionalOffices"
             :key="office.id"
             class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6 hover:border-primary hover:shadow-lg transition-all"
+            :class="{ 'hidden md:block': !showAllOffices && index >= 6 }"
           >
             <h4 class="font-semibold text-gray-900 dark:text-white mb-1">{{ office.name }}</h4>
             <p class="text-sm text-primary dark:text-primary-light mb-3">
@@ -404,6 +339,15 @@
               </p>
             </div>
           </div>
+        </div>
+
+        <div v-if="regionalOffices && regionalOffices.length > 6" class="text-center mt-6 md:hidden">
+          <button
+            class="btn-outline btn-sm"
+            @click="showAllOffices = !showAllOffices"
+          >
+            {{ showAllOffices ? 'Show Less' : `Show All ${regionalOffices.length} Offices` }}
+          </button>
         </div>
       </div>
     </section>
@@ -481,6 +425,7 @@
 
   // Fetch regional offices
   const { data: regionalOffices } = await useFetch<RegionalOffice[]>('/api/regional-offices')
+  const showAllOffices = ref(false)
 
   // FAQ data
   const faqs = [

@@ -33,6 +33,7 @@
           <UiStatGrid
             :stats="overviewStats"
             :columns="3"
+            variant="card"
           />
         </div>
       </div>
@@ -171,7 +172,7 @@
     <section class="section bg-gradient-to-br from-primary to-primary-dark">
       <div class="container">
         <div class="text-center">
-          <h2 class="text-white mb-4">Our Workforce</h2>
+          <h2 class="text-2xl md:text-3xl font-heading font-bold text-white mb-4">Our Workforce</h2>
           <p class="text-white/90 max-w-[600px] mx-auto mb-10">
             The Ghana Audit Service employs qualified professionals across
             various disciplines to deliver high-quality audit services.

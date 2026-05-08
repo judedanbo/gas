@@ -7,7 +7,7 @@
             <span class="tabular-nums">{{ animatedValues[index] }}</span>
             <span class="text-xl md:text-2xl">{{ stat.suffix }}</span>
           </span>
-          <span class="text-gray-600 dark:text-gray-400 text-sm uppercase tracking-wider">{{ stat.label }}</span>
+          <span class="text-gray-600 dark:text-gray-400 text-xs md:text-sm uppercase tracking-wider leading-tight">{{ stat.label }}</span>
         </div>
       </div>
     </div>

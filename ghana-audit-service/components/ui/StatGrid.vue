@@ -15,10 +15,10 @@
         />
         <span v-else class="text-3xl">{{ stat.icon }}</span>
       </span>
-      <span class="block text-3xl md:text-4xl font-bold text-primary">
+      <span class="block text-3xl md:text-4xl font-bold" :class="valueColorClass">
         {{ animated ? animatedValues[stat.label] || 0 : stat.value }}{{ stat.suffix }}
       </span>
-      <span class="text-sm text-gray-500 dark:text-gray-400 mt-1 block">{{ stat.label }}</span>
+      <span class="text-sm mt-1 block" :class="labelColorClass">{{ stat.label }}</span>
     </div>
   </div>
 </template>
@@ -50,6 +50,14 @@ const isHeroicon = (icon: string) => icon.includes(':')
 // Icon color based on variant
 const iconColorClass = computed(() => {
   return props.variant === 'transparent' ? 'text-accent' : 'text-primary'
+})
+
+const valueColorClass = computed(() => {
+  return props.variant === 'transparent' ? 'text-white' : 'text-primary'
+})
+
+const labelColorClass = computed(() => {
+  return props.variant === 'transparent' ? 'text-white/80' : 'text-gray-500 dark:text-gray-400'
 })
 
 const gridClasses = computed(() => {
