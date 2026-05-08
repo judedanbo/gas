@@ -26,8 +26,15 @@ interface DbEvent {
   isPublished: boolean
 }
 
+interface EventImageData {
+  url: string
+  alt: string
+  caption?: string
+}
+
 interface EventWithTranslations extends DbEvent {
   translations: Record<string, { title: string; description: string; location: string | null }>
+  images?: EventImageData[]
 }
 
 function formatDate(date: Date | string | null): string {
@@ -58,6 +65,33 @@ export function transformEvent(
     isVirtual: event.isVirtual || undefined,
     registrationUrl: event.registrationUrl || undefined,
     thumbnail: event.thumbnail || undefined
+  }
+}
+
+export function transformEventDetail(
+  event: EventWithTranslations,
+  locale: SupportedLocale = 'en'
+): Event {
+  const translation = event.translations[locale] ||
+    event.translations.en || {
+      title: 'Untitled Event',
+      description: '',
+      location: null
+    }
+
+  return {
+    id: String(event.id),
+    title: translation.title,
+    slug: event.slug,
+    description: stripHtml(translation.description),
+    content: translation.description,
+    startDate: formatDate(event.startDate),
+    endDate: event.endDate ? formatDate(event.endDate) : undefined,
+    location: translation.location || undefined,
+    isVirtual: event.isVirtual || undefined,
+    registrationUrl: event.registrationUrl || undefined,
+    thumbnail: event.thumbnail || undefined,
+    images: event.images?.length ? event.images : undefined
   }
 }
 

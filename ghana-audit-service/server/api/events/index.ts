@@ -1,8 +1,8 @@
 import type { Event } from '~/types'
 import { eq, and, isNull, sql, desc, asc, gte, lt } from 'drizzle-orm'
-import { getDatabase, schema } from '../database'
-import { transformEvents } from '../utils/transformEvents'
-import { getLocaleFromRequest } from '../utils/locale'
+import { getDatabase, schema } from '../../database'
+import { transformEvents } from '../../utils/transformEvents'
+import { getLocaleFromRequest } from '../../utils/locale'
 
 export default defineEventHandler(async (event): Promise<Event[]> => {
   const query = getQuery(event)

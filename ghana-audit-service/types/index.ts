@@ -84,17 +84,25 @@ export interface NewsArticle {
   images?: NewsArticleImage[]
 }
 
+export interface EventImage {
+  url: string
+  alt: string
+  caption?: string
+}
+
 export interface Event {
   id: string
   title: string
   slug: string
   description: string
+  content?: string
   startDate: string
   endDate?: string
   location?: string
   isVirtual?: boolean
   registrationUrl?: string
   thumbnail?: string
+  images?: EventImage[]
 }
 
 // ============================================
