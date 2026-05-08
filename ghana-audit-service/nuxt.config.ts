@@ -221,6 +221,11 @@ export default defineNuxtConfig({
   runtimeConfig: {
     // Private keys (server-side only)
     apiSecret: '',
+    smtpHost: '',
+    smtpPort: '587',
+    smtpUser: '',
+    smtpPass: '',
+    smtpFrom: 'noreply@audit.gov.gh',
     // Public keys (exposed to client)
     public: {
       siteUrl: 'https://audit.gov.gh',

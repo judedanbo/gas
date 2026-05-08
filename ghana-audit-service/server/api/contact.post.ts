@@ -2,6 +2,7 @@ import validator from 'validator'
 import { validateCSRF, createCSRFError } from '../utils/csrf'
 import { getDatabase, schema } from '../database'
 import { getClientIP } from '../utils/rateLimiter'
+import { sendContactNotification } from '../utils/email'
 
 export default defineEventHandler(async (event) => {
   // Validate CSRF token
@@ -116,6 +117,17 @@ export default defineEventHandler(async (event) => {
   })
 
   console.log(`[Contact] New submission from: ${sanitizedEmail} - Subject: ${sanitizedSubject}`)
+
+  // Send notification email to info@audit.gov.gh (non-blocking — don't fail the request if email fails)
+  sendContactNotification({
+    name: sanitizedName,
+    email: sanitizedEmail,
+    phone: sanitizedPhone,
+    subject: sanitizedSubject,
+    message: sanitizedMessage
+  }).catch((err) => {
+    console.error('[Contact] Failed to send notification email:', err)
+  })
 
   return {
     success: true,
