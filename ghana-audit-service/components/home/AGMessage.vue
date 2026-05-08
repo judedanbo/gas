@@ -28,13 +28,17 @@
               class="font-heading text-md italic text-gray-600 dark:text-gray-400 leading-relaxed border-l-4 border-accent pl-6 text-left m-0"
             >
               "Our role as a public service is to audit and report on the public accounts of Ghana
-              and all public offices, including the courts, the central and local government
-              administration, of the Universities and public institutions of like nature, of any
-              public corporation or other body or organization established by an Act of Parliament.
-              Our work as state auditors is vital to the sustenance of the economy of our nation. We
-              therefore pledge as a Service to perform our constitutional mandate to help protect
-              the public purse."
+              and all public offices. Our work as state auditors is vital to the sustenance of the
+              economy of our nation. We therefore pledge as a Service to perform our constitutional
+              mandate to help protect the public purse."
             </blockquote>
+            <NuxtLink
+              to="/about/the-service"
+              class="inline-flex items-center gap-1 text-primary dark:text-accent text-sm font-semibold mt-4 hover:underline"
+            >
+              Read full message
+              <Icon name="heroicons:arrow-right" class="w-4 h-4" aria-hidden="true" />
+            </NuxtLink>
           </div>
         </div>
       </div>

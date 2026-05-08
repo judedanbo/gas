@@ -92,11 +92,44 @@
 
         <!-- Gallery Grid -->
         <template v-else>
-          <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
-            Showing {{ filteredImages.length }} photos
-          </p>
+          <!-- Empty State -->
+          <div
+            v-if="filteredImages.length === 0"
+            class="text-center py-16 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700"
+          >
+            <Icon
+              name="heroicons:photo"
+              class="w-12 h-12 text-gray-300 dark:text-gray-600 mb-4 mx-auto"
+              aria-hidden="true"
+            />
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+              <template v-if="selectedCategory">No photos in "{{ selectedCategory }}"</template>
+              <template v-else>No photos available yet</template>
+            </h3>
+            <p class="text-gray-500 dark:text-gray-400 mb-6 max-w-md mx-auto">
+              <template v-if="selectedCategory">
+                Try selecting a different category or view all photos.
+              </template>
+              <template v-else>
+                Photos from events, activities, and milestones will appear here as they are added to the gallery.
+              </template>
+            </p>
+            <div class="flex flex-wrap justify-center gap-3">
+              <button v-if="selectedCategory" class="btn-primary btn-sm" @click="selectedCategory = ''">
+                View All Photos
+              </button>
+              <NuxtLink to="/media" class="btn-outline btn-sm">
+                Back to Media Centre
+              </NuxtLink>
+            </div>
+          </div>
 
-          <MediaGalleryGrid :images="filteredImages" />
+          <template v-else>
+            <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
+              Showing {{ filteredImages.length }} photos
+            </p>
+            <MediaGalleryGrid :images="filteredImages" />
+          </template>
         </template>
       </div>
     </section>

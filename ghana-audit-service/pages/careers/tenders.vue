@@ -112,7 +112,7 @@
           <div
             class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6"
           >
-            <h3 class="font-semibold text-gray-900 dark:text-white mb-3">How to Participate</h3>
+            <h3 class="text-base font-semibold text-gray-900 dark:text-white mb-3">How to Participate</h3>
             <ul class="space-y-2 text-sm text-gray-600 dark:text-gray-400">
               <li class="flex items-start gap-2">
                 <span class="text-primary dark:text-primary-light">1.</span>
@@ -136,7 +136,7 @@
           <div
             class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6"
           >
-            <h3 class="font-semibold text-gray-900 dark:text-white mb-3">Contact Procurement</h3>
+            <h3 class="text-base font-semibold text-gray-900 dark:text-white mb-3">Contact Procurement</h3>
             <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
               For inquiries about specific tenders or procurement processes:
             </p>
@@ -199,7 +199,8 @@
 
   onMounted(async () => {
     try {
-      tenders.value = await $fetch<Tender[]>('/api/tenders')
+      const response = await $fetch<{ data: Tender[] }>('/api/tenders')
+      tenders.value = response.data
     } catch (error) {
       console.error('Failed to fetch tenders:', error)
     } finally {

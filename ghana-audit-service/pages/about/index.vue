@@ -5,7 +5,7 @@
     <!-- Page Header -->
     <section class="page-header">
       <div class="container">
-        <h1>About Ghana Audit Service</h1>
+        <h1 class="text-4xl md:text-5xl font-heading font-bold mb-4">About Ghana Audit Service</h1>
         <p class="max-w-[700px] mx-auto text-lg text-white/90 leading-relaxed">
           Ghana's Supreme Audit Institution, established by the Constitution to ensure
           accountability and transparency in the management of public resources.
@@ -99,7 +99,7 @@
           </div>
           <div>
             <div class="bg-gray-100 dark:bg-gray-800 rounded-lg p-6">
-              <h4 class="mb-4 font-semibold flex items-center gap-2 text-gray-900 dark:text-white">
+              <h4 class="text-base mb-4 font-semibold flex items-center gap-2 text-gray-900 dark:text-white">
                 <Icon name="heroicons:document" class="w-5 h-5" aria-hidden="true" />
                 Legal Framework
               </h4>

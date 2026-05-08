@@ -72,7 +72,7 @@
               class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden"
             >
               <div class="p-6">
-                <div class="flex items-start justify-between gap-4">
+                <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
                   <div class="flex-grow">
                     <UiBadge variant="warning" size="sm" class="mb-2">
                       Primary Legislation
@@ -98,7 +98,7 @@
                   <a
                     v-if="law.fileUrl"
                     :href="law.fileUrl"
-                    class="btn-primary btn-sm flex-shrink-0"
+                    class="btn-primary btn-sm flex-shrink-0 self-start"
                     download
                   >
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -136,7 +136,7 @@
               :key="law.title"
               class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-6"
             >
-              <h4 class="font-semibold text-gray-900 dark:text-white mb-2">{{ law.title }}</h4>
+              <h4 class="text-sm font-semibold text-gray-900 dark:text-white mb-2">{{ law.title }}</h4>
               <p class="text-sm text-gray-600 dark:text-gray-400">{{ law.description }}</p>
             </div>
           </div>
@@ -180,7 +180,7 @@
               </div>
 
               <div class="flex-grow">
-                <h4 class="font-semibold text-gray-900 dark:text-white">{{ publication.title }}</h4>
+                <h4 class="text-sm font-semibold text-gray-900 dark:text-white">{{ publication.title }}</h4>
                 <p v-if="publication.excerpt" class="text-sm text-gray-600 dark:text-gray-400">
                   {{ publication.excerpt }}
                 </p>

@@ -176,7 +176,7 @@
                 aria-hidden="true"
               />
             </div>
-            <h4 class="font-semibold text-gray-900 dark:text-white mb-2">{{ objective.title }}</h4>
+            <h4 class="text-sm font-semibold text-gray-900 dark:text-white mb-2">{{ objective.title }}</h4>
             <p class="text-sm text-gray-600 dark:text-gray-400">{{ objective.description }}</p>
           </div>
         </div>

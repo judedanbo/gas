@@ -70,6 +70,25 @@
       "districts": "Districts"
     }
   },
+  "slideshow": {
+    "ariaLabel": "Featured content slideshow",
+    "carouselLabel": "carousel",
+    "slideLabel": "slide",
+    "slideOf": "Slide {current} of {total}",
+    "previous": "Previous slide",
+    "next": "Next slide",
+    "pause": "Pause slideshow",
+    "play": "Play slideshow",
+    "goToSlide": "Go to slide {number}",
+    "news": "News",
+    "event": "Event",
+    "gallery": "Gallery",
+    "report": "Audit Report",
+    "readMore": "Read More",
+    "viewReport": "View Report",
+    "viewGallery": "View Gallery",
+    "viewEvent": "View Event"
+  },
   "footer": {
     "description": "The Ghana Audit Service has a constitutional mandate to audit all public accounts and report to Parliament, ensuring accountability in the use of public resources.",
     "quickLinks": "Quick Links",

@@ -16,17 +16,17 @@
     <CommonBreadcrumb :crumbs="[{ label: 'CitizensEye', path: '/citizenseye' }]" />
 
     <!-- Hero Section -->
-    <section class="section bg-white">
+    <section class="section bg-white dark:bg-gray-800">
       <div class="container">
         <div class="lg:grid lg:grid-cols-2 lg:gap-12 items-center">
           <div>
-            <h2 class="text-3xl md:text-4xl font-heading font-bold text-gray-900 mb-6">
+            <h2 class="text-3xl md:text-4xl font-heading font-bold text-gray-900 dark:text-white mb-6">
               Be Part of the Fight Against Financial Irregularities
             </h2>
-            <p class="text-lg text-gray-600 mb-6">
+            <p class="text-lg text-gray-600 dark:text-gray-400 mb-6">
               CitizensEye is the Ghana Audit Service's citizen engagement platform that empowers you to report financial irregularities, mismanagement of public funds, and other concerns affecting public accountability.
             </p>
-            <p class="text-gray-600 mb-8">
+            <p class="text-gray-600 dark:text-gray-400 mb-8">
               Your voice matters in protecting Ghana's public resources. With CitizensEye, you can securely submit reports, upload evidence, and track the progress of your submissions - all while maintaining your anonymity if you choose.
             </p>
             <div class="flex flex-wrap gap-4">
@@ -48,10 +48,10 @@
             </div>
           </div>
           <div class="mt-10 lg:mt-0">
-            <div class="bg-gradient-to-br from-primary/10 to-accent/10 rounded-2xl p-8 text-center">
-              <Icon name="heroicons:eye" class="w-20 h-20 text-primary mb-4 mx-auto" aria-hidden="true" />
-              <p class="text-xl font-semibold text-gray-900 mb-2">CitizensEye</p>
-              <p class="text-gray-600">Protecting the Public Purse</p>
+            <div class="bg-gradient-to-br from-primary/10 to-accent/10 dark:from-primary/20 dark:to-accent/20 rounded-2xl p-8 text-center">
+              <Icon name="heroicons:eye" class="w-20 h-20 text-primary dark:text-primary-light mb-4 mx-auto" aria-hidden="true" />
+              <p class="text-xl font-semibold text-gray-900 dark:text-white mb-2">CitizensEye</p>
+              <p class="text-gray-600 dark:text-gray-400">Protecting the Public Purse</p>
             </div>
           </div>
         </div>
@@ -59,7 +59,7 @@
     </section>
 
     <!-- Features Section -->
-    <section id="features" class="section bg-gray-50">
+    <section id="features" class="section bg-gray-50 dark:bg-gray-900">
       <div class="container">
         <UiSectionHeader
           badge="Features"
@@ -71,18 +71,18 @@
           <div
             v-for="feature in features"
             :key="feature.title"
-            class="bg-white rounded-xl p-6 border border-gray-200 hover:shadow-lg transition-shadow"
+            class="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700 hover:shadow-lg transition-shadow"
           >
-            <Icon :name="feature.icon" class="w-10 h-10 text-primary mb-4" aria-hidden="true" />
-            <h3 class="text-lg font-semibold text-gray-900 mb-2">{{ feature.title }}</h3>
-            <p class="text-gray-600">{{ feature.description }}</p>
+            <Icon :name="feature.icon" class="w-10 h-10 text-primary dark:text-primary-light mb-4" aria-hidden="true" />
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">{{ feature.title }}</h3>
+            <p class="text-gray-600 dark:text-gray-400">{{ feature.description }}</p>
           </div>
         </div>
       </div>
     </section>
 
     <!-- How It Works Section -->
-    <section class="section bg-white">
+    <section class="section bg-white dark:bg-gray-800">
       <div class="container">
         <UiSectionHeader
           badge="Process"
@@ -99,16 +99,16 @@
             <div class="w-16 h-16 mx-auto mb-4 bg-primary text-white rounded-full flex items-center justify-center text-2xl font-bold">
               {{ index + 1 }}
             </div>
-            <Icon :name="step.icon" class="w-10 h-10 text-primary mb-4 mx-auto" aria-hidden="true" />
-            <h3 class="text-lg font-semibold text-gray-900 mb-2">{{ step.title }}</h3>
-            <p class="text-gray-600">{{ step.description }}</p>
+            <Icon :name="step.icon" class="w-10 h-10 text-primary dark:text-primary-light mb-4 mx-auto" aria-hidden="true" />
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">{{ step.title }}</h3>
+            <p class="text-gray-600 dark:text-gray-400">{{ step.description }}</p>
           </div>
         </div>
       </div>
     </section>
 
     <!-- Benefits Section -->
-    <section class="section bg-gray-50">
+    <section class="section bg-gray-50 dark:bg-gray-900">
       <div class="container">
         <UiSectionHeader
           badge="Benefits"
@@ -118,29 +118,29 @@
 
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-10">
           <!-- For Citizens -->
-          <div class="bg-white rounded-xl p-8 border border-gray-200">
+          <div class="bg-white dark:bg-gray-800 rounded-xl p-8 border border-gray-200 dark:border-gray-700">
             <div class="flex items-center gap-3 mb-6">
-              <Icon name="heroicons:user-group" class="w-8 h-8 text-primary" aria-hidden="true" />
-              <h3 class="text-xl font-semibold text-gray-900">For Citizens</h3>
+              <Icon name="heroicons:user-group" class="w-8 h-8 text-primary dark:text-primary-light" aria-hidden="true" />
+              <h3 class="text-xl font-semibold text-gray-900 dark:text-white">For Citizens</h3>
             </div>
             <ul class="space-y-4">
               <li v-for="benefit in citizenBenefits" :key="benefit" class="flex items-start gap-3">
-                <Icon name="heroicons:check" class="w-5 h-5 text-primary flex-shrink-0 mt-1" aria-hidden="true" />
-                <span class="text-gray-600">{{ benefit }}</span>
+                <Icon name="heroicons:check" class="w-5 h-5 text-primary dark:text-primary-light flex-shrink-0 mt-1" aria-hidden="true" />
+                <span class="text-gray-600 dark:text-gray-400">{{ benefit }}</span>
               </li>
             </ul>
           </div>
 
           <!-- For Government -->
-          <div class="bg-white rounded-xl p-8 border border-gray-200">
+          <div class="bg-white dark:bg-gray-800 rounded-xl p-8 border border-gray-200 dark:border-gray-700">
             <div class="flex items-center gap-3 mb-6">
-              <Icon name="heroicons:building-library" class="w-8 h-8 text-primary" aria-hidden="true" />
-              <h3 class="text-xl font-semibold text-gray-900">For Government</h3>
+              <Icon name="heroicons:building-library" class="w-8 h-8 text-primary dark:text-primary-light" aria-hidden="true" />
+              <h3 class="text-xl font-semibold text-gray-900 dark:text-white">For Government</h3>
             </div>
             <ul class="space-y-4">
               <li v-for="benefit in governmentBenefits" :key="benefit" class="flex items-start gap-3">
-                <Icon name="heroicons:check" class="w-5 h-5 text-primary flex-shrink-0 mt-1" aria-hidden="true" />
-                <span class="text-gray-600">{{ benefit }}</span>
+                <Icon name="heroicons:check" class="w-5 h-5 text-primary dark:text-primary-light flex-shrink-0 mt-1" aria-hidden="true" />
+                <span class="text-gray-600 dark:text-gray-400">{{ benefit }}</span>
               </li>
             </ul>
           </div>
@@ -149,7 +149,7 @@
     </section>
 
     <!-- What to Report Section -->
-    <section class="section bg-white">
+    <section class="section bg-white dark:bg-gray-800">
       <div class="container">
         <UiSectionHeader
           badge="Guidelines"
@@ -161,17 +161,17 @@
           <div
             v-for="item in reportableItems"
             :key="item.title"
-            class="bg-gray-50 rounded-lg p-5 border border-gray-200"
+            class="bg-gray-50 dark:bg-gray-700 rounded-lg p-5 border border-gray-200 dark:border-gray-600"
           >
-            <Icon :name="item.icon" class="w-6 h-6 text-primary mb-2" aria-hidden="true" />
-            <h4 class="font-medium text-gray-900">{{ item.title }}</h4>
+            <Icon :name="item.icon" class="w-6 h-6 text-primary dark:text-primary-light mb-2" aria-hidden="true" />
+            <h4 class="text-sm font-medium text-gray-900 dark:text-white">{{ item.title }}</h4>
           </div>
         </div>
       </div>
     </section>
 
     <!-- FAQ Section -->
-    <section class="section bg-gray-50">
+    <section class="section bg-gray-50 dark:bg-gray-900">
       <div class="container">
         <UiSectionHeader
           badge="FAQ"
@@ -186,7 +186,7 @@
             :title="faq.question"
             variant="card"
           >
-            <p class="text-gray-600">{{ faq.answer }}</p>
+            <p class="text-gray-600 dark:text-gray-400">{{ faq.answer }}</p>
           </UiAccordionItem>
         </div>
       </div>
@@ -222,7 +222,7 @@
     </section>
 
     <!-- Quick Links -->
-    <section class="section-sm bg-gray-50">
+    <section class="section-sm bg-gray-50 dark:bg-gray-900">
       <div class="container flex flex-wrap justify-center gap-4">
         <NuxtLink to="/citizenseye/privacy" class="btn-outline">
           Privacy Notice

@@ -32,7 +32,7 @@
               class="w-10 h-10 text-primary dark:text-primary-light mb-4"
               aria-hidden="true"
             />
-            <h3 class="font-semibold text-gray-900 dark:text-white mb-2">{{ benefit.title }}</h3>
+            <h3 class="text-base font-semibold text-gray-900 dark:text-white mb-2">{{ benefit.title }}</h3>
             <p class="text-sm text-gray-600 dark:text-gray-400">{{ benefit.description }}</p>
           </div>
         </div>
@@ -57,17 +57,27 @@
           <!-- Empty State -->
           <div
             v-if="vacancies.length === 0"
-            class="text-center py-12 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700"
+            class="text-center py-16 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700"
           >
             <Icon
               name="heroicons:briefcase"
-              class="w-10 h-10 text-gray-400 mb-4"
+              class="w-12 h-12 text-gray-300 dark:text-gray-600 mb-4 mx-auto"
               aria-hidden="true"
             />
             <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-              No vacancies available
+              No open positions right now
             </h3>
-            <p class="text-gray-600 dark:text-gray-400">Check back soon for new opportunities.</p>
+            <p class="text-gray-500 dark:text-gray-400 mb-6 max-w-md mx-auto">
+              We don't have any vacancies at the moment, but new opportunities are posted regularly. Subscribe to stay notified or contact us for general inquiries.
+            </p>
+            <div class="flex flex-wrap justify-center gap-3">
+              <NuxtLink to="/contact" class="btn-primary btn-sm">
+                Contact HR
+              </NuxtLink>
+              <NuxtLink to="/" class="btn-outline btn-sm">
+                Back to Home
+              </NuxtLink>
+            </div>
           </div>
 
           <!-- Vacancies List -->
@@ -121,7 +131,7 @@
                 {{ index + 1 }}
               </div>
               <div>
-                <h4 class="font-semibold text-gray-900 dark:text-white mb-1">{{ step.title }}</h4>
+                <h4 class="text-base font-semibold text-gray-900 dark:text-white mb-1">{{ step.title }}</h4>
                 <p class="text-gray-600 dark:text-gray-400 text-sm">{{ step.description }}</p>
               </div>
             </div>
