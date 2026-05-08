@@ -27,10 +27,10 @@
             <UiBadge variant="primary" size="lg" class="mb-4">Current Auditor-General</UiBadge>
           </template>
         </UiProfileCard>
-        <div class="mt-6 ml-0 md:ml-[calc(220px+2.5rem)]">
+        <!-- <div class="mt-6 ml-0 md:ml-[calc(220px+2.5rem)]">
           <h4 class="text-base mb-3 font-semibold text-gray-900 dark:text-white">Key Achievements</h4>
           <UiCheckList :items="currentAG.achievements" icon="check" divided />
-        </div>
+        </div> -->
       </div>
     </section>
 
@@ -101,7 +101,9 @@
     <section class="section bg-gradient-to-br from-primary to-primary-dark">
       <div class="container">
         <div class="text-center max-w-[1000px] mx-auto">
-          <h2 class="text-2xl md:text-3xl font-heading font-bold text-white mb-4">The Role of the Auditor-General</h2>
+          <h2 class="text-2xl md:text-3xl font-heading font-bold text-white mb-4">
+            The Role of the Auditor-General
+          </h2>
           <p class="text-white/90 text-lg leading-relaxed mb-10">
             The Auditor-General of Ghana is a constitutional officer appointed by the President,
             acting on the advice of the Council of State, and approved by Parliament.
