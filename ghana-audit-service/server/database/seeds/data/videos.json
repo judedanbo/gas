@@ -1,0 +1,80 @@
+[
+  {
+    "url": "https://www.youtube.com/embed/bpWn0JVkW6Q",
+    "thumbnail": "/img/videos/bpWn0JVkW6Q.jpg",
+    "duration": null,
+    "publishedAt": "2026-05-08",
+    "isPublished": true,
+    "translations": {
+      "en": {
+        "title": "AMIS Methodologies",
+        "description": null
+      }
+    }
+  },
+  {
+    "url": "https://www.youtube.com/embed/GIC17AvVXHI",
+    "thumbnail": "/img/videos/GIC17AvVXHI.jpg",
+    "duration": null,
+    "publishedAt": "2026-04-08",
+    "isPublished": true,
+    "translations": {
+      "en": {
+        "title": "AMIS Montage",
+        "description": null
+      }
+    }
+  },
+  {
+    "url": "https://www.youtube.com/embed/tWkNv7vjq2I",
+    "thumbnail": "/img/videos/tWkNv7vjq2I.jpg",
+    "duration": null,
+    "publishedAt": "2026-03-08",
+    "isPublished": true,
+    "translations": {
+      "en": {
+        "title": "2024 Financial Audit Launch",
+        "description": null
+      }
+    }
+  },
+  {
+    "url": "https://www.youtube.com/embed/inOfsmni2FY",
+    "thumbnail": "/img/videos/inOfsmni2FY.jpg",
+    "duration": null,
+    "publishedAt": "2026-02-08",
+    "isPublished": true,
+    "translations": {
+      "en": {
+        "title": "CE App-3",
+        "description": null
+      }
+    }
+  },
+  {
+    "url": "https://www.youtube.com/embed/bjWy384rk_k",
+    "thumbnail": "/img/videos/bjWy384rk_k.jpg",
+    "duration": null,
+    "publishedAt": "2026-01-08",
+    "isPublished": true,
+    "translations": {
+      "en": {
+        "title": "CE App-1",
+        "description": null
+      }
+    }
+  },
+  {
+    "url": "https://www.youtube.com/embed/EiWgKAAeLrg",
+    "thumbnail": "/img/videos/EiWgKAAeLrg.jpg",
+    "duration": null,
+    "publishedAt": "2025-12-08",
+    "isPublished": true,
+    "translations": {
+      "en": {
+        "title": "CE App-2",
+        "description": null
+      }
+    }
+  }
+]
