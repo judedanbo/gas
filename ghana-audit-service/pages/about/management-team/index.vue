@@ -33,7 +33,7 @@
               <UiProfileCard
                 :name="auditorGeneral.name"
                 :title="auditorGeneral.title"
-                :description="auditorGeneral.bio"
+                :bio="getCareerBackground(auditorGeneral.bio)"
                 :image="auditorGeneral.photo || '/images/ags/johnson_akuamoah_asiedu.jpg'"
                 size="lg"
                 featured
@@ -117,14 +117,17 @@
                 <UiProfileCard
                   :name="dag.name"
                   :title="dag.title"
-                  :description="dag.bio"
+                  :bio="getCareerBackground(dag.bio)"
                   :image="dag.photo"
                   size="sm"
                   layout="horizontal"
                 >
                   <template #default>
-                    <UiBadge variant="primary" size="sm" class="mb-2">Deputy Auditor-General</UiBadge>
+                    <UiBadge variant="primary" size="sm" class="mb-2"
+                      >Deputy Auditor-General</UiBadge
+                    >
                   </template>
+                  <!-- <template #bio>{{ dag.bio }}</template> -->
                 </UiProfileCard>
               </NuxtLink>
               <div
@@ -239,6 +242,14 @@
 
 <script setup lang="ts">
   import type { ManagementTeamMember } from '~/types'
+  import { parseBioSections } from '~/utils/parseBioSections'
+
+  function getCareerBackground(bio?: string): string | undefined {
+    if (!bio) return undefined
+    const sections = parseBioSections(bio)
+    const career = sections.find((s) => s.heading === 'Career Background')
+    return career?.content
+  }
 
   useHead({ title: 'Management Team' })
 
