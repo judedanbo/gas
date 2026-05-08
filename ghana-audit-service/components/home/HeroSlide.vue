@@ -14,7 +14,7 @@
         :alt="slide.imageAlt"
         :loading="isFirst ? 'eager' : 'lazy'"
         :fetchpriority="isFirst ? 'high' : undefined"
-        sizes="100vw"
+        sizes="xs:100vw sm:100vw md:100vw lg:100vw xl:100vw 2xl:100vw"
         class="h-full w-full object-cover text-transparent"
         :class="isActive ? 'animate-ken-burns' : ''"
       />
