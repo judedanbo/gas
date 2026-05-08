@@ -21,7 +21,11 @@ const STATIC_FALLBACK: HeroSlide = {
   categoryLabel: 'slideshow.news'
 }
 
-const GALLERY_ALBUM_SLUG = '2026-thanksgiving-service'
+const FEATURED_ALBUMS = [
+  { slug: '2026-thanksgiving-service', count: 1, offset: 0 },
+  { slug: '2026-thanksgiving-service', count: 1, offset: 3 },
+  { slug: 'uniting-for-a-transparent-ghana-audit-service-may-day-celebration', count: 2, offset: 3 }
+]
 
 async function fetchLatestNews(locale: 'en' | 'ak') {
   try {
@@ -161,7 +165,12 @@ async function fetchUpcomingEvents(locale: 'en' | 'ak') {
   }
 }
 
-async function fetchGalleryFromAlbum(locale: 'en' | 'ak') {
+async function fetchGallerySlides(
+  locale: 'en' | 'ak',
+  albumSlug: string,
+  count: number,
+  offset: number
+): Promise<HeroSlide[]> {
   try {
     const db = getDatabase()
 
@@ -170,7 +179,7 @@ async function fetchGalleryFromAlbum(locale: 'en' | 'ak') {
       .from(schema.galleryAlbums)
       .where(
         and(
-          eq(schema.galleryAlbums.slug, GALLERY_ALBUM_SLUG),
+          eq(schema.galleryAlbums.slug, albumSlug),
           eq(schema.galleryAlbums.isPublished, true),
           isNull(schema.galleryAlbums.deletedAt)
         )
@@ -189,11 +198,12 @@ async function fetchGalleryFromAlbum(locale: 'en' | 'ak') {
         )
       )
       .orderBy(asc(schema.galleryImages.id))
-      .limit(2)
+      .limit(count + offset)
 
-    if (images.length === 0) return []
+    const selected = images.slice(offset)
+    if (selected.length === 0) return []
 
-    const imageIds = images.map((img) => img.id)
+    const imageIds = selected.map((img) => img.id)
     const translations = await db
       .select()
       .from(schema.galleryImageTranslations)
@@ -209,7 +219,7 @@ async function fetchGalleryFromAlbum(locale: 'en' | 'ak') {
     const albumTitle =
       albumTranslations.find((t) => t.locale === locale)?.title ||
       albumTranslations.find((t) => t.locale === 'en')?.title ||
-      GALLERY_ALBUM_SLUG
+      albumSlug
 
     const translationsByImage = translations.reduce(
       (acc, t) => {
@@ -220,15 +230,18 @@ async function fetchGalleryFromAlbum(locale: 'en' | 'ak') {
       {} as Record<number, Record<string, { alt: string; caption: string | null }>>
     )
 
-    return images.map((img) => {
+    return selected.map((img) => {
       const t = translationsByImage[img.id]?.[locale] || translationsByImage[img.id]?.en
-      return transformGalleryToSlide({
-        id: String(img.id),
-        url: img.url,
-        alt: t?.alt || albumTitle,
-        caption: t?.caption || albumTitle,
-        uploadedAt: img.uploadedAt.toISOString().split('T')[0]
-      })
+      return transformGalleryToSlide(
+        {
+          id: String(img.id),
+          url: img.url,
+          alt: t?.alt || albumTitle,
+          caption: t?.caption || albumTitle,
+          uploadedAt: img.uploadedAt.toISOString().split('T')[0]
+        },
+        albumTitle
+      )
     })
   } catch {
     return []
@@ -238,12 +251,18 @@ async function fetchGalleryFromAlbum(locale: 'en' | 'ak') {
 export default defineEventHandler(async (event) => {
   const locale = getLocaleFromRequest(event)
 
-  const [newsSlides, reportSlides, eventSlides, gallerySlides] = await Promise.all([
+  const galleryPromises = FEATURED_ALBUMS.map((a) =>
+    fetchGallerySlides(locale, a.slug, a.count, a.offset)
+  )
+
+  const [newsSlides, reportSlides, eventSlides, ...galleryResults] = await Promise.all([
     fetchLatestNews(locale),
     fetchLatestReports(locale),
     fetchUpcomingEvents(locale),
-    fetchGalleryFromAlbum(locale)
+    ...galleryPromises
   ])
+
+  const gallerySlides = galleryResults.flat()
 
   const slides: HeroSlide[] = [...newsSlides, ...eventSlides, ...gallerySlides, ...reportSlides]
 

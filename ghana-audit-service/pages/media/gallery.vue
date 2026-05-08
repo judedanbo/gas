@@ -193,6 +193,8 @@
     }
   }
 
+  const route = useRoute()
+
   onMounted(async () => {
     document.addEventListener('click', handleClickOutside)
 
@@ -202,6 +204,11 @@
       )
       images.value = response.images
       categories.value = response.categories
+
+      const albumParam = route.query.album
+      if (typeof albumParam === 'string' && categories.value.includes(albumParam)) {
+        selectedCategory.value = albumParam
+      }
     } catch (error) {
       console.error('Failed to fetch gallery:', error)
     } finally {

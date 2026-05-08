@@ -89,7 +89,14 @@ export function transformEventToSlide(event: SlideshowEvent): HeroSlide {
   }
 }
 
-export function transformGalleryToSlide(image: SlideshowGalleryImage): HeroSlide {
+export function transformGalleryToSlide(
+  image: SlideshowGalleryImage,
+  albumTitle?: string
+): HeroSlide {
+  const linkUrl = albumTitle
+    ? `/media/gallery?album=${encodeURIComponent(albumTitle)}`
+    : '/media/gallery'
+
   return {
     id: `gallery-${image.id}`,
     type: 'gallery',
@@ -97,7 +104,7 @@ export function transformGalleryToSlide(image: SlideshowGalleryImage): HeroSlide
     imageAlt: image.alt,
     title: image.caption || image.alt,
     excerpt: '',
-    linkUrl: '/media/gallery',
+    linkUrl,
     linkLabel: 'slideshow.viewGallery',
     categoryLabel: 'slideshow.gallery',
     publishedAt: image.uploadedAt
