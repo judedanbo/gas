@@ -247,8 +247,9 @@
   function getCareerBackground(bio?: string): string | undefined {
     if (!bio) return undefined
     const sections = parseBioSections(bio)
-    const career = sections.find((s) => s.heading === 'Career Background')
-    return career?.content
+    const content = sections.find((s) => s.heading === 'Career Background')?.content
+    if (!content) return undefined
+    return content.length > 200 ? content.slice(0, 200).trimEnd() + '...' : content
   }
 
   useHead({ title: 'Management Team' })
