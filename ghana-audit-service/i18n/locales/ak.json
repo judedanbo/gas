@@ -66,6 +66,25 @@
       "districts": "Mman"
     }
   },
+  "slideshow": {
+    "ariaLabel": "Nsɛm titiriw a ɛwɔ hɔ",
+    "carouselLabel": "nneɛma a ɛsesa",
+    "slideLabel": "kratafa",
+    "slideOf": "Kratafa {current} wɔ {total} mu",
+    "previous": "Kratafa a ɛdi kan",
+    "next": "Kratafa a ɛdi akyiri",
+    "pause": "Gyina",
+    "play": "Kɔ so",
+    "goToSlide": "Kɔ kratafa {number}",
+    "news": "Nsɛm",
+    "event": "Dwumadie",
+    "gallery": "Mfonini",
+    "report": "Nsɛmhwɛfo Amanneɛbɔ",
+    "readMore": "Kenkan Bio",
+    "viewReport": "Hwɛ Amanneɛbɔ",
+    "viewGallery": "Hwɛ Mfonini",
+    "viewEvent": "Hwɛ Dwumadie"
+  },
   "footer": {
     "description": "Ghana Nsɛm Hwɛfo wɔ tumi a ɔman ahyɛ wɔn sɛ wɔnhwɛ ɔman akontaabu nyinaa na wɔnka nkyerɛ Asantefohene.",
     "quickLinks": "Nkitahodi Ntɛm",
