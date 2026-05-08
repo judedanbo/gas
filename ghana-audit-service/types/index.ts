@@ -232,6 +232,23 @@ export interface StatItem {
 }
 
 // ============================================
+// Slideshow Types
+// ============================================
+
+export interface HeroSlide {
+  id: string
+  type: 'news' | 'event' | 'gallery' | 'report'
+  image: string
+  imageAlt: string
+  title: string
+  excerpt: string
+  linkUrl: string
+  linkLabel: string
+  categoryLabel?: string
+  publishedAt?: string
+}
+
+// ============================================
 // Media Types
 // ============================================
 

@@ -1,7 +1,7 @@
 <template>
   <div>
-    <!-- Hero Section -->
-    <HomeHeroCarousel />
+    <!-- Hero Slideshow -->
+    <HomeHeroSlideshow />
 
     <!-- Stats Section (Animated) -->
     <HomeStatsCounter :stats="stats" />

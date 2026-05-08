@@ -269,6 +269,7 @@ export default defineNuxtConfig({
       '/api/news/**': { cache: isDev ? false : { maxAge: 300, staleMaxAge: 600 } },
       '/api/publications/**': { cache: isDev ? false : { maxAge: 300, staleMaxAge: 600 } },
       '/api/events/**': { cache: isDev ? false : { maxAge: 300, staleMaxAge: 600 } },
+      '/api/slideshow': { cache: isDev ? false : { maxAge: 300, staleMaxAge: 600 } },
       '/api/team/**': { cache: isDev ? false : { maxAge: 3600, staleMaxAge: 7200 } },
       '/api/gallery/**': { cache: isDev ? false : { maxAge: 600, staleMaxAge: 1200 } },
       '/api/regional-offices/**': { cache: isDev ? false : { maxAge: 3600, staleMaxAge: 7200 } },
