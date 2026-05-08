@@ -29,7 +29,7 @@
         <template v-else>
           <!-- Empty State -->
           <div
-            v-if="videos.length === 0"
+            v-if="allVideos.length === 0"
             class="text-center py-16 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700"
           >
             <Icon name="heroicons:video-camera" class="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-4" aria-hidden="true" />
@@ -46,7 +46,7 @@
 
           <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             <MediaVideoCard
-              v-for="video in videos"
+              v-for="video in allVideos"
               :key="video.id"
               :video="video"
               @play="openVideoPlayer"
@@ -64,7 +64,15 @@
           description="Follow our YouTube channel for the latest videos and updates."
           size="sm"
         />
-        <a href="https://youtube.com" target="_blank" rel="noopener noreferrer" class="btn-primary">
+        <a
+          href="https://www.youtube.com/@ghanaauditservice5076"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="btn-primary inline-flex items-center gap-2"
+        >
+          <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z" />
+          </svg>
           Visit YouTube Channel
         </a>
       </div>
@@ -119,19 +127,35 @@
 <script setup lang="ts">
   import type { Video } from '~/types'
 
-  // SEO
   useSeoMeta({
     title: 'Videos | Ghana Audit Service',
     description: 'Video content, documentaries, and recordings from the Ghana Audit Service.'
   })
 
-  const videos = ref<Video[]>([])
+  const allVideos = ref<Video[]>([])
   const loading = ref(true)
   const selectedVideo = ref<Video | null>(null)
 
+  function extractVideoId(url: string): string {
+    const match = url.match(/(?:embed\/|watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/)
+    return match ? match[1] : url
+  }
+
   onMounted(async () => {
     try {
-      videos.value = await $fetch<Video[]>('/api/videos')
+      const [seeded, youtube] = await Promise.all([
+        $fetch<Video[]>('/api/videos'),
+        $fetch<Video[]>('/api/youtube-videos').catch(() => [] as Video[])
+      ])
+
+      const seededIds = new Set(seeded.map((v) => extractVideoId(v.url)))
+
+      const uniqueYoutube = youtube.filter((v) => !seededIds.has(extractVideoId(v.url)))
+
+      const merged = [...seeded, ...uniqueYoutube]
+      merged.sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime())
+
+      allVideos.value = merged
     } catch (error) {
       console.error('Failed to fetch videos:', error)
     } finally {
@@ -149,7 +173,6 @@
     document.body.style.overflow = ''
   }
 
-  // Close on escape key
   onMounted(() => {
     const handleKeydown = (e: KeyboardEvent) => {
       if (e.key === 'Escape' && selectedVideo.value) {

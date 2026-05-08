@@ -5,10 +5,13 @@
       class="relative w-full aspect-video bg-gray-900 group"
       @click="$emit('play', video)"
     >
-      <!-- Placeholder -->
-      <div class="absolute inset-0 bg-gradient-to-br from-gray-800 to-gray-900 flex items-center justify-center">
-        <span class="text-5xl opacity-30">🎬</span>
-      </div>
+      <img
+        v-if="video.thumbnail"
+        :src="video.thumbnail"
+        :alt="video.title"
+        class="absolute inset-0 w-full h-full object-cover"
+      >
+      <div v-else class="absolute inset-0 bg-gradient-to-br from-gray-800 to-gray-900"></div>
 
       <!-- Play Button Overlay -->
       <div class="absolute inset-0 flex items-center justify-center">

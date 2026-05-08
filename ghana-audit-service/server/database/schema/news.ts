@@ -95,6 +95,27 @@ export const newsArticleTags = mysqlTable(
   ]
 )
 
+/**
+ * News article images - Photo gallery for articles
+ */
+export const newsArticleImages = mysqlTable(
+  'news_article_images',
+  {
+    id: int('id').primaryKey().autoincrement(),
+    newsArticleId: int('news_article_id')
+      .notNull()
+      .references(() => newsArticles.id, { onDelete: 'cascade' }),
+    url: varchar('url', { length: 500 }).notNull(),
+    alt: varchar('alt', { length: 255 }).notNull().default(''),
+    caption: varchar('caption', { length: 500 }),
+    sortOrder: int('sort_order').notNull().default(0)
+  },
+  (table) => [
+    index('idx_article_images_article').on(table.newsArticleId),
+    index('idx_article_images_sort').on(table.newsArticleId, table.sortOrder)
+  ]
+)
+
 // Type exports
 export type NewsArticle = typeof newsArticles.$inferSelect
 export type NewNewsArticle = typeof newsArticles.$inferInsert
@@ -102,3 +123,5 @@ export type NewsArticleTranslation = typeof newsArticleTranslations.$inferSelect
 export type NewNewsArticleTranslation = typeof newsArticleTranslations.$inferInsert
 export type Tag = typeof tags.$inferSelect
 export type NewTag = typeof tags.$inferInsert
+export type NewsArticleImage = typeof newsArticleImages.$inferSelect
+export type NewNewsArticleImage = typeof newsArticleImages.$inferInsert

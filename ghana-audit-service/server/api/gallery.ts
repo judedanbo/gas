@@ -1,98 +1,89 @@
 import type { GalleryImage } from '~/types'
+import { eq, and, isNull, sql, desc } from 'drizzle-orm'
+import { getDatabase, schema } from '../database'
+import { transformGalleryImages } from '../utils/transformGallery'
+import { getLocaleFromRequest } from '../utils/locale'
 
-const mockGallery: GalleryImage[] = [
-  {
-    id: '1',
-    url: '/images/gallery/ag-parliament-2024.jpg',
-    alt: 'Auditor-General presenting reports to Parliament',
-    caption: 'AG presenting 2023 Annual Reports to Parliament',
-    category: 'Official Events',
-    uploadedAt: '2024-06-15'
-  },
-  {
-    id: '2',
-    url: '/images/gallery/afrosai-workshop.jpg',
-    alt: 'AFROSAI-E Workshop participants',
-    caption: 'Participants at the AFROSAI-E Regional Workshop',
-    category: 'Workshops',
-    uploadedAt: '2024-05-20'
-  },
-  {
-    id: '3',
-    url: '/images/gallery/staff-training.jpg',
-    alt: 'Staff training session',
-    caption: 'ISSAI Implementation Training Program',
-    category: 'Training',
-    uploadedAt: '2024-03-25'
-  },
-  {
-    id: '4',
-    url: '/images/gallery/115-anniversary.jpg',
-    alt: '115th Anniversary celebration',
-    caption: 'Ghana Audit Service 115th Anniversary Celebration',
-    category: 'Celebrations',
-    uploadedAt: '2024-02-15'
-  },
-  {
-    id: '5',
-    url: '/images/gallery/management-meeting.jpg',
-    alt: 'Management team meeting',
-    caption: 'Annual Management Retreat',
-    category: 'Official Events',
-    uploadedAt: '2024-01-10'
-  },
-  {
-    id: '6',
-    url: '/images/gallery/world-bank-signing.jpg',
-    alt: 'MoU signing with World Bank',
-    caption: 'Signing ceremony for World Bank partnership',
-    category: 'Partnerships',
-    uploadedAt: '2024-06-10'
-  },
-  {
-    id: '7',
-    url: '/images/gallery/regional-directors.jpg',
-    alt: 'Regional Directors conference',
-    caption: 'Annual Regional Directors Conference',
-    category: 'Official Events',
-    uploadedAt: '2023-11-15'
-  },
-  {
-    id: '8',
-    url: '/images/gallery/it-audit-launch.jpg',
-    alt: 'IT Audit Manual launch',
-    caption: 'Launch of the updated IT Audit Manual',
-    category: 'Publications',
-    uploadedAt: '2024-04-15'
-  },
-  {
-    id: '9',
-    url: '/images/gallery/community-outreach.jpg',
-    alt: 'Community outreach program',
-    caption: 'Audit awareness community outreach',
-    category: 'Outreach',
-    uploadedAt: '2023-09-20'
-  }
-]
-
-export default defineEventHandler(async (event) => {
+export default defineEventHandler(async (event): Promise<{ images: GalleryImage[]; categories: string[] }> => {
   const query = getQuery(event)
+  const locale = getLocaleFromRequest(event)
+  const db = getDatabase()
 
-  let images = [...mockGallery]
+  const conditions = [isNull(schema.galleryImages.deletedAt)]
 
-  // Filter by category
-  if (query.category) {
-    images = images.filter(img => img.category === query.category)
+  if (query.category && typeof query.category === 'string') {
+    conditions.push(eq(schema.galleryImages.category, query.category))
   }
 
-  // Sort by upload date (newest first)
-  images.sort((a, b) => new Date(b.uploadedAt).getTime() - new Date(a.uploadedAt).getTime())
+  const images = await db
+    .select()
+    .from(schema.galleryImages)
+    .where(and(...conditions))
+    .orderBy(desc(schema.galleryImages.uploadedAt))
 
-  // Get unique categories
-  const categories = [...new Set(mockGallery.map(img => img.category))]
+  const imageIds = images.map((img) => img.id)
+  const translations =
+    imageIds.length > 0
+      ? await db
+          .select()
+          .from(schema.galleryImageTranslations)
+          .where(
+            sql`${schema.galleryImageTranslations.imageId} IN (${sql.join(imageIds, sql`, `)})`
+          )
+      : []
+
+  const translationsByImage = translations.reduce(
+    (acc, t) => {
+      if (!acc[t.imageId]) acc[t.imageId] = {}
+      acc[t.imageId][t.locale] = {
+        alt: t.alt,
+        caption: t.caption
+      }
+      return acc
+    },
+    {} as Record<number, Record<string, { alt: string; caption: string | null }>>
+  )
+
+  // Get album titles for images that belong to albums
+  const albumIds = [...new Set(images.filter((img) => img.albumId).map((img) => img.albumId!))]
+  const albumTranslations =
+    albumIds.length > 0
+      ? await db
+          .select()
+          .from(schema.galleryAlbumTranslations)
+          .where(
+            sql`${schema.galleryAlbumTranslations.albumId} IN (${sql.join(albumIds, sql`, `)})`
+          )
+      : []
+
+  const albumTitleByAlbumId = albumTranslations.reduce(
+    (acc, t) => {
+      if (t.locale === locale || (!acc[t.albumId] && t.locale === 'en')) {
+        acc[t.albumId] = t.title
+      }
+      return acc
+    },
+    {} as Record<number, string>
+  )
+
+  const imagesWithData = images.map((img) => ({
+    ...img,
+    translations: translationsByImage[img.id] || {},
+    albumTitle: img.albumId ? albumTitleByAlbumId[img.albumId] : undefined
+  }))
+
+  const transformed = transformGalleryImages(imagesWithData, locale)
+
+  // Filter by album title (category) if requested and the image has no direct category
+  let filtered = transformed
+  if (query.category && typeof query.category === 'string') {
+    filtered = transformed.filter((img) => img.category === query.category)
+  }
+
+  const allCategories = [...new Set(transformed.map((img) => img.category).filter(Boolean))] as string[]
 
   return {
-    images,
-    categories
+    images: filtered,
+    categories: allCategories
   }
 })

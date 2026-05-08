@@ -90,7 +90,7 @@
             </div>
 
             <!-- Language Switcher -->
-            <div class="hidden lg:flex items-center">
+            <!-- <div class="hidden lg:flex items-center">
               <select
                 v-model="currentLocale"
                 class="bg-white/10 border border-white/30 rounded px-2 py-0.5 text-xs text-white cursor-pointer hover:bg-white/20 focus:outline-none focus:border-white"
@@ -106,7 +106,7 @@
                   {{ loc.name }}
                 </option>
               </select>
-            </div>
+            </div> -->
 
             <!-- CitizensEye App -->
             <a
@@ -231,19 +231,19 @@
   } = useAccessibility()
 
   // i18n
-  const { locale, locales, setLocale } = useI18n()
+  // const { locale, locales, setLocale } = useI18n()
 
-  const currentLocale = ref(locale.value)
-  const availableLocales = computed(() =>
-    (locales.value as Array<{ code: string; name: string }>).map((l) => ({
-      code: l.code,
-      name: l.name
-    }))
-  )
+  // const currentLocale = ref(locale.value)
+  // const availableLocales = computed(() =>
+  //   (locales.value as Array<{ code: string; name: string }>).map((l) => ({
+  //     code: l.code,
+  //     name: l.name
+  //   }))
+  // )
 
-  function switchLocale() {
-    setLocale(currentLocale.value)
-  }
+  // function switchLocale() {
+  //   setLocale(currentLocale.value)
+  // }
 
   // Handle scroll effect
   const handleScroll = () => {

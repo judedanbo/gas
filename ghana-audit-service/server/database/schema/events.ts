@@ -63,8 +63,31 @@ export const eventTranslations = mysqlTable(
   ]
 )
 
+/**
+ * Event images table - Photos associated with events
+ */
+export const eventImages = mysqlTable(
+  'event_images',
+  {
+    id: int('id').primaryKey().autoincrement(),
+    eventId: int('event_id')
+      .notNull()
+      .references(() => events.id, { onDelete: 'cascade' }),
+    url: varchar('url', { length: 500 }).notNull(),
+    alt: varchar('alt', { length: 255 }).notNull(),
+    caption: varchar('caption', { length: 500 }),
+    sortOrder: int('sort_order').notNull().default(0)
+  },
+  (table) => [
+    index('idx_event_images_event').on(table.eventId),
+    index('idx_event_images_sort').on(table.eventId, table.sortOrder)
+  ]
+)
+
 // Type exports
 export type Event = typeof events.$inferSelect
 export type NewEvent = typeof events.$inferInsert
 export type EventTranslation = typeof eventTranslations.$inferSelect
 export type NewEventTranslation = typeof eventTranslations.$inferInsert
+export type EventImage = typeof eventImages.$inferSelect
+export type NewEventImage = typeof eventImages.$inferInsert

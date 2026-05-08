@@ -64,6 +64,12 @@ export type PublicationType =
   | 'strategy'
   | 'law'
 
+export interface NewsArticleImage {
+  url: string
+  alt: string
+  caption?: string
+}
+
 export interface NewsArticle {
   id: string
   title: string
@@ -75,6 +81,13 @@ export interface NewsArticle {
   thumbnail?: string
   category?: string
   tags?: string[]
+  images?: NewsArticleImage[]
+}
+
+export interface EventImage {
+  url: string
+  alt: string
+  caption?: string
 }
 
 export interface Event {
@@ -82,12 +95,14 @@ export interface Event {
   title: string
   slug: string
   description: string
+  content?: string
   startDate: string
   endDate?: string
   location?: string
   isVirtual?: boolean
   registrationUrl?: string
   thumbnail?: string
+  images?: EventImage[]
 }
 
 // ============================================

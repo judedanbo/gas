@@ -25,6 +25,7 @@ logs
 
 # Database
 data/
+!server/database/seeds/data/
 *.db
 *.db-journal
 *.db-shm

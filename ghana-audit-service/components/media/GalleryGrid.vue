@@ -9,10 +9,12 @@
         :aria-label="`View photo: ${image.caption || image.alt}`"
         @click="openLightbox(index)"
       >
-        <!-- Placeholder when no actual image -->
-        <div class="absolute inset-0 bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center">
-          <Icon name="heroicons:photo" class="w-10 h-10 text-primary/30 dark:text-primary/40" aria-hidden="true" />
-        </div>
+        <img
+          :src="image.url"
+          :alt="image.alt"
+          class="absolute inset-0 w-full h-full object-cover"
+          loading="lazy"
+        >
 
         <!-- Overlay -->
         <div class="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
@@ -63,15 +65,12 @@
 
         <!-- Image Container -->
         <div class="max-w-4xl max-h-[80vh] p-4" @click.stop>
-          <div class="bg-gray-800 rounded-lg overflow-hidden">
-            <!-- Placeholder Image -->
-            <div class="aspect-video bg-gradient-to-br from-gray-700 to-gray-800 flex items-center justify-center">
-              <div class="text-center text-white">
-                <Icon name="heroicons:photo" class="w-16 h-16 text-white/30 mx-auto mb-4" aria-hidden="true" />
-                <p class="text-lg">{{ currentImage?.alt }}</p>
-              </div>
-            </div>
-          </div>
+          <img
+            v-if="currentImage"
+            :src="currentImage.url"
+            :alt="currentImage.alt"
+            class="max-w-full max-h-[75vh] rounded-lg"
+          >
 
           <!-- Caption -->
           <div v-if="currentImage" class="text-center mt-4 text-white">
