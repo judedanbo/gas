@@ -71,4 +71,14 @@ Has content.`
     const result = parseBioSections(bio)
     expect(result).toEqual([{ heading: 'Real Section', content: 'Has content.' }])
   })
+
+  it('skips heading-only sections with no body text', () => {
+    const bio = `## Solo Heading
+## Real Section
+Has content.`
+    const result = parseBioSections(bio)
+    expect(result).toEqual([
+      { heading: 'Real Section', content: 'Has content.' }
+    ])
+  })
 })
