@@ -179,6 +179,54 @@
   --z-tooltip: 700;
 
   /* ============================================
+     TAILWIND COLOR BRIDGE
+     These RGB channel values power Tailwind's color utilities.
+     Override them under :root.high-contrast to change all colors site-wide.
+     ============================================ */
+
+  /* Primary (Ghana Green: #006B3F) */
+  --tw-primary: 0 107 63;
+  --tw-primary-dark: 0 77 44;
+  --tw-primary-light: 0 139 82;
+
+  /* Secondary (Ghana Red: #CE1126) */
+  --tw-secondary: 206 17 38;
+  --tw-secondary-dark: 165 14 31;
+  --tw-secondary-light: 229 29 51;
+
+  /* Accent (Ghana Gold: #FCD116) */
+  --tw-accent: 252 209 22;
+  --tw-accent-dark: 212 173 0;
+  --tw-accent-light: 255 225 77;
+
+  /* Ghana flag color aliases */
+  --tw-ghana-red: 206 17 38;
+  --tw-ghana-gold: 252 209 22;
+  --tw-ghana-green: 0 107 63;
+
+  /* Gray scale */
+  --tw-gray-50: 249 250 251;
+  --tw-gray-100: 243 244 246;
+  --tw-gray-200: 229 231 235;
+  --tw-gray-300: 209 213 219;
+  --tw-gray-400: 156 163 175;
+  --tw-gray-500: 107 114 128;
+  --tw-gray-600: 75 85 99;
+  --tw-gray-700: 55 65 81;
+  --tw-gray-800: 31 41 55;
+  --tw-gray-900: 17 24 39;
+
+  /* Functional colors */
+  --tw-success: 46 125 50;
+  --tw-success-light: 76 175 80;
+  --tw-warning: 245 124 0;
+  --tw-warning-light: 255 152 0;
+  --tw-error: 198 40 40;
+  --tw-error-light: 239 83 80;
+  --tw-info: 21 101 192;
+  --tw-info-light: 33 150 243;
+
+  /* ============================================
      ACCESSIBILITY
      ============================================ */
   --text-scale: 1;
