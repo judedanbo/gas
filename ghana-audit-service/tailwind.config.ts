@@ -24,39 +24,39 @@ export default {
         primary: {
           DEFAULT: 'rgb(var(--tw-primary) / <alpha-value>)',
           dark: 'rgb(var(--tw-primary-dark) / <alpha-value>)',
-          light: 'rgb(var(--tw-primary-light) / <alpha-value>)',
+          light: 'rgb(var(--tw-primary-light) / <alpha-value>)'
         },
 
         // Secondary (Red)
         secondary: {
           DEFAULT: 'rgb(var(--tw-secondary) / <alpha-value>)',
           dark: 'rgb(var(--tw-secondary-dark) / <alpha-value>)',
-          light: 'rgb(var(--tw-secondary-light) / <alpha-value>)',
+          light: 'rgb(var(--tw-secondary-light) / <alpha-value>)'
         },
 
         // Accent (Gold)
         accent: {
           DEFAULT: 'rgb(var(--tw-accent) / <alpha-value>)',
           dark: 'rgb(var(--tw-accent-dark) / <alpha-value>)',
-          light: 'rgb(var(--tw-accent-light) / <alpha-value>)',
+          light: 'rgb(var(--tw-accent-light) / <alpha-value>)'
         },
 
         // Functional Colors
         success: {
           DEFAULT: 'rgb(var(--tw-success) / <alpha-value>)',
-          light: 'rgb(var(--tw-success-light) / <alpha-value>)',
+          light: 'rgb(var(--tw-success-light) / <alpha-value>)'
         },
         warning: {
           DEFAULT: 'rgb(var(--tw-warning) / <alpha-value>)',
-          light: 'rgb(var(--tw-warning-light) / <alpha-value>)',
+          light: 'rgb(var(--tw-warning-light) / <alpha-value>)'
         },
         error: {
           DEFAULT: 'rgb(var(--tw-error) / <alpha-value>)',
-          light: 'rgb(var(--tw-error-light) / <alpha-value>)',
+          light: 'rgb(var(--tw-error-light) / <alpha-value>)'
         },
         info: {
           DEFAULT: 'rgb(var(--tw-info) / <alpha-value>)',
-          light: 'rgb(var(--tw-info-light) / <alpha-value>)',
+          light: 'rgb(var(--tw-info-light) / <alpha-value>)'
         },
 
         // Gray scale
@@ -70,8 +70,8 @@ export default {
           600: 'rgb(var(--tw-gray-600) / <alpha-value>)',
           700: 'rgb(var(--tw-gray-700) / <alpha-value>)',
           800: 'rgb(var(--tw-gray-800) / <alpha-value>)',
-          900: 'rgb(var(--tw-gray-900) / <alpha-value>)',
-        },
+          900: 'rgb(var(--tw-gray-900) / <alpha-value>)'
+        }
       },
 
       // Typography

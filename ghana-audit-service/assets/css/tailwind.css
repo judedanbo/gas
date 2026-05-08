@@ -525,7 +525,7 @@
    ============================================ */
 
 /* Links: underline all links (WCAG: don't rely on color alone to convey meaning) */
-:root.high-contrast a:not(.no-underline):not([class*="btn"]) {
+:root.high-contrast a:not(.no-underline):not([class*='btn']) {
   text-decoration: underline;
 }
 
