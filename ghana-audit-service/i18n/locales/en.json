@@ -58,6 +58,10 @@
     "ourVision": "Our Vision",
     "ourMandate": "Our Mandate",
     "latestReports": "Latest Audit Reports",
+    "latestReportsDescription": "Access the most recent reports from the Auditor-General",
+    "viewAllReports": "View All Reports",
+    "unableToLoadReports": "Unable to load reports. Please try again later.",
+    "noReportsAvailable": "No reports available at this time.",
     "latestNews": "Latest News",
     "stats": {
       "years": "Years of Service",

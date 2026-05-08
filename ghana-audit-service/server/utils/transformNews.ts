@@ -15,14 +15,31 @@ interface DbNewsArticle {
   deletedAt: Date | string | null
 }
 
+interface ArticleImage {
+  url: string
+  alt: string
+  caption?: string
+}
+
 interface NewsArticleWithTranslations extends DbNewsArticle {
   translations: Record<string, { title: string; excerpt: string; content: string }>
   tags?: string[]
+  images?: ArticleImage[]
 }
 
-/**
- * Format date to ISO string for API response
- */
+function stripHtml(html: string): string {
+  return html
+    .replace(/<[^>]+>/g, '')
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/\s+/g, ' ')
+    .trim()
+}
+
 function formatDate(date: Date | string | null): string {
   if (!date) return ''
   const d = date instanceof Date ? date : new Date(date)
@@ -49,12 +66,13 @@ export function transformNewsArticle(
     title: translation.title,
     slug: article.slug,
     content: translation.content,
-    excerpt: translation.excerpt,
+    excerpt: stripHtml(translation.excerpt),
     publishedAt: formatDate(article.publishedAt),
     author: article.author || undefined,
     thumbnail: article.thumbnail || undefined,
     category: article.category || undefined,
-    tags: article.tags
+    tags: article.tags,
+    images: article.images?.length ? article.images : undefined
   }
 }
 

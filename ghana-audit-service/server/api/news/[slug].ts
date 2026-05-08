@@ -54,6 +54,13 @@ export default defineEventHandler(async (event) => {
     .innerJoin(schema.tags, eq(schema.newsArticleTags.tagId, schema.tags.id))
     .where(eq(schema.newsArticleTags.newsArticleId, article.id))
 
+  // Fetch article images
+  const articleImages = await db
+    .select()
+    .from(schema.newsArticleImages)
+    .where(eq(schema.newsArticleImages.newsArticleId, article.id))
+    .orderBy(schema.newsArticleImages.sortOrder)
+
   // Group translations by locale
   const translationsByLocale = translations.reduce(
     (acc, t) => {
@@ -67,11 +74,16 @@ export default defineEventHandler(async (event) => {
     {} as Record<string, { title: string; excerpt: string; content: string }>
   )
 
-  // Combine article with translations and tags
+  // Combine article with translations, tags, and images
   const articleWithData = {
     ...article,
     translations: translationsByLocale,
-    tags: articleTags.map((t) => t.tagName)
+    tags: articleTags.map((t) => t.tagName),
+    images: articleImages.map((img) => ({
+      url: img.url,
+      alt: img.alt,
+      caption: img.caption || undefined
+    }))
   }
 
   // Transform to public format
