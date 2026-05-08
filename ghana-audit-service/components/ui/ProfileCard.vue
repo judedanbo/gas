@@ -32,8 +32,7 @@
         <UiBadge :variant="badgeVariant" size="sm">{{ badge }}</UiBadge>
       </div>
 
-      <!-- Description -->
-      <!-- <p v-if="description" class="text-gray-600 dark:text-gray-400 mb-4">{{ description }}</p> -->
+      <p v-if="bio" class="text-gray-600 dark:text-gray-400 mb-4 line-clamp-4">{{ bio }}</p>
 
       <!-- Additional content slot -->
       <slot />
@@ -51,7 +50,7 @@
     name: string
     title?: string
     subtitle?: string
-    description?: string
+    bio?: string
     image?: string
     badge?: string
     badgeVariant?: 'primary' | 'secondary' | 'accent' | 'success' | 'info'
@@ -69,7 +68,7 @@
     badgeVariant: 'primary',
     title: undefined,
     subtitle: undefined,
-    description: undefined,
+    bio: undefined,
     image: undefined,
     badge: undefined
   })

@@ -22,6 +22,7 @@
     "db:apply": "tsx server/database/migrate.ts",
     "db:studio": "drizzle-kit studio",
     "db:seed": "npx tsx --env-file=.env server/database/seed.ts",
+    "db:seed:departments": "npx tsx server/database/seeds/departments.ts",
     "db:seed:management-team": "npx tsx server/database/seeds/management-team.ts",
     "format": "prettier --write .",
     "format:check": "prettier --check .",

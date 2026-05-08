@@ -1,14 +1,19 @@
 /**
  * Seed script for management team data
  * Run with: npx tsx server/database/seeds/management-team.ts
+ * Use --force to clear existing data and reseed:
+ *   npx tsx server/database/seeds/management-team.ts --force
+ * Requires departments seed to have been run first (departments.ts)
  */
 
 import 'dotenv/config'
 import { drizzle } from 'drizzle-orm/mysql2'
+import { eq, sql } from 'drizzle-orm'
 import mysql from 'mysql2/promise'
 import * as schema from '../schema/index'
 
-// Database configuration
+const force = process.argv.includes('--force')
+
 const dbConfig = {
   host: process.env.DB_HOST || 'localhost',
   port: Number(process.env.DB_PORT) || 3306,
@@ -17,148 +22,210 @@ const dbConfig = {
   database: process.env.DB_NAME || 'ghana_audit_service'
 }
 
-// Original data from management-team.vue
 const auditorGeneral = {
   slug: 'johnson-akuamoah-asiedu',
   role: 'auditor-general' as const,
   email: 'info@audit.gov.gh',
-  photo: '/images/ags/johnson_akuamoah_asiedu.jpg',
+  photo: '/images/management/johnson-akuamoah-asiedu.jpg',
   displayOrder: 0,
   translations: {
     en: {
       name: 'Johnson Akuamoah Asiedu',
       title: 'Auditor-General of Ghana',
-      bio: 'Mr. Johnson Akuamoah Asiedu is the Auditor-General of Ghana, responsible for auditing the public accounts of Ghana and reporting to Parliament. He leads the Ghana Audit Service in fulfilling its constitutional mandate of ensuring accountability and transparency in the management of public resources.'
+      bio: `## Career Background
+Mr. Johnson Akuamoah Asiedu serves as the Auditor-General, having been appointed by President Nana Addo Dankwa Akufo-Addo. Prior to this appointment, he had already held the position of Acting Auditor-General and occupied several significant roles within the organization.
+
+He previously served as Deputy Auditor-General (DAG) in charge of Commercial Audit Department, DAG for Finance, Administration and Human Resource, and DAG for Performance Audits Department.
+
+He joined the Audit Service in December 2004 as an Assistant Auditor-General and Head of the Internal Audit Unit. Before that, he spent seven years at the Serious Fraud Office (SFO), now known as the Economic and Organised Crime Office (EOCO), where he advanced to become Head of the Finance Department.
+
+## International Experience
+Mr. Asiedu has conducted audits for various international organizations including the Regional Centre for Training in Aerospace Surveys (Nigeria), INTOSAI (Austria), the International Maritime Organization (UK), and the International Organisation for Migration. He has also audited Ghana's Scholarship Secretariat and DANIDA-funded parliamentary projects.
+
+## Professional Development
+He is recognized as a resource person for AFROSAI-E and INTOSAI International Development Initiative, facilitating workshops across Ghana, The Gambia, South Africa, and Tanzania. Between 2013 and 2015, he served as the principal facilitator for GIZ-sponsored Leadership and Change Management workshops at the Audit Service.
+
+He has participated in international conferences including INTOSAI workshops on Performance Management (Norway), Performance Audit Symposiums (Canada), Commonwealth meetings on public sector accounting (UK), and programs at the International Auditor Regulatory Institute (Washington, DC).
+
+## Professional Qualifications
+Mr. Asiedu is a Chartered Accountant and member of the Institute of Chartered Accountants (Ghana) and the Institute of Internal Auditors. He holds an MBA in Strategic Management from Paris Graduate School of Management and a BSc. Administration (Accounting) from the University of Ghana, Legon.
+
+## Personal Interests
+He enjoys football, reading, and gospel preaching.`
     }
   }
 }
 
 const deputyAuditorsGeneral = [
   {
-    slug: 'dag-central-government',
+    slug: 'eugenia-shorme-nortey',
     role: 'deputy-auditor-general' as const,
-    icon: 'heroicons:building-library',
+    departmentSlug: 'finance-admin-hr',
+    icon: 'heroicons:wrench-screwdriver',
+    photo: '/images/management/eugenia-shorme-nortey.jpg',
     displayOrder: 1,
     translations: {
       en: {
-        name: 'Deputy Auditor-General',
-        title: 'Central Government',
-        bio: 'Oversees audits of central government ministries, departments, and agencies.'
+        name: 'Eugenia Shorme Nortey',
+        title: 'Deputy Auditor-General, Finance, Administration and Human Resource Department',
+        bio: `## Career Background
+Eugenia Shorme Nortey is a highly accomplished finance executive with over 19 years of experience in auditing, finance, and leadership. In her current position, she leverages her technical expertise, leadership acumen, and passion for excellence to drive results at the Audit Service of Ghana, focusing on Finance, Administration, and Human Resources responsibilities.
+
+## Education
+She holds an MBA in Accounting and Finance from the University of Professional Studies, Accra, and an HND in Accounting from Accra Technical University. She is a Chartered Accountant and a member of the Chartered Institute of Taxation, Ghana.
+
+## Career Achievements
+Throughout her two-decade career, Eugenia has held progressively senior roles, including Director of Audit and Assistant Auditor General positions. Notable achievements include recognition as part of an outstanding internal audit team in 2005 and service on the Budget Committee's rate-fixing sub-committee in 2007.
+
+Her audit experience encompasses foreign missions and domestic assignments. Her leadership has been instrumental in strengthening operations, making departments efficient and accessible to all stakeholders.
+
+## Personal Interests
+Outside work, she values family time and enjoys listening to gospel music.`
       }
-    },
-    responsibilities: [
-      { displayOrder: 0, translations: { en: { description: 'Audits of government ministries' } } },
-      { displayOrder: 1, translations: { en: { description: 'Statutory bodies audits' } } },
-      { displayOrder: 2, translations: { en: { description: 'Consolidated fund audits' } } },
-      {
-        displayOrder: 3,
-        translations: { en: { description: 'Special audits and investigations' } }
-      }
-    ]
+    }
   },
   {
-    slug: 'dag-local-government',
+    slug: 'samuel-frimpong-manso',
     role: 'deputy-auditor-general' as const,
-    icon: 'heroicons:building-office',
+    departmentSlug: 'performance-special-audit',
+    icon: 'heroicons:chart-bar',
+    photo: '/images/management/samuel-frimpong-manso.jpg',
     displayOrder: 2,
     translations: {
       en: {
-        name: 'Deputy Auditor-General',
-        title: 'Local Government',
-        bio: 'Leads audit operations for all Metropolitan, Municipal, and District Assemblies.'
+        name: 'Samuel Frimpong-Manso',
+        title: 'Deputy Auditor-General, Performance and Special Audit Department',
+        bio: `## Career Background
+Mr. Samuel Frimpong-Manso held multiple positions within Ghana's Audit Service prior to his current role, including Assistant Auditor-General, Director of Audit, Assistant Director of Audit, and Principal Auditor. He joined the organization in March 2008 and has worked across several departments including the Educational Institutions and District Assemblies Department – Southern Zone (EIDA-SZ) and the District Assemblies Department (DAD).
+
+## Audit Experience
+Domestically, his experience encompasses District Wide Assistance Programme (DWAP) audits, Due Diligence Audits, Local Government Capacity Support, and USAID-funded specialized assignments. Internationally, he has directed audit teams to Ghana Missions in Algiers (2009), Havana (2015), Tokyo (2019), and Berlin (2024).
+
+## Capacity Building
+He functions as a facilitator and resource person, supporting training for Audit Service staff and external institutions including the Ghana Anti-Corruption Coalition, Inter-Ministerial Coordinating Committee on Decentralisation, Private Enterprise Federation, and Centre for Local Governance Advocacy. Between 2010 and 2025, he represented the Service on the District Development Facility Technical Working Group and District Assemblies Common Fund matters.
+
+## Professional Credentials
+Mr. Frimpong-Manso is a Chartered Accountant, Fellow of the Association of Chartered Certified Accountants (FCCA, UK), member of the Institute of Chartered Accountants, Ghana (ICAG), and member of the Chartered Institute of Taxation, Ghana (CITG).
+
+## Education
+He holds a BA (Hons) in Religions and Philosophy from the University of Ghana, Legon (1998) and an MBA (Finance) from Wisconsin International University College, Legon (2010).
+
+## Publications
+In October 2025, he authored and launched a book on public sector auditing practices.`
       }
-    },
-    responsibilities: [
-      { displayOrder: 0, translations: { en: { description: 'MMDA financial audits' } } },
-      {
-        displayOrder: 1,
-        translations: { en: { description: 'District Assemblies Common Fund audits' } }
-      },
-      {
-        displayOrder: 2,
-        translations: { en: { description: 'Local government compliance reviews' } }
-      },
-      {
-        displayOrder: 3,
-        translations: { en: { description: 'Regional coordinating council audits' } }
-      }
-    ]
+    }
   },
   {
-    slug: 'dag-education-sector',
+    slug: 'roberta-assiamah-appiah',
     role: 'deputy-auditor-general' as const,
+    departmentSlug: 'eida-southern-zone',
     icon: 'heroicons:academic-cap',
+    photo: '/images/management/roberta-assiamah-appiah.jpg',
     displayOrder: 3,
     translations: {
       en: {
-        name: 'Deputy Auditor-General',
-        title: 'Education Sector',
-        bio: 'Responsible for auditing educational institutions and sector funds.'
+        name: 'Roberta Assiamah-Appiah',
+        title: 'Deputy Auditor-General, Educational Institutions and District Assemblies - Southern Zone',
+        bio: `## Career Background
+Ms. Roberta Assiamah-Appiah joined the Audit Service in 1991. She was appointed Acting Deputy Auditor-General in 2010 and received confirmation as substantive DAG in 2012. Prior to her current role, she served as DAG for Finance and Administration Department.
+
+## Special Assignments
+She has undertaken audits of Ghana's Mission in Berne, Switzerland; Ghana Institute of Management and Public Administration (GIMPA); Driver, Vehicle and Licensing Authority (DVLA); and Judicial Service projects funded by DANIDA and the World Bank.
+
+## Professional Development
+Her professional development includes training in International Public Sector Accounting Standards (IPSAS); an Institutional Leadership Workshop for Senior Managers in South Africa; the World Congress of Accountants in Malaysia; and a Management Development Programme for Senior Managers in South Africa.
+
+## Qualifications
+She holds Chartered Accountant credentials and an Executive MBA in Finance. She achieved recognition as the overall best candidate in the May 2004 examinations of the Institute of Chartered Accountants, Ghana.
+
+## Personal Interests
+She enjoys reading and watching football.`
       }
-    },
-    responsibilities: [
-      { displayOrder: 0, translations: { en: { description: 'University audits' } } },
-      { displayOrder: 1, translations: { en: { description: 'GETFund audits' } } },
-      { displayOrder: 2, translations: { en: { description: 'Secondary education audits' } } },
-      { displayOrder: 3, translations: { en: { description: 'Education sector compliance' } } }
-    ]
+    }
   },
   {
-    slug: 'dag-commercial-audits',
+    slug: 'samuel-nii-odartey-lamptey',
     role: 'deputy-auditor-general' as const,
+    departmentSlug: 'commercial-audit',
     icon: 'heroicons:briefcase',
+    photo: '/images/management/samuel-nii-odartey-lamptey.jpg',
     displayOrder: 4,
     translations: {
       en: {
-        name: 'Deputy Auditor-General',
-        title: 'Commercial Audits',
-        bio: 'Oversees audits of state-owned enterprises and commercial entities.'
+        name: 'Samuel Nii Odartey Lamptey',
+        title: 'Deputy Auditor-General, Commercial Audit Department',
+        bio: `## Career Background
+Samuel Nii Odartey Lamptey is a Chartered Accountant with an MBA in Banking and Finance and an MSc in Public Financial Management. His career spans over 24 years in public financial management, beginning at Accra Technical University (2001–2006) before joining Ghana Audit Service in 2006.
+
+## Domestic Audit Experience
+From November 2006 through December 2020, he worked within the Central Government Audits Department, conducting audits of Ghana's Public Accounts, General Government Accounts, and Ministries, Departments and Agencies. He also performed specialized audits of initiatives funded by World Bank, DFID, USAID, and DANIDA.
+
+## International Audit Experience
+Beyond domestic work, Mr. Lamptey has audited three United Nations bodies: the International Maritime Organisation (IMO, Malta), International Organization for Migration (IOM, Turkey, Belgium, Mozambique, Costa Rica, China, Thailand, Ethiopia, and Zambia), and the INTOSAI Secretariat (Austria), between 2014 and 2024.
+
+## Capacity Building
+As a public financial management expert with AFROSAI-E, he has facilitated regional workshops since 2014, providing technical support to sister nations in fiscal governance, debt sustainability audits, and strategic planning.
+
+## Regional Leadership
+He served as Assistant Auditor-General and Regional Head for Western-North Region from January 2021 through November 2025, overseeing District Audit Offices in Bibiani, Sefwi Wiawso, and Enchi, before his appointment to his current position.`
       }
-    },
-    responsibilities: [
-      { displayOrder: 0, translations: { en: { description: 'State-owned enterprise audits' } } },
-      { displayOrder: 1, translations: { en: { description: 'Joint venture audits' } } },
-      { displayOrder: 2, translations: { en: { description: 'Commercial compliance reviews' } } },
-      { displayOrder: 3, translations: { en: { description: 'Public corporation audits' } } }
-    ]
+    }
   },
   {
-    slug: 'dag-performance-audit',
+    slug: 'judith-kwaaku',
     role: 'deputy-auditor-general' as const,
-    icon: 'heroicons:chart-bar',
+    departmentSlug: 'central-government-audit',
+    icon: 'heroicons:building-library',
+    photo: '/images/management/judith-kwaaku.jpg',
     displayOrder: 5,
     translations: {
       en: {
-        name: 'Deputy Auditor-General',
-        title: 'Performance Audit',
-        bio: 'Leads value-for-money and performance audit operations.'
+        name: 'Judith Kwaaku',
+        title: 'Deputy Auditor-General, Central Government Audit Department',
+        bio: `## Career Background
+Judith Kwaaku is a Chartered Accountant with over three decades of experience in public sector auditing. She joined the Audit Service in 1990 and has progressed through multiple leadership positions, including Assistant Auditor-General, Director of Audit, and Assistant Director. Her audit experience spans educational institutions, district assemblies, commercial entities, and central government operations.
+
+## Notable Assignments
+Her work includes special audits of World Bank, GAVI, and DANIDA donor-funded projects, plus international assignments with the International Maritime Organization and International Organization for Migration in Geneva, the Philippines, Guinea, and Malaysia. She conducted peacekeeping audits in Bouaké, Côte d'Ivoire, and audits at Ghana's diplomatic missions in Paris and Abidjan.
+
+## Professional Qualifications
+She earned an MSc in Finance and Accounting and a BSc in Accounting from Kwame Nkrumah University of Science and Technology and Central University College. She is recognized for strong leadership, a results-oriented approach, and commitment to excellence, and is characterized as a diligent and responsible professional who consistently aligns technical expertise with strategic goals.
+
+## Personal Interests
+She enjoys reading and solving puzzles.`
       }
-    },
-    responsibilities: [
-      { displayOrder: 0, translations: { en: { description: 'Performance audit planning' } } },
-      { displayOrder: 1, translations: { en: { description: 'Value-for-money assessments' } } },
-      { displayOrder: 2, translations: { en: { description: 'Program effectiveness reviews' } } },
-      { displayOrder: 3, translations: { en: { description: 'Impact evaluations' } } }
-    ]
+    }
   },
   {
-    slug: 'dag-corporate-services',
+    slug: 'george-swanzy-winful',
     role: 'deputy-auditor-general' as const,
-    icon: 'heroicons:wrench-screwdriver',
+    departmentSlug: 'eida-northern-zone',
+    icon: 'heroicons:map',
+    photo: '/images/management/george-swanzy-winful.jpg',
     displayOrder: 6,
     translations: {
       en: {
-        name: 'Deputy Auditor-General',
-        title: 'Corporate Services',
-        bio: 'Manages internal operations, HR, and administrative functions.'
+        name: 'George Swanzy Winful',
+        title: 'Deputy Auditor-General, Educational Institutions and District Assemblies - Northern Zone',
+        bio: `## Career Background
+Mr. George Swanzy Winful is a seasoned auditor and finance professional with more than 34 years of service in Ghana's public sector and international audit practice.
+
+## Qualifications
+He is a Fellow of the Association of Chartered Certified Accountants (FCCA), holds an MBA in Public Finance, and is a member of the Institute of Chartered Accountants, Ghana (ICA).
+
+## Public Sector Career
+Since 1990 with the Audit Service, he has been instrumental in advancing accountability and financial oversight across government. His notable contributions include pioneering the Performance Audit Department, serving as focal point during Ghana Integrated Financial Management Information System rollout, and leading audits producing significant state savings while reforming payroll, public enterprises, and financial regulations.
+
+## Ministry of Finance
+From 2021 to 2024, he was seconded to the Ministry of Finance as Director of the Revenue Policy Division, where he led the Medium-Term Revenue Strategy (2024–2027) and established Revenue Assurance initiatives. He earned formal commendation from the Head of Civil Service in 2024.
+
+## International Experience
+He has represented Ghana at the UN Panel of External Auditors and led audit assignments at the International Maritime Organisation and International Organization for Migration. He also trained in performance auditing under AFROSAI-E across Africa.
+
+## Personal Details
+Born May 10, 1967 in Dixcove, Western Region; married with two children; enjoys table tennis and mentors public finance professionals.`
       }
-    },
-    responsibilities: [
-      { displayOrder: 0, translations: { en: { description: 'Human resource management' } } },
-      { displayOrder: 1, translations: { en: { description: 'Financial administration' } } },
-      { displayOrder: 2, translations: { en: { description: 'Information technology' } } },
-      { displayOrder: 3, translations: { en: { description: 'Corporate planning' } } }
-    ]
+    }
   }
 ]
 
@@ -174,20 +241,23 @@ async function seed() {
   const db = drizzle(pool, { schema, mode: 'default' })
 
   try {
-    // Check if data already exists
     const existingMembers = await db.select().from(schema.managementTeam)
     if (existingMembers.length > 0) {
-      console.log(`Found ${existingMembers.length} existing management team members.`)
-      console.log(
-        'Skipping seed to avoid duplicates. Delete existing data first if you want to reseed.'
-      )
-      await pool.end()
-      return
+      if (!force) {
+        console.log(`Found ${existingMembers.length} existing management team members.`)
+        console.log('Skipping seed to avoid duplicates. Use --force to clear and reseed.')
+        return
+      }
+      console.log(`Clearing ${existingMembers.length} existing management team members (--force)...`)
+      await db.execute(sql`DELETE FROM ${schema.managementTeamResponsibilityTranslations}`)
+      await db.execute(sql`DELETE FROM ${schema.managementTeamResponsibilities}`)
+      await db.execute(sql`DELETE FROM ${schema.managementTeamTranslations}`)
+      await db.execute(sql`DELETE FROM ${schema.managementTeam}`)
     }
 
     console.log('Seeding management team data...')
 
-    // Insert Auditor-General
+    // Insert Auditor-General (no department)
     console.log('Inserting Auditor-General...')
     const [agResult] = await db.insert(schema.managementTeam).values({
       slug: auditorGeneral.slug,
@@ -200,7 +270,6 @@ async function seed() {
 
     const agId = agResult.insertId
 
-    // Insert AG translation
     await db.insert(schema.managementTeamTranslations).values({
       managementTeamId: agId,
       locale: 'en',
@@ -211,20 +280,36 @@ async function seed() {
 
     console.log(`  - Created: ${auditorGeneral.translations.en.name}`)
 
-    // Insert Deputy Auditors-General
+    // Insert Deputy Auditors-General (with department linkage)
     console.log('Inserting Deputy Auditors-General...')
+    let dagCount = 0
     for (const dag of deputyAuditorsGeneral) {
+      // Look up department by slug
+      const [dept] = await db
+        .select()
+        .from(schema.departments)
+        .where(eq(schema.departments.slug, dag.departmentSlug))
+
+      if (!dept) {
+        console.warn(
+          `  ⚠ Department '${dag.departmentSlug}' not found. Run departments.ts seed first.`
+        )
+        console.warn(`    Skipping ${dag.translations.en.name}`)
+        continue
+      }
+
       const [dagResult] = await db.insert(schema.managementTeam).values({
         slug: dag.slug,
         role: dag.role,
+        departmentId: dept.id,
         icon: dag.icon,
+        photo: dag.photo,
         displayOrder: dag.displayOrder,
         isActive: true
       })
 
       const dagId = dagResult.insertId
 
-      // Insert DAG translation
       await db.insert(schema.managementTeamTranslations).values({
         managementTeamId: dagId,
         locale: 'en',
@@ -233,34 +318,13 @@ async function seed() {
         bio: dag.translations.en.bio
       })
 
-      // Insert responsibilities
-      for (const resp of dag.responsibilities) {
-        const [respResult] = await db.insert(schema.managementTeamResponsibilities).values({
-          managementTeamId: dagId,
-          displayOrder: resp.displayOrder
-        })
-
-        const respId = respResult.insertId
-
-        // Insert responsibility translation
-        await db.insert(schema.managementTeamResponsibilityTranslations).values({
-          responsibilityId: respId,
-          locale: 'en',
-          description: resp.translations.en.description
-        })
-      }
-
-      console.log(
-        `  - Created: ${dag.translations.en.name} (${dag.translations.en.title}) with ${dag.responsibilities.length} responsibilities`
-      )
+      dagCount++
+      console.log(`  - Created: ${dag.translations.en.name} → ${dept.slug}`)
     }
 
     console.log('\nSeed completed successfully!')
     console.log(`  - 1 Auditor-General`)
-    console.log(`  - ${deputyAuditorsGeneral.length} Deputy Auditors-General`)
-    console.log(
-      `  - ${deputyAuditorsGeneral.reduce((acc, dag) => acc + dag.responsibilities.length, 0)} responsibilities`
-    )
+    console.log(`  - ${dagCount} Deputy Auditors-General`)
   } catch (error) {
     console.error('Error seeding data:', error)
     throw error
@@ -270,7 +334,6 @@ async function seed() {
   }
 }
 
-// Run the seed
 seed().catch((error) => {
   console.error('Seed failed:', error)
   process.exit(1)

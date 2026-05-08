@@ -26,34 +26,39 @@
       <section v-if="auditorGeneral" class="section">
         <div class="container">
           <div class="max-w-[900px] mx-auto">
-            <UiProfileCard
-              :name="auditorGeneral.name"
-              :title="auditorGeneral.title"
-              :description="auditorGeneral.bio"
-              :image="auditorGeneral.photo || '/images/ags/johnson_akuamoah_asiedu.jpg'"
-              size="lg"
-              featured
+            <NuxtLink
+              :to="`/about/management-team/${auditorGeneral.slug}`"
+              class="block no-underline text-inherit hover:no-underline"
             >
-              <template #default>
-                <UiBadge variant="accent" size="lg" class="mb-4">Auditor-General</UiBadge>
-              </template>
-              <template v-if="auditorGeneral.email" #actions>
-                <a
-                  :href="`mailto:${auditorGeneral.email}`"
-                  class="no-underline hover:text-primary transition-colors"
-                >
-                  <UiIconText icon="heroicons:envelope" color="default">{{
-                    auditorGeneral.email
-                  }}</UiIconText>
-                </a>
-              </template>
-            </UiProfileCard>
+              <UiProfileCard
+                :name="auditorGeneral.name"
+                :title="auditorGeneral.title"
+                :bio="getCareerBackground(auditorGeneral.bio)"
+                :image="auditorGeneral.photo || '/images/ags/johnson_akuamoah_asiedu.jpg'"
+                size="lg"
+                featured
+              >
+                <template #default>
+                  <UiBadge variant="accent" size="lg" class="mb-4">Auditor-General</UiBadge>
+                </template>
+                <template v-if="auditorGeneral.email" #actions>
+                  <a
+                    :href="`mailto:${auditorGeneral.email}`"
+                    class="no-underline hover:text-primary transition-colors"
+                  >
+                    <UiIconText icon="heroicons:envelope" color="default">{{
+                      auditorGeneral.email
+                    }}</UiIconText>
+                  </a>
+                </template>
+              </UiProfileCard>
+            </NuxtLink>
           </div>
         </div>
       </section>
 
       <!-- Organization Chart -->
-      <section v-if="deputyAuditorsGeneral.length > 0" class="section bg-gray-50 dark:bg-gray-900">
+      <!-- <section v-if="deputyAuditorsGeneral.length > 0" class="section bg-gray-50 dark:bg-gray-900">
         <div class="container">
           <UiSectionHeader
             title="Organizational Structure"
@@ -90,7 +95,7 @@
             </div>
           </div>
         </div>
-      </section>
+      </section> -->
 
       <!-- Deputy Auditors-General Profiles -->
       <section v-if="deputyAuditorsGeneral.length > 0" class="section">
@@ -99,24 +104,32 @@
             title="Deputy Auditors-General"
             description="Senior leadership overseeing key operational areas"
           />
-          <div class="flex flex-col gap-8">
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
             <div
               v-for="dag in deputyAuditorsGeneral"
               :key="dag.id"
               class="bg-gray-100 dark:bg-gray-800 rounded-lg p-6"
             >
-              <UiProfileCard
-                :name="dag.name"
-                :title="dag.title"
-                :description="dag.bio"
-                :image="dag.photo"
-                size="sm"
-                layout="horizontal"
+              <NuxtLink
+                :to="`/about/management-team/${dag.slug}`"
+                class="block no-underline text-inherit hover:no-underline"
               >
-                <template #default>
-                  <UiBadge variant="primary" size="sm" class="mb-2">Deputy Auditor-General</UiBadge>
-                </template>
-              </UiProfileCard>
+                <UiProfileCard
+                  :name="dag.name"
+                  :title="dag.title"
+                  :bio="getCareerBackground(dag.bio)"
+                  :image="dag.photo"
+                  size="sm"
+                  layout="horizontal"
+                >
+                  <template #default>
+                    <UiBadge variant="primary" size="sm" class="mb-2"
+                      >Deputy Auditor-General</UiBadge
+                    >
+                  </template>
+                  <!-- <template #bio>{{ dag.bio }}</template> -->
+                </UiProfileCard>
+              </NuxtLink>
               <div
                 v-if="dag.responsibilities.length > 0"
                 class="mt-4 ml-0 md:ml-[calc(150px+1.5rem)]"
@@ -229,6 +242,15 @@
 
 <script setup lang="ts">
   import type { ManagementTeamMember } from '~/types'
+  import { parseBioSections } from '~/utils/parseBioSections'
+
+  function getCareerBackground(bio?: string): string | undefined {
+    if (!bio) return undefined
+    const sections = parseBioSections(bio)
+    const content = sections.find((s) => s.heading === 'Career Background')?.content
+    if (!content) return undefined
+    return content.length > 200 ? content.slice(0, 196).trimEnd() + '...' : content
+  }
 
   useHead({ title: 'Management Team' })
 
@@ -261,11 +283,6 @@
   const regionalAuditors = computed(
     () => managementTeam.value?.filter((m) => m.role === 'regional-auditor') || []
   )
-
-  const activeDag = ref<string | null>(null)
-  const toggleDag = (id: string) => {
-    activeDag.value = activeDag.value === id ? null : id
-  }
 
   const regionalStats = [
     { icon: 'heroicons:building-library', value: 1, label: 'Headquarters (Accra)' },

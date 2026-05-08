@@ -1,4 +1,6 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
+const isDev = process.env.NODE_ENV !== 'production'
+
 export default defineNuxtConfig({
   compatibilityDate: '2025-07-15',
   devtools: { enabled: true },
@@ -262,25 +264,26 @@ export default defineNuxtConfig({
       '/sw.js': { prerender: false },
       '/workbox-*.js': { prerender: false },
 
-      // Public API caching - 5 minute TTL with stale-while-revalidate
-      '/api/reports/**': { cache: { maxAge: 300, staleMaxAge: 600 } },
-      '/api/news/**': { cache: { maxAge: 300, staleMaxAge: 600 } },
-      '/api/publications/**': { cache: { maxAge: 300, staleMaxAge: 600 } },
-      '/api/events/**': { cache: { maxAge: 300, staleMaxAge: 600 } },
-      '/api/team/**': { cache: { maxAge: 3600, staleMaxAge: 7200 } }, // 1 hour (changes less frequently)
-      '/api/gallery/**': { cache: { maxAge: 600, staleMaxAge: 1200 } }, // 10 minutes
-      '/api/regional-offices/**': { cache: { maxAge: 3600, staleMaxAge: 7200 } }, // 1 hour
+      // Public API caching - disabled in dev, SWR in production
+      '/api/reports/**': { cache: isDev ? false : { maxAge: 300, staleMaxAge: 600 } },
+      '/api/news/**': { cache: isDev ? false : { maxAge: 300, staleMaxAge: 600 } },
+      '/api/publications/**': { cache: isDev ? false : { maxAge: 300, staleMaxAge: 600 } },
+      '/api/events/**': { cache: isDev ? false : { maxAge: 300, staleMaxAge: 600 } },
+      '/api/team/**': { cache: isDev ? false : { maxAge: 3600, staleMaxAge: 7200 } },
+      '/api/gallery/**': { cache: isDev ? false : { maxAge: 600, staleMaxAge: 1200 } },
+      '/api/regional-offices/**': { cache: isDev ? false : { maxAge: 3600, staleMaxAge: 7200 } },
+      '/api/management-team/**': { cache: isDev ? false : { maxAge: 3600, staleMaxAge: 7200 } },
 
-      // Admin routes - cached but hidden from SEO
+      // Admin routes - hidden from SEO, cached only in production
       '/admin/**': {
         prerender: false,
         headers: { 'X-Robots-Tag': 'noindex, nofollow' },
-        cache: { maxAge: 60, staleMaxAge: 120 } // 1 minute cache
+        cache: isDev ? false : { maxAge: 60, staleMaxAge: 120 }
       },
       '/ak/admin/**': {
         prerender: false,
         headers: { 'X-Robots-Tag': 'noindex, nofollow' },
-        cache: { maxAge: 60, staleMaxAge: 120 }
+        cache: isDev ? false : { maxAge: 60, staleMaxAge: 120 }
       },
       '/api/admin/**': {
         cache: false // No caching for admin API (real-time data needed)
