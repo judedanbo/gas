@@ -88,8 +88,7 @@ async function seed() {
       for (const img of album.images) {
         const [imgResult] = await db.insert(schema.galleryImages).values({
           url: img.url,
-          albumId,
-          category: album.translations.en.title
+          albumId
         })
 
         const imageId = imgResult.insertId
