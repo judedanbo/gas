@@ -199,7 +199,8 @@
 
   onMounted(async () => {
     try {
-      tenders.value = await $fetch<Tender[]>('/api/tenders')
+      const response = await $fetch<{ data: Tender[] }>('/api/tenders')
+      tenders.value = response.data
     } catch (error) {
       console.error('Failed to fetch tenders:', error)
     } finally {
