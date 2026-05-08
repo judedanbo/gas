@@ -272,11 +272,6 @@
     () => managementTeam.value?.filter((m) => m.role === 'regional-auditor') || []
   )
 
-  const activeDag = ref<string | null>(null)
-  const toggleDag = (id: string) => {
-    activeDag.value = activeDag.value === id ? null : id
-  }
-
   const regionalStats = [
     { icon: 'heroicons:building-library', value: 1, label: 'Headquarters (Accra)' },
     { icon: 'heroicons:building-office', value: 17, label: 'Accra Branches' },
