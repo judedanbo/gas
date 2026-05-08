@@ -19,19 +19,21 @@
             v-for="category in categories"
             :key="category.path"
             :to="category.path"
-            class="group bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-6 text-center transition-all hover:border-primary hover:shadow-lg no-underline"
+            class="group bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-8 text-center transition-all hover:border-primary hover:shadow-lg no-underline"
           >
-            <Icon
-              :name="category.icon"
-              class="w-12 h-12 text-primary dark:text-primary-light mb-4"
-              aria-hidden="true"
-            />
+            <div class="w-14 h-14 mx-auto mb-4 bg-primary/10 dark:bg-primary/20 rounded-xl flex items-center justify-center">
+              <Icon
+                :name="category.icon"
+                class="w-7 h-7 text-primary dark:text-primary-light"
+                aria-hidden="true"
+              />
+            </div>
             <h3
               class="text-lg font-semibold text-gray-900 dark:text-white mb-2 group-hover:text-primary dark:group-hover:text-primary-light transition-colors"
             >
               {{ category.title }}
             </h3>
-            <p class="text-sm text-gray-600 dark:text-gray-400">
+            <p class="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
               {{ category.description }}
             </p>
           </NuxtLink>
@@ -103,25 +105,25 @@
   const categories = [
     {
       title: 'News',
-      description: 'Latest news and announcements',
+      description: 'Stay updated with latest news, announcements, and press coverage',
       icon: 'heroicons:newspaper',
       path: '/media/news'
     },
     {
       title: 'Events',
-      description: 'Upcoming and past events',
+      description: 'Upcoming conferences, workshops, and institutional engagements',
       icon: 'heroicons:calendar',
       path: '/media/events'
     },
     {
       title: 'Photo Gallery',
-      description: 'Images from our activities',
+      description: 'Browse photos from events, ceremonies, and official activities',
       icon: 'heroicons:camera',
       path: '/media/gallery'
     },
     {
       title: 'Videos',
-      description: 'Video content and recordings',
+      description: 'Watch recordings of hearings, presentations, and media briefings',
       icon: 'heroicons:video-camera',
       path: '/media/videos'
     }

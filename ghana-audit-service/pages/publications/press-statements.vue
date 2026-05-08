@@ -30,17 +30,27 @@
           <!-- Empty State -->
           <div
             v-if="publications.length === 0"
-            class="text-center py-12 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700"
+            class="text-center py-16 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700"
           >
             <Icon
               name="heroicons:megaphone"
-              class="w-10 h-10 text-primary dark:text-primary-light mb-4 mx-auto"
+              class="w-12 h-12 text-gray-300 dark:text-gray-600 mb-4 mx-auto"
               aria-hidden="true"
             />
             <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-              No press statements available
+              No press statements yet
             </h3>
-            <p class="text-gray-600 dark:text-gray-400">Check back soon for updates.</p>
+            <p class="text-gray-500 dark:text-gray-400 mb-6 max-w-md mx-auto">
+              Official press statements and releases from the Auditor-General will be published here. Browse our other publications or contact us for media inquiries.
+            </p>
+            <div class="flex flex-wrap justify-center gap-3">
+              <NuxtLink to="/publications" class="btn-primary btn-sm">
+                Browse Publications
+              </NuxtLink>
+              <NuxtLink to="/contact" class="btn-outline btn-sm">
+                Media Inquiries
+              </NuxtLink>
+            </div>
           </div>
 
           <!-- Statements -->

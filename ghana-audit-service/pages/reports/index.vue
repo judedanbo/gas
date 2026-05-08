@@ -46,19 +46,27 @@
           <!-- Empty State -->
           <div
             v-if="reports.length === 0"
-            class="text-center py-12 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700"
+            class="text-center py-16 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700"
           >
             <Icon
-              name="heroicons:document-text"
-              class="w-10 h-10 text-primary dark:text-primary-light mb-4 mx-auto"
+              name="heroicons:document-magnifying-glass"
+              class="w-12 h-12 text-gray-300 dark:text-gray-600 mb-4 mx-auto"
               aria-hidden="true"
             />
             <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-              No reports found
+              No reports match your criteria
             </h3>
-            <p class="text-gray-600 dark:text-gray-400">
-              Try adjusting your filters or search terms.
+            <p class="text-gray-500 dark:text-gray-400 mb-6 max-w-md mx-auto">
+              Try broadening your search by removing filters or using different keywords. Audit reports are published periodically throughout the year.
             </p>
+            <div class="flex flex-wrap justify-center gap-3">
+              <button class="btn-primary btn-sm" @click="clearAllFilters">
+                Clear All Filters
+              </button>
+              <NuxtLink to="/contact" class="btn-outline btn-sm">
+                Contact Us
+              </NuxtLink>
+            </div>
           </div>
 
           <!-- Reports Grid -->
@@ -151,6 +159,14 @@
       page: meta.value.page,
       perPage: 9
     })
+  }
+
+  function clearAllFilters() {
+    filters.search = ''
+    filters.category = ''
+    filters.year = ''
+    meta.value.page = 1
+    fetchFilteredReports()
   }
 
   function goToPage(page: number) {

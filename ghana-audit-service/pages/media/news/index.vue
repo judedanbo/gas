@@ -36,12 +36,20 @@
           </p>
 
           <!-- Empty State -->
-          <div v-if="news.length === 0" class="text-center py-12 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
-            <Icon name="heroicons:newspaper" class="w-10 h-10 text-gray-400 mx-auto mb-4" aria-hidden="true" />
-            <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">No news articles found</h3>
-            <p class="text-gray-600 dark:text-gray-400">
-              Check back soon for updates.
+          <div v-if="news.length === 0" class="text-center py-16 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
+            <Icon name="heroicons:newspaper" class="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-4" aria-hidden="true" />
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">No news articles yet</h3>
+            <p class="text-gray-500 dark:text-gray-400 mb-6 max-w-md mx-auto">
+              News articles and announcements will appear here as they are published. Stay informed about the Ghana Audit Service's latest activities.
             </p>
+            <div class="flex flex-wrap justify-center gap-3">
+              <NuxtLink to="/publications/press-statements" class="btn-primary btn-sm">
+                View Press Statements
+              </NuxtLink>
+              <NuxtLink to="/contact" class="btn-outline btn-sm">
+                Contact Us
+              </NuxtLink>
+            </div>
           </div>
 
           <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

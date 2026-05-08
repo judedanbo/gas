@@ -109,7 +109,7 @@
               class="w-8 h-8 text-primary dark:text-primary-light mb-2 mx-auto"
               aria-hidden="true"
             />
-            <h4 class="font-semibold text-gray-900 dark:text-white">INTOSAI</h4>
+            <h4 class="text-sm font-semibold text-gray-900 dark:text-white">INTOSAI</h4>
             <p class="text-sm text-gray-600 dark:text-gray-400">
               International Organization of Supreme Audit Institutions
             </p>
@@ -122,7 +122,7 @@
               class="w-8 h-8 text-primary dark:text-primary-light mb-2 mx-auto"
               aria-hidden="true"
             />
-            <h4 class="font-semibold text-gray-900 dark:text-white">ISSAI</h4>
+            <h4 class="text-sm font-semibold text-gray-900 dark:text-white">ISSAI</h4>
             <p class="text-sm text-gray-600 dark:text-gray-400">
               International Standards of Supreme Audit Institutions
             </p>
@@ -135,7 +135,7 @@
               class="w-8 h-8 text-primary dark:text-primary-light mb-2 mx-auto"
               aria-hidden="true"
             />
-            <h4 class="font-semibold text-gray-900 dark:text-white">AFROSAI-E</h4>
+            <h4 class="text-sm font-semibold text-gray-900 dark:text-white">AFROSAI-E</h4>
             <p class="text-sm text-gray-600 dark:text-gray-400">
               African Organisation of Supreme Audit Institutions
             </p>

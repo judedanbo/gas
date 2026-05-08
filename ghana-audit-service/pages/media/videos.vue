@@ -30,13 +30,18 @@
           <!-- Empty State -->
           <div
             v-if="videos.length === 0"
-            class="text-center py-12 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700"
+            class="text-center py-16 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700"
           >
-            <div class="text-4xl mb-4">🎬</div>
+            <Icon name="heroicons:video-camera" class="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-4" aria-hidden="true" />
             <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-              No videos available
+              No videos available yet
             </h3>
-            <p class="text-gray-600 dark:text-gray-400">Check back soon for new video content.</p>
+            <p class="text-gray-600 dark:text-gray-400 max-w-md mx-auto mb-6">
+              Video content, documentaries, and event recordings will appear here. Check back soon.
+            </p>
+            <NuxtLink to="/media" class="btn-outline btn-sm">
+              Back to Media Centre
+            </NuxtLink>
           </div>
 
           <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -75,16 +80,10 @@
         <!-- Close Button -->
         <button
           class="absolute top-4 right-4 text-white/80 hover:text-white z-10"
+          aria-label="Close video player"
           @click="closeVideoPlayer"
         >
-          <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M6 18L18 6M6 6l12 12"
-            />
-          </svg>
+          <Icon name="heroicons:x-mark" class="w-8 h-8" aria-hidden="true" />
         </button>
 
         <!-- Video Container -->
