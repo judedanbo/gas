@@ -14,7 +14,7 @@ export default defineNuxtConfig({
   },
 
   // Global CSS
-  css: ['~/assets/css/tailwind.css'],
+  css: ['~/assets/css/variables.css', '~/assets/css/tailwind.css'],
 
   // Modules
   modules: [

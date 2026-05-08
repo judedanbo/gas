@@ -185,46 +185,46 @@
      ============================================ */
 
   /* Primary (Ghana Green: #006B3F) */
-  --tw-primary: 0 107 63;
-  --tw-primary-dark: 0 77 44;
-  --tw-primary-light: 0 139 82;
+  --gas-primary: 0 107 63;
+  --gas-primary-dark: 0 77 44;
+  --gas-primary-light: 0 139 82;
 
   /* Secondary (Ghana Red: #CE1126) */
-  --tw-secondary: 206 17 38;
-  --tw-secondary-dark: 165 14 31;
-  --tw-secondary-light: 229 29 51;
+  --gas-secondary: 206 17 38;
+  --gas-secondary-dark: 165 14 31;
+  --gas-secondary-light: 229 29 51;
 
   /* Accent (Ghana Gold: #FCD116) */
-  --tw-accent: 252 209 22;
-  --tw-accent-dark: 212 173 0;
-  --tw-accent-light: 255 225 77;
+  --gas-accent: 252 209 22;
+  --gas-accent-dark: 212 173 0;
+  --gas-accent-light: 255 225 77;
 
   /* Ghana flag color aliases */
-  --tw-ghana-red: 206 17 38;
-  --tw-ghana-gold: 252 209 22;
-  --tw-ghana-green: 0 107 63;
+  --gas-ghana-red: 206 17 38;
+  --gas-ghana-gold: 252 209 22;
+  --gas-ghana-green: 0 107 63;
 
   /* Gray scale */
-  --tw-gray-50: 249 250 251;
-  --tw-gray-100: 243 244 246;
-  --tw-gray-200: 229 231 235;
-  --tw-gray-300: 209 213 219;
-  --tw-gray-400: 156 163 175;
-  --tw-gray-500: 107 114 128;
-  --tw-gray-600: 75 85 99;
-  --tw-gray-700: 55 65 81;
-  --tw-gray-800: 31 41 55;
-  --tw-gray-900: 17 24 39;
+  --gas-gray-50: 249 250 251;
+  --gas-gray-100: 243 244 246;
+  --gas-gray-200: 229 231 235;
+  --gas-gray-300: 209 213 219;
+  --gas-gray-400: 156 163 175;
+  --gas-gray-500: 107 114 128;
+  --gas-gray-600: 75 85 99;
+  --gas-gray-700: 55 65 81;
+  --gas-gray-800: 31 41 55;
+  --gas-gray-900: 17 24 39;
 
   /* Functional colors */
-  --tw-success: 46 125 50;
-  --tw-success-light: 76 175 80;
-  --tw-warning: 245 124 0;
-  --tw-warning-light: 255 152 0;
-  --tw-error: 198 40 40;
-  --tw-error-light: 239 83 80;
-  --tw-info: 21 101 192;
-  --tw-info-light: 33 150 243;
+  --gas-success: 46 125 50;
+  --gas-success-light: 76 175 80;
+  --gas-warning: 245 124 0;
+  --gas-warning-light: 255 152 0;
+  --gas-error: 198 40 40;
+  --gas-error-light: 239 83 80;
+  --gas-info: 21 101 192;
+  --gas-info-light: 33 150 243;
 
   /* ============================================
      ACCESSIBILITY
@@ -244,46 +244,46 @@ html {
    ============================================ */
 :root.high-contrast {
   /* Primary: darker green — ~10.5:1 on white */
-  --tw-primary: 0 61 28;
-  --tw-primary-dark: 0 40 18;
-  --tw-primary-light: 0 90 42;
+  --gas-primary: 0 61 28;
+  --gas-primary-dark: 0 40 18;
+  --gas-primary-light: 0 90 42;
 
   /* Secondary: darker red — ~8.2:1 on white */
-  --tw-secondary: 154 10 24;
-  --tw-secondary-dark: 120 8 18;
-  --tw-secondary-light: 180 15 30;
+  --gas-secondary: 154 10 24;
+  --gas-secondary-dark: 120 8 18;
+  --gas-secondary-light: 180 15 30;
 
   /* Accent: darker gold — ~7.1:1 on white */
-  --tw-accent: 130 100 0;
-  --tw-accent-dark: 100 77 0;
-  --tw-accent-light: 160 123 0;
+  --gas-accent: 130 100 0;
+  --gas-accent-dark: 100 77 0;
+  --gas-accent-light: 160 123 0;
 
   /* Ghana flag aliases */
-  --tw-ghana-red: 154 10 24;
-  --tw-ghana-gold: 130 100 0;
-  --tw-ghana-green: 0 61 28;
+  --gas-ghana-red: 154 10 24;
+  --gas-ghana-gold: 130 100 0;
+  --gas-ghana-green: 0 61 28;
 
   /* Grays: increased separation for better readability */
-  --tw-gray-50: 255 255 255;
-  --tw-gray-100: 248 248 248;
-  --tw-gray-200: 235 235 235;
-  --tw-gray-300: 200 200 200;
-  --tw-gray-400: 140 140 140;
-  --tw-gray-500: 90 90 90;
-  --tw-gray-600: 60 60 60;
-  --tw-gray-700: 40 40 40;
-  --tw-gray-800: 25 25 25;
-  --tw-gray-900: 10 10 10;
+  --gas-gray-50: 255 255 255;
+  --gas-gray-100: 248 248 248;
+  --gas-gray-200: 235 235 235;
+  --gas-gray-300: 200 200 200;
+  --gas-gray-400: 140 140 140;
+  --gas-gray-500: 90 90 90;
+  --gas-gray-600: 60 60 60;
+  --gas-gray-700: 40 40 40;
+  --gas-gray-800: 25 25 25;
+  --gas-gray-900: 10 10 10;
 
   /* Functional: higher contrast versions */
-  --tw-success: 0 80 0;
-  --tw-success-light: 0 110 0;
-  --tw-warning: 180 90 0;
-  --tw-warning-light: 200 100 0;
-  --tw-error: 170 0 0;
-  --tw-error-light: 200 20 20;
-  --tw-info: 0 0 170;
-  --tw-info-light: 0 30 200;
+  --gas-success: 0 80 0;
+  --gas-success-light: 0 110 0;
+  --gas-warning: 180 90 0;
+  --gas-warning-light: 200 100 0;
+  --gas-error: 170 0 0;
+  --gas-error-light: 200 20 20;
+  --gas-info: 0 0 170;
+  --gas-info-light: 0 30 200;
 }
 
 /* ============================================
@@ -292,44 +292,44 @@ html {
    ============================================ */
 :root.high-contrast.dark {
   /* Brighter green on dark bg */
-  --tw-primary: 0 200 120;
-  --tw-primary-dark: 0 170 100;
-  --tw-primary-light: 0 230 140;
+  --gas-primary: 0 200 120;
+  --gas-primary-dark: 0 170 100;
+  --gas-primary-light: 0 230 140;
 
   /* Brighter red on dark bg */
-  --tw-secondary: 255 80 95;
-  --tw-secondary-dark: 230 60 75;
-  --tw-secondary-light: 255 110 120;
+  --gas-secondary: 255 80 95;
+  --gas-secondary-dark: 230 60 75;
+  --gas-secondary-light: 255 110 120;
 
   /* Brighter gold on dark bg */
-  --tw-accent: 255 225 50;
-  --tw-accent-dark: 230 200 30;
-  --tw-accent-light: 255 240 100;
+  --gas-accent: 255 225 50;
+  --gas-accent-dark: 230 200 30;
+  --gas-accent-light: 255 240 100;
 
   /* Ghana flag aliases */
-  --tw-ghana-red: 255 80 95;
-  --tw-ghana-gold: 255 225 50;
-  --tw-ghana-green: 0 200 120;
+  --gas-ghana-red: 255 80 95;
+  --gas-ghana-gold: 255 225 50;
+  --gas-ghana-green: 0 200 120;
 
   /* Extreme gray separation */
-  --tw-gray-50: 255 255 255;
-  --tw-gray-100: 240 240 240;
-  --tw-gray-200: 220 220 220;
-  --tw-gray-300: 190 190 190;
-  --tw-gray-400: 160 160 160;
-  --tw-gray-500: 130 130 130;
-  --tw-gray-600: 50 50 50;
-  --tw-gray-700: 30 30 30;
-  --tw-gray-800: 15 15 15;
-  --tw-gray-900: 0 0 0;
+  --gas-gray-50: 255 255 255;
+  --gas-gray-100: 240 240 240;
+  --gas-gray-200: 220 220 220;
+  --gas-gray-300: 190 190 190;
+  --gas-gray-400: 160 160 160;
+  --gas-gray-500: 130 130 130;
+  --gas-gray-600: 50 50 50;
+  --gas-gray-700: 30 30 30;
+  --gas-gray-800: 15 15 15;
+  --gas-gray-900: 0 0 0;
 
   /* Functional — bright on dark */
-  --tw-success: 50 220 50;
-  --tw-success-light: 80 240 80;
-  --tw-warning: 255 180 0;
-  --tw-warning-light: 255 200 50;
-  --tw-error: 255 70 70;
-  --tw-error-light: 255 100 100;
-  --tw-info: 80 150 255;
-  --tw-info-light: 120 180 255;
+  --gas-success: 50 220 50;
+  --gas-success-light: 80 240 80;
+  --gas-warning: 255 180 0;
+  --gas-warning-light: 255 200 50;
+  --gas-error: 255 70 70;
+  --gas-error-light: 255 100 100;
+  --gas-info: 80 150 255;
+  --gas-info-light: 120 180 255;
 }

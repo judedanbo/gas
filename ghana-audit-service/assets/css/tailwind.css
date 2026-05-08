@@ -531,7 +531,7 @@
 
 /* Focus: enhanced visible focus indicators */
 :root.high-contrast :focus-visible {
-  outline: 3px solid rgb(var(--tw-primary));
+  outline: 3px solid rgb(var(--gas-primary));
   outline-offset: 2px;
 }
 

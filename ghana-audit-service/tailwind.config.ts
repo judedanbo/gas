@@ -16,61 +16,61 @@ export default {
       // Ghana Government Color Palette
       colors: {
         // Ghana Flag Colors — via CSS variable bridge
-        'ghana-red': 'rgb(var(--tw-ghana-red) / <alpha-value>)',
-        'ghana-gold': 'rgb(var(--tw-ghana-gold) / <alpha-value>)',
-        'ghana-green': 'rgb(var(--tw-ghana-green) / <alpha-value>)',
+        'ghana-red': 'rgb(var(--gas-ghana-red) / <alpha-value>)',
+        'ghana-gold': 'rgb(var(--gas-ghana-gold) / <alpha-value>)',
+        'ghana-green': 'rgb(var(--gas-ghana-green) / <alpha-value>)',
 
         // Primary (Green)
         primary: {
-          DEFAULT: 'rgb(var(--tw-primary) / <alpha-value>)',
-          dark: 'rgb(var(--tw-primary-dark) / <alpha-value>)',
-          light: 'rgb(var(--tw-primary-light) / <alpha-value>)'
+          DEFAULT: 'rgb(var(--gas-primary) / <alpha-value>)',
+          dark: 'rgb(var(--gas-primary-dark) / <alpha-value>)',
+          light: 'rgb(var(--gas-primary-light) / <alpha-value>)'
         },
 
         // Secondary (Red)
         secondary: {
-          DEFAULT: 'rgb(var(--tw-secondary) / <alpha-value>)',
-          dark: 'rgb(var(--tw-secondary-dark) / <alpha-value>)',
-          light: 'rgb(var(--tw-secondary-light) / <alpha-value>)'
+          DEFAULT: 'rgb(var(--gas-secondary) / <alpha-value>)',
+          dark: 'rgb(var(--gas-secondary-dark) / <alpha-value>)',
+          light: 'rgb(var(--gas-secondary-light) / <alpha-value>)'
         },
 
         // Accent (Gold)
         accent: {
-          DEFAULT: 'rgb(var(--tw-accent) / <alpha-value>)',
-          dark: 'rgb(var(--tw-accent-dark) / <alpha-value>)',
-          light: 'rgb(var(--tw-accent-light) / <alpha-value>)'
+          DEFAULT: 'rgb(var(--gas-accent) / <alpha-value>)',
+          dark: 'rgb(var(--gas-accent-dark) / <alpha-value>)',
+          light: 'rgb(var(--gas-accent-light) / <alpha-value>)'
         },
 
         // Functional Colors
         success: {
-          DEFAULT: 'rgb(var(--tw-success) / <alpha-value>)',
-          light: 'rgb(var(--tw-success-light) / <alpha-value>)'
+          DEFAULT: 'rgb(var(--gas-success) / <alpha-value>)',
+          light: 'rgb(var(--gas-success-light) / <alpha-value>)'
         },
         warning: {
-          DEFAULT: 'rgb(var(--tw-warning) / <alpha-value>)',
-          light: 'rgb(var(--tw-warning-light) / <alpha-value>)'
+          DEFAULT: 'rgb(var(--gas-warning) / <alpha-value>)',
+          light: 'rgb(var(--gas-warning-light) / <alpha-value>)'
         },
         error: {
-          DEFAULT: 'rgb(var(--tw-error) / <alpha-value>)',
-          light: 'rgb(var(--tw-error-light) / <alpha-value>)'
+          DEFAULT: 'rgb(var(--gas-error) / <alpha-value>)',
+          light: 'rgb(var(--gas-error-light) / <alpha-value>)'
         },
         info: {
-          DEFAULT: 'rgb(var(--tw-info) / <alpha-value>)',
-          light: 'rgb(var(--tw-info-light) / <alpha-value>)'
+          DEFAULT: 'rgb(var(--gas-info) / <alpha-value>)',
+          light: 'rgb(var(--gas-info-light) / <alpha-value>)'
         },
 
         // Gray scale
         gray: {
-          50: 'rgb(var(--tw-gray-50) / <alpha-value>)',
-          100: 'rgb(var(--tw-gray-100) / <alpha-value>)',
-          200: 'rgb(var(--tw-gray-200) / <alpha-value>)',
-          300: 'rgb(var(--tw-gray-300) / <alpha-value>)',
-          400: 'rgb(var(--tw-gray-400) / <alpha-value>)',
-          500: 'rgb(var(--tw-gray-500) / <alpha-value>)',
-          600: 'rgb(var(--tw-gray-600) / <alpha-value>)',
-          700: 'rgb(var(--tw-gray-700) / <alpha-value>)',
-          800: 'rgb(var(--tw-gray-800) / <alpha-value>)',
-          900: 'rgb(var(--tw-gray-900) / <alpha-value>)'
+          50: 'rgb(var(--gas-gray-50) / <alpha-value>)',
+          100: 'rgb(var(--gas-gray-100) / <alpha-value>)',
+          200: 'rgb(var(--gas-gray-200) / <alpha-value>)',
+          300: 'rgb(var(--gas-gray-300) / <alpha-value>)',
+          400: 'rgb(var(--gas-gray-400) / <alpha-value>)',
+          500: 'rgb(var(--gas-gray-500) / <alpha-value>)',
+          600: 'rgb(var(--gas-gray-600) / <alpha-value>)',
+          700: 'rgb(var(--gas-gray-700) / <alpha-value>)',
+          800: 'rgb(var(--gas-gray-800) / <alpha-value>)',
+          900: 'rgb(var(--gas-gray-900) / <alpha-value>)'
         }
       },
 
@@ -213,22 +213,22 @@ export default {
       typography: {
         DEFAULT: {
           css: {
-            '--tw-prose-body': 'rgb(var(--tw-gray-700))',
-            '--tw-prose-headings': 'rgb(var(--tw-gray-900))',
-            '--tw-prose-lead': 'rgb(var(--tw-gray-600))',
-            '--tw-prose-links': 'rgb(var(--tw-primary))',
-            '--tw-prose-bold': 'rgb(var(--tw-gray-900))',
-            '--tw-prose-counters': 'rgb(var(--tw-primary))',
-            '--tw-prose-bullets': 'rgb(var(--tw-primary))',
-            '--tw-prose-hr': 'rgb(var(--tw-gray-200))',
-            '--tw-prose-quotes': 'rgb(var(--tw-gray-900))',
-            '--tw-prose-quote-borders': 'rgb(var(--tw-primary))',
-            '--tw-prose-captions': 'rgb(var(--tw-gray-500))',
-            '--tw-prose-code': 'rgb(var(--tw-gray-900))',
-            '--tw-prose-pre-code': 'rgb(var(--tw-gray-200))',
-            '--tw-prose-pre-bg': 'rgb(var(--tw-gray-800))',
-            '--tw-prose-th-borders': 'rgb(var(--tw-gray-300))',
-            '--tw-prose-td-borders': 'rgb(var(--tw-gray-200))',
+            '--tw-prose-body': 'rgb(var(--gas-gray-700))',
+            '--tw-prose-headings': 'rgb(var(--gas-gray-900))',
+            '--tw-prose-lead': 'rgb(var(--gas-gray-600))',
+            '--tw-prose-links': 'rgb(var(--gas-primary))',
+            '--tw-prose-bold': 'rgb(var(--gas-gray-900))',
+            '--tw-prose-counters': 'rgb(var(--gas-primary))',
+            '--tw-prose-bullets': 'rgb(var(--gas-primary))',
+            '--tw-prose-hr': 'rgb(var(--gas-gray-200))',
+            '--tw-prose-quotes': 'rgb(var(--gas-gray-900))',
+            '--tw-prose-quote-borders': 'rgb(var(--gas-primary))',
+            '--tw-prose-captions': 'rgb(var(--gas-gray-500))',
+            '--tw-prose-code': 'rgb(var(--gas-gray-900))',
+            '--tw-prose-pre-code': 'rgb(var(--gas-gray-200))',
+            '--tw-prose-pre-bg': 'rgb(var(--gas-gray-800))',
+            '--tw-prose-th-borders': 'rgb(var(--gas-gray-300))',
+            '--tw-prose-td-borders': 'rgb(var(--gas-gray-200))',
             h1: {
               fontFamily: 'Plus Jakarta Sans, Inter, sans-serif',
               fontWeight: '700',
@@ -254,11 +254,11 @@ export default {
               marginBottom: '0.5em'
             },
             a: {
-              color: 'rgb(var(--tw-primary))',
+              color: 'rgb(var(--gas-primary))',
               textDecoration: 'none',
               fontWeight: '500',
               '&:hover': {
-                color: 'rgb(var(--tw-primary-dark))',
+                color: 'rgb(var(--gas-primary-dark))',
                 textDecoration: 'underline'
               }
             },
@@ -274,33 +274,33 @@ export default {
             },
             blockquote: {
               fontStyle: 'italic',
-              borderLeftColor: 'rgb(var(--tw-primary))',
+              borderLeftColor: 'rgb(var(--gas-primary))',
               borderLeftWidth: '4px'
             }
           }
         },
         invert: {
           css: {
-            '--tw-prose-body': 'rgb(var(--tw-gray-300))',
+            '--tw-prose-body': 'rgb(var(--gas-gray-300))',
             '--tw-prose-headings': '#ffffff',
-            '--tw-prose-lead': 'rgb(var(--tw-gray-400))',
-            '--tw-prose-links': 'rgb(var(--tw-primary-light))',
+            '--tw-prose-lead': 'rgb(var(--gas-gray-400))',
+            '--tw-prose-links': 'rgb(var(--gas-primary-light))',
             '--tw-prose-bold': '#ffffff',
-            '--tw-prose-counters': 'rgb(var(--tw-primary-light))',
-            '--tw-prose-bullets': 'rgb(var(--tw-primary-light))',
-            '--tw-prose-hr': 'rgb(var(--tw-gray-700))',
-            '--tw-prose-quotes': 'rgb(var(--tw-gray-100))',
-            '--tw-prose-quote-borders': 'rgb(var(--tw-primary-light))',
-            '--tw-prose-captions': 'rgb(var(--tw-gray-400))',
+            '--tw-prose-counters': 'rgb(var(--gas-primary-light))',
+            '--tw-prose-bullets': 'rgb(var(--gas-primary-light))',
+            '--tw-prose-hr': 'rgb(var(--gas-gray-700))',
+            '--tw-prose-quotes': 'rgb(var(--gas-gray-100))',
+            '--tw-prose-quote-borders': 'rgb(var(--gas-primary-light))',
+            '--tw-prose-captions': 'rgb(var(--gas-gray-400))',
             '--tw-prose-code': '#ffffff',
-            '--tw-prose-pre-code': 'rgb(var(--tw-gray-200))',
-            '--tw-prose-pre-bg': 'rgb(var(--tw-gray-900))',
-            '--tw-prose-th-borders': 'rgb(var(--tw-gray-600))',
-            '--tw-prose-td-borders': 'rgb(var(--tw-gray-700))',
+            '--tw-prose-pre-code': 'rgb(var(--gas-gray-200))',
+            '--tw-prose-pre-bg': 'rgb(var(--gas-gray-900))',
+            '--tw-prose-th-borders': 'rgb(var(--gas-gray-600))',
+            '--tw-prose-td-borders': 'rgb(var(--gas-gray-700))',
             a: {
-              color: 'rgb(var(--tw-primary-light))',
+              color: 'rgb(var(--gas-primary-light))',
               '&:hover': {
-                color: 'rgb(var(--tw-primary))'
+                color: 'rgb(var(--gas-primary))'
               }
             }
           }
