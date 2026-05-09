@@ -19,13 +19,14 @@ describe('useReports', () => {
       const { useReports } = await import('../../../composables/useReports')
       const { categories } = useReports()
 
-      expect(categories).toHaveLength(6)
+      expect(categories).toHaveLength(7)
       expect(categories[0]).toEqual({ value: 'financial', label: 'Financial Audit' })
       expect(categories[1]).toEqual({ value: 'compliance', label: 'Compliance Audit' })
       expect(categories[2]).toEqual({ value: 'it', label: 'IT Audit' })
       expect(categories[3]).toEqual({ value: 'performance', label: 'Performance Audit' })
       expect(categories[4]).toEqual({ value: 'technical', label: 'Technical Audit' })
       expect(categories[5]).toEqual({ value: 'follow-up', label: 'Follow-up Review' })
+      expect(categories[6]).toEqual({ value: 'special', label: 'Special Audit' })
     })
   })
 

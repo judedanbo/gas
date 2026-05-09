@@ -150,7 +150,8 @@
       "special": "Special Audit",
       "it": "IT Audit",
       "forensic": "Forensic Audit",
-      "technical": "Technical Audit"
+      "technical": "Technical Audit",
+      "follow-up": "Follow-up Review"
     }
   },
   "newsletter": {

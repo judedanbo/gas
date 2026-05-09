@@ -31,6 +31,12 @@ data/
 *.db-shm
 *.db-wal
 
+# Temp files
+.tmp-pdf/
+
+# Downloaded report PDFs (large binaries)
+public/pdf/reports/
+
 # Test output
 coverage/
 playwright-report/

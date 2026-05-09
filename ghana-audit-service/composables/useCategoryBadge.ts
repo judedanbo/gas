@@ -13,7 +13,8 @@ export function useCategoryBadge() {
     'compliance': 'accent',
     'it': 'info',
     'technical': 'gray',
-    'follow-up': 'danger'
+    'follow-up': 'danger',
+    'special': 'warning'
   }
 
   // Audit category labels
@@ -23,7 +24,8 @@ export function useCategoryBadge() {
     'compliance': 'Compliance Audit',
     'it': 'IT Audit',
     'technical': 'Technical Audit',
-    'follow-up': 'Follow-up Review'
+    'follow-up': 'Follow-up Review',
+    'special': 'Special Audit'
   }
 
   // Publication type to badge variant mapping

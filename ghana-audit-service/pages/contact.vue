@@ -108,7 +108,7 @@
           </div>
 
           <!-- Contact Form -->
-          <div>
+          <div id="send-message">
             <div
               class="bg-gray-50 dark:bg-gray-900 rounded-xl p-8 border border-gray-200 dark:border-gray-700"
             >
@@ -413,8 +413,18 @@
   const submitError = ref('')
   const csrfToken = ref('')
 
-  // Fetch CSRF token on mount
+  const route = useRoute()
+
   onMounted(async () => {
+    // Pre-fill form from query params (e.g. broken report link)
+    if (route.query.subject && typeof route.query.subject === 'string') {
+      form.subject = route.query.subject
+    }
+    if (route.query.message && typeof route.query.message === 'string') {
+      form.message = route.query.message
+    }
+
+    // Fetch CSRF token
     try {
       const response = await $fetch<{ token: string }>('/api/csrf')
       csrfToken.value = response.token

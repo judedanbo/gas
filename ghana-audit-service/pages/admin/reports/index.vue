@@ -175,7 +175,8 @@
     { value: 'it', label: 'IT Audit' },
     { value: 'performance', label: 'Performance Audit' },
     { value: 'technical', label: 'Technical Audit' },
-    { value: 'follow-up', label: 'Follow-up Review' }
+    { value: 'follow-up', label: 'Follow-up Review' },
+    { value: 'special', label: 'Special Audit' }
   ]
 
   // Years (current year to 2000)

@@ -28,7 +28,8 @@ export const auditReports = mysqlTable(
       'it',
       'performance',
       'technical',
-      'follow-up'
+      'follow-up',
+      'special'
     ]).notNull(),
     publishedAt: date('published_at').notNull(),
     year: year('year').notNull(),

@@ -66,43 +66,33 @@
       <section class="section">
         <div class="container">
           <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <!-- Main Content -->
+            <!-- PDF Reader -->
             <div class="lg:col-span-2">
-              <div
-                class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-8"
-              >
-                <h2 class="text-xl font-heading font-bold text-gray-900 dark:text-white mb-4">
-                  Report Summary
-                </h2>
-                <p class="text-gray-700 dark:text-gray-300 leading-relaxed text-lg">
-                  {{ report.summary || 'No summary available for this report.' }}
-                </p>
-
-                <div class="mt-8 pt-6 border-t border-gray-200 dark:border-gray-700">
-                  <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-                    About This Report
-                  </h3>
-                  <div class="prose prose-gray dark:prose-invert max-w-none">
-                    <p>
-                      This {{ getAuditCategoryLabel(report.category).toLowerCase() }} covers the
-                      fiscal year {{ report.year }} and was published on
-                      {{ formatDate(report.publishedAt) }}.
-                    </p>
-                    <p>
-                      The report is available for download in PDF format. For any questions or
-                      clarifications regarding the contents of this report, please contact the Ghana
-                      Audit Service.
-                    </p>
+              <ClientOnly>
+                <ReportsPdfReader :file-url="report.fileUrl" :title="report.title" />
+                <template #fallback>
+                  <div class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-8 min-h-[70vh] flex items-center justify-center">
+                    <UiLoadingSpinner />
                   </div>
-                </div>
-              </div>
+                </template>
+              </ClientOnly>
             </div>
 
             <!-- Sidebar -->
             <div class="lg:col-span-1">
               <div
-                class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6 sticky top-24"
+                class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden sticky top-24"
               >
+                <!-- Report Cover Thumbnail -->
+                <div class="aspect-[4/3] w-full bg-gray-100 dark:bg-gray-700">
+                  <img
+                    :src="report.thumbnail || '/img/reports/default-cover.svg'"
+                    :alt="report.title"
+                    class="w-full h-full object-cover object-top"
+                  />
+                </div>
+
+                <div class="p-6">
                 <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">
                   Download Report
                 </h3>
@@ -163,6 +153,7 @@
                   </svg>
                   Back to Reports
                 </NuxtLink>
+                </div>
               </div>
             </div>
           </div>

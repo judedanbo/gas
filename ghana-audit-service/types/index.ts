@@ -43,6 +43,7 @@ export type AuditCategory =
   | 'performance'
   | 'technical'
   | 'follow-up'
+  | 'special'
 
 export interface Publication {
   id: string

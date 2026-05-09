@@ -78,6 +78,7 @@ export type AuditCategory =
   | 'performance'
   | 'technical'
   | 'follow-up'
+  | 'special'
 export type PublicationType =
   | 'press-statement'
   | 'bulletin'

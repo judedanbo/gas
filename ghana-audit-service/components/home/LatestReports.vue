@@ -13,30 +13,22 @@
       </UiSectionHeader>
 
       <!-- Loading State -->
-      <div v-if="pending" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div v-if="pending" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         <div
           v-for="n in 4"
           :key="n"
-          class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-6 animate-pulse"
+          class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden animate-pulse"
         >
-          <div class="flex justify-between items-center mb-3">
-            <div class="h-5 w-20 bg-gray-200 dark:bg-gray-700 rounded" />
-            <div class="h-5 w-12 bg-gray-200 dark:bg-gray-700 rounded" />
-          </div>
-          <div class="h-6 bg-gray-200 dark:bg-gray-700 rounded mb-2" />
-          <div class="h-6 bg-gray-200 dark:bg-gray-700 rounded w-3/4 mb-3" />
-          <div class="space-y-2 mb-4">
-            <div class="h-4 bg-gray-200 dark:bg-gray-700 rounded" />
-            <div class="h-4 bg-gray-200 dark:bg-gray-700 rounded" />
-            <div class="h-4 bg-gray-200 dark:bg-gray-700 rounded w-2/3" />
-          </div>
-          <div class="flex gap-4 mb-4">
-            <div class="h-4 w-24 bg-gray-200 dark:bg-gray-700 rounded" />
-            <div class="h-4 w-16 bg-gray-200 dark:bg-gray-700 rounded" />
-          </div>
-          <div class="flex gap-2">
-            <div class="h-8 flex-1 bg-gray-200 dark:bg-gray-700 rounded" />
-            <div class="h-8 flex-1 bg-gray-200 dark:bg-gray-700 rounded" />
+          <div class="aspect-[4/3] bg-gray-200 dark:bg-gray-700" />
+          <div class="p-4 space-y-3">
+            <div class="h-3 w-12 bg-gray-200 dark:bg-gray-700 rounded" />
+            <div class="h-5 bg-gray-200 dark:bg-gray-700 rounded" />
+            <div class="h-5 bg-gray-200 dark:bg-gray-700 rounded w-3/4" />
+            <div class="flex gap-3">
+              <div class="h-3 w-20 bg-gray-200 dark:bg-gray-700 rounded" />
+              <div class="h-3 w-14 bg-gray-200 dark:bg-gray-700 rounded" />
+            </div>
+            <div class="h-9 bg-gray-200 dark:bg-gray-700 rounded-lg" />
           </div>
         </div>
       </div>
@@ -63,7 +55,7 @@
       </div>
 
       <!-- Reports Grid -->
-      <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div v-else class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         <ReportsReportCard v-for="report in reports" :key="report.id" :report="report" />
       </div>
     </div>

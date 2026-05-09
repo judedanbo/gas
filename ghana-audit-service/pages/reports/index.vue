@@ -70,7 +70,7 @@
           </div>
 
           <!-- Reports Grid -->
-          <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div v-else class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             <ReportsReportCard v-for="report in reports" :key="report.id" :report="report" />
           </div>
 
@@ -157,7 +157,7 @@
       category: filters.category || undefined,
       year: filters.year || undefined,
       page: meta.value.page,
-      perPage: 9
+      perPage: 12
     })
   }
 

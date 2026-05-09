@@ -29,7 +29,8 @@ export default defineEventHandler(async (event): Promise<PaginatedResponse<Audit
       'it',
       'performance',
       'technical',
-      'follow-up'
+      'follow-up',
+      'special'
     ]
     if (validCategories.includes(query.category as AuditCategory)) {
       conditions.push(eq(schema.auditReports.category, query.category as AuditCategory))
