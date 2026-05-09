@@ -78,7 +78,10 @@ export function transformReport(
     category: report.category,
     publishedAt: formatDate(report.publishedAt),
     year: report.year,
-    fileUrl: report.fileUrl,
+    // Route downloads through the rate-limited endpoint so direct uploads/
+    // bandwidth is metered. Direct /uploads/reports/*.pdf access is blocked
+    // by server/middleware/rateLimit.ts.
+    fileUrl: `/api/downloads/reports/${report.id}`,
     fileSize: formatFileSize(report.fileSize),
     summary: translation.summary || undefined,
     thumbnail: report.thumbnail || undefined

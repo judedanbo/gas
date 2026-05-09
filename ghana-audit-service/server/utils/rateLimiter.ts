@@ -10,7 +10,7 @@ interface RateLimitEntry {
 const rateLimitStore = new Map<string, RateLimitEntry>()
 
 // Trusted proxy IPs (configure via environment variable in production)
-const TRUSTED_PROXIES = process.env.TRUSTED_PROXIES?.split(',').map(ip => ip.trim()) || []
+const TRUSTED_PROXIES = process.env.TRUSTED_PROXIES?.split(',').map((ip) => ip.trim()) || []
 
 // Cleanup interval (every 5 minutes)
 const CLEANUP_INTERVAL = 5 * 60 * 1000
@@ -133,5 +133,73 @@ export const RATE_LIMITS: Record<string, RateLimitConfig> = {
   search: {
     limit: 30,
     windowMs: 60 * 1000
+  },
+  // HTML page navigation: 300 per minute (lenient, catches scrapers without
+  // affecting normal users or search-engine crawlers)
+  page: {
+    limit: 300,
+    windowMs: 60 * 1000
+  },
+  // Report/publication downloads (per-minute window): 5 per minute
+  // This is the tight, anti-burst guard.
+  download: {
+    limit: 5,
+    windowMs: 60 * 1000
+  },
+  // Report/publication downloads (per-hour window): 50 per hour
+  // Bandwidth/cost guard against sustained abuse.
+  downloadHourly: {
+    limit: 50,
+    windowMs: 60 * 60 * 1000
+  }
+}
+
+/**
+ * Result of a multi-window rate limit check. `limit`, `remaining`, and
+ * `resetTime` reflect the tightest window so X-RateLimit-* headers are honest
+ * about the constraint a client is closest to.
+ */
+export interface MultiWindowResult {
+  isLimited: boolean
+  limit: number
+  remaining: number
+  resetTime: number
+  retryAfterSeconds: number
+}
+
+/**
+ * Check a request against multiple windows simultaneously (e.g. 5/min AND
+ * 50/hour). Returns the most-restrictive view: limited if any window is full,
+ * remaining/resetTime taken from whichever window is closest to its cap.
+ */
+export function checkMultiWindowRateLimit(
+  baseIdentifier: string,
+  configs: Array<{ name: string; config: RateLimitConfig }>
+): MultiWindowResult {
+  const results = configs.map(({ name, config }) => {
+    const key = `${baseIdentifier}:${name}`
+    const r = checkRateLimit(key, config.limit, config.windowMs)
+    return { ...r, limit: config.limit }
+  })
+
+  const limited = results.find((r) => r.isLimited)
+  if (limited) {
+    return {
+      isLimited: true,
+      limit: limited.limit,
+      remaining: 0,
+      resetTime: limited.resetTime,
+      retryAfterSeconds: Math.max(1, Math.ceil((limited.resetTime - Date.now()) / 1000))
+    }
+  }
+
+  // Surface the tightest non-limited window in the headers.
+  const tightest = results.reduce((a, b) => (a.remaining <= b.remaining ? a : b))
+  return {
+    isLimited: false,
+    limit: tightest.limit,
+    remaining: tightest.remaining,
+    resetTime: tightest.resetTime,
+    retryAfterSeconds: 0
   }
 }

@@ -1,5 +1,11 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
-import { checkRateLimit, createRateLimitKey, getClientIP, RATE_LIMITS } from '../../../server/utils/rateLimiter'
+import {
+  checkRateLimit,
+  checkMultiWindowRateLimit,
+  createRateLimitKey,
+  getClientIP,
+  RATE_LIMITS
+} from '../../../server/utils/rateLimiter'
 
 describe('rateLimiter', () => {
   describe('checkRateLimit', () => {
@@ -142,6 +148,88 @@ describe('rateLimiter', () => {
       expect(RATE_LIMITS.search).toBeDefined()
       expect(RATE_LIMITS.search.limit).toBe(30)
       expect(RATE_LIMITS.search.windowMs).toBe(60000)
+    })
+
+    it('should have page rate limit config (lenient HTML navigation guard)', () => {
+      expect(RATE_LIMITS.page).toBeDefined()
+      expect(RATE_LIMITS.page.limit).toBe(300)
+      expect(RATE_LIMITS.page.windowMs).toBe(60000)
+    })
+
+    it('should have download per-minute rate limit config', () => {
+      expect(RATE_LIMITS.download).toBeDefined()
+      expect(RATE_LIMITS.download.limit).toBe(5)
+      expect(RATE_LIMITS.download.windowMs).toBe(60000)
+    })
+
+    it('should have download per-hour rate limit config', () => {
+      expect(RATE_LIMITS.downloadHourly).toBeDefined()
+      expect(RATE_LIMITS.downloadHourly.limit).toBe(50)
+      expect(RATE_LIMITS.downloadHourly.windowMs).toBe(60 * 60 * 1000)
+    })
+  })
+
+  describe('checkMultiWindowRateLimit', () => {
+    beforeEach(() => {
+      vi.useFakeTimers()
+    })
+
+    it('should report tightest non-limited window in headers', () => {
+      const result = checkMultiWindowRateLimit('multi-ip-1', [
+        { name: 'minute', config: { limit: 5, windowMs: 60_000 } },
+        { name: 'hour', config: { limit: 50, windowMs: 3_600_000 } }
+      ])
+
+      expect(result.isLimited).toBe(false)
+      // After one request: minute=4 left, hour=49 left → tightest is the minute window
+      expect(result.remaining).toBe(4)
+      expect(result.limit).toBe(5)
+    })
+
+    it('should flag limited when the per-minute window is exhausted', () => {
+      const ip = 'multi-ip-2'
+      const configs = [
+        { name: 'minute', config: { limit: 2, windowMs: 60_000 } },
+        { name: 'hour', config: { limit: 100, windowMs: 3_600_000 } }
+      ]
+
+      checkMultiWindowRateLimit(ip, configs)
+      checkMultiWindowRateLimit(ip, configs)
+      const third = checkMultiWindowRateLimit(ip, configs)
+
+      expect(third.isLimited).toBe(true)
+      expect(third.retryAfterSeconds).toBeGreaterThan(0)
+    })
+
+    it('should flag limited when the per-hour window is exhausted', () => {
+      const ip = 'multi-ip-3'
+      const configs = [
+        { name: 'minute', config: { limit: 100, windowMs: 60_000 } },
+        { name: 'hour', config: { limit: 2, windowMs: 3_600_000 } }
+      ]
+
+      checkMultiWindowRateLimit(ip, configs)
+      checkMultiWindowRateLimit(ip, configs)
+      const third = checkMultiWindowRateLimit(ip, configs)
+
+      expect(third.isLimited).toBe(true)
+      expect(third.retryAfterSeconds).toBeGreaterThan(0)
+    })
+
+    it('should keep windows isolated by name within the same IP', () => {
+      const ip = 'multi-ip-4'
+
+      // Burn one bucket via direct checkRateLimit at a specific name
+      const first = checkMultiWindowRateLimit(ip, [
+        { name: 'minute', config: { limit: 5, windowMs: 60_000 } }
+      ])
+      expect(first.remaining).toBe(4)
+
+      // A different bucket name should be unaffected
+      const second = checkMultiWindowRateLimit(ip, [
+        { name: 'hour', config: { limit: 10, windowMs: 3_600_000 } }
+      ])
+      expect(second.remaining).toBe(9)
     })
   })
 })
