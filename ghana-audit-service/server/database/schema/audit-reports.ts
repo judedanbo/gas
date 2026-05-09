@@ -4,7 +4,6 @@ import {
   varchar,
   datetime,
   date,
-  year,
   boolean,
   text,
   mysqlEnum,
@@ -32,7 +31,6 @@ export const auditReports = mysqlTable(
       'special'
     ]).notNull(),
     publishedAt: date('published_at').notNull(),
-    year: year('year').notNull(),
     fileUrl: varchar('file_url', { length: 500 }).notNull(),
     fileSize: varchar('file_size', { length: 50 }).notNull(),
     thumbnail: varchar('thumbnail', { length: 500 }),
@@ -50,7 +48,6 @@ export const auditReports = mysqlTable(
   (table) => [
     index('idx_audit_reports_slug').on(table.slug),
     index('idx_audit_reports_category').on(table.category),
-    index('idx_audit_reports_year').on(table.year),
     index('idx_audit_reports_published').on(table.publishedAt),
     index('idx_audit_reports_is_published').on(table.isPublished)
   ]

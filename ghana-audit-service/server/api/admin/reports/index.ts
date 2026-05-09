@@ -49,9 +49,9 @@ async function handleList(event: H3Event) {
     )
   }
 
-  // Filter by year
+  // Filter by year (derived from publishedAt)
   if (query.year) {
-    conditions.push(eq(schema.auditReports.year, Number(query.year)))
+    conditions.push(sql`YEAR(${schema.auditReports.publishedAt}) = ${Number(query.year)}`)
   }
 
   // Filter by published status
@@ -160,13 +160,12 @@ async function handleCreate(event: H3Event) {
 
     // Insert main report
     const [result] = await connection.execute(
-      `INSERT INTO audit_reports (slug, category, published_at, year, file_url, file_size, thumbnail, is_published, created_by, updated_by)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO audit_reports (slug, category, published_at, file_url, file_size, thumbnail, is_published, created_by, updated_by)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         input.slug,
         input.category,
         new Date(input.publishedAt),
-        input.year,
         input.fileUrl,
         input.fileSize,
         thumbnail,

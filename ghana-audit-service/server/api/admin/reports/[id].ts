@@ -149,14 +149,13 @@ async function handleUpdate(event: H3Event, id: number) {
     // Update main report
     await connection.execute(
       `UPDATE audit_reports
-       SET slug = ?, category = ?, published_at = ?, year = ?, file_url = ?, file_size = ?,
+       SET slug = ?, category = ?, published_at = ?, file_url = ?, file_size = ?,
            thumbnail = ?, is_published = ?, updated_by = ?
        WHERE id = ?`,
       [
         input.slug,
         input.category,
         new Date(input.publishedAt),
-        input.year,
         input.fileUrl,
         input.fileSize,
         thumbnail,

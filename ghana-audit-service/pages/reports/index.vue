@@ -22,7 +22,7 @@
           v-model:model-search="filters.search"
           v-model:model-category="filters.category"
           v-model:model-year="filters.year"
-          @filter="fetchFilteredReports"
+          @filter="onFilterChange"
         />
 
         <!-- Loading State -->
@@ -170,6 +170,11 @@
     applyQueryParams()
     fetchFilteredReports()
   })
+
+  function onFilterChange() {
+    meta.value.page = 1
+    fetchFilteredReports()
+  }
 
   async function fetchFilteredReports() {
     syncQueryToUrl()

@@ -68,7 +68,6 @@ export const auditReportSchema = z.object({
   slug: slugSchema,
   category: z.enum(['financial', 'compliance', 'it', 'performance', 'technical', 'follow-up', 'special']),
   publishedAt: z.string().refine((val) => !isNaN(Date.parse(val)), 'Invalid date'),
-  year: z.coerce.number().min(1900).max(2100),
   fileUrl: z.string().max(500).or(z.literal('')),
   fileSize: z.coerce.number().optional().nullable(),
   thumbnail: z.string().max(500).optional().nullable().or(z.literal('')),

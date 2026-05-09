@@ -137,7 +137,7 @@ const { categories } = useReports()
 
 // Generate years from 2020 to current year
 const currentYear = new Date().getFullYear()
-const years = Array.from({ length: currentYear - 2019 }, (_, i) => currentYear - i)
+const years = Array.from({ length: currentYear - 1992 }, (_, i) => currentYear - i)
 
 // Local state synced with props
 const searchQuery = ref(props.modelSearch)

@@ -95,7 +95,6 @@ export interface AdminAuditReport {
   id: number
   slug: string
   category: AuditCategory
-  year: number
   fileUrl: string
   fileSize: number | null
   thumbnail: string | null
@@ -381,7 +380,6 @@ export interface ContactSubmission {
 export interface ReportInput {
   slug: string
   category: AuditCategory
-  year: number
   fileUrl: string
   fileSize?: number | null
   thumbnail?: string | null

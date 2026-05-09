@@ -6,7 +6,6 @@ interface DbAuditReport {
   slug: string
   category: AuditCategory
   publishedAt: Date | string | null
-  year: number
   fileUrl: string
   fileSize: string // Already stored as formatted string (e.g., "4.2 MB")
   thumbnail: string | null
@@ -77,7 +76,7 @@ export function transformReport(
     slug: report.slug,
     category: report.category,
     publishedAt: formatDate(report.publishedAt),
-    year: report.year,
+    year: report.publishedAt ? new Date(report.publishedAt).getFullYear() : 0,
     // Route downloads through the rate-limited endpoint so direct uploads/
     // bandwidth is metered. Direct /uploads/reports/*.pdf access is blocked
     // by server/middleware/rateLimit.ts.

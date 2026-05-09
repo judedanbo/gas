@@ -133,14 +133,6 @@
                 :error="errors.category"
               />
 
-              <AdminFormAdminSelect
-                v-model="form.year"
-                :options="yearOptions"
-                label="Year"
-                required
-                :error="errors.year"
-              />
-
               <AdminFormAdminSwitch
                 v-model="form.isPublished"
                 label="Published"
@@ -230,7 +222,6 @@
   const form = reactive<ReportInput>({
     slug: '',
     category: 'financial',
-    year: new Date().getFullYear(),
     fileUrl: '',
     fileSize: undefined,
     thumbnail: '',
@@ -245,7 +236,6 @@
     'translations.en.title': [rules.required],
     slug: [rules.required],
     category: [rules.required],
-    year: [rules.required],
     fileUrl: [rules.required]
   }
 
@@ -289,13 +279,6 @@
     { value: 'follow-up', label: 'Follow-up Review' },
     { value: 'special', label: 'Special Audit' }
   ]
-
-  // Years
-  const currentYear = new Date().getFullYear()
-  const yearOptions = Array.from({ length: currentYear - 1999 }, (_, i) => ({
-    value: currentYear - i,
-    label: String(currentYear - i)
-  }))
 
   // Generate slug from text
   function generateSlug(text: string): string {

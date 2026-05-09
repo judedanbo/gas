@@ -151,14 +151,6 @@
                   :error="errors.category"
                 />
 
-                <AdminFormAdminSelect
-                  v-model="form.year"
-                  :options="yearOptions"
-                  label="Year"
-                  required
-                  :error="errors.year"
-                />
-
                 <AdminFormAdminSwitch
                   v-model="form.isPublished"
                   label="Published"
@@ -261,7 +253,6 @@
   const form = reactive<ReportInput>({
     slug: '',
     category: 'financial',
-    year: new Date().getFullYear(),
     fileUrl: '',
     fileSize: undefined,
     thumbnail: '',
@@ -276,7 +267,6 @@
     'translations.en.title': [rules.required],
     slug: [rules.required],
     category: [rules.required],
-    year: [rules.required],
     fileUrl: [rules.required]
   }
 
@@ -320,13 +310,6 @@
     { value: 'follow-up', label: 'Follow-up Review' },
     { value: 'special', label: 'Special Audit' }
   ]
-
-  // Years
-  const currentYear = new Date().getFullYear()
-  const yearOptions = Array.from({ length: currentYear - 1999 }, (_, i) => ({
-    value: currentYear - i,
-    label: String(currentYear - i)
-  }))
 
   // Check slug availability with debounce (excludes current report)
   async function checkSlugAvailability(slug: string) {
@@ -387,7 +370,6 @@
       // Populate form
       form.slug = report.slug
       form.category = report.category
-      form.year = report.year
       form.fileUrl = report.fileUrl
       form.fileSize = report.fileSize || undefined
       form.thumbnail = report.thumbnail || ''

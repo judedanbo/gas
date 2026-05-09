@@ -52,7 +52,7 @@
                 Published: {{ formatDate(report.publishedAt) }}
               </UiIconText>
               <UiIconText icon="folder" size="md" color="white" gap="sm">
-                Fiscal Year: {{ report.year }}
+                Year: {{ new Date(report.publishedAt).getFullYear() }}
               </UiIconText>
               <UiIconText icon="file" size="md" color="white" gap="sm">
                 File Size: {{ report.fileSize }}
@@ -124,8 +124,8 @@
                       </dd>
                     </div>
                     <div class="flex justify-between">
-                      <dt class="text-gray-500 dark:text-gray-400">Fiscal Year:</dt>
-                      <dd class="text-gray-900 dark:text-white font-medium">{{ report.year }}</dd>
+                      <dt class="text-gray-500 dark:text-gray-400">Year:</dt>
+                      <dd class="text-gray-900 dark:text-white font-medium">{{ new Date(report.publishedAt).getFullYear() }}</dd>
                     </div>
                     <div class="flex justify-between">
                       <dt class="text-gray-500 dark:text-gray-400">Published:</dt>

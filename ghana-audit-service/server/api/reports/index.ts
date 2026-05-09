@@ -1,5 +1,5 @@
 import type { AuditReport, AuditCategory, PaginatedResponse } from '~/types'
-import { eq, and, isNull, sql, desc } from 'drizzle-orm'
+import { eq, and, isNull, sql, desc, like, or, inArray } from 'drizzle-orm'
 import { getDatabase, schema } from '../../database'
 import { buildPaginationMeta } from '../../utils/adminHelpers'
 import { transformReports } from '../../utils/transformReport'
@@ -10,18 +10,15 @@ export default defineEventHandler(async (event): Promise<PaginatedResponse<Audit
   const locale = getLocaleFromRequest(event)
   const db = getDatabase()
 
-  // Parse pagination (use defaults suitable for public API)
   const page = Math.max(1, Number(query.page) || 1)
   const perPage = Math.min(50, Math.max(1, Number(query.perPage) || 10))
   const offset = (page - 1) * perPage
 
-  // Build where conditions - only published, non-deleted reports
   const conditions = [
     eq(schema.auditReports.isPublished, true),
     isNull(schema.auditReports.deletedAt)
   ]
 
-  // Filter by category
   if (query.category && typeof query.category === 'string') {
     const validCategories: AuditCategory[] = [
       'financial',
@@ -37,20 +34,37 @@ export default defineEventHandler(async (event): Promise<PaginatedResponse<Audit
     }
   }
 
-  // Filter by year
   if (query.year) {
-    conditions.push(eq(schema.auditReports.year, Number(query.year)))
+    conditions.push(sql`YEAR(${schema.auditReports.publishedAt}) = ${Number(query.year)}`)
+  }
+
+  // Search against translations at the DB level so it covers ALL reports, not just the current page
+  if (query.search && typeof query.search === 'string') {
+    const searchPattern = `%${query.search}%`
+    const matchingIds = await db
+      .selectDistinct({ id: schema.auditReportTranslations.auditReportId })
+      .from(schema.auditReportTranslations)
+      .where(
+        or(
+          like(schema.auditReportTranslations.title, searchPattern),
+          like(schema.auditReportTranslations.summary, searchPattern)
+        )
+      )
+
+    const ids = matchingIds.map((r) => r.id)
+    if (ids.length === 0) {
+      return { data: [], meta: buildPaginationMeta(0, page, perPage) }
+    }
+    conditions.push(inArray(schema.auditReports.id, ids))
   }
 
   const whereClause = and(...conditions)
 
-  // Get total count
   const [{ count }] = await db
     .select({ count: sql<number>`count(*)` })
     .from(schema.auditReports)
     .where(whereClause)
 
-  // Fetch reports
   const reports = await db
     .select()
     .from(schema.auditReports)
@@ -59,7 +73,6 @@ export default defineEventHandler(async (event): Promise<PaginatedResponse<Audit
     .limit(perPage)
     .offset(offset)
 
-  // Fetch translations for each report
   const reportIds = reports.map((r) => r.id)
   const translations =
     reportIds.length > 0
@@ -71,7 +84,6 @@ export default defineEventHandler(async (event): Promise<PaginatedResponse<Audit
           )
       : []
 
-  // Group translations by report
   const translationsByReport = translations.reduce(
     (acc, t) => {
       if (!acc[t.auditReportId]) {
@@ -86,32 +98,15 @@ export default defineEventHandler(async (event): Promise<PaginatedResponse<Audit
     {} as Record<number, Record<string, { title: string; summary: string | null }>>
   )
 
-  // Combine reports with translations
   const reportsWithTranslations = reports.map((report) => ({
     ...report,
     translations: translationsByReport[report.id] || {}
   }))
 
-  // Apply search filter (after combining with translations for title/summary search)
-  let filteredReports = reportsWithTranslations
-  if (query.search && typeof query.search === 'string') {
-    const searchTerm = query.search.toLowerCase()
-    filteredReports = reportsWithTranslations.filter((r) => {
-      const translation = r.translations[locale] || r.translations.en || {}
-      const title = (translation.title || '').toLowerCase()
-      const summary = (translation.summary || '').toLowerCase()
-      return title.includes(searchTerm) || summary.includes(searchTerm)
-    })
-  }
-
-  // Transform to public format
-  const data = transformReports(filteredReports, locale)
-
-  // Adjust count for search filter
-  const total = query.search ? filteredReports.length : Number(count)
+  const data = transformReports(reportsWithTranslations, locale)
 
   return {
     data,
-    meta: buildPaginationMeta(total, page, perPage)
+    meta: buildPaginationMeta(Number(count), page, perPage)
   }
 })

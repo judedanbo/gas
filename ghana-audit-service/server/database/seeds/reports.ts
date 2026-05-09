@@ -29,7 +29,6 @@ type ReportCategory = 'financial' | 'compliance' | 'it' | 'performance' | 'techn
 interface SeedReportItem {
   slug: string
   category: ReportCategory
-  year: number
   publishedAt: string
   fileUrl: string
   fileSize: string
@@ -77,7 +76,6 @@ async function seed() {
         slug: report.slug,
         category: report.category,
         publishedAt: new Date(report.publishedAt),
-        year: report.year,
         fileUrl: report.fileUrl,
         fileSize: report.fileSize,
         thumbnail: report.thumbnail,

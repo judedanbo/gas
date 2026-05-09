@@ -187,9 +187,8 @@
   const columns = [
     { key: 'translations.en.title', label: 'Title', sortable: true },
     { key: 'category', label: 'Category', sortable: true, width: '150px' },
-    { key: 'year', label: 'Year', sortable: true, width: '100px' },
-    { key: 'isPublished', label: 'Status', width: '120px' },
-    { key: 'publishedAt', label: 'Published', sortable: true, width: '120px' }
+    { key: 'publishedAt', label: 'Published', sortable: true, width: '120px' },
+    { key: 'isPublished', label: 'Status', width: '120px' }
   ]
 
   // Delete
