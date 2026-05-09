@@ -114,7 +114,8 @@ const navigationItems: NavItem[] = [
       { label: 'All Reports', href: '/reports', icon: 'heroicons:chart-bar', description: 'Browse all audit reports' },
       { label: 'Financial Audits', href: '/reports?category=financial', icon: 'heroicons:currency-dollar', description: 'Government financial statements' },
       { label: 'Performance Audits', href: '/reports?category=performance', icon: 'heroicons:chart-bar', description: 'Value-for-money assessments' },
-      { label: 'Compliance Audits', href: '/reports?category=compliance', icon: 'heroicons:check-circle', description: 'Regulatory compliance reviews' }
+      { label: 'Compliance Audits', href: '/reports?category=compliance', icon: 'heroicons:check-circle', description: 'Regulatory compliance reviews' },
+      { label: 'Special Audits', href: '/reports?category=special', icon: 'heroicons:magnifying-glass-circle', description: 'Special investigations and audit reviews' }
     ]
   },
   {

@@ -137,6 +137,8 @@
       'Access comprehensive audit reports on public accounts, ministries, departments, and agencies across Ghana.'
   })
 
+  const route = useRoute()
+  const router = useRouter()
   const { reports, loading, error, meta, fetchReports } = useReports()
 
   // Filters
@@ -146,18 +148,49 @@
     year: '' as number | ''
   })
 
-  // Fetch reports on mount
+  let syncingUrl = false
+
+  function applyQueryParams() {
+    const q = route.query
+    filters.category = (typeof q.category === 'string' ? q.category : '') as AuditCategory | ''
+    filters.search = typeof q.search === 'string' ? q.search : ''
+    filters.year = q.year ? Number(q.year) : ''
+    meta.value.page = q.page ? Number(q.page) : 1
+  }
+
+  // Fetch reports on mount, reading any query params
   onMounted(() => {
+    applyQueryParams()
+    fetchFilteredReports()
+  })
+
+  // Re-apply filters when navigating between menu items (client-side)
+  watch(() => route.query, () => {
+    if (syncingUrl) return
+    applyQueryParams()
     fetchFilteredReports()
   })
 
   async function fetchFilteredReports() {
+    syncQueryToUrl()
     await fetchReports({
       search: filters.search || undefined,
       category: filters.category || undefined,
       year: filters.year || undefined,
       page: meta.value.page,
       perPage: 12
+    })
+  }
+
+  function syncQueryToUrl() {
+    const query: Record<string, string> = {}
+    if (filters.category) query.category = filters.category
+    if (filters.search) query.search = filters.search
+    if (filters.year) query.year = String(filters.year)
+    if (meta.value.page > 1) query.page = String(meta.value.page)
+    syncingUrl = true
+    router.replace({ query }).finally(() => {
+      nextTick(() => { syncingUrl = false })
     })
   }
 

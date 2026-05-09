@@ -231,6 +231,11 @@
           labelKey: 'reports.categories.compliance',
           href: '/reports?category=compliance',
           icon: 'heroicons:check-circle'
+        },
+        {
+          labelKey: 'reports.categories.special',
+          href: '/reports?category=special',
+          icon: 'heroicons:magnifying-glass-circle'
         }
       ]
     },
