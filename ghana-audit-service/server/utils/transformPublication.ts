@@ -49,7 +49,10 @@ export function transformPublication(
     slug: publication.slug,
     type: publication.type,
     publishedAt: formatDate(publication.publishedAt),
-    fileUrl: publication.fileUrl || undefined,
+    // Route downloads through the rate-limited endpoint so direct uploads/
+    // bandwidth is metered. Direct /uploads/publications/*.pdf access is
+    // blocked by server/middleware/rateLimit.ts.
+    fileUrl: publication.fileUrl ? `/api/downloads/publications/${publication.id}` : undefined,
     content: translation.content || undefined,
     excerpt: translation.excerpt || undefined,
     thumbnail: publication.thumbnail || undefined
