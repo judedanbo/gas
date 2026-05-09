@@ -9,6 +9,8 @@ import {
 } from '../../../utils/adminHelpers'
 import { logAuditAction, sanitizeForAudit } from '../../../utils/auditLogger'
 import { auditReportSchema, validateBody, createValidationError } from '../../../utils/validation'
+import { resolvePublicAsset } from '../../../utils/publicFiles'
+import { generateThumbnailFromPdf } from '../../../utils/generateThumbnail'
 
 export default defineEventHandler(async (event) => {
   const method = event.method
@@ -140,6 +142,15 @@ async function handleCreate(event: H3Event) {
     throw createValidationError({ slug: 'A report with this slug already exists' })
   }
 
+  // Auto-generate thumbnail from PDF if none was provided
+  let thumbnail = input.thumbnail || null
+  if (!thumbnail && input.fileUrl) {
+    const pdfPath = resolvePublicAsset(input.fileUrl)
+    if (pdfPath) {
+      thumbnail = generateThumbnailFromPdf(pdfPath)
+    }
+  }
+
   // Insert report and translations in a transaction
   const pool = (await import('../../../database')).getPool()
   const connection = await pool.getConnection()
@@ -158,7 +169,7 @@ async function handleCreate(event: H3Event) {
         input.year,
         input.fileUrl,
         input.fileSize,
-        input.thumbnail || null,
+        thumbnail,
         input.isPublished,
         user.id,
         user.id

@@ -45,16 +45,20 @@ export default defineEventHandler(async (event) => {
   const fileStat = await stat(filePath)
   const ext = extname(filePath) || '.pdf'
   const downloadName = `${report.slug || basename(filePath, ext)}${ext}`
+  const query = getQuery(event)
+  const isInlineView = query.view === '1' || query.view === 'true'
 
   setHeader(event, 'Content-Type', 'application/pdf')
   setHeader(event, 'Content-Length', fileStat.size)
   setHeader(
     event,
     'Content-Disposition',
-    `attachment; filename="${downloadName.replace(/"/g, '')}"`
+    `${isInlineView ? 'inline' : 'attachment'}; filename="${downloadName.replace(/"/g, '')}"`
   )
-  // Don't let intermediaries cache rate-limited responses.
-  setHeader(event, 'Cache-Control', 'private, no-store, must-revalidate')
+  setHeader(event, 'Cache-Control', isInlineView
+    ? 'private, max-age=300'
+    : 'private, no-store, must-revalidate'
+  )
 
   return sendStream(event, createReadStream(filePath))
 })

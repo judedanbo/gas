@@ -4,6 +4,8 @@ import { getDatabase, schema } from '../../../database'
 import { requirePermission, getCurrentUser, isAdmin } from '../../../utils/adminHelpers'
 import { logAuditAction, createChangesObject, sanitizeForAudit } from '../../../utils/auditLogger'
 import { auditReportSchema, validateBody, createValidationError } from '../../../utils/validation'
+import { resolvePublicAsset } from '../../../utils/publicFiles'
+import { generateThumbnailFromPdf } from '../../../utils/generateThumbnail'
 
 export default defineEventHandler(async (event) => {
   const method = event.method
@@ -127,6 +129,16 @@ async function handleUpdate(event: H3Event, id: number) {
     }
   }
 
+  // Auto-generate thumbnail if none was provided and the PDF changed or had no thumbnail
+  let thumbnail = input.thumbnail || null
+  const fileUrlChanged = input.fileUrl !== existingReport.fileUrl
+  if (!thumbnail && input.fileUrl && (fileUrlChanged || !existingReport.thumbnail)) {
+    const pdfPath = resolvePublicAsset(input.fileUrl)
+    if (pdfPath) {
+      thumbnail = generateThumbnailFromPdf(pdfPath)
+    }
+  }
+
   // Update report and translations in a transaction
   const pool = (await import('../../../database')).getPool()
   const connection = await pool.getConnection()
@@ -147,7 +159,7 @@ async function handleUpdate(event: H3Event, id: number) {
         input.year,
         input.fileUrl,
         input.fileSize,
-        input.thumbnail || null,
+        thumbnail,
         input.isPublished,
         user.id,
         id

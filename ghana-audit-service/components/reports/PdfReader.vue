@@ -79,7 +79,7 @@
     <!-- PDF iframe (hidden on mobile) -->
     <template v-else>
       <iframe
-        :src="fileUrl"
+        :src="viewUrl"
         :title="title"
         class="w-full flex-1 bg-gray-100 dark:bg-gray-700 hidden sm:block"
         :class="expanded ? '' : 'min-h-[70vh]'"
@@ -112,6 +112,11 @@
     title: 'Audit Report PDF'
   })
 
+  const viewUrl = computed(() => {
+    const separator = props.fileUrl.includes('?') ? '&' : '?'
+    return `${props.fileUrl}${separator}view=1`
+  })
+
   const reportIssueLink = computed(() => ({
     path: '/contact',
     hash: '#send-message',
@@ -129,12 +134,9 @@
     checking.value = true
     loadError.value = false
     try {
-      const response = await fetch(props.fileUrl, { method: 'HEAD', mode: 'no-cors' })
-      if (response.type === 'opaque') {
-        loadError.value = false
-      } else if (!response.ok) {
-        loadError.value = true
-      }
+      const response = await fetch(viewUrl.value)
+      loadError.value = !response.ok
+      response.body?.cancel()
     } catch {
       loadError.value = true
     } finally {
