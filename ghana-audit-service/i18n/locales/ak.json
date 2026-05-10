@@ -258,6 +258,39 @@
         "requests": "Requests"
       }
     },
+    "insights": {
+      "title": "Insights",
+      "subtitle": "Search ne 404 — content-team feedback.",
+      "backToOverview": "Sɛnea Asite",
+      "topSearches": {
+        "title": "Search a ɛsoa",
+        "hint": "Nsɛm a wɔbisa kɛse; avg results kyerɛ relevance.",
+        "cols": {
+          "query": "Query",
+          "count": "Dodow",
+          "avgResults": "Avg results"
+        }
+      },
+      "zeroResults": {
+        "title": "Search a ɛnnya nsɛm",
+        "hint": "Nsɛm a wɔbisa nanso ɛnnya biribiara — ɛkyerɛ baabi a content sua.",
+        "empty": "Biribiara nni hɔ — ɛyɛ.",
+        "cols": {
+          "query": "Query",
+          "count": "Mpɛn dodow",
+          "lastSeen": "Bere kɔɔ"
+        }
+      },
+      "notFound": {
+        "title": "404 hot list",
+        "hint": "Akwan a abu mu — yɛ ahyɛaseɛ ansa na users akyerɛ.",
+        "cols": {
+          "path": "Path",
+          "hits": "Hits",
+          "uniqueIps": "Unique IPs"
+        }
+      }
+    },
     "capacity": {
       "title": "Capacity",
       "subtitle": "Throughput, latency, cache ne storage trends ma infrastructure adwumayɛfo.",

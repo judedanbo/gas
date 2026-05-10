@@ -174,6 +174,31 @@ export interface IncidentsQuery {
 
 export type CapacityWindow = '30d' | '90d' | '365d'
 
+export type InsightsWindow = '24h' | '7d' | '30d'
+
+export interface InsightsResponse {
+  windowHours: number
+  topQueries: Array<{
+    queryHash: string
+    sampleText: string
+    count: number
+    avgResults: number
+    lastSeen: string
+  }>
+  zeroResultQueries: Array<{
+    queryHash: string
+    sampleText: string
+    count: number
+    lastSeen: string
+  }>
+  hotNotFound: Array<{
+    routePath: string
+    count: number
+    uniqueIps: number
+    lastSeen: string
+  }>
+}
+
 export interface CapacityResponse {
   windowDays: number
   hourly: Array<{ hour: string; visits: number; bytes: number; cacheHits: number }>
@@ -237,6 +262,10 @@ export function useAnalytics() {
     return api.get<CapacityResponse>('analytics/capacity', { window })
   }
 
+  function fetchInsights(window: InsightsWindow = '7d'): Promise<InsightsResponse> {
+    return api.get<InsightsResponse>('analytics/insights', { window })
+  }
+
   return {
     fetchOverview,
     fetchRoutes,
@@ -244,6 +273,7 @@ export function useAnalytics() {
     fetchBots,
     updateBotClassification,
     fetchIncidents,
-    fetchCapacity
+    fetchCapacity,
+    fetchInsights
   }
 }

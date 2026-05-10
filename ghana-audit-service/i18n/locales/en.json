@@ -258,6 +258,39 @@
         "requests": "Requests"
       }
     },
+    "insights": {
+      "title": "Insights",
+      "subtitle": "Search behaviour and link rot — content-team feedback loop.",
+      "backToOverview": "Overview",
+      "topSearches": {
+        "title": "Top searches",
+        "hint": "Most-frequent queries; the avg-results column hints at relevance.",
+        "cols": {
+          "query": "Query",
+          "count": "Count",
+          "avgResults": "Avg results"
+        }
+      },
+      "zeroResults": {
+        "title": "Zero-result searches",
+        "hint": "Queries that always returned nothing in the window — content gaps to fill.",
+        "empty": "No zero-result queries — well done.",
+        "cols": {
+          "query": "Query",
+          "count": "Times asked",
+          "lastSeen": "Last seen"
+        }
+      },
+      "notFound": {
+        "title": "404 hot list",
+        "hint": "Top broken paths; catches link rot in newly-published material before users complain.",
+        "cols": {
+          "path": "Path",
+          "hits": "Hits",
+          "uniqueIps": "Unique IPs"
+        }
+      }
+    },
     "capacity": {
       "title": "Capacity",
       "subtitle": "Throughput, latency, cache, and storage trends to inform infrastructure decisions.",

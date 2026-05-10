@@ -36,6 +36,13 @@
       "when": 1778412553804,
       "tag": "0004_spotty_jack_murdock",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "5",
+      "when": 1778418886965,
+      "tag": "0005_lumpy_scrambler",
+      "breakpoints": true
     }
   ]
 }

@@ -187,6 +187,38 @@ export const abuseIncidents = mysqlTable(
   ]
 )
 
+/**
+ * search_queries — slim per-search log feeding the admin Insights tab.
+ *
+ * Captures every /api/search invocation: the query text (truncated), a
+ * stable hash for grouping, the result count, and IP/UA fingerprints.
+ * Zero-result queries (resultCount = 0) are a content-gap signal —
+ * surface them to the content team so they can fill the gap.
+ *
+ * Retention: same as request_events (ANALYTICS_RETENTION_DAYS, default
+ * 30 days) — handled by a small DELETE in the existing retention task.
+ */
+export const searchQueries = mysqlTable(
+  'search_queries',
+  {
+    id: bigint('id', { mode: 'number', unsigned: true }).primaryKey().autoincrement(),
+    ts: datetime('ts', { fsp: 3 })
+      .notNull()
+      .default(sql`CURRENT_TIMESTAMP(3)`),
+    queryText: varchar('query_text', { length: 256 }).notNull(),
+    queryHash: char('query_hash', { length: 64 }).notNull(),
+    locale: char('locale', { length: 8 }),
+    resultCount: int('result_count').notNull().default(0),
+    ipHash: char('ip_hash', { length: 64 }),
+    uaFamily: varchar('ua_family', { length: 32 }).notNull().default('unknown')
+  },
+  (table) => [
+    index('idx_sq_ts').on(table.ts),
+    index('idx_sq_hash_ts').on(table.queryHash, table.ts),
+    index('idx_sq_zero_ts').on(table.resultCount, table.ts)
+  ]
+)
+
 // Type exports
 export type RequestEvent = typeof requestEvents.$inferSelect
 export type NewRequestEvent = typeof requestEvents.$inferInsert
@@ -198,3 +230,5 @@ export type BotSignature = typeof botSignatures.$inferSelect
 export type NewBotSignature = typeof botSignatures.$inferInsert
 export type AbuseIncident = typeof abuseIncidents.$inferSelect
 export type NewAbuseIncident = typeof abuseIncidents.$inferInsert
+export type SearchQuery = typeof searchQueries.$inferSelect
+export type NewSearchQuery = typeof searchQueries.$inferInsert
