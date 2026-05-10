@@ -21,7 +21,7 @@ export default defineEventHandler(async (event) => {
 
   // Check rate limit for login attempts
   const key = createRateLimitKey(clientIP, '/api/admin/auth/login')
-  const { isLimited, remaining, resetTime } = checkRateLimit(
+  const { isLimited, remaining, resetTime } = await checkRateLimit(
     key,
     LOGIN_RATE_LIMIT.limit,
     LOGIN_RATE_LIMIT.windowMs
@@ -117,10 +117,7 @@ export default defineEventHandler(async (event) => {
   })
 
   // Update last login timestamp
-  await db
-    .update(schema.users)
-    .set({ lastLoginAt: new Date() })
-    .where(eq(schema.users.id, user.id))
+  await db.update(schema.users).set({ lastLoginAt: new Date() }).where(eq(schema.users.id, user.id))
 
   // Log successful login
   await db.insert(schema.auditLogs).values({

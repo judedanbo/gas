@@ -30,12 +30,19 @@ services:
       - NUXT_API_SECRET=${NUXT_API_SECRET:-change-me-in-production}
       # JWT
       - JWT_SECRET=${JWT_SECRET:-change-this-jwt-secret}
+      # Redis (rate limiter / analytics hot counters)
+      - REDIS_URL=${REDIS_URL:-redis://redis:6379/0}
+      # Analytics
+      - ANALYTICS_IP_SALT=${ANALYTICS_IP_SALT:-change-this-analytics-salt}
+      - ANALYTICS_RETENTION_DAYS=${ANALYTICS_RETENTION_DAYS:-30}
       # Sentry (optional)
       - NUXT_PUBLIC_SENTRY_DSN=${NUXT_PUBLIC_SENTRY_DSN:-}
     # volumes:
     # - ./ghana-audit-service:/app
     depends_on:
       mysql:
+        condition: service_healthy
+      redis:
         condition: service_healthy
     networks:
       - gas-network
@@ -94,11 +101,41 @@ services:
       - --collation-server=utf8mb4_unicode_ci
       - --default-authentication-plugin=mysql_native_password
 
+  # ===========================================
+  # Redis (rate limiter + analytics hot counters)
+  # ===========================================
+  redis:
+    image: redis:7-alpine
+    container_name: gas-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    networks:
+      - gas-network
+    command:
+      - redis-server
+      - --appendonly
+      - "yes"
+      - --maxmemory
+      - 256mb
+      - --maxmemory-policy
+      - allkeys-lru
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
 # ===========================================
 # Volumes
 # ===========================================
 volumes:
   mysql-data:
+    driver: local
+  redis-data:
     driver: local
 
 # ===========================================

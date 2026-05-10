@@ -56,7 +56,7 @@ function applyRateLimitHeaders(
   setHeader(event, 'X-RateLimit-Reset', Math.ceil(resetTime / 1000).toString())
 }
 
-export default defineEventHandler((event): undefined | object => {
+export default defineEventHandler(async (event): Promise<undefined | object> => {
   const rawPath = event.path || '/'
   const path = rawPath.split('?')[0]
 
@@ -83,7 +83,7 @@ export default defineEventHandler((event): undefined | object => {
 
   // Downloads: stricter dual-window limit (per-minute and per-hour).
   if (isDownload) {
-    const result = checkMultiWindowRateLimit(clientIP, [
+    const result = await checkMultiWindowRateLimit(clientIP, [
       { name: 'download:minute', config: RATE_LIMITS.download },
       { name: 'download:hour', config: RATE_LIMITS.downloadHourly }
     ])
@@ -120,7 +120,11 @@ export default defineEventHandler((event): undefined | object => {
     }
 
     const key = createRateLimitKey(clientIP, path)
-    const { isLimited, remaining, resetTime } = checkRateLimit(key, config.limit, config.windowMs)
+    const { isLimited, remaining, resetTime } = await checkRateLimit(
+      key,
+      config.limit,
+      config.windowMs
+    )
 
     applyRateLimitHeaders(event, config.limit, remaining, resetTime)
 
@@ -143,7 +147,11 @@ export default defineEventHandler((event): undefined | object => {
   // /ak/*, etc.) — lenient global per-IP bucket as a backstop against scraping.
   const config = RATE_LIMITS.page
   const key = `${clientIP}:page`
-  const { isLimited, remaining, resetTime } = checkRateLimit(key, config.limit, config.windowMs)
+  const { isLimited, remaining, resetTime } = await checkRateLimit(
+    key,
+    config.limit,
+    config.windowMs
+  )
 
   applyRateLimitHeaders(event, config.limit, remaining, resetTime)
 

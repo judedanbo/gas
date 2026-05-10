@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest'
+import { describe, it, expect, beforeAll, beforeEach, vi } from 'vitest'
 import {
   checkRateLimit,
   checkMultiWindowRateLimit,
@@ -7,6 +7,13 @@ import {
   RATE_LIMITS
 } from '../../../server/utils/rateLimiter'
 
+// Force the in-memory backend so unit tests don't talk to a real Redis
+// (fake timers don't advance Redis TTLs). getRedis() reads REDIS_URL lazily
+// on first call, so deleting it here in beforeAll is sufficient.
+beforeAll(() => {
+  delete process.env.REDIS_URL
+})
+
 describe('rateLimiter', () => {
   describe('checkRateLimit', () => {
     beforeEach(() => {
@@ -14,64 +21,64 @@ describe('rateLimiter', () => {
       vi.useFakeTimers()
     })
 
-    it('should allow requests under the limit', () => {
+    it('should allow requests under the limit', async () => {
       const identifier = 'test-ip-1'
       const limit = 5
       const windowMs = 60000
 
-      const result = checkRateLimit(identifier, limit, windowMs)
+      const result = await checkRateLimit(identifier, limit, windowMs)
 
       expect(result.isLimited).toBe(false)
       expect(result.remaining).toBe(4) // limit - 1
     })
 
-    it('should track request count correctly', () => {
+    it('should track request count correctly', async () => {
       const identifier = 'test-ip-2'
       const limit = 3
       const windowMs = 60000
 
       // First request
-      let result = checkRateLimit(identifier, limit, windowMs)
+      let result = await checkRateLimit(identifier, limit, windowMs)
       expect(result.remaining).toBe(2)
 
       // Second request
-      result = checkRateLimit(identifier, limit, windowMs)
+      result = await checkRateLimit(identifier, limit, windowMs)
       expect(result.remaining).toBe(1)
 
       // Third request
-      result = checkRateLimit(identifier, limit, windowMs)
+      result = await checkRateLimit(identifier, limit, windowMs)
       expect(result.remaining).toBe(0)
     })
 
-    it('should limit requests when limit is exceeded', () => {
+    it('should limit requests when limit is exceeded', async () => {
       const identifier = 'test-ip-3'
       const limit = 2
       const windowMs = 60000
 
       // First two requests
-      checkRateLimit(identifier, limit, windowMs)
-      checkRateLimit(identifier, limit, windowMs)
+      await checkRateLimit(identifier, limit, windowMs)
+      await checkRateLimit(identifier, limit, windowMs)
 
       // Third request should be limited
-      const result = checkRateLimit(identifier, limit, windowMs)
+      const result = await checkRateLimit(identifier, limit, windowMs)
       expect(result.isLimited).toBe(true)
       expect(result.remaining).toBe(0)
     })
 
-    it('should reset after window expires', () => {
+    it('should reset after window expires', async () => {
       const identifier = 'test-ip-4'
       const limit = 2
       const windowMs = 60000
 
       // Exhaust limit
-      checkRateLimit(identifier, limit, windowMs)
-      checkRateLimit(identifier, limit, windowMs)
+      await checkRateLimit(identifier, limit, windowMs)
+      await checkRateLimit(identifier, limit, windowMs)
 
       // Advance time past window
       vi.advanceTimersByTime(windowMs + 1000)
 
       // Should be allowed again
-      const result = checkRateLimit(identifier, limit, windowMs)
+      const result = await checkRateLimit(identifier, limit, windowMs)
       expect(result.isLimited).toBe(false)
       expect(result.remaining).toBe(1)
     })
@@ -174,8 +181,8 @@ describe('rateLimiter', () => {
       vi.useFakeTimers()
     })
 
-    it('should report tightest non-limited window in headers', () => {
-      const result = checkMultiWindowRateLimit('multi-ip-1', [
+    it('should report tightest non-limited window in headers', async () => {
+      const result = await checkMultiWindowRateLimit('multi-ip-1', [
         { name: 'minute', config: { limit: 5, windowMs: 60_000 } },
         { name: 'hour', config: { limit: 50, windowMs: 3_600_000 } }
       ])
@@ -186,47 +193,47 @@ describe('rateLimiter', () => {
       expect(result.limit).toBe(5)
     })
 
-    it('should flag limited when the per-minute window is exhausted', () => {
+    it('should flag limited when the per-minute window is exhausted', async () => {
       const ip = 'multi-ip-2'
       const configs = [
         { name: 'minute', config: { limit: 2, windowMs: 60_000 } },
         { name: 'hour', config: { limit: 100, windowMs: 3_600_000 } }
       ]
 
-      checkMultiWindowRateLimit(ip, configs)
-      checkMultiWindowRateLimit(ip, configs)
-      const third = checkMultiWindowRateLimit(ip, configs)
+      await checkMultiWindowRateLimit(ip, configs)
+      await checkMultiWindowRateLimit(ip, configs)
+      const third = await checkMultiWindowRateLimit(ip, configs)
 
       expect(third.isLimited).toBe(true)
       expect(third.retryAfterSeconds).toBeGreaterThan(0)
     })
 
-    it('should flag limited when the per-hour window is exhausted', () => {
+    it('should flag limited when the per-hour window is exhausted', async () => {
       const ip = 'multi-ip-3'
       const configs = [
         { name: 'minute', config: { limit: 100, windowMs: 60_000 } },
         { name: 'hour', config: { limit: 2, windowMs: 3_600_000 } }
       ]
 
-      checkMultiWindowRateLimit(ip, configs)
-      checkMultiWindowRateLimit(ip, configs)
-      const third = checkMultiWindowRateLimit(ip, configs)
+      await checkMultiWindowRateLimit(ip, configs)
+      await checkMultiWindowRateLimit(ip, configs)
+      const third = await checkMultiWindowRateLimit(ip, configs)
 
       expect(third.isLimited).toBe(true)
       expect(third.retryAfterSeconds).toBeGreaterThan(0)
     })
 
-    it('should keep windows isolated by name within the same IP', () => {
+    it('should keep windows isolated by name within the same IP', async () => {
       const ip = 'multi-ip-4'
 
       // Burn one bucket via direct checkRateLimit at a specific name
-      const first = checkMultiWindowRateLimit(ip, [
+      const first = await checkMultiWindowRateLimit(ip, [
         { name: 'minute', config: { limit: 5, windowMs: 60_000 } }
       ])
       expect(first.remaining).toBe(4)
 
       // A different bucket name should be unaffected
-      const second = checkMultiWindowRateLimit(ip, [
+      const second = await checkMultiWindowRateLimit(ip, [
         { name: 'hour', config: { limit: 10, windowMs: 3_600_000 } }
       ])
       expect(second.remaining).toBe(9)
