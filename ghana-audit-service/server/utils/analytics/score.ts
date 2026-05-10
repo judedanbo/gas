@@ -35,6 +35,10 @@ export interface ScoreSnapshot {
   missingAcceptLanguage?: boolean
   missingAcceptEncoding?: boolean
   httpVersion10?: boolean
+  /** Phase 5f: fuzz_attempt incident count in the 24h window. Any value
+   *  > 0 is a near-conclusive signal — fuzzing is unambiguous attack
+   *  behaviour. Mirrors probingHits24h in weight (+50). */
+  fuzzAttempts24h?: number
 }
 
 export interface ScoreResult {
@@ -122,6 +126,13 @@ export function scoreSignature(snapshot: ScoreSnapshot): ScoreResult {
   if (snapshot.httpVersion10) {
     score += 10
     reasons.push('http_1_0:+10')
+  }
+  if ((snapshot.fuzzAttempts24h ?? 0) > 0) {
+    // Fuzzing is unambiguously hostile. +50 puts a clean signature into
+    // the suspicious bucket on its own and into abusive when paired with
+    // any other signal.
+    score += 50
+    reasons.push(`fuzz_attempt(${snapshot.fuzzAttempts24h}):+50`)
   }
 
   let classification: ScoreResult['classification']

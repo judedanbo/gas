@@ -169,7 +169,7 @@ export const botSignatures = mysqlTable(
  *
  * kind values: 'rate_limit_api' | 'rate_limit_download' | 'rate_limit_form'
  *            | 'failed_login' | 'probing_path' | 'header_anomaly'
- *            | 'download_burst' | 'crawl_burst'
+ *            | 'download_burst' | 'crawl_burst' | 'fuzz_attempt'
  */
 export const abuseIncidents = mysqlTable(
   'abuse_incidents',

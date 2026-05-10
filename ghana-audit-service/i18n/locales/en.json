@@ -361,6 +361,18 @@
         "allKinds": "All kinds",
         "allSeverities": "All severities",
         "details": "Show evidence"
+      },
+      "fuzz": {
+        "title": "Fuzz-attempt leaderboard",
+        "subtitle": "Inputs matching SQL-injection / XSS / path-traversal / SSRF fingerprints. Single hits raise an incident; recurring senders surface here.",
+        "empty": "No fuzz attempts in the window — quiet day.",
+        "cols": {
+          "severity": "Severity",
+          "kind": "Top kind",
+          "count": "Count",
+          "classification": "Class",
+          "lastSeen": "Last seen"
+        }
       }
     }
   }

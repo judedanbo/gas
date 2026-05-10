@@ -25,6 +25,7 @@ interface AggregateRow {
   last_seen: Date | string
   rate_limit_hits: number
   probing_hits: number
+  fuzz_hits: number
   failed_logins: number
   downloads: number
   country: string | null
@@ -61,6 +62,7 @@ const AGGREGATE_SQL = `
     MAX(CASE WHEN re.http_version = '1.0' THEN 1 ELSE 0 END) AS any_http_10,
     COALESCE(rl.hits, 0) AS rate_limit_hits,
     COALESCE(pp.hits, 0) AS probing_hits,
+    COALESCE(fz.hits, 0) AS fuzz_hits,
     COALESCE(fl.hits, 0) AS failed_logins,
     COALESCE(dl.dls, 0) AS downloads
   FROM request_events re
@@ -76,6 +78,12 @@ const AGGREGATE_SQL = `
     WHERE ts >= (NOW() - INTERVAL ? HOUR) AND kind = 'probing_path'
     GROUP BY ip_hash, ua_hash
   ) pp ON pp.ip_hash = re.ip_hash AND pp.ua_hash = re.ua_hash
+  LEFT JOIN (
+    SELECT ip_hash, ua_hash, COUNT(*) AS hits
+    FROM abuse_incidents
+    WHERE ts >= (NOW() - INTERVAL ? HOUR) AND kind = 'fuzz_attempt'
+    GROUP BY ip_hash, ua_hash
+  ) fz ON fz.ip_hash = re.ip_hash AND fz.ua_hash = re.ua_hash
   LEFT JOIN (
     SELECT ip_hash, ua_hash, COUNT(*) AS hits
     FROM abuse_incidents
@@ -144,6 +152,7 @@ export default defineTask({
       WINDOW_HOURS,
       WINDOW_HOURS,
       WINDOW_HOURS,
+      WINDOW_HOURS,
       WINDOW_HOURS
     ])) as [AggregateRow[], unknown]
 
@@ -161,7 +170,8 @@ export default defineTask({
         asn: row.asn != null ? Number(row.asn) : null,
         missingAcceptLanguage: Number(row.any_missing_accept_language) > 0,
         missingAcceptEncoding: Number(row.any_missing_accept_encoding) > 0,
-        httpVersion10: Number(row.any_http_10) > 0
+        httpVersion10: Number(row.any_http_10) > 0,
+        fuzzAttempts24h: Number(row.fuzz_hits)
       }
       const result = scoreSignature(snapshot)
 

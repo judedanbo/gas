@@ -217,6 +217,29 @@ export interface FormSubmissionsResponse {
   }>
 }
 
+export type FuzzKind =
+  | 'sqli'
+  | 'xss'
+  | 'path_traversal'
+  | 'ssrf'
+  | 'length_anomaly'
+  | 'encoded_payload'
+
+export interface FuzzAttemptsResponse {
+  windowHours: number
+  items: Array<{
+    ipHash: string
+    uaHash: string
+    uaFamily: string
+    country: string | null
+    classification: string | null
+    count: number
+    topSeverity: string
+    topKind: FuzzKind | string | null
+    lastSeen: string
+  }>
+}
+
 export interface CapacityResponse {
   windowDays: number
   hourly: Array<{ hour: string; visits: number; bytes: number; cacheHits: number }>
@@ -288,6 +311,10 @@ export function useAnalytics() {
     return api.get<FormSubmissionsResponse>('analytics/form-submissions', { window })
   }
 
+  function fetchFuzzAttempts(window: InsightsWindow = '7d'): Promise<FuzzAttemptsResponse> {
+    return api.get<FuzzAttemptsResponse>('analytics/fuzz-attempts', { window })
+  }
+
   return {
     fetchOverview,
     fetchRoutes,
@@ -297,6 +324,7 @@ export function useAnalytics() {
     fetchIncidents,
     fetchCapacity,
     fetchInsights,
-    fetchFormSubmissions
+    fetchFormSubmissions,
+    fetchFuzzAttempts
   }
 }

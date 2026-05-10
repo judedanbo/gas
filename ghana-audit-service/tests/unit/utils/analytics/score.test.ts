@@ -18,6 +18,7 @@ function snapshot(overrides: Partial<ScoreSnapshot> = {}): ScoreSnapshot {
     missingAcceptLanguage: false,
     missingAcceptEncoding: false,
     httpVersion10: false,
+    fuzzAttempts24h: 0,
     ...overrides
   }
 }
@@ -161,6 +162,26 @@ describe('analytics/score', () => {
         })
       )
       expect(r.score).toBe(0)
+    })
+
+    it('a single fuzz attempt fires +50 (suspicious bucket alone)', () => {
+      const r = scoreSignature(snapshot({ fuzzAttempts24h: 1 }))
+      expect(r.score).toBe(50)
+      expect(r.classification).toBe('suspicious')
+      expect(r.reasons).toEqual([expect.stringMatching(/^fuzz_attempt/)])
+    })
+
+    it('fuzz + any other signal crosses into abusive', () => {
+      const r = scoreSignature(snapshot({ fuzzAttempts24h: 3, uaFamily: 'crawler' }))
+      // 50 (fuzz) + 10 (crawler) = 60 → abusive threshold
+      expect(r.score).toBe(60)
+      expect(r.classification).toBe('abusive')
+    })
+
+    it('fuzzAttempts24h = 0 contributes nothing', () => {
+      const r = scoreSignature(snapshot({ fuzzAttempts24h: 0 }))
+      expect(r.score).toBe(0)
+      expect(r.reasons).not.toContainEqual(expect.stringMatching(/^fuzz_attempt/))
     })
 
     it('empty UA + crawl signature reaches suspicious', () => {

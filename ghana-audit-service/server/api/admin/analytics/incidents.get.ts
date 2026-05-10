@@ -10,7 +10,8 @@ const ALLOWED_KINDS = new Set([
   'probing_path',
   'header_anomaly',
   'download_burst',
-  'crawl_burst'
+  'crawl_burst',
+  'fuzz_attempt'
 ])
 
 const ALLOWED_SEVERITIES = new Set(['info', 'warning', 'critical'])

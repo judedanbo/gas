@@ -3,6 +3,8 @@ import { validateCSRF, createCSRFError } from '../utils/csrf'
 import { getDatabase, schema } from '../database'
 import { getClientIP } from '../utils/rateLimiter'
 import { sendContactNotification } from '../utils/email'
+import { analyseBodyFields, highestSeverity } from '../utils/analytics/fuzzPatterns'
+import { recordIncident } from '../utils/analytics/recordIncident'
 
 export default defineEventHandler(async (event) => {
   // Validate CSRF token
@@ -11,6 +13,25 @@ export default defineEventHandler(async (event) => {
   }
 
   const body = await readBody(event)
+
+  // Body-field fuzz scan. Runs before validation so we capture the raw
+  // payload regardless of whether it would pass length / format checks.
+  // Flag-only — never affects the response.
+  if (body && typeof body === 'object') {
+    const fuzzMatches = analyseBodyFields(body as Record<string, unknown>)
+    if (fuzzMatches.length > 0) {
+      const stash = event.context.analytics
+      recordIncident({
+        kind: 'fuzz_attempt',
+        severity: highestSeverity(fuzzMatches),
+        ipHash: stash?.ipHash ?? null,
+        uaHash: stash?.uaHash ?? null,
+        routePattern: '/api/contact',
+        routePath: '/api/contact',
+        details: { source: 'body', matches: fuzzMatches }
+      })
+    }
+  }
 
   // Validate required fields
   const errors: Record<string, string> = {}

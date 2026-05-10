@@ -13,6 +13,7 @@ import { pushAnalyticsEvent } from '../utils/analytics/buffer'
 import { isProbingPath } from '../utils/analytics/probingPaths'
 import { recordIncident } from '../utils/analytics/recordIncident'
 import { getGeoIp } from '../utils/analytics/geoip'
+import { analyseQueryString, highestSeverity } from '../utils/analytics/fuzzPatterns'
 
 /**
  * Capture middleware. Filename prefix `00-` is intentional: middleware files
@@ -88,6 +89,24 @@ export default defineEventHandler((event) => {
       routePattern,
       routePath,
       details: { path, method, ua: ua.slice(0, 200) }
+    })
+  }
+
+  // Query-string fuzz scan. Fires for any non-static GET/POST whose query
+  // contains SQLi / XSS / path-traversal / SSRF / encoded payloads.
+  // Body fields on form POSTs are scanned in the handlers themselves
+  // (after readBody), since middleware can't read the body without
+  // disturbing the stream.
+  const fuzzMatches = analyseQueryString(rawPath)
+  if (fuzzMatches.length > 0) {
+    recordIncident({
+      kind: 'fuzz_attempt',
+      severity: highestSeverity(fuzzMatches),
+      ipHash,
+      uaHash,
+      routePattern,
+      routePath,
+      details: { source: 'query', matches: fuzzMatches }
     })
   }
 

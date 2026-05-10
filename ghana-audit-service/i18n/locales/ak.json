@@ -361,6 +361,18 @@
         "allKinds": "Nyinaa",
         "allSeverities": "Nyinaa",
         "details": "Hwɛ evidence"
+      },
+      "fuzz": {
+        "title": "Fuzz-attempt leaderboard",
+        "subtitle": "Inputs a ɛhyia SQL-injection / XSS / path-traversal / SSRF fingerprints. Mpɛn baako mpo na ɛyɛ incident; akwan a wɔde ba mpɛn pii bɛda hɔ.",
+        "empty": "Fuzz attempts biara nni hɔ — ɛyɛ.",
+        "cols": {
+          "severity": "Severity",
+          "kind": "Top kind",
+          "count": "Dodow",
+          "classification": "Class",
+          "lastSeen": "Bere kɔɔ"
+        }
       }
     }
   }

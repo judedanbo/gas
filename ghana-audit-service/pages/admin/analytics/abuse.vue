@@ -171,6 +171,7 @@
               <option value="probing_path">probing_path</option>
               <option value="crawl_burst">crawl_burst</option>
               <option value="failed_login">failed_login</option>
+              <option value="fuzz_attempt">fuzz_attempt</option>
             </select>
             <select
               v-model="incidentSeverityFilter"
@@ -251,6 +252,116 @@
         </ul>
       </div>
     </div>
+
+    <!-- Fuzz-attempts leaderboard -->
+    <div
+      class="mt-6 rounded-lg border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800"
+    >
+      <div
+        class="flex items-center justify-between border-b border-gray-200 px-4 py-3 dark:border-gray-700"
+      >
+        <div>
+          <h2 class="text-base font-semibold text-gray-900 dark:text-white">
+            {{ $t('analytics.abuse.fuzz.title') }}
+          </h2>
+          <p class="text-xs text-gray-500 dark:text-gray-400">
+            {{ $t('analytics.abuse.fuzz.subtitle') }}
+          </p>
+        </div>
+        <select
+          v-model="fuzzWindow"
+          class="rounded-md border border-gray-300 bg-white px-2 py-1 text-xs text-gray-700 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-200"
+          @change="loadFuzz"
+        >
+          <option value="24h">24h</option>
+          <option value="7d">7d</option>
+          <option value="30d">30d</option>
+        </select>
+      </div>
+      <div
+        v-if="fuzzError"
+        class="border-b border-red-300 bg-red-50 p-3 text-xs text-red-800 dark:border-red-800 dark:bg-red-950 dark:text-red-200"
+      >
+        {{ fuzzError }}
+      </div>
+      <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-gray-200 text-xs dark:divide-gray-700">
+          <thead class="bg-gray-50 dark:bg-gray-900/50">
+            <tr>
+              <th class="px-2 py-2 text-left font-medium text-gray-600 dark:text-gray-300">
+                {{ $t('analytics.abuse.fuzz.cols.severity') }}
+              </th>
+              <th class="px-2 py-2 text-left font-medium text-gray-600 dark:text-gray-300">
+                {{ $t('analytics.abuse.fuzz.cols.kind') }}
+              </th>
+              <th class="px-2 py-2 text-right font-medium text-gray-600 dark:text-gray-300">
+                {{ $t('analytics.abuse.fuzz.cols.count') }}
+              </th>
+              <th class="px-2 py-2 text-left font-medium text-gray-600 dark:text-gray-300">IP</th>
+              <th class="px-2 py-2 text-left font-medium text-gray-600 dark:text-gray-300">CC</th>
+              <th class="px-2 py-2 text-left font-medium text-gray-600 dark:text-gray-300">UA</th>
+              <th class="px-2 py-2 text-left font-medium text-gray-600 dark:text-gray-300">
+                {{ $t('analytics.abuse.fuzz.cols.classification') }}
+              </th>
+              <th class="px-2 py-2 text-left font-medium text-gray-600 dark:text-gray-300">
+                {{ $t('analytics.abuse.fuzz.cols.lastSeen') }}
+              </th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
+            <tr v-if="!fuzzLoading && !fuzz?.items.length">
+              <td class="px-2 py-3 text-center text-gray-500 dark:text-gray-400" colspan="8">
+                {{ $t('analytics.abuse.fuzz.empty') }}
+              </td>
+            </tr>
+            <tr v-for="f in fuzz?.items" :key="`${f.ipHash}-${f.uaHash}`">
+              <td class="px-2 py-2">
+                <span
+                  :class="[
+                    'rounded px-1.5 py-0.5 text-[11px]',
+                    sevBadge(f.topSeverity as 'info' | 'warning' | 'critical')
+                  ]"
+                >
+                  {{ f.topSeverity }}
+                </span>
+              </td>
+              <td class="px-2 py-2 font-mono text-[11px] text-gray-700 dark:text-gray-200">
+                {{ f.topKind || '—' }}
+              </td>
+              <td
+                class="px-2 py-2 text-right tabular-nums font-semibold text-gray-900 dark:text-white"
+              >
+                {{ f.count }}
+              </td>
+              <td class="px-2 py-2 font-mono text-[11px] text-gray-700 dark:text-gray-200">
+                {{ f.ipHash.slice(0, 10) }}…
+              </td>
+              <td class="px-2 py-2 text-gray-700 dark:text-gray-200">
+                {{ f.country || '—' }}
+              </td>
+              <td class="px-2 py-2 text-gray-700 dark:text-gray-200">
+                {{ f.uaFamily }}
+              </td>
+              <td class="px-2 py-2">
+                <span
+                  v-if="f.classification"
+                  :class="[
+                    'rounded px-1.5 py-0.5 text-[11px]',
+                    classBadge(f.classification as Classification)
+                  ]"
+                >
+                  {{ f.classification }}
+                </span>
+                <span v-else class="text-gray-400">—</span>
+              </td>
+              <td class="px-2 py-2 text-gray-700 dark:text-gray-300">
+                {{ formatRelative(f.lastSeen) }}
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -259,12 +370,14 @@
     BotSignaturesResponse,
     IncidentsResponse,
     Classification,
-    IncidentWindow
+    IncidentWindow,
+    FuzzAttemptsResponse,
+    InsightsWindow
   } from '~/composables/useAnalytics'
 
   definePageMeta({ layout: 'admin' })
 
-  const { fetchBots, fetchIncidents, updateBotClassification } = useAnalytics()
+  const { fetchBots, fetchIncidents, updateBotClassification, fetchFuzzAttempts } = useAnalytics()
 
   // ── bots leaderboard ───────────────────────────────────────────────────
   const bots = ref<BotSignaturesResponse | null>(null)
@@ -326,9 +439,28 @@
     }
   }
 
+  // ── fuzz-attempts leaderboard ─────────────────────────────────────────
+  const fuzz = ref<FuzzAttemptsResponse | null>(null)
+  const fuzzLoading = ref(false)
+  const fuzzError = ref<string | null>(null)
+  const fuzzWindow = ref<InsightsWindow>('7d')
+
+  async function loadFuzz() {
+    fuzzLoading.value = true
+    fuzzError.value = null
+    try {
+      fuzz.value = await fetchFuzzAttempts(fuzzWindow.value)
+    } catch (err) {
+      fuzzError.value = (err as { message?: string })?.message ?? 'Failed to load fuzz attempts'
+    } finally {
+      fuzzLoading.value = false
+    }
+  }
+
   onMounted(() => {
     void loadBots()
     void loadIncidents()
+    void loadFuzz()
   })
 
   function formatNumber(n: number | undefined): string {
