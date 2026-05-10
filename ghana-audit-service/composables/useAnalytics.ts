@@ -170,6 +170,33 @@ export interface IncidentsQuery {
   perPage?: number
 }
 
+export type CapacityWindow = '30d' | '90d' | '365d'
+
+export interface CapacityResponse {
+  windowDays: number
+  hourly: Array<{ hour: string; visits: number; bytes: number; cacheHits: number }>
+  daily: Array<{ day: string; visits: number; bytes: number }>
+  slowestRoutes: Array<{ pattern: string; visits: number; avgP95Ms: number }>
+  heaviestRoutes: Array<{
+    pattern: string
+    bytes: number
+    visits: number
+    avgBytesPerVisit: number
+  }>
+  heatmap: Array<{ dow: number; hr: number; avgVisits: number }>
+  storage: {
+    requestEventsRows: number
+    downloadEventsRows: number
+    oldestRequestEvent: string | null
+  }
+  redis: {
+    usedMemoryBytes: number | null
+    peakMemoryBytes: number | null
+    evictedKeys: number | null
+    keyCount: number | null
+  }
+}
+
 export function useAnalytics() {
   const api = useAdminApi()
 
@@ -204,12 +231,17 @@ export function useAnalytics() {
     return api.get<IncidentsResponse>('analytics/incidents', { ...params })
   }
 
+  function fetchCapacity(window: CapacityWindow = '30d'): Promise<CapacityResponse> {
+    return api.get<CapacityResponse>('analytics/capacity', { window })
+  }
+
   return {
     fetchOverview,
     fetchRoutes,
     fetchRouteDetail,
     fetchBots,
     updateBotClassification,
-    fetchIncidents
+    fetchIncidents,
+    fetchCapacity
   }
 }

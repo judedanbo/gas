@@ -287,7 +287,14 @@ export default defineNuxtConfig({
       '/sw.js': { prerender: false },
       '/workbox-*.js': { prerender: false },
 
-      // Public API caching - disabled in dev, SWR in production
+      // Public API caching - disabled in dev, SWR in production.
+      // /api/reports (list) is wrapped with defineAnalyticsCachedHandler
+      // so its cache hits land in request_events.cache_hit; the route-rule
+      // cache must be off for that one path, otherwise the outer rule
+      // serves cached without giving the wrapper a chance to flag the hit.
+      // /api/reports/** (detail + deeper) still uses route-rule caching
+      // until those handlers are migrated too.
+      '/api/reports': { cache: false },
       '/api/reports/**': { cache: isDev ? false : { maxAge: 300, staleMaxAge: 600 } },
       '/api/news/**': { cache: isDev ? false : { maxAge: 300, staleMaxAge: 600 } },
       '/api/publications/**': { cache: isDev ? false : { maxAge: 300, staleMaxAge: 600 } },

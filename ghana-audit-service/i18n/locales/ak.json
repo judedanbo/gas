@@ -258,6 +258,43 @@
         "requests": "Requests"
       }
     },
+    "capacity": {
+      "title": "Capacity",
+      "subtitle": "Throughput, latency, cache ne storage trends ma infrastructure adwumayɛfo.",
+      "backToOverview": "Sɛnea Asite",
+      "throughput": {
+        "title": "Requests + bandwidth"
+      },
+      "cacheRatio": {
+        "title": "Cache hit ratio (instrumented routes)",
+        "hint": "Akwan a yɛde wrapper no boa nkutoo na ɛyɛ adwuma. Sɛ ɛkɔ fam ≥10% nnawɔtwe biara mu a, hwehwɛ ho."
+      },
+      "heatmap": {
+        "title": "Da × dɔn traffic"
+      },
+      "slowest": {
+        "title": "Akwan 10 a ɛyɛ slow (visit-weighted p95)",
+        "pattern": "Pattern",
+        "p95": "p95",
+        "visits": "Visits"
+      },
+      "heaviest": {
+        "title": "Akwan 10 a ɛsoa kɛse (bytes out)",
+        "pattern": "Pattern",
+        "bytes": "Bytes",
+        "avgPerVisit": "Avg / visit"
+      },
+      "storage": {
+        "rawRows": "request_events rows",
+        "downloadRows": "download_events rows"
+      },
+      "redis": {
+        "used": "Redis used memory",
+        "peak": "peak {peak}",
+        "keys": "Redis keys",
+        "evicted": "{evicted} evicted"
+      }
+    },
     "abuse": {
       "title": "Abuse",
       "subtitle": "Akwan a wɔbu wɔn ano ne ho nsɛm. Yɛnyɛ block; admin na ɛsua.",

@@ -258,6 +258,43 @@
         "requests": "Requests"
       }
     },
+    "capacity": {
+      "title": "Capacity",
+      "subtitle": "Throughput, latency, cache, and storage trends to inform infrastructure decisions.",
+      "backToOverview": "Overview",
+      "throughput": {
+        "title": "Requests + bandwidth"
+      },
+      "cacheRatio": {
+        "title": "Cache hit ratio (instrumented routes)",
+        "hint": "Only routes wrapped with defineAnalyticsCachedHandler contribute. A trend down ≥10% week-over-week is worth investigating."
+      },
+      "heatmap": {
+        "title": "Day × hour traffic"
+      },
+      "slowest": {
+        "title": "Slowest 10 routes (visit-weighted p95)",
+        "pattern": "Pattern",
+        "p95": "p95",
+        "visits": "Visits"
+      },
+      "heaviest": {
+        "title": "Heaviest 10 routes (bytes out)",
+        "pattern": "Pattern",
+        "bytes": "Bytes",
+        "avgPerVisit": "Avg / visit"
+      },
+      "storage": {
+        "rawRows": "request_events rows",
+        "downloadRows": "download_events rows"
+      },
+      "redis": {
+        "used": "Redis used memory",
+        "peak": "peak {peak}",
+        "keys": "Redis keys",
+        "evicted": "{evicted} evicted"
+      }
+    },
     "abuse": {
       "title": "Abuse",
       "subtitle": "Suspect signatures and incident timeline. Flag-only — no auto-block.",

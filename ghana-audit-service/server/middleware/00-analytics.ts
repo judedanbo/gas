@@ -97,7 +97,9 @@ export default defineEventHandler((event) => {
         status,
         durationMs,
         bytesOut,
-        cacheHit: false,
+        // event.context.cacheHit is set by defineAnalyticsCachedHandler;
+        // unwrapped routes leave it undefined → recorded as false.
+        cacheHit: event.context.cacheHit === true,
         ipHash,
         uaHash,
         uaFamily,

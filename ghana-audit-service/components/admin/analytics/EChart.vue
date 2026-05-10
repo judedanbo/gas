@@ -21,13 +21,14 @@
   import VChart from 'vue-echarts'
   import { use } from 'echarts/core'
   import { CanvasRenderer } from 'echarts/renderers'
-  import { LineChart, BarChart, PieChart } from 'echarts/charts'
+  import { LineChart, BarChart, PieChart, HeatmapChart } from 'echarts/charts'
   import {
     GridComponent,
     TooltipComponent,
     LegendComponent,
     TitleComponent,
-    DataZoomComponent
+    DataZoomComponent,
+    VisualMapComponent
   } from 'echarts/components'
   import type { EChartsOption } from 'echarts'
 
@@ -38,11 +39,13 @@
     LineChart,
     BarChart,
     PieChart,
+    HeatmapChart,
     GridComponent,
     TooltipComponent,
     LegendComponent,
     TitleComponent,
-    DataZoomComponent
+    DataZoomComponent,
+    VisualMapComponent
   ])
 
   defineProps<{
