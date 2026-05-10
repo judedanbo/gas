@@ -15,6 +15,9 @@ function snapshot(overrides: Partial<ScoreSnapshot> = {}): ScoreSnapshot {
     failedLogins24h: 0,
     downloads24h: 0,
     asn: null,
+    missingAcceptLanguage: false,
+    missingAcceptEncoding: false,
+    httpVersion10: false,
     ...overrides
   }
 }
@@ -100,6 +103,64 @@ describe('analytics/score', () => {
       // 30 (script) + 5 (hosting AWS) = 35 → suspicious threshold
       expect(r.score).toBe(35)
       expect(r.classification).toBe('suspicious')
+    })
+
+    it('missing Accept-Language adds +5', () => {
+      const r = scoreSignature(snapshot({ missingAcceptLanguage: true }))
+      expect(r.score).toBe(5)
+      expect(r.reasons).toEqual(['missing_accept_language:+5'])
+    })
+
+    it('missing Accept-Encoding adds +5', () => {
+      const r = scoreSignature(snapshot({ missingAcceptEncoding: true }))
+      expect(r.score).toBe(5)
+      expect(r.reasons).toEqual(['missing_accept_encoding:+5'])
+    })
+
+    it('HTTP/1.0 adds +10', () => {
+      const r = scoreSignature(snapshot({ httpVersion10: true }))
+      expect(r.score).toBe(10)
+      expect(r.classification).toBe('crawler')
+      expect(r.reasons).toEqual(['http_1_0:+10'])
+    })
+
+    it('all three header anomalies stack to +20', () => {
+      const r = scoreSignature(
+        snapshot({
+          missingAcceptLanguage: true,
+          missingAcceptEncoding: true,
+          httpVersion10: true
+        })
+      )
+      expect(r.score).toBe(20)
+      expect(r.classification).toBe('crawler')
+    })
+
+    it('header anomalies + scripted UA + crawl signature reach abusive', () => {
+      const r = scoreSignature(
+        snapshot({
+          uaFamily: 'script',
+          distinctRoutes24h: 60,
+          missingAcceptLanguage: true,
+          missingAcceptEncoding: true,
+          httpVersion10: true
+        })
+      )
+      // 30 (script) + 25 (crawl) + 5 + 5 + 10 = 75
+      expect(r.score).toBe(75)
+      expect(r.classification).toBe('abusive')
+    })
+
+    it('false / undefined header-anomaly fields contribute nothing', () => {
+      // Default snapshot has all three as false; explicit undefined also OK.
+      const r = scoreSignature(
+        snapshot({
+          missingAcceptLanguage: undefined,
+          missingAcceptEncoding: undefined,
+          httpVersion10: undefined
+        })
+      )
+      expect(r.score).toBe(0)
     })
 
     it('empty UA + crawl signature reaches suspicious', () => {

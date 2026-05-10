@@ -26,6 +26,15 @@ export interface ScoreSnapshot {
   /** Optional ASN (autonomous system number) for the source IP. When set,
    *  matching against a known cloud/hosting ASN list adds +5. */
   asn?: number | null
+  /** Header-anomaly signals (Phase 5d). True means "this signature has
+   *  been observed with the anomaly at least once in the window" — i.e.
+   *  a single offending request is enough to flag the (ip,ua) pair.
+   *  Real browsers send Accept-Language / Accept-Encoding on every
+   *  request; bots routinely skip them. HTTP/1.0 in 2026 is almost
+   *  exclusively scripted clients. */
+  missingAcceptLanguage?: boolean
+  missingAcceptEncoding?: boolean
+  httpVersion10?: boolean
 }
 
 export interface ScoreResult {
@@ -101,6 +110,18 @@ export function scoreSignature(snapshot: ScoreSnapshot): ScoreResult {
     // useful in combination with other rules.
     score += 5
     reasons.push(`hosting_asn(${snapshot.asn}):+5`)
+  }
+  if (snapshot.missingAcceptLanguage) {
+    score += 5
+    reasons.push('missing_accept_language:+5')
+  }
+  if (snapshot.missingAcceptEncoding) {
+    score += 5
+    reasons.push('missing_accept_encoding:+5')
+  }
+  if (snapshot.httpVersion10) {
+    score += 10
+    reasons.push('http_1_0:+10')
   }
 
   let classification: ScoreResult['classification']

@@ -29,6 +29,9 @@ interface AggregateRow {
   downloads: number
   country: string | null
   asn: number | null
+  any_missing_accept_language: number
+  any_missing_accept_encoding: number
+  any_http_10: number
 }
 
 const WINDOW_HOURS = 24
@@ -48,6 +51,14 @@ const AGGREGATE_SQL = `
     -- Geo is mostly stable per IP; pick a representative cheaply.
     MAX(re.country) AS country,
     MAX(re.asn) AS asn,
+    -- Header-anomaly per-signature flags (Phase 5d). The MAX-of-CASE
+    -- pattern reads as "this signature has been observed with the
+    -- anomaly on at least one request in the window". NULLs (events
+    -- captured before the column existed) are treated as "unknown" —
+    -- they can't trip the signal.
+    MAX(CASE WHEN re.has_accept_language = 0 THEN 1 ELSE 0 END) AS any_missing_accept_language,
+    MAX(CASE WHEN re.has_accept_encoding = 0 THEN 1 ELSE 0 END) AS any_missing_accept_encoding,
+    MAX(CASE WHEN re.http_version = '1.0' THEN 1 ELSE 0 END) AS any_http_10,
     COALESCE(rl.hits, 0) AS rate_limit_hits,
     COALESCE(pp.hits, 0) AS probing_hits,
     COALESCE(fl.hits, 0) AS failed_logins,
@@ -147,7 +158,10 @@ export default defineTask({
         probingHits24h: Number(row.probing_hits),
         failedLogins24h: Number(row.failed_logins),
         downloads24h: Number(row.downloads),
-        asn: row.asn != null ? Number(row.asn) : null
+        asn: row.asn != null ? Number(row.asn) : null,
+        missingAcceptLanguage: Number(row.any_missing_accept_language) > 0,
+        missingAcceptEncoding: Number(row.any_missing_accept_encoding) > 0,
+        httpVersion10: Number(row.any_http_10) > 0
       }
       const result = scoreSignature(snapshot)
 

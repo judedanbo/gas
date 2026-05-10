@@ -58,6 +58,14 @@ export default defineEventHandler((event) => {
   const referrerHost = parseReferrerHost(
     getHeader(event, 'referer') || getHeader(event, 'referrer')
   )
+  // Header-anomaly signals for the Phase 4 abuse detector. Real browsers
+  // send Accept-Language + Accept-Encoding on every request; many bots
+  // skip them. HTTP/1.0 in 2026 also typically means a stale scripted
+  // client. Capture the booleans here on the request side; the detector
+  // aggregates per (ipHash, uaHash) and feeds them into score.ts.
+  const hasAcceptLanguage = !!getHeader(event, 'accept-language')
+  const hasAcceptEncoding = !!getHeader(event, 'accept-encoding')
+  const httpVersion = (event.node.req.httpVersion || '').slice(0, 8) || null
 
   const routePattern = normaliseRoutePattern(rawPath)
   const routePath = rawPath.slice(0, 512)
@@ -113,7 +121,10 @@ export default defineEventHandler((event) => {
         asn,
         referrerHost,
         isBot: null,
-        role: role ? String(role).slice(0, 16) : null
+        role: role ? String(role).slice(0, 16) : null,
+        hasAcceptLanguage,
+        hasAcceptEncoding,
+        httpVersion
       })
     } catch (err) {
       // Capture must never break the response. Log and move on.

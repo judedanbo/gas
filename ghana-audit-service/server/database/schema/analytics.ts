@@ -45,7 +45,14 @@ export const requestEvents = mysqlTable(
     asn: int('asn'),
     referrerHost: varchar('referrer_host', { length: 128 }),
     isBot: boolean('is_bot'),
-    role: varchar('role', { length: 16 })
+    role: varchar('role', { length: 16 }),
+    // Header-anomaly signals for the abuse detector. NULL on rows captured
+    // before the Phase 5d migration; true/false from then on. The detector
+    // treats NULL as "unknown" and fires the signal only on explicit FALSE
+    // (header was actually absent on the wire).
+    hasAcceptLanguage: boolean('has_accept_language'),
+    hasAcceptEncoding: boolean('has_accept_encoding'),
+    httpVersion: varchar('http_version', { length: 8 })
   },
   (table) => [
     index('idx_req_ts').on(table.ts),
