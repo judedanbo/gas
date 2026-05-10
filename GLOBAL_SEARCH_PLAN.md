@@ -20,10 +20,19 @@ Frontend (already in place, can be reused unchanged):
 
 - `pages/search.vue` reads `?q=` from the URL, drives type and date
   filters, paginates, renders `SearchSearchResultCard` per result.
-- `composables/useSearch.ts` posts to `/api/search` with
-  `query, type, category, dateFrom, dateTo, page, perPage`.
+- `composables/useSearch.ts` fetches `/api/search` (GET via `$fetch`)
+  with `query, type, category, dateFrom, dateTo, page, perPage`.
 - `types/index.ts` defines `SearchResult` and `SearchFilters` with
   `type: 'report' | 'publication' | 'news' | 'page'`.
+
+Existing helpers we will reuse:
+
+- `server/utils/locale.ts` exports `getLocaleFromRequest(event)`
+  (reads `accept-language`); already used by
+  `server/api/news/index.ts:10` and `server/api/reports/index.ts:10`.
+- `server/api/reports/index.ts:48-51` has the canonical Drizzle
+  `or(like(...), like(...))` shape across translations — per-domain
+  searchers should mirror it.
 
 Backend (mock, needs replacement):
 
@@ -44,9 +53,9 @@ keyed by `(entity_id, locale)` with `title` and one of
 | `publication`  | `publications`         | `publicationTranslations`       | `title`     | `content`     | `/publications/{category}/{slug}`            |
 | `news`         | `newsArticles`         | `newsArticleTranslations`       | `title`     | `content`     | `/media/news/{slug}`                         |
 | `event`        | `events`               | `eventTranslations`             | `title`     | `description` | `/media/events/{slug}`                       |
-| `tender`       | `tenders`              | `tenderTranslations`            | `title`     | `description` | `/tenders/{slug}` (TBD — confirm route)      |
+| `tender`       | `tenders`              | `tenderTranslations`            | `title`     | `description` | `/careers/tenders/{slug}` (new per-item page, Phase 2) |
 | `vacancy`      | `vacancies`            | `vacancyTranslations`           | `title`     | `description` | `/careers/{slug}`                            |
-| `video`        | `videos`               | `videoTranslations`             | `title`     | `description` | `/media/videos` (or per-id deeplink)         |
+| `video`        | `videos`               | `videoTranslations`             | `title`     | `description` | `/media/videos/{slug}` (new per-item page, Phase 2)    |
 | `gallery`      | `galleryAlbums`        | `galleryAlbumTranslations`      | `title`     | `description` | `/media/gallery?album={slug}`                |
 | `team`         | `managementTeam`       | `managementTeamTranslations`    | `name`      | (bio, if any) | `/about/management-team/{slug}`              |
 | `office`       | `regionalOffices`      | `regionalOfficeTranslations`    | `name`      | (n/a)         | `/about/regional-offices` (anchor by slug)   |
@@ -71,9 +80,14 @@ In scope:
 - Date range filter (`dateFrom`, `dateTo`) against `publishedAt` for
   domains that have it; ignored for static pages and team/offices.
 - Pagination (`page`, `perPage`, max 50).
-- Excerpt generation: ~200 char snippet from the body field with the
-  matched term highlighted server-side via a `<mark>` (or returned as
-  plain text and let the card render highlighting).
+- Excerpt generation: ~200 char **plain-text** snippet from the body
+  field. `<mark>` match-highlighting is deferred to Phase 3, which
+  also edits `SearchResultCard.vue` to render the excerpt via
+  `v-html` with a `<mark>`-only sanitizer.
+- New per-item routes for tenders and videos
+  (`pages/careers/tenders/[slug].vue`, `pages/media/videos/[slug].vue`)
+  so search results can deep-link. Treated as part of this work, in
+  Phase 2.
 - Type widening in `types/index.ts`: extend the `type` union; update
   `useSearch.typeFilters`.
 - Tests: replace the existing mock-based integration test
@@ -93,9 +107,11 @@ Out of scope (explicit, follow-up work):
   rows total). A migration path is sketched in §10 but not done now.
 - Admin search. The admin panel has its own `AdminSearchFilter` and is
   scoped per-resource — leave it alone.
-- Tag / category facets. Filterable categories already exist on the
-  reports and publications listing pages; this plan keeps them out
-  of the global search response shape and revisits in v2.
+- Tag / category facets. `auditReports` has a real `category` enum
+  column; `publications` has `type` (the analogous field, named
+  differently). The global-search response intentionally surfaces
+  neither in v1 — the existing list pages already filter by them.
+  Revisit in v2.
 
 ## 4. API contract
 
@@ -115,12 +131,17 @@ interface SearchResult {
   type: 'report' | 'publication' | 'news' | 'event' | 'tender'
        | 'vacancy' | 'video' | 'gallery' | 'team' | 'office' | 'page'
   title: string             // localized
-  excerpt: string           // localized, ~200 chars, may include <mark>…</mark>
+  excerpt: string           // localized, plain text in v1 (~200 chars);
+                            // sanitized <mark>…</mark> added in Phase 3
   url: string               // localized prefix applied client-side
   publishedAt?: string      // ISO; absent for pages, team, offices
   score?: number            // for client-side debug; not sorted on
 }
 ```
+
+Locale is **not** a request param — it's resolved server-side from
+`accept-language` via `getLocaleFromRequest(event)` to match
+`/api/news` and `/api/reports`. `SearchFilters` is unchanged.
 
 The `category` filter on `SearchFilters` is currently unused by the
 frontend and remains a no-op server-side — leave it documented as
@@ -136,11 +157,15 @@ We have two options.
 
 - Simple, no schema migrations, works with existing indexes for the
   `isPublished` and `publishedAt` filters.
+- Mirror the existing pattern at `server/api/reports/index.ts:48-51`:
+  `or(like(t.title, term), like(t.body, term))` joined to the base
+  table.
 - Per domain run:
   `SELECT base.id, base.slug, base.published_at, t.title, t.{body}
    FROM base JOIN translations t ON t.entity_id = base.id
    WHERE base.is_published = 1
-     AND t.locale = ?  -- with COALESCE fallback to 'en'
+     AND base.deleted_at IS NULL          -- present on all 10 base tables
+     AND t.locale = ?                     -- with fallback to 'en'
      AND (t.title LIKE ? OR t.{body} LIKE ?)
      AND base.published_at BETWEEN ? AND ?`
 - Score in SQL with a simple expression:
@@ -204,49 +229,54 @@ than detail DTOs.
 
 ### 6.3 Excerpt generation
 
-Helper `buildExcerpt(body: string, term: string, max = 200): string`.
-Find first case-insensitive match, return a window around it, prepend
-`…` if not at start, append `…` if not at end. HTML-escape, then wrap
-the matched substring in `<mark>…</mark>`. The
-`SearchSearchResultCard` already renders `excerpt` as HTML — confirm
-this before merging; if not, adjust the card template (separate small
-PR) to use `v-html` with a sanitized whitelist of `<mark>` only.
+Phase 1: `buildExcerpt(body: string, term: string, max = 200): string`
+returns a **plain-text** snippet centered on the first
+case-insensitive match, prefixed/suffixed with `…` as needed. No
+HTML, no escaping concerns, no `<mark>` — `SearchResultCard.vue:26`
+renders it via `{{ result.excerpt }}` and stays untouched.
+
+Phase 3: extend the helper to produce a `<mark>`-wrapped HTML
+snippet, switch `SearchResultCard.vue` to `v-html`, and add a
+`<mark>`-only sanitizer (e.g. tiny inline allowlist or DOMPurify
+configured to permit only `mark`).
 
 ### 6.4 Static pages registry
 
-`server/utils/staticSearchablePages.ts` exports a typed array:
+`server/utils/staticSearchablePages.ts` exports a typed array with
+inline locale strings (no Nitro-side JSON loading — there's no
+existing precedent for that and it's avoidable):
 
 ```ts
 export const staticSearchablePages = [
-  { id: 'page-about',          path: '/about',                        i18nKey: 'pages.about' },
-  { id: 'page-the-service',    path: '/about/the-service',            i18nKey: 'pages.theService' },
-  { id: 'page-dept-profile',   path: '/about/departmental-profile',   i18nKey: 'pages.departmentalProfile' },
-  { id: 'page-past-ag',        path: '/about/past-auditors-general',  i18nKey: 'pages.pastAuditorsGeneral' },
-  { id: 'page-contact',        path: '/contact',                      i18nKey: 'pages.contact' },
-  { id: 'page-citizenseye',    path: '/citizenseye',                  i18nKey: 'pages.citizensEye' },
-  { id: 'page-accessibility',  path: '/accessibility',                i18nKey: 'pages.accessibility' },
-  { id: 'page-privacy',        path: '/privacy-policy',               i18nKey: 'pages.privacyPolicy' },
-  { id: 'page-terms',          path: '/terms',                        i18nKey: 'pages.terms' },
-  { id: 'page-publications',   path: '/publications',                 i18nKey: 'pages.publications' },
-  { id: 'page-careers',        path: '/careers',                      i18nKey: 'pages.careers' },
+  {
+    id: 'page-about',
+    path: '/about',
+    titleEn: 'About the Audit Service',
+    titleAk: '...',
+    descriptionEn: '...',
+    descriptionAk: '...',
+  },
+  // ...one entry per static page (about/*, contact, citizenseye,
+  // accessibility, privacy-policy, terms, publications index,
+  // careers, etc. — full list confirmed against pages/)
 ] as const
 ```
 
-Each entry needs a `title`/`description` string in both
-`i18n/locales/en.json` and `ak.json` under a new `pages` namespace.
-The static-page searcher resolves them by reading the locale file
-once at module init (Nitro side — server $i18n is not directly
-available, so read the JSON files directly under
-`~/i18n/locales/{locale}.json`).
+The static-page searcher then runs the LIKE check in JS against the
+inline strings for the resolved locale (falling back to `en`). This
+is a tiny in-memory list, so a JS scan is fine.
+
+Optional follow-up: reuse the same strings as document `<title>` /
+`<meta name="description">` on the corresponding pages so SEO and
+search agree.
 
 ### 6.5 Locale resolution
 
-Use `getCookie(event, 'i18n_redirected')` or the `accept-language`
-header; or simpler — accept a `locale` query param from the frontend.
-The cleanest fix is to plumb locale from the Nuxt app into the
-fetch call. Add `locale` to `SearchFilters` and pass `useI18n().locale`
-when calling `search()` in `pages/search.vue`. Server defaults to
-`en` if missing.
+Use `getLocaleFromRequest(event)` from `server/utils/locale.ts`
+(reads `accept-language`, defaults to `'en'`). This matches the
+existing convention in `server/api/news/index.ts:10` and
+`server/api/reports/index.ts:10`. No frontend change, no `locale`
+field on `SearchFilters`.
 
 ### 6.6 Caching & route rules
 
@@ -262,16 +292,15 @@ behavior does, but verify.
 
 ### 6.7 Rate limiting
 
-The site already has `server/middleware/rateLimit.ts`. Wire global
-search through it with a moderate budget (e.g., 30 req/min/IP) — the
-endpoint is unauthenticated and runs DB queries.
+Already covered. `server/middleware/rateLimit.ts:118` matches any
+`path.includes('/search')` and applies `RATE_LIMITS.search`
+(30 req/min/IP). No work needed.
 
 ## 7. Frontend changes (small)
 
-- `types/index.ts`: extend `SearchResult.type` union and add
-  `locale?: string` to `SearchFilters`.
+- `types/index.ts`: extend `SearchResult.type` union. `SearchFilters`
+  is unchanged (no `locale` field — server resolves it).
 - `composables/useSearch.ts`:
-  - Pass `locale` when calling `$fetch`.
   - Extend `typeFilters` to include the new types
     (Events, Tenders, Vacancies, Videos, Gallery, Team, Offices). Keep
     the four existing ones first to preserve UI muscle memory.
@@ -279,11 +308,13 @@ endpoint is unauthenticated and runs DB queries.
   filters list. URL prefix for results: when rendering
   `result.url`, prepend the active locale prefix
   (`localePath(result.url)` from `useI18n()`).
-- `components/search/SearchResultCard.vue`: confirm/enable safe
-  `<mark>` rendering for the excerpt. If it currently renders text,
-  switch to `v-html` after sanitizing — only `<mark>` allowed.
+- `components/search/SearchResultCard.vue`: **untouched in Phase 1**.
+  Phase 3 switches the excerpt to `v-html` with a `<mark>`-only
+  sanitizer.
 
-No Vue components are added. No new pages.
+Phase 2 adds two new pages: `pages/careers/tenders/[slug].vue` and
+`pages/media/videos/[slug].vue` (minimal detail layouts following
+`pages/media/news/[slug].vue` and similar). No other Vue components.
 
 ## 8. i18n copy
 
@@ -331,24 +362,31 @@ npm run format:check && npm run typecheck` — all four must pass.
   news.
 - Replace `server/api/search.ts` body with a call to
   `runGlobalSearch`.
-- Extend types and `useSearch.typeFilters` to include the new types
-  (even though only three are wired in phase 1).
-- Tests for the three domains.
+- Extend `SearchResult.type` union and `useSearch.typeFilters` (even
+  though only three are wired in Phase 1).
+- Plain-text excerpts only — no `SearchResultCard.vue` change.
+- Rewrite `tests/integration/api/search.test.ts` for DB-mocked
+  behavior covering the three domains.
 - Ship.
 
-**Phase 2 — remaining domains.**
+**Phase 2 — remaining domains + per-item routes.**
 - Add searchers for events, tenders, vacancies, videos, gallery,
-  team, offices.
-- Add the static-pages searcher and i18n copy.
+  team, offices, plus the static-pages searcher.
+- New pages: `pages/careers/tenders/[slug].vue`,
+  `pages/media/videos/[slug].vue` (mirroring the existing news /
+  events detail patterns).
+- Add `server/utils/staticSearchablePages.ts` with inline en/ak
+  strings.
 - Tests per domain.
 
 **Phase 3 — quality.**
-- Snippeting with `<mark>` and corresponding sanitized rendering in
-  `SearchResultCard`.
-- Rate limit wiring.
-- SWR cache rule.
+- Snippeting with `<mark>` and `v-html` rendering in
+  `SearchResultCard.vue` with a `<mark>`-only sanitizer.
+- `nuxt.config.ts`: `routeRules['/api/search'] = { swr: 60 }`.
 - Optional: MySQL FULLTEXT migration if Phase 1 latency is poor on
   prod-sized data.
+
+(Rate limiting is **not** in Phase 3 — it's already wired.)
 
 **Phase 4 — autocomplete.**
 - Lightweight `/api/search/suggest` returning top 5 titles. New work,
@@ -360,14 +398,13 @@ Phase 1 (PR 1):
 
 - Add `ghana-audit-service/server/utils/searchService.ts` — new.
 - Edit `ghana-audit-service/server/api/search.ts` — replace mock with
-  service call.
+  service call; resolve locale via `getLocaleFromRequest`.
 - Edit `ghana-audit-service/types/index.ts` — extend
-  `SearchResult.type` union; add `locale?` to `SearchFilters`.
-- Edit `ghana-audit-service/composables/useSearch.ts` — pass `locale`,
-  extend `typeFilters`.
-- Edit `ghana-audit-service/pages/search.vue` — pass
-  `useI18n().locale.value` into the search call; wrap `result.url`
-  with `localePath` in the card if needed.
+  `SearchResult.type` union. (No `locale` on `SearchFilters`.)
+- Edit `ghana-audit-service/composables/useSearch.ts` — extend
+  `typeFilters`.
+- Edit `ghana-audit-service/pages/search.vue` — wrap `result.url`
+  with `localePath` from `useI18n()`.
 - Edit `ghana-audit-service/tests/integration/api/search.test.ts` —
   rewrite for DB-mocked behavior.
 - Edit `ghana-audit-service/i18n/locales/en.json`,
@@ -377,16 +414,27 @@ Phase 1 (PR 1):
 Phase 2 (PR 2):
 
 - Extend `searchService.ts` with new searchers.
-- Add `ghana-audit-service/server/utils/staticSearchablePages.ts`.
-- Add `pages.*` i18n keys (en + ak).
+- Add `ghana-audit-service/server/utils/staticSearchablePages.ts`
+  with inline en/ak strings.
+- Add `ghana-audit-service/pages/careers/tenders/[slug].vue` (new
+  per-item page).
+- Add `ghana-audit-service/pages/media/videos/[slug].vue` (new
+  per-item page).
+- Add the necessary public Nitro endpoints to back the two new
+  detail pages if not already present (e.g.
+  `server/api/tenders/[slug].get.ts`,
+  `server/api/videos/[slug].get.ts`) — verify before writing.
+- Add labels for the new types in `i18n/locales/en.json` and
+  `ak.json` if not already added in Phase 1.
 - Tests per domain.
 
 Phase 3 (PR 3):
 
 - Edit `ghana-audit-service/components/search/SearchResultCard.vue`
-  to render `<mark>`-highlighted excerpts safely.
+  to render `<mark>`-highlighted excerpts safely (`v-html` +
+  sanitizer).
+- Extend `buildExcerpt` in `searchService.ts` to emit `<mark>`.
 - Edit `ghana-audit-service/nuxt.config.ts` — `routeRules['/api/search']`.
-- Wire `rateLimit` middleware path matcher to include `/api/search`.
 
 ## 12. Risks and open questions
 
@@ -396,28 +444,21 @@ Phase 3 (PR 3):
    (a Nitro task that runs `pdf-parse` against
    `public/reports/*.pdf` during seed/build and writes to a new
    column or sidecar table).
-2. **Excerpt rendering.** `SearchSearchResultCard` may treat
-   `excerpt` as plain text. Confirm before relying on `<mark>`. If
-   it does, adjust in Phase 1 or strip highlighting until Phase 3.
-3. **Tender route.** `/tenders/{slug}` is assumed; verify the actual
-   route under `pages/`. If tenders only live as a list page, fall
-   back to `/tenders#${slug}` or omit the type from search.
-4. **Video deep links.** `/media/videos.vue` is a single page;
-   confirm whether per-video deep links exist before claiming
-   `video` results.
-5. **Locale fallback.** Akan translations may be sparse. Decide
+2. **Locale fallback.** Akan translations may be sparse. Decide
    whether to (a) hide rows that have no `ak` translation, or
    (b) fall back to the `en` row but mark it. Recommendation: (b),
    with a small flag in the result so the card can show "(English)".
-6. **Caching of static-pages translations.** Reading
-   `i18n/locales/{locale}.json` per request is fine; cache them in a
-   module-level `Map` keyed by locale.
-7. **Public exposure of unpublished translations.** Ensure every
-   per-domain query joins on the base table and filters
-   `is_published = 1` (and `deletedAt IS NULL` where the column
-   exists). Add a unit-test pattern that any new searcher must apply
-   these filters — easiest to enforce via a tiny shared helper.
-8. **Ranking quality.** Title match × 3 + body match × 1 is a rough
+3. **Per-item detail page design.** Phase 2 introduces
+   `pages/careers/tenders/[slug].vue` and
+   `pages/media/videos/[slug].vue`. The data is already in the
+   schema and existing list pages can be referenced; the layouts
+   need a quick design pass before implementation. Confirm matching
+   public Nitro endpoints exist (or add them).
+4. **Public exposure of unpublished translations.** Every per-domain
+   query must filter `is_published = 1 AND deleted_at IS NULL`.
+   Easiest to enforce via a tiny shared base-table predicate helper
+   used by all searchers.
+5. **Ranking quality.** Title match × 3 + body match × 1 is a rough
    start. Watch the staging logs after Phase 1; refine before
    Phase 3.
 
