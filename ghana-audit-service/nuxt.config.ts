@@ -239,6 +239,17 @@ export default defineNuxtConfig({
   // Nitro server configuration
   nitro: {
     compressPublicAssets: true,
+    experimental: {
+      // Enable Nitro tasks (server/tasks/**) so the analytics rollup +
+      // retention jobs can run on the schedule below.
+      tasks: true
+    },
+    scheduledTasks: {
+      // Roll up the previous hour into route_stats_hourly at :05 every hour.
+      '5 * * * *': ['analytics:rollup-hourly'],
+      // Trim raw request_events past ANALYTICS_RETENTION_DAYS once a day.
+      '0 3 * * *': ['analytics:retention-raw']
+    },
     prerender: {
       crawlLinks: true,
       routes: [

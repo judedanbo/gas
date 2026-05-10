@@ -191,5 +191,72 @@
     "of": "of",
     "showing": "Showing",
     "results": "results"
+  },
+  "analytics": {
+    "loading": "Loading…",
+    "noData": "No data yet",
+    "overview": {
+      "title": "Analytics Overview",
+      "subtitle": "Traffic, downloads, and behaviour over the last 24 hours",
+      "viewRoutes": "View routes",
+      "refresh": "Refresh",
+      "approximate": "approximate",
+      "weighted": "visit-weighted",
+      "cards": {
+        "visits": "Visits 24h",
+        "uniqueIps": "Unique IPs 24h",
+        "downloads": "Downloads 24h",
+        "bandwidth": "Bandwidth 24h",
+        "botShare": "Bot share",
+        "errorRate": "Error rate",
+        "cacheHit": "Cache hit rate",
+        "p95Latency": "Avg p95 latency"
+      },
+      "hourly": {
+        "title": "Hourly traffic — last 7 days",
+        "window": "Last 7 days, hourly"
+      },
+      "topRoutes": {
+        "title": "Top routes (24h)",
+        "pattern": "Pattern",
+        "visits": "Visits",
+        "p95": "p95"
+      },
+      "topDownloads": {
+        "title": "Top downloads (24h)",
+        "target": "Target",
+        "count": "Count",
+        "bytes": "Bytes"
+      }
+    },
+    "routes": {
+      "title": "Routes",
+      "subtitle": "Per-route stats. Click a row to drill in.",
+      "backToOverview": "Overview",
+      "window": "Window",
+      "sort": "Sort by",
+      "searchPlaceholder": "Filter pattern…",
+      "pagination": "Page {page} of {last} · {total} routes",
+      "cols": {
+        "pattern": "Pattern",
+        "visits": "Visits",
+        "uniqueIps": "Unique IPs",
+        "p95": "p95",
+        "errorRate": "Error %",
+        "cacheHitRate": "Cache hit %",
+        "bytes": "Bytes",
+        "benefit": "Caching benefit"
+      },
+      "detail": {
+        "empty": "Select a route to see details.",
+        "visits": "Visits",
+        "uniqueIps": "Unique IPs",
+        "p95": "p95",
+        "bytes": "Bytes",
+        "statusMix": "Status mix",
+        "topIps": "Top IPs",
+        "requests": "Requests"
+      }
+    }
   }
 }
