@@ -10,6 +10,8 @@ import {
   parseReferrerHost
 } from '../utils/analytics/fingerprint'
 import { pushAnalyticsEvent } from '../utils/analytics/buffer'
+import { isProbingPath } from '../utils/analytics/probingPaths'
+import { recordIncident } from '../utils/analytics/recordIncident'
 
 /**
  * Capture middleware. Filename prefix `00-` is intentional: middleware files
@@ -57,6 +59,23 @@ export default defineEventHandler((event) => {
   // Stash on context so downstream handlers (download endpoints, future
   // detector hooks) can reuse the hashes without recomputing.
   event.context.analytics = { ipHash, uaHash, uaFamily }
+
+  // Probing-path detection — fires the moment we see the request, not when
+  // the response closes, so we don't lose the signal if the connection is
+  // dropped before sending. Severity 'warning' because a single hit is
+  // strong evidence of malicious automation but we want admins to confirm
+  // before taking action (still flag-only).
+  if (isProbingPath(path)) {
+    recordIncident({
+      kind: 'probing_path',
+      severity: 'warning',
+      ipHash,
+      uaHash,
+      routePattern,
+      routePath,
+      details: { path, method, ua: ua.slice(0, 200) }
+    })
+  }
 
   event.node.res.on('close', () => {
     try {

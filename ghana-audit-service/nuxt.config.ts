@@ -247,8 +247,14 @@ export default defineNuxtConfig({
     scheduledTasks: {
       // Roll up the previous hour into route_stats_hourly at :05 every hour.
       '5 * * * *': ['analytics:rollup-hourly'],
+      // Refresh bot_signatures every 5 minutes from the last 24h of events.
+      '*/5 * * * *': ['analytics:detect-bots'],
       // Trim raw request_events past ANALYTICS_RETENTION_DAYS once a day.
-      '0 3 * * *': ['analytics:retention-raw']
+      '0 3 * * *': ['analytics:retention-raw'],
+      // Trim abuse_incidents per severity tier (info=90d, warn/critical=365d).
+      '15 3 * * *': ['analytics:retention-incidents'],
+      // Decay scores on bot_signatures not seen in a week.
+      '30 3 * * *': ['analytics:bot-decay']
     },
     prerender: {
       crawlLinks: true,

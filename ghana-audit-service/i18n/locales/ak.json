@@ -257,6 +257,32 @@
         "topIps": "Top IPs",
         "requests": "Requests"
       }
+    },
+    "abuse": {
+      "title": "Abuse",
+      "subtitle": "Akwan a wɔbu wɔn ano ne ho nsɛm. Yɛnyɛ block; admin na ɛsua.",
+      "backToOverview": "Sɛnea Asite",
+      "leaderboard": {
+        "title": "Akwan a wɔn ho yɛ nyam",
+        "suspiciousAndAbusive": "Suspicious + abusive",
+        "markSafe": "Ka sɛ ɛyɛ safe",
+        "forceAbusive": "Hyɛ no abusive",
+        "cols": {
+          "classification": "Class",
+          "score": "Score",
+          "requests": "Requests",
+          "routes": "Akwan",
+          "rateLimit": "RL hits",
+          "lastSeen": "Bere kɔɔ",
+          "actions": "Yɛ"
+        }
+      },
+      "incidents": {
+        "title": "Asɛm timeline",
+        "allKinds": "Nyinaa",
+        "allSeverities": "Nyinaa",
+        "details": "Hwɛ evidence"
+      }
     }
   }
 }

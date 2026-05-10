@@ -91,12 +91,81 @@ export interface AnalyticsRouteDetail {
 }
 
 export type AnalyticsWindow = '24h' | '7d' | '30d'
+export type IncidentWindow = '24h' | '7d' | '30d' | '90d'
+
+export type Classification = 'clean' | 'crawler' | 'suspicious' | 'abusive' | 'safe-allowlist'
+
+export interface BotSignature {
+  id: number
+  ipHash: string
+  uaHash: string
+  uaFamily: string
+  uaSample: string | null
+  firstSeen: string
+  lastSeen: string
+  totalRequests: number
+  distinctRoutes24h: number
+  rateLimitHits24h: number
+  failedLogins24h: number
+  score: number
+  classification: Classification
+  notes: string | null
+  decidedBy: number | null
+  decidedAt: string | null
+  country: string | null
+  asn: number | null
+}
+
+export interface BotSignaturesResponse {
+  items: BotSignature[]
+  meta: { total: number; page: number; perPage: number; lastPage: number }
+}
+
+export interface AbuseIncident {
+  id: number
+  ts: string
+  kind: string
+  severity: 'info' | 'warning' | 'critical'
+  ipHash: string | null
+  uaHash: string | null
+  routePattern: string | null
+  routePath: string | null
+  details: Record<string, unknown> | null
+}
+
+export interface IncidentsResponse {
+  items: AbuseIncident[]
+  meta: {
+    total: number
+    page: number
+    perPage: number
+    lastPage: number
+    windowHours: number
+  }
+}
 
 export interface RoutesQuery {
   window?: AnalyticsWindow
   sort?: 'visits' | 'uniqueIps' | 'p95' | 'errorRate' | 'cacheHitRate' | 'bytes' | 'benefit'
   dir?: 'asc' | 'desc'
   q?: string
+  page?: number
+  perPage?: number
+}
+
+export interface BotsQuery {
+  classification?: Classification | ''
+  minScore?: number
+  q?: string
+  page?: number
+  perPage?: number
+}
+
+export interface IncidentsQuery {
+  kind?: string
+  severity?: 'info' | 'warning' | 'critical'
+  window?: IncidentWindow
+  ipHash?: string
   page?: number
   perPage?: number
 }
@@ -120,5 +189,27 @@ export function useAnalytics() {
     return api.get<AnalyticsRouteDetail>('analytics/route-detail', { pattern, window })
   }
 
-  return { fetchOverview, fetchRoutes, fetchRouteDetail }
+  function fetchBots(params: BotsQuery = {}): Promise<BotSignaturesResponse> {
+    return api.get<BotSignaturesResponse>('analytics/bots', { ...params })
+  }
+
+  function updateBotClassification(
+    id: number,
+    body: { classification: Classification; notes?: string | null }
+  ): Promise<{ ok: true }> {
+    return api.patch<{ ok: true }>(`analytics/bots/${id}`, body)
+  }
+
+  function fetchIncidents(params: IncidentsQuery = {}): Promise<IncidentsResponse> {
+    return api.get<IncidentsResponse>('analytics/incidents', { ...params })
+  }
+
+  return {
+    fetchOverview,
+    fetchRoutes,
+    fetchRouteDetail,
+    fetchBots,
+    updateBotClassification,
+    fetchIncidents
+  }
 }

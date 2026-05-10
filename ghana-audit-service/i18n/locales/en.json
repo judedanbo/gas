@@ -257,6 +257,32 @@
         "topIps": "Top IPs",
         "requests": "Requests"
       }
+    },
+    "abuse": {
+      "title": "Abuse",
+      "subtitle": "Suspect signatures and incident timeline. Flag-only — no auto-block.",
+      "backToOverview": "Overview",
+      "leaderboard": {
+        "title": "Suspect leaderboard",
+        "suspiciousAndAbusive": "Suspicious + abusive",
+        "markSafe": "Mark safe",
+        "forceAbusive": "Force abusive",
+        "cols": {
+          "classification": "Class",
+          "score": "Score",
+          "requests": "Requests",
+          "routes": "Routes",
+          "rateLimit": "RL hits",
+          "lastSeen": "Last seen",
+          "actions": "Actions"
+        }
+      },
+      "incidents": {
+        "title": "Incident timeline",
+        "allKinds": "All kinds",
+        "allSeverities": "All severities",
+        "details": "Show evidence"
+      }
     }
   }
 }

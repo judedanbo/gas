@@ -7,6 +7,30 @@ import {
   type RateLimitConfig
 } from '../utils/rateLimiter'
 import { isStaticAsset, BLOCKED_DIRECT_PATHS } from '../utils/staticAssets'
+import { recordIncident } from '../utils/analytics/recordIncident'
+import { normaliseRoutePattern } from '../utils/analytics/fingerprint'
+
+type IncidentKind = 'rate_limit_api' | 'rate_limit_download' | 'rate_limit_form'
+
+function recordRateLimitHit(
+  event: Parameters<typeof setHeader>[0],
+  kind: IncidentKind,
+  rawPath: string
+): void {
+  // The capture middleware (00-analytics.ts) sorts before this one and
+  // stashes hashes on event.context.analytics. Fall back to nulls if it
+  // somehow didn't run — incident is still useful as a path-only event.
+  const stash = event.context.analytics
+  recordIncident({
+    kind,
+    severity: 'info',
+    ipHash: stash?.ipHash ?? null,
+    uaHash: stash?.uaHash ?? null,
+    routePattern: normaliseRoutePattern(rawPath),
+    routePath: rawPath.slice(0, 512),
+    details: { kind }
+  })
+}
 
 function applyRateLimitHeaders(
   event: Parameters<typeof setHeader>[0],
@@ -54,6 +78,7 @@ export default defineEventHandler(async (event): Promise<undefined | object> => 
     applyRateLimitHeaders(event, result.limit, result.remaining, result.resetTime)
 
     if (result.isLimited) {
+      recordRateLimitHit(event, 'rate_limit_download', rawPath)
       setHeader(event, 'Retry-After', result.retryAfterSeconds)
       setResponseStatus(event, 429)
       return {
@@ -71,10 +96,12 @@ export default defineEventHandler(async (event): Promise<undefined | object> => 
   // Other API routes: existing per-route, per-IP buckets.
   if (isApi) {
     let config: RateLimitConfig = RATE_LIMITS.api
+    let incidentKind: IncidentKind = 'rate_limit_api'
 
     if (event.method === 'POST') {
       if (path.includes('/newsletter') || path.includes('/contact')) {
         config = RATE_LIMITS.form
+        incidentKind = 'rate_limit_form'
       }
     }
 
@@ -92,6 +119,7 @@ export default defineEventHandler(async (event): Promise<undefined | object> => 
     applyRateLimitHeaders(event, config.limit, remaining, resetTime)
 
     if (isLimited) {
+      recordRateLimitHit(event, incidentKind, rawPath)
       const retryAfter = Math.max(1, Math.ceil((resetTime - Date.now()) / 1000))
       setHeader(event, 'Retry-After', retryAfter)
       setResponseStatus(event, 429)
@@ -119,6 +147,7 @@ export default defineEventHandler(async (event): Promise<undefined | object> => 
   applyRateLimitHeaders(event, config.limit, remaining, resetTime)
 
   if (isLimited) {
+    recordRateLimitHit(event, 'rate_limit_api', rawPath)
     const retryAfter = Math.max(1, Math.ceil((resetTime - Date.now()) / 1000))
     setHeader(event, 'Retry-After', retryAfter)
     setResponseStatus(event, 429)
