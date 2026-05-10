@@ -227,6 +227,15 @@
         "target": "Adeɛ",
         "count": "Dodow",
         "bytes": "Bytes"
+      },
+      "forms": {
+        "title": "Form submissions (24h)",
+        "subtitle": "Newsletter ne contact form posts a yɛde wɔn ho akɔbɔ bot signatures so. Suspicious / abusive accepts yɛ form validation false negatives a ɛsɛ sɛ admin hwɛ.",
+        "accepted": "Accepted",
+        "rejected": "Rejected",
+        "uniqueIps": "Unique IPs",
+        "suspect": "Suspect accepts",
+        "suspectHint": "Submissions bi a wɔagye no firi signatures a detector ka sɛ ɛyɛ suspicious anaa abusive."
       }
     },
     "routes": {

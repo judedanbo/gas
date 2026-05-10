@@ -187,17 +187,105 @@
         </table>
       </div>
     </div>
+
+    <!-- Form submissions cross-reference -->
+    <div class="mt-6">
+      <h2 class="mb-3 text-base font-semibold text-gray-900 dark:text-white">
+        {{ $t('analytics.overview.forms.title') }}
+      </h2>
+      <p class="mb-3 text-xs text-gray-500 dark:text-gray-400">
+        {{ $t('analytics.overview.forms.subtitle') }}
+      </p>
+      <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+        <div
+          v-for="f in formData?.items"
+          :key="f.pattern"
+          :class="[
+            'rounded-lg border p-4 shadow-sm',
+            f.hasSuspectAccepts
+              ? 'border-amber-300 bg-amber-50/40 dark:border-amber-800 dark:bg-amber-950/30'
+              : 'border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800'
+          ]"
+        >
+          <div class="mb-3 flex items-center justify-between">
+            <div class="font-mono text-xs text-gray-700 dark:text-gray-200">
+              {{ f.pattern }}
+            </div>
+            <span
+              v-if="f.hasSuspectAccepts"
+              class="rounded bg-amber-100 px-1.5 py-0.5 text-[11px] font-medium text-amber-800 dark:bg-amber-950/60 dark:text-amber-300"
+              :title="$t('analytics.overview.forms.suspectHint')"
+            >
+              ⚠ {{ $t('analytics.overview.forms.suspect') }}
+            </span>
+          </div>
+          <div class="grid grid-cols-3 gap-2 text-xs">
+            <div>
+              <div class="text-gray-500 dark:text-gray-400">
+                {{ $t('analytics.overview.forms.accepted') }}
+              </div>
+              <div class="text-lg font-semibold text-emerald-700 dark:text-emerald-300">
+                {{ formatNumber(f.accepted) }}
+              </div>
+            </div>
+            <div>
+              <div class="text-gray-500 dark:text-gray-400">
+                {{ $t('analytics.overview.forms.rejected') }}
+              </div>
+              <div class="text-lg font-semibold text-red-700 dark:text-red-300">
+                {{ formatNumber(f.rejected) }}
+              </div>
+            </div>
+            <div>
+              <div class="text-gray-500 dark:text-gray-400">
+                {{ $t('analytics.overview.forms.uniqueIps') }}
+              </div>
+              <div class="text-lg font-semibold text-gray-900 dark:text-white">
+                {{ formatNumber(f.uniqueIps) }}
+              </div>
+            </div>
+          </div>
+          <div v-if="f.accepted > 0" class="mt-3 grid grid-cols-4 gap-1 text-center text-[11px]">
+            <div class="rounded bg-gray-100 px-1 py-1 dark:bg-gray-700">
+              <div class="text-gray-500 dark:text-gray-400">clean</div>
+              <div class="font-semibold text-gray-900 dark:text-white">
+                {{ f.accepted_from.clean }}
+              </div>
+            </div>
+            <div class="rounded bg-blue-100 px-1 py-1 dark:bg-blue-950/40">
+              <div class="text-gray-500 dark:text-gray-400">crawler</div>
+              <div class="font-semibold text-blue-700 dark:text-blue-300">
+                {{ f.accepted_from.crawler }}
+              </div>
+            </div>
+            <div class="rounded bg-amber-100 px-1 py-1 dark:bg-amber-950/40">
+              <div class="text-gray-500 dark:text-gray-400">suspicious</div>
+              <div class="font-semibold text-amber-700 dark:text-amber-300">
+                {{ f.accepted_from.suspicious }}
+              </div>
+            </div>
+            <div class="rounded bg-red-100 px-1 py-1 dark:bg-red-950/40">
+              <div class="text-gray-500 dark:text-gray-400">abusive</div>
+              <div class="font-semibold text-red-700 dark:text-red-300">
+                {{ f.accepted_from.abusive }}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
   import type { EChartsOption } from 'echarts'
-  import type { AnalyticsOverview } from '~/composables/useAnalytics'
+  import type { AnalyticsOverview, FormSubmissionsResponse } from '~/composables/useAnalytics'
 
   definePageMeta({ layout: 'admin' })
 
-  const { fetchOverview } = useAnalytics()
+  const { fetchOverview, fetchFormSubmissions } = useAnalytics()
   const data = ref<AnalyticsOverview | null>(null)
+  const formData = ref<FormSubmissionsResponse | null>(null)
   const loading = ref(false)
   const error = ref<string | null>(null)
 
@@ -205,9 +293,17 @@
     loading.value = true
     error.value = null
     try {
-      data.value = await fetchOverview()
-    } catch (err) {
-      error.value = (err as { message?: string })?.message ?? 'Failed to load analytics overview'
+      // Fire both in parallel — independent endpoints, same auth + cache
+      // policy. If form-submissions fails we keep the rest of the page.
+      const [overview, forms] = await Promise.allSettled([
+        fetchOverview(),
+        fetchFormSubmissions('24h')
+      ])
+      if (overview.status === 'fulfilled') data.value = overview.value
+      else
+        error.value =
+          (overview.reason as { message?: string })?.message ?? 'Failed to load analytics overview'
+      if (forms.status === 'fulfilled') formData.value = forms.value
     } finally {
       loading.value = false
     }

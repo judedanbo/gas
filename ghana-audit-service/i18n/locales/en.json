@@ -227,6 +227,15 @@
         "target": "Target",
         "count": "Count",
         "bytes": "Bytes"
+      },
+      "forms": {
+        "title": "Form submissions (24h)",
+        "subtitle": "Newsletter and contact-form posts cross-referenced with bot signatures. Suspicious / abusive accepts are false negatives in form validation worth reviewing.",
+        "accepted": "Accepted",
+        "rejected": "Rejected",
+        "uniqueIps": "Unique IPs",
+        "suspect": "Suspect accepts",
+        "suspectHint": "Some accepted submissions came from signatures the detector currently classifies as suspicious or abusive."
       }
     },
     "routes": {

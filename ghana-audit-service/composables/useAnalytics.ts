@@ -199,6 +199,24 @@ export interface InsightsResponse {
   }>
 }
 
+export interface FormSubmissionsResponse {
+  windowHours: number
+  items: Array<{
+    pattern: string
+    total: number
+    accepted: number
+    rejected: number
+    uniqueIps: number
+    accepted_from: {
+      abusive: number
+      suspicious: number
+      crawler: number
+      clean: number
+    }
+    hasSuspectAccepts: boolean
+  }>
+}
+
 export interface CapacityResponse {
   windowDays: number
   hourly: Array<{ hour: string; visits: number; bytes: number; cacheHits: number }>
@@ -266,6 +284,10 @@ export function useAnalytics() {
     return api.get<InsightsResponse>('analytics/insights', { window })
   }
 
+  function fetchFormSubmissions(window: InsightsWindow = '7d'): Promise<FormSubmissionsResponse> {
+    return api.get<FormSubmissionsResponse>('analytics/form-submissions', { window })
+  }
+
   return {
     fetchOverview,
     fetchRoutes,
@@ -274,6 +296,7 @@ export function useAnalytics() {
     updateBotClassification,
     fetchIncidents,
     fetchCapacity,
-    fetchInsights
+    fetchInsights,
+    fetchFormSubmissions
   }
 }
