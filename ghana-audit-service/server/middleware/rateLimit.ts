@@ -6,44 +6,7 @@ import {
   RATE_LIMITS,
   type RateLimitConfig
 } from '../utils/rateLimiter'
-
-// Static asset paths — never rate limited so a single page load doesn't
-// burn through a user's budget on dozens of CSS/JS/image fetches.
-const STATIC_PATH_PREFIXES = [
-  '/_nuxt/',
-  '/_ipx/',
-  '/__nuxt/',
-  '/__nuxt_island/',
-  '/_loading/',
-  '/_payload.json',
-  '/icons/'
-]
-
-const STATIC_EXACT_PATHS = new Set([
-  '/favicon.ico',
-  '/favicon.svg',
-  '/robots.txt',
-  '/sitemap.xml',
-  '/manifest.webmanifest',
-  '/sw.js',
-  '/registerSW.js'
-])
-
-const STATIC_FILE_EXTENSIONS =
-  /\.(?:css|js|mjs|map|png|jpe?g|gif|svg|webp|avif|ico|woff2?|ttf|otf|eot|json|txt|xml)$/i
-
-// PDFs in these public dirs must be fetched through /api/downloads/{type}/{id}
-// so they are subject to per-IP download limits and bandwidth accounting.
-const BLOCKED_DIRECT_PATHS = /^\/uploads\/(?:reports|publications)\/.+\.pdf$/i
-
-function isStaticAsset(path: string): boolean {
-  if (STATIC_EXACT_PATHS.has(path)) return true
-  if (path.startsWith('/workbox-')) return true
-  for (const prefix of STATIC_PATH_PREFIXES) {
-    if (path.startsWith(prefix)) return true
-  }
-  return STATIC_FILE_EXTENSIONS.test(path)
-}
+import { isStaticAsset, BLOCKED_DIRECT_PATHS } from '../utils/staticAssets'
 
 function applyRateLimitHeaders(
   event: Parameters<typeof setHeader>[0],
