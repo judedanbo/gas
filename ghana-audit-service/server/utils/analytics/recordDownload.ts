@@ -5,6 +5,7 @@ import { getDatabase } from '../../database'
 import { downloadEvents } from '../../database/schema/analytics'
 import { getClientIP } from '../rateLimiter'
 import { hashIp, hashUa, classifyUa } from './fingerprint'
+import { getGeoIp } from './geoip'
 
 /**
  * Register a response 'close' hook on the event that, once the file stream
@@ -24,9 +25,15 @@ export function recordDownload(
   const isPartial = !!getHeader(event, 'range')
   const ua = getHeader(event, 'user-agent') || ''
   const stash = event.context.analytics
+  // Reuse hashes + geo from the capture middleware when available; fall
+  // back to recomputing if this handler somehow runs without it (e.g. a
+  // future call site that bypasses the middleware skip-list).
   const ipHash = stash?.ipHash ?? hashIp(getClientIP(event))
   const uaHash = stash?.uaHash ?? hashUa(ua)
   const uaFamily = stash?.uaFamily ?? classifyUa(ua).family
+  const fallbackGeo = stash ? null : getGeoIp(getClientIP(event))
+  const country = stash?.country ?? fallbackGeo?.country ?? null
+  const asn = stash?.asn ?? fallbackGeo?.asn ?? null
 
   event.node.res.on('close', () => {
     void (async () => {
@@ -51,8 +58,8 @@ export function recordDownload(
           ipHash,
           uaHash,
           uaFamily,
-          country: null,
-          asn: null,
+          country,
+          asn,
           isBot: null
         })
       } catch (err) {

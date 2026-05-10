@@ -14,6 +14,7 @@ function snapshot(overrides: Partial<ScoreSnapshot> = {}): ScoreSnapshot {
     probingHits24h: 0,
     failedLogins24h: 0,
     downloads24h: 0,
+    asn: null,
     ...overrides
   }
 }
@@ -80,6 +81,25 @@ describe('analytics/score', () => {
       const r = scoreSignature(snapshot({ downloads24h: 11 }))
       expect(r.score).toBe(20)
       expect(r.classification).toBe('crawler')
+    })
+
+    it('hosting ASN adds +5 (DigitalOcean)', () => {
+      const r = scoreSignature(snapshot({ asn: 14061 }))
+      expect(r.score).toBe(5)
+      expect(r.classification).toBe('clean')
+      expect(r.reasons).toEqual(expect.arrayContaining([expect.stringMatching(/^hosting_asn/)]))
+    })
+
+    it('non-hosting ASN does not add to score (Ghanaian ISP)', () => {
+      const r = scoreSignature(snapshot({ asn: 37339 }))
+      expect(r.score).toBe(0)
+    })
+
+    it('hosting ASN tips a scripted UA into suspicious', () => {
+      const r = scoreSignature(snapshot({ uaFamily: 'script', asn: 16509 }))
+      // 30 (script) + 5 (hosting AWS) = 35 → suspicious threshold
+      expect(r.score).toBe(35)
+      expect(r.classification).toBe('suspicious')
     })
 
     it('empty UA + crawl signature reaches suspicious', () => {

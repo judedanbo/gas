@@ -11,6 +11,7 @@
  */
 
 import type { UaFamily } from './fingerprint'
+import { isHostingAsn } from './geoip'
 
 export type Classification = 'clean' | 'crawler' | 'suspicious' | 'abusive' | 'safe-allowlist'
 
@@ -22,6 +23,9 @@ export interface ScoreSnapshot {
   probingHits24h: number
   failedLogins24h: number
   downloads24h: number
+  /** Optional ASN (autonomous system number) for the source IP. When set,
+   *  matching against a known cloud/hosting ASN list adds +5. */
+  asn?: number | null
 }
 
 export interface ScoreResult {
@@ -90,6 +94,13 @@ export function scoreSignature(snapshot: ScoreSnapshot): ScoreResult {
   if (snapshot.downloads24h > 10) {
     score += 20
     reasons.push(`download_burst(${snapshot.downloads24h}):+20`)
+  }
+  if (isHostingAsn(snapshot.asn)) {
+    // Real users almost never arrive from cloud-provider ASNs on a
+    // public-information government site. Weak signal on its own (+5) but
+    // useful in combination with other rules.
+    score += 5
+    reasons.push(`hosting_asn(${snapshot.asn}):+5`)
   }
 
   let classification: ScoreResult['classification']

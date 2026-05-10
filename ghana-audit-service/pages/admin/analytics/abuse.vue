@@ -59,6 +59,10 @@
                   {{ $t('analytics.abuse.leaderboard.cols.score') }}
                 </th>
                 <th class="px-2 py-2 text-left font-medium text-gray-600 dark:text-gray-300">IP</th>
+                <th class="px-2 py-2 text-left font-medium text-gray-600 dark:text-gray-300">CC</th>
+                <th class="px-2 py-2 text-right font-medium text-gray-600 dark:text-gray-300">
+                  ASN
+                </th>
                 <th class="px-2 py-2 text-left font-medium text-gray-600 dark:text-gray-300">UA</th>
                 <th class="px-2 py-2 text-right font-medium text-gray-600 dark:text-gray-300">
                   {{ $t('analytics.abuse.leaderboard.cols.requests') }}
@@ -79,7 +83,7 @@
             </thead>
             <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
               <tr v-if="!botsLoading && !bots?.items.length">
-                <td class="px-2 py-3 text-center text-gray-500 dark:text-gray-400" colspan="9">
+                <td class="px-2 py-3 text-center text-gray-500 dark:text-gray-400" colspan="11">
                   {{ $t('analytics.noData') }}
                 </td>
               </tr>
@@ -96,6 +100,12 @@
                 </td>
                 <td class="px-2 py-2 font-mono text-[11px] text-gray-700 dark:text-gray-200">
                   {{ b.ipHash.slice(0, 10) }}…
+                </td>
+                <td class="px-2 py-2 text-gray-700 dark:text-gray-200">
+                  {{ b.country || '—' }}
+                </td>
+                <td class="px-2 py-2 text-right tabular-nums text-gray-700 dark:text-gray-200">
+                  {{ b.asn ?? '—' }}
                 </td>
                 <td class="px-2 py-2 text-gray-700 dark:text-gray-200">
                   {{ b.uaFamily }}

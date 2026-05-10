@@ -35,10 +35,17 @@ services:
       # Analytics
       - ANALYTICS_IP_SALT=${ANALYTICS_IP_SALT:-change-this-analytics-salt}
       - ANALYTICS_RETENTION_DAYS=${ANALYTICS_RETENTION_DAYS:-30}
+      # MaxMind GeoLite2 — optional, omit to disable enrichment.
+      - ANALYTICS_GEOIP_DB_PATH=${ANALYTICS_GEOIP_DB_PATH:-}
+      - ANALYTICS_ASN_DB_PATH=${ANALYTICS_ASN_DB_PATH:-}
       # Sentry (optional)
       - NUXT_PUBLIC_SENTRY_DSN=${NUXT_PUBLIC_SENTRY_DSN:-}
-    # volumes:
-    # - ./ghana-audit-service:/app
+    volumes:
+      # Mount ./data read-only so MaxMind GeoLite2 mmdb files placed there
+      # are visible inside the container at /app/data. Files are not
+      # committed; populate ./data manually with GeoLite2-Country.mmdb /
+      # GeoLite2-ASN.mmdb downloaded from https://www.maxmind.com/.
+      - ./data:/app/data:ro
     depends_on:
       mysql:
         condition: service_healthy

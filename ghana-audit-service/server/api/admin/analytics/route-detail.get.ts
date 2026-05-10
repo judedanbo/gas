@@ -74,6 +74,8 @@ export default defineEventHandler(async (event) => {
     .select({
       ipHash: schema.requestEvents.ipHash,
       uaFamily: schema.requestEvents.uaFamily,
+      country: sql<string | null>`MAX(country)`,
+      asn: sql<number | null>`MAX(asn)`,
       count: sql<number>`COUNT(*)`,
       bytes: sql<number>`COALESCE(SUM(bytes_out), 0)`,
       lastSeen: sql<Date>`MAX(ts)`
@@ -115,6 +117,8 @@ export default defineEventHandler(async (event) => {
     topIps: topIps.map((r) => ({
       ipHash: r.ipHash,
       uaFamily: r.uaFamily,
+      country: r.country ?? null,
+      asn: r.asn != null ? Number(r.asn) : null,
       visits: Number(r.count),
       bytes: Number(r.bytes),
       lastSeen: r.lastSeen instanceof Date ? r.lastSeen.toISOString() : String(r.lastSeen)

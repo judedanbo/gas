@@ -84,6 +84,8 @@ export interface AnalyticsRouteDetail {
   topIps: Array<{
     ipHash: string
     uaFamily: string
+    country: string | null
+    asn: number | null
     visits: number
     bytes: number
     lastSeen: string

@@ -12,6 +12,7 @@ import {
 import { pushAnalyticsEvent } from '../utils/analytics/buffer'
 import { isProbingPath } from '../utils/analytics/probingPaths'
 import { recordIncident } from '../utils/analytics/recordIncident'
+import { getGeoIp } from '../utils/analytics/geoip'
 
 /**
  * Capture middleware. Filename prefix `00-` is intentional: middleware files
@@ -32,6 +33,8 @@ declare module 'h3' {
       ipHash: string
       uaHash: string
       uaFamily: string
+      country: string | null
+      asn: number | null
     }
   }
 }
@@ -49,6 +52,9 @@ export default defineEventHandler((event) => {
   const ipHash = hashIp(ip)
   const uaHash = hashUa(ua)
   const { family: uaFamily } = classifyUa(ua)
+  // Geo lookup happens here, before the raw IP leaves scope. The hashed
+  // IP can't be reverse-resolved, so country/asn must be resolved now.
+  const { country, asn } = getGeoIp(ip)
   const referrerHost = parseReferrerHost(
     getHeader(event, 'referer') || getHeader(event, 'referrer')
   )
@@ -57,8 +63,8 @@ export default defineEventHandler((event) => {
   const routePath = rawPath.slice(0, 512)
 
   // Stash on context so downstream handlers (download endpoints, future
-  // detector hooks) can reuse the hashes without recomputing.
-  event.context.analytics = { ipHash, uaHash, uaFamily }
+  // detector hooks) can reuse the hashes + geo without recomputing.
+  event.context.analytics = { ipHash, uaHash, uaFamily, country, asn }
 
   // Probing-path detection — fires the moment we see the request, not when
   // the response closes, so we don't lose the signal if the connection is
@@ -103,8 +109,8 @@ export default defineEventHandler((event) => {
         ipHash,
         uaHash,
         uaFamily,
-        country: null,
-        asn: null,
+        country,
+        asn,
         referrerHost,
         isBot: null,
         role: role ? String(role).slice(0, 16) : null

@@ -27,6 +27,8 @@ interface AggregateRow {
   probing_hits: number
   failed_logins: number
   downloads: number
+  country: string | null
+  asn: number | null
 }
 
 const WINDOW_HOURS = 24
@@ -43,6 +45,9 @@ const AGGREGATE_SQL = `
     COUNT(DISTINCT re.route_pattern) AS distinct_routes,
     MIN(re.ts) AS first_seen,
     MAX(re.ts) AS last_seen,
+    -- Geo is mostly stable per IP; pick a representative cheaply.
+    MAX(re.country) AS country,
+    MAX(re.asn) AS asn,
     COALESCE(rl.hits, 0) AS rate_limit_hits,
     COALESCE(pp.hits, 0) AS probing_hits,
     COALESCE(fl.hits, 0) AS failed_logins,
@@ -83,7 +88,7 @@ const UPSERT_SQL = `
     total_requests, distinct_routes_24h, rate_limit_hits_24h,
     failed_logins_24h, score, classification, country, asn
   )
-  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, NULL)
+  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   ON DUPLICATE KEY UPDATE
     ua_family = VALUES(ua_family),
     last_seen = GREATEST(last_seen, VALUES(last_seen)),
@@ -93,6 +98,10 @@ const UPSERT_SQL = `
     rate_limit_hits_24h = VALUES(rate_limit_hits_24h),
     failed_logins_24h = VALUES(failed_logins_24h),
     score = VALUES(score),
+    -- Geo is stable per IP, but COALESCE preserves a previously-resolved
+    -- value when GeoIP is currently unavailable (e.g. MMDB not mounted).
+    country = COALESCE(VALUES(country), country),
+    asn = COALESCE(VALUES(asn), asn),
     -- Preserve manual overrides: only update classification when the row
     -- was never decided by a human. decided_by IS NULL means auto.
     classification = CASE
@@ -137,7 +146,8 @@ export default defineTask({
         rateLimitHits24h: Number(row.rate_limit_hits),
         probingHits24h: Number(row.probing_hits),
         failedLogins24h: Number(row.failed_logins),
-        downloads24h: Number(row.downloads)
+        downloads24h: Number(row.downloads),
+        asn: row.asn != null ? Number(row.asn) : null
       }
       const result = scoreSignature(snapshot)
 
@@ -153,7 +163,9 @@ export default defineTask({
         snapshot.rateLimitHits24h,
         snapshot.failedLogins24h,
         result.score,
-        result.classification
+        result.classification,
+        row.country,
+        snapshot.asn
       ])
       upserted++
 
