@@ -52,6 +52,13 @@ export function useSearch() {
     { value: 'report', label: 'Audit Reports' },
     { value: 'publication', label: 'Publications' },
     { value: 'news', label: 'News' },
+    { value: 'event', label: 'Events' },
+    { value: 'tender', label: 'Tenders' },
+    { value: 'vacancy', label: 'Vacancies' },
+    { value: 'video', label: 'Videos' },
+    { value: 'gallery', label: 'Gallery' },
+    { value: 'team', label: 'Team' },
+    { value: 'office', label: 'Offices' },
     { value: 'page', label: 'Pages' }
   ]
 

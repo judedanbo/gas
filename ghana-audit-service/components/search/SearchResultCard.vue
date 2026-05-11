@@ -14,7 +14,7 @@
         <!-- Title -->
         <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">
           <NuxtLink
-            :to="result.url"
+            :to="localePath(result.url)"
             class="hover:text-primary transition-colors"
           >
             {{ result.title }}
@@ -46,6 +46,7 @@ const props = defineProps<{
 }>()
 
 const { t } = useI18n()
+const localePath = useLocalePath()
 const { formatDateShort } = useLocaleDate()
 
 // Type to badge variant mapping

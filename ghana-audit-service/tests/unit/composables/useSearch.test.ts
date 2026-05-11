@@ -20,11 +20,19 @@ describe('useSearch', () => {
       const { useSearch } = await import('../../../composables/useSearch')
       const { typeFilters } = useSearch()
 
-      expect(typeFilters).toHaveLength(4)
-      expect(typeFilters[0]).toEqual({ value: 'report', label: 'Audit Reports' })
-      expect(typeFilters[1]).toEqual({ value: 'publication', label: 'Publications' })
-      expect(typeFilters[2]).toEqual({ value: 'news', label: 'News' })
-      expect(typeFilters[3]).toEqual({ value: 'page', label: 'Pages' })
+      expect(typeFilters).toEqual([
+        { value: 'report', label: 'Audit Reports' },
+        { value: 'publication', label: 'Publications' },
+        { value: 'news', label: 'News' },
+        { value: 'event', label: 'Events' },
+        { value: 'tender', label: 'Tenders' },
+        { value: 'vacancy', label: 'Vacancies' },
+        { value: 'video', label: 'Videos' },
+        { value: 'gallery', label: 'Gallery' },
+        { value: 'team', label: 'Team' },
+        { value: 'office', label: 'Offices' },
+        { value: 'page', label: 'Pages' }
+      ])
     })
   })
 

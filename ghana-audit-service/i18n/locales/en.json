@@ -165,6 +165,13 @@
     "report": "Audit Report",
     "publication": "Publication",
     "news": "News",
+    "event": "Event",
+    "tender": "Tender",
+    "vacancy": "Vacancy",
+    "video": "Video",
+    "gallery": "Gallery",
+    "team": "Team Member",
+    "office": "Regional Office",
     "page": "Page"
   },
   "errors": {

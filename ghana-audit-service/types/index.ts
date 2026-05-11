@@ -313,7 +313,18 @@ export interface ApiError {
 
 export interface SearchResult {
   id: string
-  type: 'report' | 'publication' | 'news' | 'page'
+  type:
+    | 'report'
+    | 'publication'
+    | 'news'
+    | 'event'
+    | 'tender'
+    | 'vacancy'
+    | 'video'
+    | 'gallery'
+    | 'team'
+    | 'office'
+    | 'page'
   title: string
   excerpt: string
   url: string
