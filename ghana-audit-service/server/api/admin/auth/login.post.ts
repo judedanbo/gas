@@ -4,6 +4,22 @@ import { getDatabase, schema } from '../../../database'
 import { verifyPassword } from '../../../utils/password'
 import { signToken, getTokenExpiry } from '../../../utils/jwt'
 import { checkRateLimit, createRateLimitKey, getClientIP } from '../../../utils/rateLimiter'
+import { recordIncident } from '../../../utils/analytics/recordIncident'
+
+function recordFailedLogin(event: Parameters<typeof setHeader>[0], reason: string) {
+  // Stash is populated by the capture middleware (00-analytics.ts). Fall
+  // back to nulls for the rare case where the middleware didn't run.
+  const stash = event.context.analytics
+  recordIncident({
+    kind: 'failed_login',
+    severity: 'info',
+    ipHash: stash?.ipHash ?? null,
+    uaHash: stash?.uaHash ?? null,
+    routePattern: '/api/admin/auth/login',
+    routePath: '/api/admin/auth/login',
+    details: { reason }
+  })
+}
 
 const loginSchema = z.object({
   email: z.string().email('Invalid email address'),
@@ -21,7 +37,7 @@ export default defineEventHandler(async (event) => {
 
   // Check rate limit for login attempts
   const key = createRateLimitKey(clientIP, '/api/admin/auth/login')
-  const { isLimited, remaining, resetTime } = checkRateLimit(
+  const { isLimited, remaining, resetTime } = await checkRateLimit(
     key,
     LOGIN_RATE_LIMIT.limit,
     LOGIN_RATE_LIMIT.windowMs
@@ -79,6 +95,7 @@ export default defineEventHandler(async (event) => {
       ipAddress: clientIP,
       userAgent: getHeader(event, 'user-agent') || null
     })
+    recordFailedLogin(event, 'user_not_found')
 
     throw createError({
       statusCode: 401,
@@ -101,6 +118,7 @@ export default defineEventHandler(async (event) => {
       ipAddress: clientIP,
       userAgent: getHeader(event, 'user-agent') || null
     })
+    recordFailedLogin(event, 'invalid_password')
 
     throw createError({
       statusCode: 401,
@@ -117,10 +135,7 @@ export default defineEventHandler(async (event) => {
   })
 
   // Update last login timestamp
-  await db
-    .update(schema.users)
-    .set({ lastLoginAt: new Date() })
-    .where(eq(schema.users.id, user.id))
+  await db.update(schema.users).set({ lastLoginAt: new Date() }).where(eq(schema.users.id, user.id))
 
   // Log successful login
   await db.insert(schema.auditLogs).values({

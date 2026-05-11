@@ -239,6 +239,23 @@ export default defineNuxtConfig({
   // Nitro server configuration
   nitro: {
     compressPublicAssets: true,
+    experimental: {
+      // Enable Nitro tasks (server/tasks/**) so the analytics rollup +
+      // retention jobs can run on the schedule below.
+      tasks: true
+    },
+    scheduledTasks: {
+      // Roll up the previous hour into route_stats_hourly at :05 every hour.
+      '5 * * * *': ['analytics:rollup-hourly'],
+      // Refresh bot_signatures every 5 minutes from the last 24h of events.
+      '*/5 * * * *': ['analytics:detect-bots'],
+      // Trim raw request_events past ANALYTICS_RETENTION_DAYS once a day.
+      '0 3 * * *': ['analytics:retention-raw'],
+      // Trim abuse_incidents per severity tier (info=90d, warn/critical=365d).
+      '15 3 * * *': ['analytics:retention-incidents'],
+      // Decay scores on bot_signatures not seen in a week.
+      '30 3 * * *': ['analytics:bot-decay']
+    },
     prerender: {
       crawlLinks: true,
       routes: [
@@ -270,7 +287,14 @@ export default defineNuxtConfig({
       '/sw.js': { prerender: false },
       '/workbox-*.js': { prerender: false },
 
-      // Public API caching - disabled in dev, SWR in production
+      // Public API caching - disabled in dev, SWR in production.
+      // /api/reports (list) is wrapped with defineAnalyticsCachedHandler
+      // so its cache hits land in request_events.cache_hit; the route-rule
+      // cache must be off for that one path, otherwise the outer rule
+      // serves cached without giving the wrapper a chance to flag the hit.
+      // /api/reports/** (detail + deeper) still uses route-rule caching
+      // until those handlers are migrated too.
+      '/api/reports': { cache: false },
       '/api/reports/**': { cache: isDev ? false : { maxAge: 300, staleMaxAge: 600 } },
       '/api/news/**': { cache: isDev ? false : { maxAge: 300, staleMaxAge: 600 } },
       '/api/publications/**': { cache: isDev ? false : { maxAge: 300, staleMaxAge: 600 } },

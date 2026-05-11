@@ -191,5 +191,189 @@
     "of": "wɔ mu",
     "showing": "Ɛkyerɛ",
     "results": "nsɛm"
+  },
+  "analytics": {
+    "loading": "Reload…",
+    "noData": "Data biara nni hɔ",
+    "overview": {
+      "title": "Analytics — Sɛnea Asite",
+      "subtitle": "Traffic ne downloads wɔ nnɔnhwerew 24 a atwa mu mu",
+      "viewRoutes": "Hwɛ akwan",
+      "refresh": "Yɛ no foforɔ",
+      "approximate": "ɛbɛn",
+      "weighted": "wɔ visit-weighted",
+      "cards": {
+        "visits": "Visits 24h",
+        "uniqueIps": "Unique IPs 24h",
+        "downloads": "Downloads 24h",
+        "bandwidth": "Bandwidth 24h",
+        "botShare": "Bot share",
+        "errorRate": "Error rate",
+        "cacheHit": "Cache hit rate",
+        "p95Latency": "Avg p95 latency"
+      },
+      "hourly": {
+        "title": "Hourly traffic — nna 7 a atwa mu mu",
+        "window": "Nna 7, hourly"
+      },
+      "topRoutes": {
+        "title": "Akwan a ɛsoa (24h)",
+        "pattern": "Pattern",
+        "visits": "Visits",
+        "p95": "p95"
+      },
+      "topDownloads": {
+        "title": "Downloads a ɛsoa (24h)",
+        "target": "Adeɛ",
+        "count": "Dodow",
+        "bytes": "Bytes"
+      },
+      "forms": {
+        "title": "Form submissions (24h)",
+        "subtitle": "Newsletter ne contact form posts a yɛde wɔn ho akɔbɔ bot signatures so. Suspicious / abusive accepts yɛ form validation false negatives a ɛsɛ sɛ admin hwɛ.",
+        "accepted": "Accepted",
+        "rejected": "Rejected",
+        "uniqueIps": "Unique IPs",
+        "suspect": "Suspect accepts",
+        "suspectHint": "Submissions bi a wɔagye no firi signatures a detector ka sɛ ɛyɛ suspicious anaa abusive."
+      }
+    },
+    "routes": {
+      "title": "Akwan",
+      "subtitle": "Per-route stats. Klik so na hwɛ.",
+      "backToOverview": "Sɛnea Asite",
+      "window": "Bere",
+      "sort": "Sort by",
+      "searchPlaceholder": "Hwehwɛ pattern…",
+      "pagination": "Page {page} / {last} · akwan {total}",
+      "cols": {
+        "pattern": "Pattern",
+        "visits": "Visits",
+        "uniqueIps": "Unique IPs",
+        "p95": "p95",
+        "errorRate": "Error %",
+        "cacheHitRate": "Cache hit %",
+        "bytes": "Bytes",
+        "benefit": "Caching benefit"
+      },
+      "detail": {
+        "empty": "Yi route bi na hwɛ ho nsɛm.",
+        "visits": "Visits",
+        "uniqueIps": "Unique IPs",
+        "p95": "p95",
+        "bytes": "Bytes",
+        "statusMix": "Status mix",
+        "topIps": "Top IPs",
+        "requests": "Requests"
+      }
+    },
+    "insights": {
+      "title": "Insights",
+      "subtitle": "Search ne 404 — content-team feedback.",
+      "backToOverview": "Sɛnea Asite",
+      "topSearches": {
+        "title": "Search a ɛsoa",
+        "hint": "Nsɛm a wɔbisa kɛse; avg results kyerɛ relevance.",
+        "cols": {
+          "query": "Query",
+          "count": "Dodow",
+          "avgResults": "Avg results"
+        }
+      },
+      "zeroResults": {
+        "title": "Search a ɛnnya nsɛm",
+        "hint": "Nsɛm a wɔbisa nanso ɛnnya biribiara — ɛkyerɛ baabi a content sua.",
+        "empty": "Biribiara nni hɔ — ɛyɛ.",
+        "cols": {
+          "query": "Query",
+          "count": "Mpɛn dodow",
+          "lastSeen": "Bere kɔɔ"
+        }
+      },
+      "notFound": {
+        "title": "404 hot list",
+        "hint": "Akwan a abu mu — yɛ ahyɛaseɛ ansa na users akyerɛ.",
+        "cols": {
+          "path": "Path",
+          "hits": "Hits",
+          "uniqueIps": "Unique IPs"
+        }
+      }
+    },
+    "capacity": {
+      "title": "Capacity",
+      "subtitle": "Throughput, latency, cache ne storage trends ma infrastructure adwumayɛfo.",
+      "backToOverview": "Sɛnea Asite",
+      "throughput": {
+        "title": "Requests + bandwidth"
+      },
+      "cacheRatio": {
+        "title": "Cache hit ratio (instrumented routes)",
+        "hint": "Akwan a yɛde wrapper no boa nkutoo na ɛyɛ adwuma. Sɛ ɛkɔ fam ≥10% nnawɔtwe biara mu a, hwehwɛ ho."
+      },
+      "heatmap": {
+        "title": "Da × dɔn traffic"
+      },
+      "slowest": {
+        "title": "Akwan 10 a ɛyɛ slow (visit-weighted p95)",
+        "pattern": "Pattern",
+        "p95": "p95",
+        "visits": "Visits"
+      },
+      "heaviest": {
+        "title": "Akwan 10 a ɛsoa kɛse (bytes out)",
+        "pattern": "Pattern",
+        "bytes": "Bytes",
+        "avgPerVisit": "Avg / visit"
+      },
+      "storage": {
+        "rawRows": "request_events rows",
+        "downloadRows": "download_events rows"
+      },
+      "redis": {
+        "used": "Redis used memory",
+        "peak": "peak {peak}",
+        "keys": "Redis keys",
+        "evicted": "{evicted} evicted"
+      }
+    },
+    "abuse": {
+      "title": "Abuse",
+      "subtitle": "Akwan a wɔbu wɔn ano ne ho nsɛm. Yɛnyɛ block; admin na ɛsua.",
+      "backToOverview": "Sɛnea Asite",
+      "leaderboard": {
+        "title": "Akwan a wɔn ho yɛ nyam",
+        "suspiciousAndAbusive": "Suspicious + abusive",
+        "markSafe": "Ka sɛ ɛyɛ safe",
+        "forceAbusive": "Hyɛ no abusive",
+        "cols": {
+          "classification": "Class",
+          "score": "Score",
+          "requests": "Requests",
+          "routes": "Akwan",
+          "rateLimit": "RL hits",
+          "lastSeen": "Bere kɔɔ",
+          "actions": "Yɛ"
+        }
+      },
+      "incidents": {
+        "title": "Asɛm timeline",
+        "allKinds": "Nyinaa",
+        "allSeverities": "Nyinaa",
+        "details": "Hwɛ evidence"
+      },
+      "fuzz": {
+        "title": "Fuzz-attempt leaderboard",
+        "subtitle": "Inputs a ɛhyia SQL-injection / XSS / path-traversal / SSRF fingerprints. Mpɛn baako mpo na ɛyɛ incident; akwan a wɔde ba mpɛn pii bɛda hɔ.",
+        "empty": "Fuzz attempts biara nni hɔ — ɛyɛ.",
+        "cols": {
+          "severity": "Severity",
+          "kind": "Top kind",
+          "count": "Dodow",
+          "classification": "Class",
+          "lastSeen": "Bere kɔɔ"
+        }
+      }
+    }
   }
 }

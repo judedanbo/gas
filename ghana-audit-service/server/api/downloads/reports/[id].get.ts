@@ -4,6 +4,7 @@ import { extname, basename } from 'node:path'
 import { and, eq, isNull } from 'drizzle-orm'
 import { getDatabase, schema } from '../../../database'
 import { resolvePublicAsset } from '../../../utils/publicFiles'
+import { recordDownload } from '../../../utils/analytics/recordDownload'
 
 export default defineEventHandler(async (event) => {
   const id = getRouterParam(event, 'id')
@@ -55,10 +56,13 @@ export default defineEventHandler(async (event) => {
     'Content-Disposition',
     `${isInlineView ? 'inline' : 'attachment'}; filename="${downloadName.replace(/"/g, '')}"`
   )
-  setHeader(event, 'Cache-Control', isInlineView
-    ? 'private, max-age=300'
-    : 'private, no-store, must-revalidate'
+  setHeader(
+    event,
+    'Cache-Control',
+    isInlineView ? 'private, max-age=300' : 'private, no-store, must-revalidate'
   )
+
+  recordDownload(event, { kind: 'report', targetId: report.id, slug: report.slug })
 
   return sendStream(event, createReadStream(filePath))
 })

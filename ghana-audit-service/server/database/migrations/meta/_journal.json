@@ -29,6 +29,27 @@
       "when": 1778275621343,
       "tag": "0003_light_lethal_legion",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "5",
+      "when": 1778412553804,
+      "tag": "0004_spotty_jack_murdock",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "5",
+      "when": 1778418886965,
+      "tag": "0005_lumpy_scrambler",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "5",
+      "when": 1778419612888,
+      "tag": "0006_ambiguous_venom",
+      "breakpoints": true
     }
   ]
 }

@@ -28,5 +28,8 @@ export * from './regional-offices'
 // Media Tables
 export * from './media'
 
+// Analytics & Abuse Detection
+export * from './analytics'
+
 // Existing Tables (migrated from SQLite)
 export * from './existing'

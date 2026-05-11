@@ -191,5 +191,189 @@
     "of": "of",
     "showing": "Showing",
     "results": "results"
+  },
+  "analytics": {
+    "loading": "Loading…",
+    "noData": "No data yet",
+    "overview": {
+      "title": "Analytics Overview",
+      "subtitle": "Traffic, downloads, and behaviour over the last 24 hours",
+      "viewRoutes": "View routes",
+      "refresh": "Refresh",
+      "approximate": "approximate",
+      "weighted": "visit-weighted",
+      "cards": {
+        "visits": "Visits 24h",
+        "uniqueIps": "Unique IPs 24h",
+        "downloads": "Downloads 24h",
+        "bandwidth": "Bandwidth 24h",
+        "botShare": "Bot share",
+        "errorRate": "Error rate",
+        "cacheHit": "Cache hit rate",
+        "p95Latency": "Avg p95 latency"
+      },
+      "hourly": {
+        "title": "Hourly traffic — last 7 days",
+        "window": "Last 7 days, hourly"
+      },
+      "topRoutes": {
+        "title": "Top routes (24h)",
+        "pattern": "Pattern",
+        "visits": "Visits",
+        "p95": "p95"
+      },
+      "topDownloads": {
+        "title": "Top downloads (24h)",
+        "target": "Target",
+        "count": "Count",
+        "bytes": "Bytes"
+      },
+      "forms": {
+        "title": "Form submissions (24h)",
+        "subtitle": "Newsletter and contact-form posts cross-referenced with bot signatures. Suspicious / abusive accepts are false negatives in form validation worth reviewing.",
+        "accepted": "Accepted",
+        "rejected": "Rejected",
+        "uniqueIps": "Unique IPs",
+        "suspect": "Suspect accepts",
+        "suspectHint": "Some accepted submissions came from signatures the detector currently classifies as suspicious or abusive."
+      }
+    },
+    "routes": {
+      "title": "Routes",
+      "subtitle": "Per-route stats. Click a row to drill in.",
+      "backToOverview": "Overview",
+      "window": "Window",
+      "sort": "Sort by",
+      "searchPlaceholder": "Filter pattern…",
+      "pagination": "Page {page} of {last} · {total} routes",
+      "cols": {
+        "pattern": "Pattern",
+        "visits": "Visits",
+        "uniqueIps": "Unique IPs",
+        "p95": "p95",
+        "errorRate": "Error %",
+        "cacheHitRate": "Cache hit %",
+        "bytes": "Bytes",
+        "benefit": "Caching benefit"
+      },
+      "detail": {
+        "empty": "Select a route to see details.",
+        "visits": "Visits",
+        "uniqueIps": "Unique IPs",
+        "p95": "p95",
+        "bytes": "Bytes",
+        "statusMix": "Status mix",
+        "topIps": "Top IPs",
+        "requests": "Requests"
+      }
+    },
+    "insights": {
+      "title": "Insights",
+      "subtitle": "Search behaviour and link rot — content-team feedback loop.",
+      "backToOverview": "Overview",
+      "topSearches": {
+        "title": "Top searches",
+        "hint": "Most-frequent queries; the avg-results column hints at relevance.",
+        "cols": {
+          "query": "Query",
+          "count": "Count",
+          "avgResults": "Avg results"
+        }
+      },
+      "zeroResults": {
+        "title": "Zero-result searches",
+        "hint": "Queries that always returned nothing in the window — content gaps to fill.",
+        "empty": "No zero-result queries — well done.",
+        "cols": {
+          "query": "Query",
+          "count": "Times asked",
+          "lastSeen": "Last seen"
+        }
+      },
+      "notFound": {
+        "title": "404 hot list",
+        "hint": "Top broken paths; catches link rot in newly-published material before users complain.",
+        "cols": {
+          "path": "Path",
+          "hits": "Hits",
+          "uniqueIps": "Unique IPs"
+        }
+      }
+    },
+    "capacity": {
+      "title": "Capacity",
+      "subtitle": "Throughput, latency, cache, and storage trends to inform infrastructure decisions.",
+      "backToOverview": "Overview",
+      "throughput": {
+        "title": "Requests + bandwidth"
+      },
+      "cacheRatio": {
+        "title": "Cache hit ratio (instrumented routes)",
+        "hint": "Only routes wrapped with defineAnalyticsCachedHandler contribute. A trend down ≥10% week-over-week is worth investigating."
+      },
+      "heatmap": {
+        "title": "Day × hour traffic"
+      },
+      "slowest": {
+        "title": "Slowest 10 routes (visit-weighted p95)",
+        "pattern": "Pattern",
+        "p95": "p95",
+        "visits": "Visits"
+      },
+      "heaviest": {
+        "title": "Heaviest 10 routes (bytes out)",
+        "pattern": "Pattern",
+        "bytes": "Bytes",
+        "avgPerVisit": "Avg / visit"
+      },
+      "storage": {
+        "rawRows": "request_events rows",
+        "downloadRows": "download_events rows"
+      },
+      "redis": {
+        "used": "Redis used memory",
+        "peak": "peak {peak}",
+        "keys": "Redis keys",
+        "evicted": "{evicted} evicted"
+      }
+    },
+    "abuse": {
+      "title": "Abuse",
+      "subtitle": "Suspect signatures and incident timeline. Flag-only — no auto-block.",
+      "backToOverview": "Overview",
+      "leaderboard": {
+        "title": "Suspect leaderboard",
+        "suspiciousAndAbusive": "Suspicious + abusive",
+        "markSafe": "Mark safe",
+        "forceAbusive": "Force abusive",
+        "cols": {
+          "classification": "Class",
+          "score": "Score",
+          "requests": "Requests",
+          "routes": "Routes",
+          "rateLimit": "RL hits",
+          "lastSeen": "Last seen",
+          "actions": "Actions"
+        }
+      },
+      "incidents": {
+        "title": "Incident timeline",
+        "allKinds": "All kinds",
+        "allSeverities": "All severities",
+        "details": "Show evidence"
+      },
+      "fuzz": {
+        "title": "Fuzz-attempt leaderboard",
+        "subtitle": "Inputs matching SQL-injection / XSS / path-traversal / SSRF fingerprints. Single hits raise an incident; recurring senders surface here.",
+        "empty": "No fuzz attempts in the window — quiet day.",
+        "cols": {
+          "severity": "Severity",
+          "kind": "Top kind",
+          "count": "Count",
+          "classification": "Class",
+          "lastSeen": "Last seen"
+        }
+      }
+    }
   }
 }

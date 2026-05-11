@@ -1,6 +1,7 @@
 import type { PaginatedResponse, SearchResult } from '~/types'
 import { getLocaleFromRequest } from '../utils/locale'
 import { runGlobalSearch, type SearchableType } from '../utils/searchService'
+import { recordSearch } from '../utils/analytics/recordSearch'
 
 const KNOWN_TYPES: ReadonlyArray<SearchableType> = [
   'report',
@@ -35,7 +36,7 @@ export default defineEventHandler(async (event): Promise<PaginatedResponse<Searc
   const query = getQuery(event)
   const locale = getLocaleFromRequest(event)
 
-  return runGlobalSearch({
+  const result = await runGlobalSearch({
     query: typeof query.query === 'string' ? query.query : String(query.query ?? ''),
     types: parseTypes(query.type),
     dateFrom: parseOptionalString(query.dateFrom),
@@ -44,4 +45,17 @@ export default defineEventHandler(async (event): Promise<PaginatedResponse<Searc
     page: Number(query.page) || 1,
     perPage: Number(query.perPage) || 10
   })
+
+  // Record the search (and its result count) for the admin Insights tab.
+  // Fire-and-forget; never blocks the response. Uses the locale resolved
+  // above by getLocaleFromRequest (the public search component passes the
+  // user's preferred locale either via Accept-Language or the i18n URL
+  // prefix; PR #9 normalised that into getLocaleFromRequest).
+  recordSearch(event, {
+    query: String(query.query ?? ''),
+    resultCount: result.meta.total,
+    locale
+  })
+
+  return result
 })
