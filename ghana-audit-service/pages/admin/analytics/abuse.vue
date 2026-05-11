@@ -316,12 +316,7 @@
             </tr>
             <tr v-for="f in fuzz?.items" :key="`${f.ipHash}-${f.uaHash}`">
               <td class="px-2 py-2">
-                <span
-                  :class="[
-                    'rounded px-1.5 py-0.5 text-[11px]',
-                    sevBadge(f.topSeverity as 'info' | 'warning' | 'critical')
-                  ]"
-                >
+                <span :class="['rounded px-1.5 py-0.5 text-[11px]', sevBadge(f.topSeverity)]">
                   {{ f.topSeverity }}
                 </span>
               </td>

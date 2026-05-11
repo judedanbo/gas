@@ -3,8 +3,13 @@ import { validateCSRF, createCSRFError } from '../utils/csrf'
 import { getDatabase, schema } from '../database'
 import { getClientIP } from '../utils/rateLimiter'
 import { sendContactNotification } from '../utils/email'
-import { analyseBodyFields, highestSeverity } from '../utils/analytics/fuzzPatterns'
-import { recordIncident } from '../utils/analytics/recordIncident'
+import {
+  analyseBodyFields,
+  highestSeverity,
+  matchKindFingerprint
+} from '../utils/analytics/fuzzPatterns'
+import { recordIncidentDeduped } from '../utils/analytics/recordIncidentDeduped'
+import { hashIp } from '../utils/analytics/fingerprint'
 
 export default defineEventHandler(async (event) => {
   // Validate CSRF token
@@ -16,20 +21,32 @@ export default defineEventHandler(async (event) => {
 
   // Body-field fuzz scan. Runs before validation so we capture the raw
   // payload regardless of whether it would pass length / format checks.
-  // Flag-only — never affects the response.
+  // Flag-only — never affects the response. Deduplicated on a 5-minute
+  // window so a campaign of identical malicious bodies creates one
+  // incident, not thousands.
   if (body && typeof body === 'object') {
     const fuzzMatches = analyseBodyFields(body as Record<string, unknown>)
     if (fuzzMatches.length > 0) {
       const stash = event.context.analytics
-      recordIncident({
-        kind: 'fuzz_attempt',
-        severity: highestSeverity(fuzzMatches),
-        ipHash: stash?.ipHash ?? null,
-        uaHash: stash?.uaHash ?? null,
-        routePattern: '/api/contact',
-        routePath: '/api/contact',
-        details: { source: 'body', matches: fuzzMatches }
-      })
+      // Fall back to a fresh hash of the source IP if the capture
+      // middleware didn't populate the stash. Without an ipHash the
+      // dedup key collapses to 'none' and the detector can't aggregate
+      // the incident against any signature.
+      const ipHash = stash?.ipHash ?? hashIp(getClientIP(event))
+      const uaHash = stash?.uaHash ?? null
+      recordIncidentDeduped(
+        {
+          kind: 'fuzz_attempt',
+          severity: highestSeverity(fuzzMatches),
+          ipHash,
+          uaHash,
+          routePattern: '/api/contact',
+          routePath: '/api/contact',
+          details: { source: 'body', matches: fuzzMatches }
+        },
+        `/api/contact:${matchKindFingerprint(fuzzMatches)}`,
+        300
+      )
     }
   }
 

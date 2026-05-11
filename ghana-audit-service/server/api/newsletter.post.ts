@@ -3,8 +3,13 @@ import { eq } from 'drizzle-orm'
 import { validateCSRF, createCSRFError } from '../utils/csrf'
 import { getDatabase, schema } from '../database'
 import { getClientIP } from '../utils/rateLimiter'
-import { analyseBodyFields, highestSeverity } from '../utils/analytics/fuzzPatterns'
-import { recordIncident } from '../utils/analytics/recordIncident'
+import {
+  analyseBodyFields,
+  highestSeverity,
+  matchKindFingerprint
+} from '../utils/analytics/fuzzPatterns'
+import { recordIncidentDeduped } from '../utils/analytics/recordIncidentDeduped'
+import { hashIp } from '../utils/analytics/fingerprint'
 
 export default defineEventHandler(async (event) => {
   // Validate CSRF token
@@ -15,20 +20,27 @@ export default defineEventHandler(async (event) => {
   const body = await readBody(event)
 
   // Body-field fuzz scan. Runs before validation so we capture the raw
-  // payload regardless of whether it would pass format checks. Flag-only.
+  // payload regardless of whether it would pass format checks. Flag-only,
+  // deduplicated on a 5-minute window.
   if (body && typeof body === 'object') {
     const fuzzMatches = analyseBodyFields(body as Record<string, unknown>)
     if (fuzzMatches.length > 0) {
       const stash = event.context.analytics
-      recordIncident({
-        kind: 'fuzz_attempt',
-        severity: highestSeverity(fuzzMatches),
-        ipHash: stash?.ipHash ?? null,
-        uaHash: stash?.uaHash ?? null,
-        routePattern: '/api/newsletter',
-        routePath: '/api/newsletter',
-        details: { source: 'body', matches: fuzzMatches }
-      })
+      const ipHash = stash?.ipHash ?? hashIp(getClientIP(event))
+      const uaHash = stash?.uaHash ?? null
+      recordIncidentDeduped(
+        {
+          kind: 'fuzz_attempt',
+          severity: highestSeverity(fuzzMatches),
+          ipHash,
+          uaHash,
+          routePattern: '/api/newsletter',
+          routePath: '/api/newsletter',
+          details: { source: 'body', matches: fuzzMatches }
+        },
+        `/api/newsletter:${matchKindFingerprint(fuzzMatches)}`,
+        300
+      )
     }
   }
 

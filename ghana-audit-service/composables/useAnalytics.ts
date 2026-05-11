@@ -234,7 +234,7 @@ export interface FuzzAttemptsResponse {
     country: string | null
     classification: string | null
     count: number
-    topSeverity: string
+    topSeverity: 'info' | 'warning' | 'critical'
     topKind: FuzzKind | string | null
     lastSeen: string
   }>

@@ -12,8 +12,13 @@ import {
 import { pushAnalyticsEvent } from '../utils/analytics/buffer'
 import { isProbingPath } from '../utils/analytics/probingPaths'
 import { recordIncident } from '../utils/analytics/recordIncident'
+import { recordIncidentDeduped } from '../utils/analytics/recordIncidentDeduped'
 import { getGeoIp } from '../utils/analytics/geoip'
-import { analyseQueryString, highestSeverity } from '../utils/analytics/fuzzPatterns'
+import {
+  analyseQueryString,
+  highestSeverity,
+  matchKindFingerprint
+} from '../utils/analytics/fuzzPatterns'
 
 /**
  * Capture middleware. Filename prefix `00-` is intentional: middleware files
@@ -92,22 +97,37 @@ export default defineEventHandler((event) => {
     })
   }
 
-  // Query-string fuzz scan. Fires for any non-static GET/POST whose query
-  // contains SQLi / XSS / path-traversal / SSRF / encoded payloads.
+  // Query-string fuzz scan. Fires for any non-static, non-admin GET/POST
+  // whose query contains SQLi / XSS / path-traversal / SSRF / encoded
+  // payloads. Admin paths are skipped per the Phase 5g plan — JWT-gated
+  // surfaces are low-risk and admins legitimately submit complex queries.
+  //
   // Body fields on form POSTs are scanned in the handlers themselves
   // (after readBody), since middleware can't read the body without
   // disturbing the stream.
-  const fuzzMatches = analyseQueryString(rawPath)
-  if (fuzzMatches.length > 0) {
-    recordIncident({
-      kind: 'fuzz_attempt',
-      severity: highestSeverity(fuzzMatches),
-      ipHash,
-      uaHash,
-      routePattern,
-      routePath,
-      details: { source: 'query', matches: fuzzMatches }
-    })
+  //
+  // Deduplicated per (kind, ipHash, routePattern + match-kind fingerprint)
+  // on a 5-minute window via Redis SET NX EX → in-process LRU fallback.
+  // Without dedup a sustained fuzzing campaign would write one row per
+  // attacker request; the score signal only needs *that* the signature
+  // is fuzzing, not the exact count.
+  if (!path.startsWith('/api/admin/') && !path.startsWith('/admin/')) {
+    const fuzzMatches = analyseQueryString(rawPath)
+    if (fuzzMatches.length > 0) {
+      recordIncidentDeduped(
+        {
+          kind: 'fuzz_attempt',
+          severity: highestSeverity(fuzzMatches),
+          ipHash,
+          uaHash,
+          routePattern,
+          routePath,
+          details: { source: 'query', matches: fuzzMatches }
+        },
+        `${routePattern}:${matchKindFingerprint(fuzzMatches)}`,
+        300
+      )
+    }
   }
 
   event.node.res.on('close', () => {

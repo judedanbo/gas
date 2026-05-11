@@ -241,3 +241,16 @@ export function highestSeverity(matches: FuzzMatch[]): 'info' | 'warning' | 'cri
   }
   return best
 }
+
+/**
+ * Stable fingerprint of the match kinds present in a fuzz incident.
+ * Used as the dedup key suffix in recordIncidentDeduped so distinct
+ * payload families from the same (ipHash, routePattern) still each
+ * generate one incident per window (e.g. a signature that fuzzes both
+ * SQLi and XSS gets two rows, not one).
+ */
+export function matchKindFingerprint(matches: FuzzMatch[]): string {
+  return Array.from(new Set(matches.map((m) => m.kind)))
+    .sort()
+    .join(',')
+}

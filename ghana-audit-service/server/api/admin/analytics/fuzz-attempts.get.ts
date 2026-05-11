@@ -74,6 +74,10 @@ export default defineEventHandler(async (event) => {
   const pool = getPool()
   const [rows] = (await pool.query(QUERY, [hours])) as [QueryRow[], unknown]
 
+  const ALLOWED_SEVERITY = new Set(['info', 'warning', 'critical'] as const)
+  const coerceSeverity = (s: string): 'info' | 'warning' | 'critical' =>
+    (ALLOWED_SEVERITY as Set<string>).has(s) ? (s as 'info' | 'warning' | 'critical') : 'info'
+
   return {
     windowHours: hours,
     items: rows.map((r) => ({
@@ -83,7 +87,7 @@ export default defineEventHandler(async (event) => {
       country: r.country ?? null,
       classification: r.classification ?? null,
       count: Number(r.count),
-      topSeverity: String(r.top_severity || 'info'),
+      topSeverity: coerceSeverity(String(r.top_severity || 'info')),
       topKind: r.top_kind ?? null,
       lastSeen: r.last_seen instanceof Date ? r.last_seen.toISOString() : String(r.last_seen)
     }))
