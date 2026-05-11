@@ -23,27 +23,56 @@ interface NewsRow extends ReportRow {
 }
 
 const tableResults = new Map<unknown, unknown[]>()
-const queryLog: { table: unknown; from: 'reports' | 'publications' | 'news' | 'unknown' }[] = []
+const queryLog: { table: unknown; from: string }[] = []
 
-function tableKey(table: unknown): 'reports' | 'publications' | 'news' | 'unknown' {
-  // Identify tables by a unique enumerated property we set in the mock module
+const SCHEMA_TABLE_NAMES = [
+  'auditReports',
+  'auditReportTranslations',
+  'publications',
+  'publicationTranslations',
+  'newsArticles',
+  'newsArticleTranslations',
+  'events',
+  'eventTranslations',
+  'tenders',
+  'tenderTranslations',
+  'vacancies',
+  'vacancyTranslations',
+  'videos',
+  'videoTranslations',
+  'galleryAlbums',
+  'galleryAlbumTranslations',
+  'managementTeam',
+  'managementTeamTranslations',
+  'regionalOffices',
+  'regionalOfficeTranslations'
+] as const
+
+function tableKey(table: unknown): string {
   const tag = (table as { __tag?: string }).__tag
-  if (tag === 'auditReports') return 'reports'
-  if (tag === 'publications') return 'publications'
-  if (tag === 'newsArticles') return 'news'
-  return 'unknown'
+  return tag ?? 'unknown'
 }
 
 vi.mock('../../../server/database', () => {
-  const tag = (name: string) => ({ __tag: name }) as unknown as Record<string, unknown>
-  const schema = {
-    auditReports: tag('auditReports'),
-    auditReportTranslations: tag('auditReportTranslations'),
-    publications: tag('publications'),
-    publicationTranslations: tag('publicationTranslations'),
-    newsArticles: tag('newsArticles'),
-    newsArticleTranslations: tag('newsArticleTranslations')
-  }
+  // Each table is a Proxy: any column access returns a non-undefined sentinel so
+  // searcher code like `schema.events.isPublished` doesn't crash, while object
+  // identity on the table itself remains stable for Map lookups.
+  const makeTaggedTable = (name: string) =>
+    new Proxy(
+      { __tag: name },
+      {
+        get(target, prop) {
+          if (prop === '__tag') return target.__tag
+          if (typeof prop === 'symbol') return undefined
+          return { __column: `${name}.${String(prop)}` }
+        }
+      }
+    ) as unknown as Record<string, unknown>
+
+  const schema = Object.fromEntries(
+    SCHEMA_TABLE_NAMES.map((name) => [name, makeTaggedTable(name)])
+  ) as Record<(typeof SCHEMA_TABLE_NAMES)[number], Record<string, unknown>>
+
   function makeBuilder() {
     const state: { table?: unknown } = {}
     const builder: Record<string, unknown> = {
@@ -65,6 +94,7 @@ vi.mock('../../../server/database', () => {
     }
     return builder
   }
+
   return {
     schema,
     getDatabase: () => ({
@@ -184,7 +214,10 @@ describe('Search API', () => {
       tableResults.set(schema.newsArticles, [
         newsRow({ baseId: 30, title: 'Audit news headline' })
       ])
-      mockGetQuery.mockReturnValue({ query: 'audit' })
+      mockGetQuery.mockReturnValue({
+        query: 'audit',
+        type: ['report', 'publication', 'news']
+      })
       const handler = await importHandler()
 
       const result = await handler(createMockEvent())
@@ -224,7 +257,10 @@ describe('Search API', () => {
           publishedAt: '2024-12-31'
         })
       ])
-      mockGetQuery.mockReturnValue({ query: 'audit' })
+      mockGetQuery.mockReturnValue({
+        query: 'audit',
+        type: ['report', 'publication', 'news']
+      })
       const handler = await importHandler()
 
       const result = await handler(createMockEvent())
@@ -250,7 +286,7 @@ describe('Search API', () => {
 
       expect(result.data).toHaveLength(1)
       expect(result.data[0].type).toBe('report')
-      expect(queryLog.map((q) => q.from).sort()).toEqual(['reports'])
+      expect(queryLog.map((q) => q.from).sort()).toEqual(['auditReports'])
     })
 
     it('accepts multiple repeated type params', async () => {
@@ -263,10 +299,10 @@ describe('Search API', () => {
       const result = await handler(createMockEvent())
 
       expect(result.data.map((r) => r.type).sort()).toEqual(['news', 'publication'])
-      expect(queryLog.map((q) => q.from).sort()).toEqual(['news', 'publications'])
+      expect(queryLog.map((q) => q.from).sort()).toEqual(['newsArticles', 'publications'])
     })
 
-    it('ignores unknown type values', async () => {
+    it('ignores unknown type values, falling back to all supported types', async () => {
       const schema = await importSchemaTags()
       tableResults.set(schema.auditReports, [reportRow({ title: 'Audit' })])
       tableResults.set(schema.publications, [publicationRow({ title: 'Audit' })])
@@ -276,8 +312,14 @@ describe('Search API', () => {
 
       const result = await handler(createMockEvent())
 
-      // Falls back to all Phase 1 domains when no valid types remain
-      expect(result.data).toHaveLength(3)
+      // Bogus type → handler treats as unfiltered, all SUPPORTED_TYPES are queried.
+      // We only seed the three Phase 1 tables, so only those return rows; static
+      // pages add a few matches from inline strings containing "Audit".
+      expect(result.data.length).toBeGreaterThanOrEqual(3)
+      const types = new Set(result.data.map((r) => r.type))
+      expect(types.has('report')).toBe(true)
+      expect(types.has('publication')).toBe(true)
+      expect(types.has('news')).toBe(true)
     })
   })
 
@@ -289,7 +331,7 @@ describe('Search API', () => {
         reportRow({ baseId: 1, locale: 'ak', title: 'Akan Audit Title' })
       ])
       mockGetHeader.mockReturnValue('ak')
-      mockGetQuery.mockReturnValue({ query: 'audit' })
+      mockGetQuery.mockReturnValue({ query: 'audit', type: 'report' })
       const handler = await importHandler()
 
       const result = await handler(createMockEvent())
@@ -304,7 +346,7 @@ describe('Search API', () => {
         reportRow({ baseId: 1, locale: 'en', title: 'Annual audit summary' })
       ])
       mockGetHeader.mockReturnValue('ak')
-      mockGetQuery.mockReturnValue({ query: 'audit' })
+      mockGetQuery.mockReturnValue({ query: 'audit', type: 'report' })
       const handler = await importHandler()
 
       const result = await handler(createMockEvent())
@@ -456,6 +498,202 @@ describe('Search API', () => {
 
       expect(result.data[0].excerpt).not.toMatch(/<[^>]+>/)
       expect(result.data[0].excerpt.toLowerCase()).toContain('audit')
+    })
+  })
+
+  describe('Phase 2 domains', () => {
+    it('searches events and links to /media/events/:slug', async () => {
+      const schema = await importSchemaTags()
+      tableResults.set(schema.events, [
+        {
+          baseId: 1,
+          slug: 'ag-conference',
+          publishedAt: '2024-08-15',
+          locale: 'en',
+          title: 'Audit Conference 2024',
+          body: 'Annual audit conference open to the public.'
+        }
+      ])
+      mockGetQuery.mockReturnValue({ query: 'audit', type: 'event' })
+      const handler = await importHandler()
+
+      const result = await handler(createMockEvent())
+
+      expect(result.data).toHaveLength(1)
+      expect(result.data[0].type).toBe('event')
+      expect(result.data[0].url).toBe('/media/events/ag-conference')
+    })
+
+    it('searches tenders and links them to the careers tenders list page', async () => {
+      const schema = await importSchemaTags()
+      tableResults.set(schema.tenders, [
+        {
+          baseId: 1,
+          slug: 'tender-1',
+          publishedAt: '2024-09-01',
+          status: 'open',
+          locale: 'en',
+          title: 'Audit Software Procurement',
+          body: 'Procurement of audit software for the service.'
+        }
+      ])
+      mockGetQuery.mockReturnValue({ query: 'audit', type: 'tender' })
+      const handler = await importHandler()
+
+      const result = await handler(createMockEvent())
+
+      expect(result.data).toHaveLength(1)
+      expect(result.data[0].url).toBe('/careers/tenders')
+    })
+
+    it('excludes cancelled tenders from results', async () => {
+      const schema = await importSchemaTags()
+      tableResults.set(schema.tenders, [
+        {
+          baseId: 1,
+          slug: 'tender-cancelled',
+          publishedAt: '2024-09-01',
+          status: 'cancelled',
+          locale: 'en',
+          title: 'Cancelled audit tender',
+          body: 'This tender was cancelled.'
+        }
+      ])
+      mockGetQuery.mockReturnValue({ query: 'audit', type: 'tender' })
+      const handler = await importHandler()
+
+      const result = await handler(createMockEvent())
+
+      expect(result.data).toEqual([])
+    })
+
+    it('searches vacancies and links to /careers/:slug', async () => {
+      const schema = await importSchemaTags()
+      tableResults.set(schema.vacancies, [
+        {
+          baseId: 1,
+          slug: 'senior-auditor',
+          publishedAt: '2024-09-01',
+          locale: 'en',
+          title: 'Senior Auditor wanted',
+          body: 'Apply for the senior auditor role.'
+        }
+      ])
+      mockGetQuery.mockReturnValue({ query: 'auditor', type: 'vacancy' })
+      const handler = await importHandler()
+
+      const result = await handler(createMockEvent())
+
+      expect(result.data).toHaveLength(1)
+      expect(result.data[0].url).toBe('/careers/senior-auditor')
+    })
+
+    it('searches videos and links to the videos list page', async () => {
+      const schema = await importSchemaTags()
+      tableResults.set(schema.videos, [
+        {
+          baseId: 42,
+          publishedAt: '2024-07-01',
+          locale: 'en',
+          title: 'Audit explainer video',
+          body: 'A short explainer about audit findings.'
+        }
+      ])
+      mockGetQuery.mockReturnValue({ query: 'audit', type: 'video' })
+      const handler = await importHandler()
+
+      const result = await handler(createMockEvent())
+
+      expect(result.data).toHaveLength(1)
+      expect(result.data[0].id).toBe('video-42')
+      expect(result.data[0].url).toBe('/media/videos')
+    })
+
+    it('searches gallery albums with an ?album=:slug deep link', async () => {
+      const schema = await importSchemaTags()
+      tableResults.set(schema.galleryAlbums, [
+        {
+          baseId: 5,
+          slug: 'audit-week',
+          publishedAt: '2024-06-15',
+          locale: 'en',
+          title: 'Audit Week 2024 album',
+          body: 'Photos from audit week.'
+        }
+      ])
+      mockGetQuery.mockReturnValue({ query: 'audit', type: 'gallery' })
+      const handler = await importHandler()
+
+      const result = await handler(createMockEvent())
+
+      expect(result.data).toHaveLength(1)
+      expect(result.data[0].url).toBe('/media/gallery?album=audit-week')
+    })
+
+    it('searches management team and links to /about/management-team/:slug', async () => {
+      const schema = await importSchemaTags()
+      tableResults.set(schema.managementTeam, [
+        {
+          baseId: 1,
+          slug: 'jane-doe',
+          locale: 'en',
+          name: 'Jane Doe',
+          role: 'Deputy Auditor-General',
+          bio: 'Jane leads the audit operations directorate.'
+        }
+      ])
+      mockGetQuery.mockReturnValue({ query: 'audit', type: 'team' })
+      const handler = await importHandler()
+
+      const result = await handler(createMockEvent())
+
+      expect(result.data).toHaveLength(1)
+      expect(result.data[0].url).toBe('/about/management-team/jane-doe')
+      expect(result.data[0].publishedAt).toBeUndefined()
+    })
+
+    it('searches regional offices and links to /contact', async () => {
+      const schema = await importSchemaTags()
+      tableResults.set(schema.regionalOffices, [
+        {
+          baseId: 1,
+          region: 'Greater Accra',
+          locale: 'en',
+          name: 'Greater Accra Regional Audit Office',
+          address: '123 Audit Street, Accra'
+        }
+      ])
+      mockGetQuery.mockReturnValue({ query: 'audit', type: 'office' })
+      const handler = await importHandler()
+
+      const result = await handler(createMockEvent())
+
+      expect(result.data).toHaveLength(1)
+      expect(result.data[0].url).toBe('/contact')
+      expect(result.data[0].publishedAt).toBeUndefined()
+    })
+
+    it('searches static pages without touching the database', async () => {
+      mockGetQuery.mockReturnValue({ query: 'CitizensEye', type: 'page' })
+      const handler = await importHandler()
+
+      const result = await handler(createMockEvent())
+
+      const ids = result.data.map((r) => r.id)
+      expect(ids).toContain('page-citizenseye')
+      // No DB lookup should have been issued for a page-only search.
+      expect(queryLog).toEqual([])
+    })
+
+    it('falls back to English static-page strings when an Akan match is missing', async () => {
+      mockGetHeader.mockReturnValue('ak')
+      // Search for an English-only word — Akan static strings do not contain it.
+      mockGetQuery.mockReturnValue({ query: 'constitutional', type: 'page' })
+      const handler = await importHandler()
+
+      const result = await handler(createMockEvent())
+
+      expect(result.data.some((r) => r.id === 'page-about')).toBe(true)
     })
   })
 })
