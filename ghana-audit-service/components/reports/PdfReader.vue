@@ -7,7 +7,7 @@
     <div class="flex items-center justify-between px-4 py-2 bg-gray-50 dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700">
       <h2 class="text-sm font-semibold text-gray-700 dark:text-gray-300">
         <Icon name="heroicons:document-text" class="w-4 h-4 inline -mt-0.5 mr-1" aria-hidden="true" />
-        Report Viewer
+        {{ viewerTitle }}
       </h2>
       <div v-if="!loadError" class="flex items-center gap-1">
         <a
@@ -106,10 +106,12 @@
   interface Props {
     fileUrl: string
     title?: string
+    viewerTitle?: string
   }
 
   const props = withDefaults(defineProps<Props>(), {
-    title: 'Audit Report PDF'
+    title: 'Audit Report PDF',
+    viewerTitle: 'Report Viewer'
   })
 
   const viewUrl = computed(() => {
@@ -134,9 +136,9 @@
     checking.value = true
     loadError.value = false
     try {
-      const response = await fetch(viewUrl.value)
-      loadError.value = !response.ok
-      response.body?.cancel()
+      const response = await fetch(viewUrl.value, { redirect: 'manual' })
+      loadError.value = response.status >= 400
+      if (response.body) response.body.cancel()
     } catch {
       loadError.value = true
     } finally {

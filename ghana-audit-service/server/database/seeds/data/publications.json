@@ -3,7 +3,8 @@
     "slug": "public-hearing",
     "type": "press-statement",
     "publishedAt": "2022-04-11",
-    "fileUrl": "https://audit.gov.gh/demo/files/publications/Public_Hearing1344085564.pdf",
+    "fileUrl": "/uploads/publications/public-hearing.pdf",
+    "thumbnail": "/img/publications/public_hearing.jpg",
     "isPublished": true,
     "translations": {
       "en": {
@@ -17,7 +18,8 @@
     "slug": "re-ken-ofori-atta-gives-clearance-to-recruit-800-staff-for-audit-service",
     "type": "press-statement",
     "publishedAt": "2021-09-23",
-    "fileUrl": "https://audit.gov.gh/demo/files/publications/RE:_Ken_Ofori-Atta_gives_Clearance_to_recruit_800_Staff_for_Audit_Service474739593.pdf",
+    "fileUrl": "/uploads/publications/re-ken-ofori-atta-gives-clearance-to-recruit-800-staff-for-audit-service.pdf",
+    "thumbnail": "/img/publications/ken_ofori_atta_recruitment.jpg",
     "isPublished": true,
     "translations": {
       "en": {
@@ -31,7 +33,8 @@
     "slug": "call-for-submission-and-publication-of-reports-2019-financial-year",
     "type": "press-statement",
     "publishedAt": "2020-09-30",
-    "fileUrl": "https://audit.gov.gh/demo/files/publications/A_call_for_the_submission_and_publication_of_reports_of_the_Auditor-General_for_2019_Financial_Year_by_the_Minority_caucus_in_Parliament1390361364.pdf",
+    "fileUrl": "/uploads/publications/call-for-submission-and-publication-of-reports-2019-financial-year.pdf",
+    "thumbnail": "/img/publications/call_submission_2019.jpg",
     "isPublished": true,
     "translations": {
       "en": {
@@ -45,7 +48,8 @@
     "slug": "auditor-general-submits-report-to-parliament-petroleum-funds-2018",
     "type": "press-statement",
     "publishedAt": "2020-06-17",
-    "fileUrl": "https://audit.gov.gh/demo/files/audit_reports/Report_of_the_Auditor-General_on_the_management_of_Petroleum_Funds_for_the_financial_year_ended_31_December_2018.pdf",
+    "fileUrl": "/uploads/publications/auditor-general-submits-report-to-parliament-petroleum-funds-2018.pdf",
+    "thumbnail": "/img/publications/ag_submits_petroleum_2018.jpg",
     "isPublished": true,
     "translations": {
       "en": {
@@ -56,80 +60,11 @@
     }
   },
   {
-    "slug": "auditor-general-submits-report-to-parliament-capital-projects-ddf",
-    "type": "press-statement",
-    "publishedAt": "2020-06-10",
-    "fileUrl": "https://audit.gov.gh/demo/files/audit_reports/Performance_Audit_Report_of_the_Auditor-General_on_Capital_Projects_funded_through_DDF_in_30_MMDAs_in_Ghana_-_MLGRD.pdf",
-    "isPublished": true,
-    "translations": {
-      "en": {
-        "title": "Auditor-General submits Report to Parliament",
-        "excerpt": "Performance audit on capital projects funded through District Development Facility submitted.",
-        "content": "<p>Performance audit on capital projects funded through District Development Facility submitted.</p>"
-      }
-    }
-  },
-  {
-    "slug": "submission-of-assets-and-liabilities-declaration-forms-june-2020",
-    "type": "press-statement",
-    "publishedAt": "2020-06-05",
-    "fileUrl": "https://audit.gov.gh/demo/files/publications/Submission_of_Assets_and_Liabilities_Declaration_forms305069654.pdf",
-    "isPublished": true,
-    "translations": {
-      "en": {
-        "title": "Submission of Assets and Liabilities Declaration forms",
-        "excerpt": "Service resumed collection of completed asset declaration forms from public office holders.",
-        "content": "<p>Service resumed collection of completed asset declaration forms from public office holders.</p>"
-      }
-    }
-  },
-  {
-    "slug": "auditor-general-submits-reports-to-parliament-may-2020",
-    "type": "press-statement",
-    "publishedAt": "2020-05-14",
-    "fileUrl": "https://audit.gov.gh/demo/files/publications/Auditor-General_submits_Reports_to_Parliament579724749.pdf",
-    "isPublished": true,
-    "translations": {
-      "en": {
-        "title": "Auditor-General submits Reports to Parliament",
-        "excerpt": "Two reports submitted: payroll verification audit and sports stadia sustainability performance audit.",
-        "content": "<p>Two reports submitted: payroll verification audit and sports stadia sustainability performance audit.</p>"
-      }
-    }
-  },
-  {
-    "slug": "submission-of-assets-and-liabilities-declaration-forms-march-2020",
-    "type": "press-statement",
-    "publishedAt": "2020-03-24",
-    "fileUrl": "https://audit.gov.gh/demo/files/publications/Submission_of_Assets_And_Liabilities_Declaration_forms883748179.pdf",
-    "isPublished": true,
-    "translations": {
-      "en": {
-        "title": "Submission of Assets And Liabilities Declaration forms",
-        "excerpt": "Suspended collection of declaration forms to reduce COVID-19 transmission risk.",
-        "content": "<p>Suspended collection of declaration forms to reduce COVID-19 transmission risk.</p>"
-      }
-    }
-  },
-  {
-    "slug": "auditor-general-submits-reports-to-parliament-march-2020",
-    "type": "press-statement",
-    "publishedAt": "2020-03-04",
-    "fileUrl": "https://audit.gov.gh/demo/files/publications/Auditor-General_submits_Reports_to_Parliament1794744214.docx",
-    "isPublished": true,
-    "translations": {
-      "en": {
-        "title": "Auditor-General submits Reports to Parliament",
-        "excerpt": "Four reports submitted covering foreign exchange, veterinary services, and selected road works.",
-        "content": "<p>Four reports submitted covering foreign exchange, veterinary services, and selected road works.</p>"
-      }
-    }
-  },
-  {
     "slug": "audit-service-not-conducting-aptitude-test",
     "type": "press-statement",
     "publishedAt": "2018-10-26",
-    "fileUrl": "https://audit.gov.gh/demo/files/publications/Statement:_Audit_Service_not_conducting_aptitude_test171990772.pdf",
+    "fileUrl": "/uploads/publications/audit-service-not-conducting-aptitude-test.pdf",
+    "thumbnail": "/img/publications/not_conducting_aptitude_test.jpg",
     "isPublished": true,
     "translations": {
       "en": {
@@ -143,7 +78,8 @@
     "slug": "notice-declaration-of-assets-and-liabilities-by-public-office-holders",
     "type": "press-statement",
     "publishedAt": "2018-04-26",
-    "fileUrl": "https://audit.gov.gh/demo/files/publications/NOTICE:_Declaration_of_Assets_&_Liabilities_by_Public_Office_Holders990432555.pdf",
+    "fileUrl": "/uploads/publications/notice-declaration-of-assets-and-liabilities-by-public-office-holders.pdf",
+    "thumbnail": "/img/publications/assets_declaration_notice.jpg",
     "isPublished": true,
     "translations": {
       "en": {
@@ -157,7 +93,8 @@
     "slug": "notice-of-list-of-persons-surcharged-by-the-auditor-general",
     "type": "press-statement",
     "publishedAt": "2018-04-26",
-    "fileUrl": "https://audit.gov.gh/demo/files/publications/Notice_of_list_of_person(s)_surcharged_by_the_Auditor-General330536104.pdf",
+    "fileUrl": "/uploads/publications/notice-of-list-of-persons-surcharged-by-the-auditor-general.pdf",
+    "thumbnail": "/img/publications/surcharge_notice.jpg",
     "isPublished": true,
     "translations": {
       "en": {
@@ -171,7 +108,8 @@
     "slug": "bulletin-1st-quarter-2026",
     "type": "bulletin",
     "publishedAt": "2026-04-02",
-    "fileUrl": "https://audit.gov.gh/files/publications/1st_Quarter_20261127406655.pdf",
+    "fileUrl": "/uploads/publications/bulletin-1st-quarter-2026.pdf",
+    "thumbnail": "/img/publications/1st_Quarter_2026.jpg",
     "isPublished": true,
     "translations": {
       "en": {
@@ -185,7 +123,8 @@
     "slug": "bulletin-4th-quarter-2025",
     "type": "bulletin",
     "publishedAt": "2025-12-25",
-    "fileUrl": "https://audit.gov.gh/files/publications/4th_quarter_2025151202925.pdf",
+    "fileUrl": "/uploads/publications/bulletin-4th-quarter-2025.pdf",
+    "thumbnail": "/img/publications/4th_quarter_2025.jpg",
     "isPublished": true,
     "translations": {
       "en": {
@@ -199,7 +138,8 @@
     "slug": "bulletin-3rd-quarter-2025",
     "type": "bulletin",
     "publishedAt": "2025-10-05",
-    "fileUrl": "https://audit.gov.gh/files/publications/3rd_quarter_20251812887888.pdf",
+    "fileUrl": "/uploads/publications/bulletin-3rd-quarter-2025.pdf",
+    "thumbnail": "/img/publications/3rd_quarter_2025.jpg",
     "isPublished": true,
     "translations": {
       "en": {
@@ -213,7 +153,8 @@
     "slug": "bulletin-2nd-quarter-2025",
     "type": "bulletin",
     "publishedAt": "2025-07-08",
-    "fileUrl": "https://audit.gov.gh/files/publications/2nd_Quarter_2025149671924.pdf",
+    "fileUrl": "/uploads/publications/bulletin-2nd-quarter-2025.pdf",
+    "thumbnail": "/img/publications/2nd_Quarter_2025.jpg",
     "isPublished": true,
     "translations": {
       "en": {
@@ -227,7 +168,8 @@
     "slug": "bulletin-1st-quarter-2025",
     "type": "bulletin",
     "publishedAt": "2025-04-01",
-    "fileUrl": "https://audit.gov.gh/files/publications/1st_Quarter_20251369366160.pdf",
+    "fileUrl": "/uploads/publications/bulletin-1st-quarter-2025.pdf",
+    "thumbnail": "/img/publications/1st_Quarter_2025.jpg",
     "isPublished": true,
     "translations": {
       "en": {
@@ -241,7 +183,8 @@
     "slug": "bulletin-4th-quarter-2024",
     "type": "bulletin",
     "publishedAt": "2024-12-31",
-    "fileUrl": "https://audit.gov.gh/files/publications/4th_Quarter_20241517148827.pdf",
+    "fileUrl": "/uploads/publications/bulletin-4th-quarter-2024.pdf",
+    "thumbnail": "/img/publications/4th_Quarter_2024.jpg",
     "isPublished": true,
     "translations": {
       "en": {
@@ -255,7 +198,8 @@
     "slug": "bulletin-3rd-quarter-2024",
     "type": "bulletin",
     "publishedAt": "2024-10-02",
-    "fileUrl": "https://audit.gov.gh/files/publications/3rd_Quarter_2024236363246.pdf",
+    "fileUrl": "/uploads/publications/bulletin-3rd-quarter-2024.pdf",
+    "thumbnail": "/img/publications/3rd_Quarter_2024.jpg",
     "isPublished": true,
     "translations": {
       "en": {
@@ -269,7 +213,8 @@
     "slug": "bulletin-2nd-quarter-2024",
     "type": "bulletin",
     "publishedAt": "2024-06-30",
-    "fileUrl": "https://audit.gov.gh/files/publications/2nd_quarter_2024455693312.pdf",
+    "fileUrl": "/uploads/publications/bulletin-2nd-quarter-2024.pdf",
+    "thumbnail": "/img/publications/2nd_quarter_2024.jpg",
     "isPublished": true,
     "translations": {
       "en": {
@@ -283,7 +228,8 @@
     "slug": "bulletin-1st-quarter-2024",
     "type": "bulletin",
     "publishedAt": "2024-04-08",
-    "fileUrl": "https://audit.gov.gh/files/publications/1st_quarter_202450729145.jpg",
+    "fileUrl": "/uploads/publications/bulletin-1st-quarter-2024.pdf",
+    "thumbnail": "/img/publications/1st_quarter_2024.jpg",
     "isPublished": true,
     "translations": {
       "en": {
@@ -297,7 +243,8 @@
     "slug": "bulletin-4th-quarter-2023",
     "type": "bulletin",
     "publishedAt": "2023-12-28",
-    "fileUrl": "https://audit.gov.gh/files/publications/4th_quarter_20231611050174.pdf",
+    "fileUrl": "/uploads/publications/bulletin-4th-quarter-2023.pdf",
+    "thumbnail": "/img/publications/4th_quarter_2023.jpg",
     "isPublished": true,
     "translations": {
       "en": {
@@ -311,7 +258,8 @@
     "slug": "bulletin-3rd-quarter-2023",
     "type": "bulletin",
     "publishedAt": "2023-10-09",
-    "fileUrl": "https://audit.gov.gh/files/publications/3rd_quarter_2023618956406.pdf",
+    "fileUrl": "/uploads/publications/bulletin-3rd-quarter-2023.pdf",
+    "thumbnail": "/img/publications/3rd_quarter_2023.jpg",
     "isPublished": true,
     "translations": {
       "en": {
@@ -325,7 +273,8 @@
     "slug": "bulletin-2nd-quarter-2023",
     "type": "bulletin",
     "publishedAt": "2023-07-14",
-    "fileUrl": "https://audit.gov.gh/files/publications/2nd_quarter_20231875676442.pdf",
+    "fileUrl": "/uploads/publications/bulletin-2nd-quarter-2023.pdf",
+    "thumbnail": "/img/publications/2nd_quarter_2023.jpg",
     "isPublished": true,
     "translations": {
       "en": {
@@ -339,7 +288,8 @@
     "slug": "bulletin-1st-quarter-2023",
     "type": "bulletin",
     "publishedAt": "2023-04-10",
-    "fileUrl": "https://audit.gov.gh/files/publications/1st_quarter_20232072804535.pdf",
+    "fileUrl": "/uploads/publications/bulletin-1st-quarter-2023.pdf",
+    "thumbnail": "/img/publications/1st_quarter_2023.jpg",
     "isPublished": true,
     "translations": {
       "en": {
@@ -353,7 +303,8 @@
     "slug": "bulletin-4th-quarter-2022",
     "type": "bulletin",
     "publishedAt": "2022-12-25",
-    "fileUrl": "https://audit.gov.gh/files/publications/4th_quarter_2022470981421.pdf",
+    "fileUrl": "/uploads/publications/bulletin-4th-quarter-2022.pdf",
+    "thumbnail": "/img/publications/4th_quarter_2022.jpg",
     "isPublished": true,
     "translations": {
       "en": {
@@ -367,7 +318,8 @@
     "slug": "bulletin-3rd-quarter-2022",
     "type": "bulletin",
     "publishedAt": "2022-10-26",
-    "fileUrl": "https://audit.gov.gh/files/publications/3rd_quarter_20221917798635.pdf",
+    "fileUrl": "/uploads/publications/bulletin-3rd-quarter-2022.pdf",
+    "thumbnail": "/img/publications/3rd_quarter_2022.jpg",
     "isPublished": true,
     "translations": {
       "en": {
@@ -381,7 +333,8 @@
     "slug": "bulletin-2nd-quarter-2022",
     "type": "bulletin",
     "publishedAt": "2022-07-02",
-    "fileUrl": "https://audit.gov.gh/files/publications/2nd_quarter_20221739182139.pdf",
+    "fileUrl": "/uploads/publications/bulletin-2nd-quarter-2022.pdf",
+    "thumbnail": "/img/publications/2nd_quarter_2022.jpg",
     "isPublished": true,
     "translations": {
       "en": {
@@ -395,7 +348,8 @@
     "slug": "bulletin-1st-quarter-2022",
     "type": "bulletin",
     "publishedAt": "2022-04-02",
-    "fileUrl": "https://audit.gov.gh/files/publications/1st_quarter_20221414262116.pdf",
+    "fileUrl": "/uploads/publications/bulletin-1st-quarter-2022.pdf",
+    "thumbnail": "/img/publications/1st_quarter_2022.jpg",
     "isPublished": true,
     "translations": {
       "en": {
@@ -409,7 +363,8 @@
     "slug": "bulletin-4th-quarter-2021",
     "type": "bulletin",
     "publishedAt": "2021-12-31",
-    "fileUrl": "https://audit.gov.gh/files/publications/4th_quarter_2021592630226.pdf",
+    "fileUrl": "/uploads/publications/bulletin-4th-quarter-2021.pdf",
+    "thumbnail": "/img/publications/4th_quarter_2021.jpg",
     "isPublished": true,
     "translations": {
       "en": {
@@ -423,7 +378,8 @@
     "slug": "bulletin-3rd-quarter-2021",
     "type": "bulletin",
     "publishedAt": "2021-09-30",
-    "fileUrl": "https://audit.gov.gh/files/publications/3rd_quarter_2021248126834.jpg",
+    "fileUrl": "/uploads/publications/bulletin-3rd-quarter-2021.pdf",
+    "thumbnail": "/img/publications/3rd_quarter_2021.jpg",
     "isPublished": true,
     "translations": {
       "en": {
@@ -437,7 +393,8 @@
     "slug": "bulletin-2nd-quarter-2021",
     "type": "bulletin",
     "publishedAt": "2021-06-30",
-    "fileUrl": "https://audit.gov.gh/files/publications/2nd_quarter_2021435707538.pdf",
+    "fileUrl": "/uploads/publications/bulletin-2nd-quarter-2021.pdf",
+    "thumbnail": "/img/publications/2nd_quarter_2021.jpg",
     "isPublished": true,
     "translations": {
       "en": {
@@ -451,7 +408,8 @@
     "slug": "bulletin-1st-quarter-2021",
     "type": "bulletin",
     "publishedAt": "2021-03-31",
-    "fileUrl": "https://audit.gov.gh/files/publications/1st_quarter_20211478886516.pdf",
+    "fileUrl": "/uploads/publications/bulletin-1st-quarter-2021.pdf",
+    "thumbnail": "/img/publications/1st_quarter_2021.jpg",
     "isPublished": true,
     "translations": {
       "en": {
@@ -465,7 +423,8 @@
     "slug": "bulletin-4th-quarter-2020",
     "type": "bulletin",
     "publishedAt": "2020-12-31",
-    "fileUrl": "https://audit.gov.gh/files/publications/4th_quarter_20201854816478.pdf",
+    "fileUrl": "/uploads/publications/bulletin-4th-quarter-2020.pdf",
+    "thumbnail": "/img/publications/4th_quarter_2020.jpg",
     "isPublished": true,
     "translations": {
       "en": {
@@ -479,7 +438,8 @@
     "slug": "bulletin-3rd-quarter-2020",
     "type": "bulletin",
     "publishedAt": "2020-09-30",
-    "fileUrl": "https://audit.gov.gh/files/publications/3rd_quarter_20201887695841.pdf",
+    "fileUrl": "/uploads/publications/bulletin-3rd-quarter-2020.pdf",
+    "thumbnail": "/img/publications/3rd_quarter_2020.jpg",
     "isPublished": true,
     "translations": {
       "en": {
@@ -493,7 +453,8 @@
     "slug": "bulletin-2nd-quarter-2020",
     "type": "bulletin",
     "publishedAt": "2020-06-30",
-    "fileUrl": "https://audit.gov.gh/files/publications/2nd_quarter_2020237107259.pdf",
+    "fileUrl": "/uploads/publications/bulletin-2nd-quarter-2020.pdf",
+    "thumbnail": "/img/publications/2nd_quarter_2020.jpg",
     "isPublished": true,
     "translations": {
       "en": {
@@ -507,7 +468,8 @@
     "slug": "bulletin-1st-quarter-2020",
     "type": "bulletin",
     "publishedAt": "2020-03-31",
-    "fileUrl": "https://audit.gov.gh/files/publications/1st_quarter_20201104992042.pdf",
+    "fileUrl": "/uploads/publications/bulletin-1st-quarter-2020.pdf",
+    "thumbnail": "/img/publications/1st_quarter_2020.jpg",
     "isPublished": true,
     "translations": {
       "en": {

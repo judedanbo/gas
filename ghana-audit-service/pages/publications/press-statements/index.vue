@@ -58,50 +58,81 @@
             <article
               v-for="statement in publications"
               :key="statement.id"
-              class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-6 transition-all hover:border-primary hover:shadow-lg"
+              class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden transition-all hover:border-primary hover:shadow-lg"
             >
-              <div class="flex items-start justify-between gap-4 mb-4">
-                <div>
-                  <UiBadge variant="primary" size="sm" class="mb-2"> Press Statement </UiBadge>
-                  <h2 class="text-xl font-semibold text-gray-900 dark:text-white">
-                    {{ statement.title }}
-                  </h2>
+              <div class="flex flex-col sm:flex-row">
+                <!-- Thumbnail -->
+                <div class="sm:w-48 sm:flex-shrink-0">
+                  <NuxtLink :to="`/publications/press-statements/${statement.slug}`">
+                    <div class="aspect-[16/9] sm:aspect-auto sm:h-full bg-gray-100 dark:bg-gray-700">
+                      <img
+                        v-if="statement.thumbnail"
+                        :src="statement.thumbnail"
+                        :alt="statement.title"
+                        class="w-full h-full object-cover"
+                      />
+                      <div
+                        v-else
+                        class="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/10 to-primary/5 min-h-[100px]"
+                      >
+                        <Icon
+                          name="heroicons:megaphone"
+                          class="w-10 h-10 text-primary/30"
+                          aria-hidden="true"
+                        />
+                      </div>
+                    </div>
+                  </NuxtLink>
                 </div>
-                <time class="text-sm text-gray-500 dark:text-gray-400 whitespace-nowrap">
-                  {{ formatDate(statement.publishedAt) }}
-                </time>
-              </div>
 
-              <p v-if="statement.excerpt" class="text-gray-600 dark:text-gray-300 mb-4">
-                {{ statement.excerpt }}
-              </p>
+                <!-- Content -->
+                <div class="flex-1 p-6">
+                  <div class="flex items-start justify-between gap-4 mb-4">
+                    <div>
+                      <UiBadge variant="primary" size="sm" class="mb-2"> Press Statement </UiBadge>
+                      <h2 class="text-xl font-semibold text-gray-900 dark:text-white">
+                        <NuxtLink
+                          :to="`/publications/press-statements/${statement.slug}`"
+                          class="hover:text-primary transition-colors"
+                        >
+                          {{ statement.title }}
+                        </NuxtLink>
+                      </h2>
+                    </div>
+                    <time class="text-sm text-gray-500 dark:text-gray-400 whitespace-nowrap">
+                      {{ formatDate(statement.publishedAt) }}
+                    </time>
+                  </div>
 
-              <div
-                v-if="statement.content"
-                class="prose prose-gray dark:prose-invert max-w-none mb-4"
-              >
-                <div v-html="statement.content"></div>
-              </div>
+                  <p v-if="statement.excerpt" class="text-gray-600 dark:text-gray-300 mb-4">
+                    {{ statement.excerpt }}
+                  </p>
 
-              <div
-                v-if="statement.fileUrl"
-                class="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700"
-              >
-                <a
-                  :href="statement.fileUrl"
-                  class="btn-outline btn-sm inline-flex items-center gap-2"
-                  download
-                >
-                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                      d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                    />
-                  </svg>
-                  Download PDF
-                </a>
+                  <div class="flex flex-wrap gap-3">
+                    <NuxtLink
+                      :to="`/publications/press-statements/${statement.slug}`"
+                      class="btn-primary btn-sm inline-flex items-center gap-2"
+                    >
+                      Read More
+                    </NuxtLink>
+                    <a
+                      v-if="statement.fileUrl"
+                      :href="statement.fileUrl"
+                      class="btn-outline btn-sm inline-flex items-center gap-2"
+                      download
+                    >
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          stroke-width="2"
+                          d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                        />
+                      </svg>
+                      Download PDF
+                    </a>
+                  </div>
+                </div>
               </div>
             </article>
           </div>

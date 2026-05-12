@@ -50,6 +50,13 @@
       "when": 1778419612888,
       "tag": "0006_ambiguous_venom",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "5",
+      "when": 1778585985918,
+      "tag": "0007_reflective_firestar",
+      "breakpoints": true
     }
   ]
 }

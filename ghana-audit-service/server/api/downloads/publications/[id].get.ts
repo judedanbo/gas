@@ -39,7 +39,13 @@ export default defineEventHandler(async (event) => {
   }
 
   const filePath = resolvePublicAsset(publication.fileUrl)
+  const query = getQuery(event)
+  const isInlineView = query.view === '1' || query.view === 'true'
+
   if (!filePath) {
+    if (/^https?:\/\//.test(publication.fileUrl)) {
+      return sendRedirect(event, publication.fileUrl, 302)
+    }
     throw createError({ statusCode: 404, statusMessage: 'Publication file not available' })
   }
 
@@ -52,9 +58,12 @@ export default defineEventHandler(async (event) => {
   setHeader(
     event,
     'Content-Disposition',
-    `attachment; filename="${downloadName.replace(/"/g, '')}"`
+    `${isInlineView ? 'inline' : 'attachment'}; filename="${downloadName.replace(/"/g, '')}"`
   )
-  setHeader(event, 'Cache-Control', 'private, no-store, must-revalidate')
+  setHeader(event, 'Cache-Control', isInlineView
+    ? 'private, max-age=300'
+    : 'private, no-store, must-revalidate'
+  )
 
   recordDownload(event, {
     kind: 'publication',

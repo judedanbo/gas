@@ -45,24 +45,39 @@
           </div>
 
           <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <article
+            <NuxtLink
               v-for="bulletin in publications"
               :key="bulletin.id"
-              class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden transition-all hover:border-primary hover:shadow-lg"
+              :to="`/publications/bulletins/${bulletin.slug}`"
+              class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden transition-all hover:border-info hover:shadow-lg group"
             >
               <!-- Bulletin Cover -->
-              <div class="bg-gradient-to-br from-info to-info/80 text-white p-6">
-                <Icon
-                  name="heroicons:newspaper"
-                  class="w-12 h-12 text-white mb-4 opacity-80"
-                  aria-hidden="true"
+              <div class="aspect-[4/3] w-full bg-gray-100 dark:bg-gray-700">
+                <img
+                  v-if="bulletin.thumbnail"
+                  :src="bulletin.thumbnail"
+                  :alt="bulletin.title"
+                  class="w-full h-full object-cover object-top"
                 />
-                <UiBadge variant="info" size="sm"> Bulletin </UiBadge>
+                <div
+                  v-else
+                  class="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-info to-info/80 text-white p-6"
+                >
+                  <Icon
+                    name="heroicons:newspaper"
+                    class="w-12 h-12 text-white mb-4 opacity-80"
+                    aria-hidden="true"
+                  />
+                  <UiBadge variant="info" size="sm"> Bulletin </UiBadge>
+                </div>
               </div>
 
               <!-- Bulletin Info -->
               <div class="p-6">
-                <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                <UiBadge variant="info" size="sm" class="mb-2"> Bulletin </UiBadge>
+                <h3
+                  class="text-lg font-semibold text-gray-900 dark:text-white mb-2 group-hover:text-info transition-colors"
+                >
                   {{ bulletin.title }}
                 </h3>
                 <p
@@ -76,17 +91,12 @@
                   <time class="text-sm text-gray-500 dark:text-gray-400">
                     {{ formatDate(bulletin.publishedAt) }}
                   </time>
-                  <a
-                    v-if="bulletin.fileUrl"
-                    :href="bulletin.fileUrl"
-                    class="btn-primary btn-sm"
-                    download
-                  >
-                    Download
-                  </a>
+                  <span class="text-info text-sm font-medium group-hover:underline">
+                    View &rarr;
+                  </span>
                 </div>
               </div>
-            </article>
+            </NuxtLink>
           </div>
 
           <!-- Pagination -->

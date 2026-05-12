@@ -29,6 +29,7 @@ interface SeedPublicationItem {
   type: 'press-statement' | 'bulletin' | 'guideline' | 'manual' | 'strategy' | 'law'
   publishedAt: string
   fileUrl: string | null
+  thumbnail?: string | null
   isPublished: boolean
   translations: {
     en: { title: string; excerpt: string; content: string }
@@ -75,6 +76,7 @@ async function seed() {
         type: pub.type,
         publishedAt: new Date(pub.publishedAt),
         fileUrl: pub.fileUrl,
+        thumbnail: pub.thumbnail || null,
         isPublished: pub.isPublished
       })
 
