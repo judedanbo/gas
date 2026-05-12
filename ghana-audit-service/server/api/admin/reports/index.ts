@@ -1,5 +1,5 @@
 import type { H3Event } from 'h3'
-import { eq, and, isNull, sql, desc } from 'drizzle-orm'
+import { eq, and, isNull, sql, desc, asc } from 'drizzle-orm'
 import { getDatabase, schema } from '../../../database'
 import {
   requirePermission,
@@ -33,6 +33,18 @@ async function handleList(event: H3Event) {
   const query = getQuery(event)
   const { page, perPage, offset } = parsePagination(query as Record<string, unknown>)
   const db = getDatabase()
+
+  // Sort parameters
+  const sortColumnMap: Record<string, any> = {
+    publishedAt: schema.auditReports.publishedAt,
+    category: schema.auditReports.category,
+    isPublished: schema.auditReports.isPublished,
+    fileSize: schema.auditReports.fileSize
+  }
+
+  const sortBy = typeof query.sortBy === 'string' ? query.sortBy : null
+  const sortDir = query.sortDir === 'asc' ? 'asc' : 'desc'
+  const sortByTitle = sortBy === 'translations.en.title'
 
   // Build where conditions
   const conditions = []
@@ -94,17 +106,44 @@ async function handleList(event: H3Event) {
     .from(schema.auditReports)
     .where(and(...(conditions.length > 0 ? conditions : []), eq(schema.auditReports.isPublished, false)))
 
-  // Fetch reports with translations
-  const reports = await db
-    .select()
-    .from(schema.auditReports)
-    .where(whereClause)
-    .orderBy(desc(schema.auditReports.publishedAt))
-    .limit(perPage)
-    .offset(offset)
+  // Fetch reports — with optional title sort via join
+  let reportRows
+  if (sortByTitle) {
+    const reports = await db
+      .select({ report: schema.auditReports })
+      .from(schema.auditReports)
+      .leftJoin(
+        schema.auditReportTranslations,
+        and(
+          eq(schema.auditReportTranslations.auditReportId, schema.auditReports.id),
+          eq(schema.auditReportTranslations.locale, 'en')
+        )
+      )
+      .where(whereClause)
+      .orderBy(sortDir === 'asc'
+        ? asc(schema.auditReportTranslations.title)
+        : desc(schema.auditReportTranslations.title))
+      .limit(perPage)
+      .offset(offset)
+
+    reportRows = reports.map(r => r.report)
+  } else {
+    const sortColumn = sortBy && sortColumnMap[sortBy]
+      ? sortColumnMap[sortBy]
+      : schema.auditReports.publishedAt
+    const orderFn = sortDir === 'asc' ? asc : desc
+
+    reportRows = await db
+      .select()
+      .from(schema.auditReports)
+      .where(whereClause)
+      .orderBy(orderFn(sortColumn))
+      .limit(perPage)
+      .offset(offset)
+  }
 
   // Fetch translations for each report
-  const reportIds = reports.map((r) => r.id)
+  const reportIds = reportRows.map((r) => r.id)
   const translations =
     reportIds.length > 0
       ? await db
@@ -131,7 +170,7 @@ async function handleList(event: H3Event) {
   )
 
   // Combine reports with translations
-  const data = reports.map((report) => ({
+  const data = reportRows.map((report) => ({
     ...report,
     translations: translationsByReport[report.id] || {}
   }))
