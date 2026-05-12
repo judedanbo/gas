@@ -73,6 +73,18 @@ async function handleList(event: H3Event) {
     .from(schema.auditReports)
     .where(whereClause)
 
+  // Count published
+  const [{ publishedCount }] = await db
+    .select({ publishedCount: sql<number>`count(*)` })
+    .from(schema.auditReports)
+    .where(and(...(conditions.length > 0 ? conditions : []), eq(schema.auditReports.isPublished, true)))
+
+  // Count drafts
+  const [{ draftCount }] = await db
+    .select({ draftCount: sql<number>`count(*)` })
+    .from(schema.auditReports)
+    .where(and(...(conditions.length > 0 ? conditions : []), eq(schema.auditReports.isPublished, false)))
+
   // Fetch reports with translations
   const reports = await db
     .select()
@@ -117,7 +129,12 @@ async function handleList(event: H3Event) {
 
   return {
     data,
-    meta: buildPaginationMeta(Number(count), page, perPage)
+    meta: buildPaginationMeta(Number(count), page, perPage),
+    counts: {
+      total: Number(count),
+      published: Number(publishedCount),
+      drafts: Number(draftCount)
+    }
   }
 }
 
