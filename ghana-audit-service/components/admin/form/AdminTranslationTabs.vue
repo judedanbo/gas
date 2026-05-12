@@ -49,17 +49,15 @@
               @update:model-value="setFieldValue(locale.code, field.key, String($event))"
             />
 
-            <!-- Rich Text (placeholder - can be enhanced later) -->
-            <AdminFormAdminTextarea
+            <!-- Rich Text -->
+            <AdminFormAdminRichText
               v-else-if="field.type === 'richtext'"
               :id="`${field.key}-${locale.code}`"
               :model-value="getFieldValue(locale.code, field.key)"
               :label="field.label"
               :placeholder="field.placeholder"
-              :rows="8"
               :required="field.required && locale.required"
               :error="getFieldError(locale.code, field.key)"
-              :help-text="'HTML content is supported'"
               @update:model-value="setFieldValue(locale.code, field.key, String($event))"
             />
           </template>
