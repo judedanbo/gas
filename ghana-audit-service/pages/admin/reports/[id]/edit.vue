@@ -113,82 +113,77 @@
                 @file-info="handleFileInfo"
               />
             </div>
+
+            <!-- PDF Preview -->
+            <div
+              v-if="form.fileUrl"
+              class="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden"
+            >
+              <button
+                type="button"
+                class="w-full flex items-center justify-between px-6 py-4 text-left"
+                @click="previewExpanded = !previewExpanded"
+              >
+                <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Preview</h2>
+                <svg
+                  :class="[
+                    'w-5 h-5 text-gray-400 transition-transform',
+                    previewExpanded ? 'rotate-180' : ''
+                  ]"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M19 9l-7 7-7-7"
+                  />
+                </svg>
+              </button>
+              <div v-if="previewExpanded" class="border-t border-gray-200 dark:border-gray-700">
+                <iframe :src="form.fileUrl" class="w-full h-[500px]" title="PDF Preview" />
+                <div class="px-6 py-3 bg-gray-50 dark:bg-gray-700/50 text-sm">
+                  <a
+                    :href="form.fileUrl"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="text-primary hover:underline inline-flex items-center gap-1"
+                  >
+                    Open in new tab
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
+                      />
+                    </svg>
+                  </a>
+                </div>
+              </div>
+            </div>
           </div>
 
           <!-- Sidebar -->
           <div class="space-y-6">
-            <!-- Publish Settings -->
+            <!-- Status -->
             <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-              <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Settings</h2>
+              <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Status</h2>
               <div class="space-y-4">
-                <div>
-                  <AdminFormAdminInput
-                    v-model="form.slug"
-                    label="Slug"
-                    required
-                    help-text="URL-friendly identifier"
-                    :error="errors.slug || slugError"
-                    @update:model-value="handleSlugChange"
+                <div class="flex items-center gap-2">
+                  <span
+                    :class="[
+                      'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium',
+                      form.isPublished
+                        ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300'
+                        : 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300'
+                    ]"
                   >
-                    <template #suffix>
-                      <span v-if="isCheckingSlug" class="text-gray-400">
-                        <svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
-                          <circle
-                            class="opacity-25"
-                            cx="12"
-                            cy="12"
-                            r="10"
-                            stroke="currentColor"
-                            stroke-width="4"
-                          />
-                          <path
-                            class="opacity-75"
-                            fill="currentColor"
-                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
-                          />
-                        </svg>
-                      </span>
-                      <span v-else-if="isSlugAvailable === true" class="text-green-500">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            stroke-width="2"
-                            d="M5 13l4 4L19 7"
-                          />
-                        </svg>
-                      </span>
-                      <span v-else-if="isSlugAvailable === false" class="text-red-500">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            stroke-width="2"
-                            d="M6 18L18 6M6 6l12 12"
-                          />
-                        </svg>
-                      </span>
-                    </template>
-                  </AdminFormAdminInput>
-                  <p v-if="slugSuggestion" class="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                    Suggestion:
-                    <button
-                      type="button"
-                      class="text-primary hover:underline"
-                      @click="useSlugSuggestion"
-                    >
-                      {{ slugSuggestion }}
-                    </button>
-                  </p>
+                    {{ form.isPublished ? 'Published' : 'Draft' }}
+                  </span>
                 </div>
-
-                <AdminFormAdminSelect
-                  v-model="form.category"
-                  :options="categories"
-                  label="Category"
-                  required
-                  :error="errors.category"
-                />
 
                 <AdminFormAdminSwitch
                   v-model="form.isPublished"
@@ -205,6 +200,85 @@
               </div>
             </div>
 
+            <!-- URL -->
+            <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+              <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">URL</h2>
+              <div>
+                <AdminFormAdminInput
+                  v-model="form.slug"
+                  label="Slug"
+                  required
+                  help-text="URL-friendly identifier"
+                  :error="errors.slug || slugError"
+                  @update:model-value="handleSlugChange"
+                >
+                  <template #suffix>
+                    <span v-if="isCheckingSlug" class="text-gray-400">
+                      <svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                        <circle
+                          class="opacity-25"
+                          cx="12"
+                          cy="12"
+                          r="10"
+                          stroke="currentColor"
+                          stroke-width="4"
+                        />
+                        <path
+                          class="opacity-75"
+                          fill="currentColor"
+                          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+                        />
+                      </svg>
+                    </span>
+                    <span v-else-if="isSlugAvailable === true" class="text-green-500">
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          stroke-width="2"
+                          d="M5 13l4 4L19 7"
+                        />
+                      </svg>
+                    </span>
+                    <span v-else-if="isSlugAvailable === false" class="text-red-500">
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          stroke-width="2"
+                          d="M6 18L18 6M6 6l12 12"
+                        />
+                      </svg>
+                    </span>
+                  </template>
+                </AdminFormAdminInput>
+                <p v-if="slugSuggestion" class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                  Suggestion:
+                  <button
+                    type="button"
+                    class="text-primary hover:underline"
+                    @click="useSlugSuggestion"
+                  >
+                    {{ slugSuggestion }}
+                  </button>
+                </p>
+              </div>
+            </div>
+
+            <!-- Classification -->
+            <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+              <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                Classification
+              </h2>
+              <AdminFormAdminSelect
+                v-model="form.category"
+                :options="categories"
+                label="Category"
+                required
+                :error="errors.category"
+              />
+            </div>
+
             <!-- Thumbnail -->
             <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
               <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Thumbnail</h2>
@@ -216,9 +290,115 @@
               />
             </div>
 
+            <!-- History -->
+            <div class="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
+              <button
+                type="button"
+                class="w-full flex items-center justify-between px-6 py-4 text-left"
+                @click="historyExpanded = !historyExpanded"
+              >
+                <h2 class="text-lg font-semibold text-gray-900 dark:text-white">History</h2>
+                <svg
+                  :class="[
+                    'w-5 h-5 text-gray-400 transition-transform',
+                    historyExpanded ? 'rotate-180' : ''
+                  ]"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M19 9l-7 7-7-7"
+                  />
+                </svg>
+              </button>
+              <div
+                v-if="historyExpanded"
+                class="border-t border-gray-200 dark:border-gray-700 px-6 py-4"
+              >
+                <div v-if="historyLoading" class="flex justify-center py-4">
+                  <div
+                    class="animate-spin w-5 h-5 border-2 border-primary border-t-transparent rounded-full"
+                  />
+                </div>
+                <div
+                  v-else-if="historyEntries.length === 0"
+                  class="text-sm text-gray-500 dark:text-gray-400 py-2"
+                >
+                  No history available
+                </div>
+                <div v-else class="relative">
+                  <div class="absolute left-3 top-2 bottom-2 w-px bg-gray-200 dark:bg-gray-600" />
+                  <div
+                    v-for="entry in historyEntries.slice(0, 10)"
+                    :key="entry.id"
+                    class="relative pl-8 pb-4 last:pb-0"
+                  >
+                    <div
+                      class="absolute left-1.5 top-1.5 w-3 h-3 rounded-full border-2 border-white dark:border-gray-800"
+                      :class="{
+                        'bg-green-500': entry.action === 'create',
+                        'bg-blue-500': entry.action === 'update',
+                        'bg-red-500': entry.action === 'delete'
+                      }"
+                    />
+                    <div class="text-sm">
+                      <span class="font-medium text-gray-900 dark:text-white">{{
+                        entry.userName
+                      }}</span>
+                      <span class="text-gray-500 dark:text-gray-400">
+                        {{
+                          entry.action === 'create'
+                            ? ' created'
+                            : entry.action === 'update'
+                              ? ' updated'
+                              : ' deleted'
+                        }}
+                        this report
+                      </span>
+                      <p class="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
+                        {{ formatRelativeTime(entry.createdAt) }}
+                      </p>
+                      <div v-if="entry.action === 'update' && entry.changes">
+                        <button
+                          type="button"
+                          class="text-xs text-primary hover:underline mt-1"
+                          @click="entry._expanded = !entry._expanded"
+                        >
+                          {{ entry._expanded ? 'Hide changes' : 'View changes' }}
+                        </button>
+                        <div
+                          v-if="entry._expanded"
+                          class="mt-2 text-xs space-y-1 bg-gray-50 dark:bg-gray-700/50 rounded p-2"
+                        >
+                          <div
+                            v-for="(change, field) in getChangedFields(entry.changes)"
+                            :key="field"
+                            class="text-gray-600 dark:text-gray-400"
+                          >
+                            <span class="font-medium">{{ humanizeField(String(field)) }}:</span>
+                            <span class="text-red-500 line-through">{{
+                              truncateValue(String(change.before))
+                            }}</span>
+                            <span class="mx-1">&rarr;</span>
+                            <span class="text-green-600">{{
+                              truncateValue(String(change.after))
+                            }}</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
             <!-- Meta Info -->
             <div
-              class="bg-gray-50 dark:bg-gray-800/50 rounded-lg p-4 text-sm text-gray-500 dark:text-gray-400"
+              class="bg-gray-50 dark:bg-gray-800/50 rounded-lg p-4 text-sm text-gray-500 dark:text-gray-400 space-y-1"
             >
               <p>Created: {{ formatDate(currentItem.createdAt) }}</p>
               <p>Updated: {{ formatDate(currentItem.updatedAt) }}</p>
@@ -226,34 +406,53 @@
           </div>
         </div>
 
-        <!-- Actions -->
-        <div
-          class="flex items-center justify-end gap-4 pt-6 border-t border-gray-200 dark:border-gray-700"
-        >
-          <NuxtLink to="/admin/reports" class="btn btn-ghost"> Cancel </NuxtLink>
-          <button
-            type="submit"
-            class="btn btn-primary inline-flex items-center gap-2"
-            :disabled="saving"
+        <!-- Sticky Save Bar -->
+        <Transition name="slide-up">
+          <div
+            v-if="hasChanges || saving"
+            class="sticky bottom-0 z-10 -mx-4 lg:-mx-6 px-4 lg:px-6 py-4 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)]"
           >
-            <svg v-if="saving" class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
-              <circle
-                class="opacity-25"
-                cx="12"
-                cy="12"
-                r="10"
-                stroke="currentColor"
-                stroke-width="4"
-              />
-              <path
-                class="opacity-75"
-                fill="currentColor"
-                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-              />
-            </svg>
-            {{ saving ? 'Saving...' : 'Save Changes' }}
-          </button>
-        </div>
+            <div class="flex items-center justify-between max-w-full">
+              <div class="flex items-center gap-2 text-sm text-amber-600 dark:text-amber-400">
+                <span class="w-2 h-2 rounded-full bg-amber-500" />
+                Unsaved changes
+              </div>
+              <div class="flex items-center gap-3">
+                <button
+                  type="button"
+                  class="btn btn-ghost"
+                  :disabled="saving"
+                  @click="handleDiscard"
+                >
+                  Discard
+                </button>
+                <NuxtLink to="/admin/reports" class="btn btn-ghost"> Cancel </NuxtLink>
+                <button
+                  type="submit"
+                  class="btn btn-primary inline-flex items-center gap-2"
+                  :disabled="saving"
+                >
+                  <svg v-if="saving" class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                    <circle
+                      class="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      stroke-width="4"
+                    />
+                    <path
+                      class="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                    />
+                  </svg>
+                  {{ saving ? 'Saving...' : 'Save Changes' }}
+                </button>
+              </div>
+            </div>
+          </div>
+        </Transition>
       </form>
     </template>
   </div>
@@ -267,12 +466,12 @@
   })
 
   const route = useRoute()
-  const router = useRouter()
   const id = Number(route.params.id)
 
   const { currentItem, loading, saving, error, fieldErrors, fetchOne, update } =
     useAdminCrud<AdminAuditReport>('reports')
   const { errors, validate, setErrors, clearFieldError, rules } = useFormValidation()
+  const toast = useToast()
 
   // Slug checking state
   const isCheckingSlug = ref(false)
@@ -302,6 +501,35 @@
     }
   })
 
+  // Unsaved changes tracking
+  const { hasChanges, markSaved } = useUnsavedChanges(() => ({
+    slug: form.slug,
+    category: form.category,
+    fileUrl: form.fileUrl,
+    fileSize: form.fileSize,
+    thumbnail: form.thumbnail,
+    isPublished: form.isPublished,
+    publishedAt: form.publishedAt,
+    translations: form.translations
+  }))
+
+  // PDF preview state
+  const previewExpanded = ref(false)
+
+  // History state
+  const historyExpanded = ref(false)
+  const historyLoading = ref(false)
+  const historyEntries = ref<
+    Array<{
+      id: number
+      action: string
+      userName: string
+      changes: Record<string, unknown> | null
+      createdAt: string
+      _expanded?: boolean
+    }>
+  >([])
+
   const validationRules = {
     'translations.en.title': [rules.required],
     slug: [rules.required],
@@ -309,7 +537,7 @@
     fileUrl: [rules.required]
   }
 
-  // Translation fields
+  // Translation fields — richtext for summary
   const translationFields = [
     {
       key: 'title',
@@ -321,7 +549,7 @@
     {
       key: 'summary',
       label: 'Summary',
-      type: 'textarea' as const,
+      type: 'richtext' as const,
       placeholder: 'Brief description of the report'
     }
   ]
@@ -339,7 +567,6 @@
     return result
   })
 
-  // Categories
   const categories = [
     { value: 'financial', label: 'Financial Audit' },
     { value: 'compliance', label: 'Compliance Audit' },
@@ -370,30 +597,25 @@
       isSlugAvailable.value = response.available
       slugSuggestion.value = response.suggestion || null
     } catch {
-      // On error, assume available and let server validate on submit
       isSlugAvailable.value = null
     } finally {
       isCheckingSlug.value = false
     }
   }
 
-  // Handle slug input change
   function handleSlugChange(value: string | number) {
     const slugValue = String(value)
     clearFieldError('slug')
 
-    // Clear previous timeout
     if (slugCheckTimeout) {
       clearTimeout(slugCheckTimeout)
     }
 
-    // Debounce the slug check
     slugCheckTimeout = setTimeout(() => {
       checkSlugAvailability(slugValue)
     }, 300)
   }
 
-  // Use suggested slug
   function useSlugSuggestion() {
     if (slugSuggestion.value) {
       form.slug = slugSuggestion.value
@@ -402,11 +624,25 @@
     }
   }
 
+  // Fetch history
+  async function fetchHistory() {
+    historyLoading.value = true
+    try {
+      const response = await $fetch<{ data: (typeof historyEntries.value)[number][] }>(
+        `/api/admin/reports/${id}/history`
+      )
+      historyEntries.value = response.data.map((e) => ({ ...e, _expanded: false }))
+    } catch {
+      historyEntries.value = []
+    } finally {
+      historyLoading.value = false
+    }
+  }
+
   // Fetch report data
   onMounted(async () => {
     const report = await fetchOne(id)
     if (report) {
-      // Populate form
       form.slug = report.slug
       form.category = report.category
       form.fileUrl = report.fileUrl
@@ -415,20 +651,81 @@
       form.isPublished = report.isPublished
       form.publishedAt = report.publishedAt || ''
       form.translations = report.translations || { en: { title: '', summary: '' } }
+      nextTick(() => markSaved())
     }
+    fetchHistory()
   })
 
-  // Handle file info
   function handleFileInfo(info: { filename: string; size: number; mimeType: string }) {
     form.fileSize = info.size
   }
 
-  // Format date
   function formatDate(date: string): string {
     return new Date(date).toLocaleString()
   }
 
-  // Submit
+  function formatRelativeTime(dateStr: string): string {
+    const date = new Date(dateStr)
+    const now = new Date()
+    const diffMs = now.getTime() - date.getTime()
+    const diffMins = Math.floor(diffMs / 60000)
+    const diffHours = Math.floor(diffMs / 3600000)
+    const diffDays = Math.floor(diffMs / 86400000)
+
+    if (diffMins < 1) return 'just now'
+    if (diffMins < 60) return `${diffMins} minute${diffMins === 1 ? '' : 's'} ago`
+    if (diffHours < 24) return `${diffHours} hour${diffHours === 1 ? '' : 's'} ago`
+    if (diffDays < 30) return `${diffDays} day${diffDays === 1 ? '' : 's'} ago`
+    return date.toLocaleDateString()
+  }
+
+  function getChangedFields(
+    changes: Record<string, unknown> | null
+  ): Record<string, { before: unknown; after: unknown }> {
+    if (!changes) return {}
+    const before = (changes.before || {}) as Record<string, unknown>
+    const after = (changes.after || {}) as Record<string, unknown>
+    const result: Record<string, { before: unknown; after: unknown }> = {}
+
+    for (const key of new Set([...Object.keys(before), ...Object.keys(after)])) {
+      if (JSON.stringify(before[key]) !== JSON.stringify(after[key])) {
+        result[key] = { before: before[key], after: after[key] }
+      }
+    }
+    return result
+  }
+
+  function humanizeField(field: string): string {
+    const map: Record<string, string> = {
+      slug: 'Slug',
+      category: 'Category',
+      isPublished: 'Published',
+      is_published: 'Published',
+      publishedAt: 'Publish Date',
+      published_at: 'Publish Date',
+      fileUrl: 'File',
+      file_url: 'File',
+      fileSize: 'File Size',
+      file_size: 'File Size',
+      thumbnail: 'Thumbnail',
+      translations: 'Content'
+    }
+    return (
+      map[field] ||
+      field
+        .replace(/([A-Z])/g, ' $1')
+        .replace(/_/g, ' ')
+        .replace(/^\w/, (c) => c.toUpperCase())
+    )
+  }
+
+  function truncateValue(value: string, maxLength = 50): string {
+    if (typeof value === 'object') return JSON.stringify(value).slice(0, maxLength)
+    const str = String(value)
+    return str.length > maxLength ? str.slice(0, maxLength) + '...' : str
+  }
+
+  // Submit — stays on page with toast
   async function handleSubmit() {
     if (!validate(form, validationRules)) return
 
@@ -440,9 +737,52 @@
 
     const result = await update(id, data)
     if (result) {
-      router.push('/admin/reports')
+      toast.success('Report updated successfully')
+      markSaved()
+      await fetchOne(id)
+      if (currentItem.value) {
+        form.publishedAt = currentItem.value.publishedAt || ''
+      }
+      nextTick(() => markSaved())
+      fetchHistory()
     } else if (fieldErrors.value) {
       setErrors(fieldErrors.value)
+      toast.error(error.value || 'Failed to save report')
+    }
+  }
+
+  // Discard changes — revert to last saved state
+  function handleDiscard() {
+    if (currentItem.value) {
+      form.slug = currentItem.value.slug
+      form.category = currentItem.value.category
+      form.fileUrl = currentItem.value.fileUrl
+      form.fileSize = currentItem.value.fileSize || undefined
+      form.thumbnail = currentItem.value.thumbnail || ''
+      form.isPublished = currentItem.value.isPublished
+      form.publishedAt = currentItem.value.publishedAt || ''
+      form.translations = currentItem.value.translations || { en: { title: '', summary: '' } }
+      nextTick(() => markSaved())
     }
   }
 </script>
+
+<style scoped>
+  .slide-up-enter-active {
+    transition: all 0.3s ease-out;
+  }
+
+  .slide-up-leave-active {
+    transition: all 0.2s ease-in;
+  }
+
+  .slide-up-enter-from {
+    opacity: 0;
+    transform: translateY(100%);
+  }
+
+  .slide-up-leave-to {
+    opacity: 0;
+    transform: translateY(100%);
+  }
+</style>

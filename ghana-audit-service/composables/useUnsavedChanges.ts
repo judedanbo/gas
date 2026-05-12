@@ -38,6 +38,7 @@ export function useUnsavedChanges(formData: () => Record<string, unknown>) {
       )
       if (!answer) return false
     }
+    return true
   })
 
   return { hasChanges, markSaved, markClean }
