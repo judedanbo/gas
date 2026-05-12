@@ -25,6 +25,9 @@
         @click="mobileMenuOpen = false"
       />
     </Transition>
+
+    <!-- Toast Notifications -->
+    <UiToastContainer />
   </div>
 </template>
 
