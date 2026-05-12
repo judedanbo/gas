@@ -1,4 +1,5 @@
 import type { H3Event } from 'h3'
+import type { AnyColumn } from 'drizzle-orm'
 import { eq, and, isNull, sql, desc, asc } from 'drizzle-orm'
 import { getDatabase, schema } from '../../../database'
 import {
@@ -35,7 +36,7 @@ async function handleList(event: H3Event) {
   const db = getDatabase()
 
   // Sort parameters
-  const sortColumnMap: Record<string, any> = {
+  const sortColumnMap: Record<string, AnyColumn> = {
     publishedAt: schema.auditReports.publishedAt,
     category: schema.auditReports.category,
     isPublished: schema.auditReports.isPublished,
@@ -98,13 +99,17 @@ async function handleList(event: H3Event) {
   const [{ publishedCount }] = await db
     .select({ publishedCount: sql<number>`count(*)` })
     .from(schema.auditReports)
-    .where(and(...(conditions.length > 0 ? conditions : []), eq(schema.auditReports.isPublished, true)))
+    .where(
+      and(...(conditions.length > 0 ? conditions : []), eq(schema.auditReports.isPublished, true))
+    )
 
   // Count drafts
   const [{ draftCount }] = await db
     .select({ draftCount: sql<number>`count(*)` })
     .from(schema.auditReports)
-    .where(and(...(conditions.length > 0 ? conditions : []), eq(schema.auditReports.isPublished, false)))
+    .where(
+      and(...(conditions.length > 0 ? conditions : []), eq(schema.auditReports.isPublished, false))
+    )
 
   // Fetch reports — with optional title sort via join
   let reportRows
@@ -120,17 +125,18 @@ async function handleList(event: H3Event) {
         )
       )
       .where(whereClause)
-      .orderBy(sortDir === 'asc'
-        ? asc(schema.auditReportTranslations.title)
-        : desc(schema.auditReportTranslations.title))
+      .orderBy(
+        sortDir === 'asc'
+          ? asc(schema.auditReportTranslations.title)
+          : desc(schema.auditReportTranslations.title)
+      )
       .limit(perPage)
       .offset(offset)
 
-    reportRows = reports.map(r => r.report)
+    reportRows = reports.map((r) => r.report)
   } else {
-    const sortColumn = sortBy && sortColumnMap[sortBy]
-      ? sortColumnMap[sortBy]
-      : schema.auditReports.publishedAt
+    const sortColumn =
+      sortBy && sortColumnMap[sortBy] ? sortColumnMap[sortBy] : schema.auditReports.publishedAt
     const orderFn = sortDir === 'asc' ? asc : desc
 
     reportRows = await db

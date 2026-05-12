@@ -5,13 +5,19 @@
       <div>
         <h1 class="text-2xl font-bold text-gray-900 dark:text-white">A-G Reports</h1>
         <div class="flex flex-wrap gap-2 mt-2">
-          <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300">
+          <span
+            class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300"
+          >
             {{ counts.total }} total
           </span>
-          <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300">
+          <span
+            class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300"
+          >
             {{ counts.published }} published
           </span>
-          <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300">
+          <span
+            class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300"
+          >
             {{ counts.drafts }} drafts
           </span>
         </div>
@@ -306,7 +312,7 @@
 
     bulkLoading.value = true
     try {
-      const ids = selectedReports.value.map(r => r.id)
+      const ids = selectedReports.value.map((r) => r.id)
       await api.post('reports/bulk', { action, ids })
       selectedReports.value = []
       await fetchData()

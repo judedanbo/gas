@@ -30,7 +30,7 @@ export default defineEventHandler(async (event) => {
       )
     )
 
-  const validIds = existingReports.map(r => r.id)
+  const validIds = existingReports.map((r) => r.id)
   if (validIds.length === 0) {
     throw createError({
       statusCode: 404,
@@ -54,17 +54,20 @@ export default defineEventHandler(async (event) => {
       .where(whereIds)
   } else {
     // archive and delete both soft-delete
-    await db
-      .update(schema.auditReports)
-      .set({ deletedAt: now, updatedBy: user.id })
-      .where(whereIds)
+    await db.update(schema.auditReports).set({ deletedAt: now, updatedBy: user.id }).where(whereIds)
   }
 
   for (const id of validIds) {
-    await logAuditAction(event, action === 'archive' || action === 'delete' ? 'delete' : 'update', 'audit_report', id, {
-      action,
-      bulkOperation: true
-    })
+    await logAuditAction(
+      event,
+      action === 'archive' || action === 'delete' ? 'delete' : 'update',
+      'audit_report',
+      id,
+      {
+        action,
+        bulkOperation: true
+      }
+    )
   }
 
   return { success: true, affected: validIds.length }
