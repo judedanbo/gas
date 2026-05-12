@@ -151,7 +151,7 @@
 
       <template #cell-fileSize="{ value }">
         <span class="text-gray-500 dark:text-gray-400 text-sm">
-          {{ value || '—' }}
+          {{ formatFileSize(value) }}
         </span>
       </template>
 
@@ -272,6 +272,18 @@
     technical: 'bg-pink-100 text-pink-700 dark:bg-pink-900/30 dark:text-pink-300',
     'follow-up': 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300',
     special: 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-300'
+  }
+
+  function formatFileSize(value: unknown): string {
+    if (!value) return '—'
+    const str = String(value)
+    if (str.includes('MB') || str.includes('KB') || str.includes('GB')) return str
+    const bytes = Number(str)
+    if (isNaN(bytes)) return str
+    if (bytes < 1024) return `${bytes} B`
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
+    if (bytes < 1024 * 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
+    return `${(bytes / (1024 * 1024 * 1024)).toFixed(1)} GB`
   }
 
   // Years (current year to 2000)
