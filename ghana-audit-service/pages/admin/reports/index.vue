@@ -22,17 +22,63 @@
           </span>
         </div>
       </div>
-      <NuxtLink to="/admin/reports/create" class="btn btn-primary inline-flex items-center gap-2">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            stroke-width="2"
-            d="M12 4v16m8-8H4"
-          />
-        </svg>
-        Add Report
-      </NuxtLink>
+      <div class="flex items-center gap-2">
+        <!-- View Toggle -->
+        <div class="inline-flex rounded-lg border border-gray-200 dark:border-gray-700 p-0.5">
+          <button
+            type="button"
+            class="rounded-md p-2 transition-colors"
+            :class="
+              viewMode === 'table'
+                ? 'bg-primary text-white shadow-sm'
+                : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
+            "
+            title="Table view"
+            @click="viewMode = 'table'"
+          >
+            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M4 6h16M4 10h16M4 14h16M4 18h16"
+              />
+            </svg>
+          </button>
+          <button
+            type="button"
+            class="rounded-md p-2 transition-colors"
+            :class="
+              viewMode === 'grid'
+                ? 'bg-primary text-white shadow-sm'
+                : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
+            "
+            title="Grid view"
+            @click="viewMode = 'grid'"
+          >
+            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"
+              />
+            </svg>
+          </button>
+        </div>
+
+        <NuxtLink to="/admin/reports/create" class="btn btn-primary inline-flex items-center gap-2">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M12 4v16m8-8H4"
+            />
+          </svg>
+          Add Report
+        </NuxtLink>
+      </div>
     </div>
 
     <!-- Filters -->
@@ -109,6 +155,7 @@
 
     <!-- Data Table -->
     <AdminUiAdminDataTable
+      v-if="viewMode === 'table'"
       :columns="columns"
       :data="items"
       :loading="loading"
@@ -199,6 +246,55 @@
       </template>
     </AdminUiAdminDataTable>
 
+    <!-- Grid View -->
+    <div v-if="viewMode === 'grid'">
+      <div v-if="loading" class="flex items-center justify-center py-20">
+        <div
+          class="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent"
+        />
+      </div>
+
+      <div v-else-if="items.length === 0">
+        <AdminUiAdminEmptyState
+          title="No reports found"
+          description="Get started by creating your first audit report."
+          action-to="/admin/reports/create"
+          action-label="Add Report"
+        />
+      </div>
+
+      <template v-else>
+        <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          <AdminUiAdminReportCard
+            v-for="report in items"
+            :key="report.id"
+            :report="report"
+            :selected="isSelected(report)"
+            :category-class="categoryStyles[report.category] || 'bg-gray-100 text-gray-700'"
+            @click="handleRowClick(report)"
+            @toggle-select="toggleCardSelect(report)"
+            @delete="confirmDelete(report)"
+          />
+        </div>
+
+        <!-- Grid Pagination -->
+        <div
+          class="mt-6 flex items-center justify-between text-sm text-gray-600 dark:text-gray-400"
+        >
+          <span>
+            Showing {{ (meta.page - 1) * meta.perPage + 1 }} to
+            {{ Math.min(meta.page * meta.perPage, meta.total) }} of {{ meta.total }} results
+          </span>
+          <AdminUiAdminPagination
+            v-if="meta.lastPage > 1"
+            :current-page="meta.page"
+            :last-page="meta.lastPage"
+            @page-change="handlePageChange"
+          />
+        </div>
+      </template>
+    </div>
+
     <!-- Delete Confirmation -->
     <AdminUiAdminConfirmDialog
       v-model="showDeleteDialog"
@@ -230,6 +326,16 @@
 
   const { items, loading, deleting, meta, fetchAll, remove } =
     useAdminCrud<AdminAuditReport>('reports')
+
+  // View mode
+  const viewMode = ref<'table' | 'grid'>(
+    (typeof localStorage !== 'undefined' &&
+      (localStorage.getItem('admin-reports-view') as 'table' | 'grid')) ||
+      'table'
+  )
+  watch(viewMode, (v) => {
+    if (typeof localStorage !== 'undefined') localStorage.setItem('admin-reports-view', v)
+  })
 
   // Stats counts from API
   const counts = ref({ total: 0, published: 0, drafts: 0 })
@@ -317,6 +423,18 @@
 
   function handleSelectionChange(selected: AdminAuditReport[]) {
     selectedReports.value = selected
+  }
+
+  function isSelected(report: AdminAuditReport): boolean {
+    return selectedReports.value.some((r) => r.id === report.id)
+  }
+
+  function toggleCardSelect(report: AdminAuditReport) {
+    if (isSelected(report)) {
+      selectedReports.value = selectedReports.value.filter((r) => r.id !== report.id)
+    } else {
+      selectedReports.value = [...selectedReports.value, report]
+    }
   }
 
   async function executeBulkAction(action: string) {
