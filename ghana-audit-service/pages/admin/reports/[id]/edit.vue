@@ -1,8 +1,47 @@
 <template>
   <div>
-    <!-- Loading -->
-    <div v-if="loading" class="flex items-center justify-center py-12">
-      <div class="animate-spin w-8 h-8 border-2 border-primary border-t-transparent rounded-full" />
+    <!-- Loading Skeleton -->
+    <div v-if="loading" class="space-y-6">
+      <div class="flex items-center gap-4 mb-6">
+        <div class="w-9 h-9 rounded-lg bg-gray-200 dark:bg-gray-700 animate-pulse" />
+        <div class="space-y-2">
+          <div class="h-7 w-40 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
+          <div class="h-4 w-64 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
+        </div>
+      </div>
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div class="lg:col-span-2 space-y-6">
+          <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+            <div class="h-5 w-24 bg-gray-200 dark:bg-gray-700 rounded animate-pulse mb-4" />
+            <div class="space-y-3">
+              <div class="h-10 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
+              <div class="h-32 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
+            </div>
+          </div>
+          <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+            <div class="h-5 w-28 bg-gray-200 dark:bg-gray-700 rounded animate-pulse mb-4" />
+            <div class="h-32 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
+          </div>
+        </div>
+        <div class="space-y-6">
+          <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+            <div class="h-5 w-20 bg-gray-200 dark:bg-gray-700 rounded animate-pulse mb-4" />
+            <div class="space-y-3">
+              <div class="h-10 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
+              <div class="h-10 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
+              <div class="h-8 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
+            </div>
+          </div>
+          <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+            <div class="h-5 w-24 bg-gray-200 dark:bg-gray-700 rounded animate-pulse mb-4" />
+            <div class="h-32 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
+          </div>
+          <div class="bg-gray-50 dark:bg-gray-800/50 rounded-lg p-4">
+            <div class="h-4 w-40 bg-gray-200 dark:bg-gray-700 rounded animate-pulse mb-2" />
+            <div class="h-4 w-36 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
+          </div>
+        </div>
+      </div>
     </div>
 
     <!-- Not Found -->
