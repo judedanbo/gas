@@ -17,16 +17,15 @@
           {{ item.label }}
         </NuxtLink>
 
-        <button
+        <NuxtLink
           v-else
-          class="flex items-center gap-1 px-4 py-2 text-base font-medium text-gray-700 dark:text-gray-200 no-underline rounded-md transition-all hover:text-primary dark:hover:text-primary-light hover:bg-gray-50 dark:hover:bg-gray-700 bg-transparent border-none cursor-pointer font-sans"
-          :class="{ 'text-primary dark:text-primary-light bg-gray-50 dark:bg-gray-700': isChildActive(item) }"
-          :aria-expanded="activeDropdown === item.label"
-          @click="toggleDropdown(item.label)"
+          :to="item.href"
+          class="flex items-center gap-1 px-4 py-2 text-base font-medium text-gray-700 dark:text-gray-200 no-underline rounded-md transition-all hover:text-primary dark:hover:text-primary-light hover:bg-gray-50 dark:hover:bg-gray-700"
+          :class="{ 'text-primary dark:text-primary-light bg-gray-50 dark:bg-gray-700': isActive(item.href) || isChildActive(item) }"
         >
           {{ item.label }}
           <span class="text-[10px] transition-transform" :class="{ 'rotate-180': activeDropdown === item.label }">▼</span>
-        </button>
+        </NuxtLink>
 
         <!-- Dropdown Menu -->
         <Transition name="dropdown">
@@ -141,8 +140,8 @@ const navigationItems: NavItem[] = [
     ]
   },
   {
-    label: 'Careers',
-    href: '/careers',
+    label: 'Advertisement',
+    href: '/advertisement',
     children: [
       { label: 'Job Vacancies', href: '/careers', icon: 'heroicons:briefcase', description: 'Current openings' },
       { label: 'Tenders & Procurement', href: '/careers/tenders', icon: 'heroicons:pencil-square', description: 'Procurement opportunities' }
@@ -185,9 +184,6 @@ const closeDropdown = () => {
   }, 150)
 }
 
-const toggleDropdown = (label: string) => {
-  activeDropdown.value = activeDropdown.value === label ? null : label
-}
 </script>
 
 <style scoped>

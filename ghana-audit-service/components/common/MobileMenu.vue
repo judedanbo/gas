@@ -65,19 +65,28 @@
 
           <!-- Item with children (accordion) -->
           <div v-else>
-            <button
-              class="flex justify-between items-center w-full px-6 py-4 text-base font-medium text-gray-900 dark:text-white bg-transparent border-none cursor-pointer font-sans text-left hover:bg-gray-50 dark:hover:bg-gray-700"
-              :aria-expanded="openAccordion === item.label"
-              @click="toggleAccordion(item.label)"
-            >
-              {{ item.label }}
-              <span
-                class="text-[10px] transition-transform"
-                :class="{ 'rotate-180': openAccordion === item.label }"
+            <div class="flex items-center">
+              <NuxtLink
+                :to="item.href"
+                class="flex-1 px-6 py-4 text-base font-medium text-gray-900 dark:text-white no-underline hover:bg-gray-50 dark:hover:bg-gray-700"
+                @click="$emit('close')"
               >
-                ▼
-              </span>
-            </button>
+                {{ item.label }}
+              </NuxtLink>
+              <button
+                class="px-4 py-4 text-gray-600 dark:text-gray-300 bg-transparent border-none cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700"
+                :aria-expanded="openAccordion === item.label"
+                :aria-label="`Toggle ${item.label} submenu`"
+                @click="toggleAccordion(item.label)"
+              >
+                <span
+                  class="text-[10px] transition-transform inline-block"
+                  :class="{ 'rotate-180': openAccordion === item.label }"
+                >
+                  ▼
+                </span>
+              </button>
+            </div>
 
             <Transition name="accordion">
               <ul
@@ -281,8 +290,8 @@
       ]
     },
     {
-      labelKey: 'common.careers',
-      href: '/careers',
+      labelKey: 'common.advertisement',
+      href: '/advertisement',
       children: [
         { labelKey: 'nav.vacancies', href: '/careers', icon: 'heroicons:briefcase' },
         { labelKey: 'nav.tenders', href: '/careers/tenders', icon: 'heroicons:pencil-square' }

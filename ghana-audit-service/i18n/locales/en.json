@@ -6,6 +6,7 @@
     "publications": "Publications",
     "media": "Media Centre",
     "careers": "Careers",
+    "advertisement": "Advertisement",
     "contact": "Contact Us",
     "search": "Search",
     "subscribe": "Subscribe",
@@ -375,5 +376,13 @@
         }
       }
     }
+  },
+  "advertisement": {
+    "title": "Advertisements",
+    "subtitle": "Browse job vacancies, tenders, and procurement opportunities from the Ghana Audit Service.",
+    "vacancies": "Job Vacancies",
+    "vacanciesDescription": "Explore current job openings and career opportunities at the Ghana Audit Service.",
+    "tenders": "Tenders & Procurement",
+    "tendersDescription": "View active tenders, procurement notices, and bidding opportunities."
   }
 }

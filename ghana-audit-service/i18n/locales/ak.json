@@ -6,6 +6,7 @@
     "publications": "Nwoma",
     "media": "Mfomsoɔ",
     "careers": "Adwuma",
+    "advertisement": "Dawurobɔ",
     "contact": "Ka Yɛn",
     "search": "Hwehwɛ",
     "subscribe": "Kyerɛw wo din",
@@ -375,5 +376,13 @@
         }
       }
     }
+  },
+  "advertisement": {
+    "title": "Dawurobɔ",
+    "subtitle": "Hwɛ adwuma beae, adetɔ, ne procurement ho nsɛm firi Ghana Nsɛm Hwɛfo.",
+    "vacancies": "Adwuma Beae",
+    "vacanciesDescription": "Hwɛ adwuma beae a ɛwɔ Ghana Nsɛm Hwɛfo.",
+    "tenders": "Adetɔ",
+    "tendersDescription": "Hwɛ adetɔ ne procurement nsɛm a ɛwɔ hɔ."
   }
 }
