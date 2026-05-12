@@ -251,7 +251,7 @@
     {
       key: 'summary',
       label: 'Summary',
-      type: 'textarea' as const,
+      type: 'richtext' as const,
       placeholder: 'Brief description of the report'
     }
   ]
