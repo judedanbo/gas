@@ -57,15 +57,61 @@
       </template>
     </AdminUiAdminSearchFilter>
 
+    <!-- Bulk Action Bar -->
+    <div
+      v-if="selectedReports.length > 0"
+      class="mb-4 flex items-center gap-3 rounded-lg border border-primary/20 bg-primary/5 px-4 py-3 dark:border-primary/30 dark:bg-primary/10"
+    >
+      <span class="text-sm font-medium text-gray-700 dark:text-gray-200">
+        {{ selectedReports.length }} report{{ selectedReports.length > 1 ? 's' : '' }} selected
+      </span>
+      <div class="flex items-center gap-2 ml-auto">
+        <button
+          type="button"
+          class="btn btn-sm bg-green-600 hover:bg-green-700 text-white px-3 py-1.5 rounded-lg text-xs font-medium"
+          :disabled="bulkLoading"
+          @click="executeBulkAction('publish')"
+        >
+          Publish
+        </button>
+        <button
+          type="button"
+          class="btn btn-sm bg-amber-500 hover:bg-amber-600 text-white px-3 py-1.5 rounded-lg text-xs font-medium"
+          :disabled="bulkLoading"
+          @click="executeBulkAction('unpublish')"
+        >
+          Unpublish
+        </button>
+        <button
+          type="button"
+          class="btn btn-sm bg-gray-500 hover:bg-gray-600 text-white px-3 py-1.5 rounded-lg text-xs font-medium"
+          :disabled="bulkLoading"
+          @click="confirmBulkDelete('archive')"
+        >
+          Archive
+        </button>
+        <button
+          type="button"
+          class="btn btn-sm bg-red-600 hover:bg-red-700 text-white px-3 py-1.5 rounded-lg text-xs font-medium"
+          :disabled="bulkLoading"
+          @click="confirmBulkDelete('delete')"
+        >
+          Delete
+        </button>
+      </div>
+    </div>
+
     <!-- Data Table -->
     <AdminUiAdminDataTable
       :columns="columns"
       :data="items"
       :loading="loading"
       :meta="meta"
+      selectable
       @page-change="handlePageChange"
       @row-click="handleRowClick"
       @sort="handleSort"
+      @selection-change="handleSelectionChange"
     >
       <template #[`cell-translations.en.title`]="{ row }">
         <div class="max-w-xs">
@@ -156,6 +202,16 @@
       :loading="deleting"
       @confirm="handleDelete"
     />
+
+    <!-- Bulk Delete/Archive Confirmation -->
+    <AdminUiAdminConfirmDialog
+      v-model="showBulkDeleteDialog"
+      :title="pendingBulkAction === 'archive' ? 'Archive Reports' : 'Delete Reports'"
+      :message="`Are you sure you want to ${pendingBulkAction} ${selectedReports.length} report${selectedReports.length > 1 ? 's' : ''}? This action cannot be undone.`"
+      :confirm-text="pendingBulkAction === 'archive' ? 'Archive' : 'Delete'"
+      :loading="bulkLoading"
+      @confirm="handleBulkDelete"
+    />
   </div>
 </template>
 
@@ -233,6 +289,45 @@
     sortBy.value = column
     sortDir.value = direction
     fetchData({ page: 1 })
+  }
+
+  // Bulk actions
+  const selectedReports = ref<AdminAuditReport[]>([])
+  const bulkLoading = ref(false)
+  const showBulkDeleteDialog = ref(false)
+  const pendingBulkAction = ref<string | null>(null)
+
+  function handleSelectionChange(selected: AdminAuditReport[]) {
+    selectedReports.value = selected
+  }
+
+  async function executeBulkAction(action: string) {
+    if (selectedReports.value.length === 0) return
+
+    bulkLoading.value = true
+    try {
+      const ids = selectedReports.value.map(r => r.id)
+      await api.post('reports/bulk', { action, ids })
+      selectedReports.value = []
+      await fetchData()
+    } catch (e: unknown) {
+      const err = e as { data?: { message?: string }; message?: string }
+      console.error('Bulk action failed:', err.data?.message || err.message)
+    } finally {
+      bulkLoading.value = false
+    }
+  }
+
+  function confirmBulkDelete(action: string) {
+    pendingBulkAction.value = action
+    showBulkDeleteDialog.value = true
+  }
+
+  async function handleBulkDelete() {
+    if (!pendingBulkAction.value) return
+    await executeBulkAction(pendingBulkAction.value)
+    showBulkDeleteDialog.value = false
+    pendingBulkAction.value = null
   }
 
   // Delete
