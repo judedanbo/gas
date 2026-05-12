@@ -4,7 +4,17 @@
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
       <div>
         <h1 class="text-2xl font-bold text-gray-900 dark:text-white">A-G Reports</h1>
-        <p class="text-gray-600 dark:text-gray-400 mt-1">Manage audit reports</p>
+        <div class="flex flex-wrap gap-2 mt-2">
+          <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300">
+            {{ counts.total }} total
+          </span>
+          <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300">
+            {{ counts.published }} published
+          </span>
+          <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300">
+            {{ counts.drafts }} drafts
+          </span>
+        </div>
       </div>
       <NuxtLink to="/admin/reports/create" class="btn btn-primary inline-flex items-center gap-2">
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -55,6 +65,7 @@
       :meta="meta"
       @page-change="handlePageChange"
       @row-click="handleRowClick"
+      @sort="handleSort"
     >
       <template #[`cell-translations.en.title`]="{ row }">
         <div class="max-w-xs">
@@ -68,8 +79,11 @@
       </template>
 
       <template #cell-category="{ value }">
-        <span class="badge badge-primary capitalize">
-          {{ value }}
+        <span
+          class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium capitalize"
+          :class="categoryStyles[value as string] || 'bg-gray-100 text-gray-700'"
+        >
+          {{ (value as string)?.replace('-', ' ') }}
         </span>
       </template>
 
@@ -81,6 +95,12 @@
 
       <template #cell-publishedAt="{ value }">
         {{ value ? new Date(value as string).toLocaleDateString() : '-' }}
+      </template>
+
+      <template #cell-fileSize="{ value }">
+        <span class="text-gray-500 dark:text-gray-400 text-sm">
+          {{ value || '—' }}
+        </span>
       </template>
 
       <template #actions="{ row }">
@@ -149,6 +169,9 @@
   const { items, loading, deleting, meta, fetchAll, remove } =
     useAdminCrud<AdminAuditReport>('reports')
 
+  // Stats counts from API
+  const counts = ref({ total: 0, published: 0, drafts: 0 })
+
   // Filters
   const filters = reactive({
     search: '',
@@ -179,6 +202,16 @@
     { value: 'special', label: 'Special Audit' }
   ]
 
+  const categoryStyles: Record<string, string> = {
+    financial: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300',
+    compliance: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300',
+    it: 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300',
+    performance: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300',
+    technical: 'bg-pink-100 text-pink-700 dark:bg-pink-900/30 dark:text-pink-300',
+    'follow-up': 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300',
+    special: 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-300'
+  }
+
   // Years (current year to 2000)
   const currentYear = new Date().getFullYear()
   const years = Array.from({ length: currentYear - 1999 }, (_, i) => currentYear - i)
@@ -188,8 +221,19 @@
     { key: 'translations.en.title', label: 'Title', sortable: true },
     { key: 'category', label: 'Category', sortable: true, width: '150px' },
     { key: 'publishedAt', label: 'Published', sortable: true, width: '120px' },
+    { key: 'fileSize', label: 'Size', width: '100px' },
     { key: 'isPublished', label: 'Status', width: '120px' }
   ]
+
+  // Sort state
+  const sortBy = ref<string | null>(null)
+  const sortDir = ref<'asc' | 'desc'>('desc')
+
+  function handleSort(column: string, direction: 'asc' | 'desc') {
+    sortBy.value = column
+    sortDir.value = direction
+    fetchData({ page: 1 })
+  }
 
   // Delete
   const showDeleteDialog = ref(false)
@@ -220,7 +264,9 @@
   }
 
   // Fetch data
-  function fetchData(overrides: Record<string, string | number | boolean | undefined> = {}) {
+  const api = useAdminApi()
+
+  async function fetchData(overrides: Record<string, string | number | boolean | undefined> = {}) {
     const params: Record<string, string | number | boolean | undefined> = {
       page: meta.value.page,
       perPage: 20,
@@ -231,8 +277,25 @@
     if (filters.category) params.category = filters.category
     if (filters.year) params.year = filters.year
     if (filters.isPublished) params.isPublished = filters.isPublished
+    if (sortBy.value) params.sortBy = sortBy.value
+    if (sortBy.value) params.sortDir = sortDir.value
 
-    fetchAll(params)
+    // Use raw API to capture counts alongside data
+    try {
+      const response = await api.get<{
+        data: AdminAuditReport[]
+        meta: { total: number; page: number; perPage: number; lastPage: number }
+        counts: { total: number; published: number; drafts: number }
+      }>('reports', params)
+
+      items.value = response.data
+      meta.value = response.meta
+      if (response.counts) {
+        counts.value = response.counts
+      }
+    } catch {
+      await fetchAll(params)
+    }
   }
 
   // Watch filters
