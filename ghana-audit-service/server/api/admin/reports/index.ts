@@ -61,9 +61,18 @@ async function handleList(event: H3Event) {
     conditions.push(eq(schema.auditReports.isPublished, false))
   }
 
-  // Search in translations
-  // TODO: Implement search filtering after fetching due to join complexity
-  // if (query.search && typeof query.search === 'string') { ... }
+  // Search in translations via subquery
+  if (query.search && typeof query.search === 'string') {
+    const searchTerm = `%${query.search}%`
+    conditions.push(
+      sql`${schema.auditReports.id} IN (
+        SELECT ${schema.auditReportTranslations.auditReportId}
+        FROM ${schema.auditReportTranslations}
+        WHERE ${schema.auditReportTranslations.title} LIKE ${searchTerm}
+           OR ${schema.auditReportTranslations.summary} LIKE ${searchTerm}
+      )`
+    )
+  }
 
   const whereClause = conditions.length > 0 ? and(...conditions) : undefined
 
