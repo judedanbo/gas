@@ -5,20 +5,46 @@
         <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Publications</h1>
         <p class="text-gray-600 dark:text-gray-400 mt-1">Manage publications and documents</p>
       </div>
-      <NuxtLink
-        to="/admin/publications/create"
-        class="btn btn-primary inline-flex items-center gap-2"
-      >
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            stroke-width="2"
-            d="M12 4v16m8-8H4"
-          />
-        </svg>
-        Add Publication
-      </NuxtLink>
+      <div class="flex items-center gap-2">
+        <div class="inline-flex rounded-lg border border-gray-200 dark:border-gray-700 p-0.5">
+          <button
+            type="button"
+            class="rounded-md p-2 transition-colors"
+            :class="
+              viewMode === 'table'
+                ? 'bg-primary text-white shadow-sm'
+                : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
+            "
+            aria-label="Table view"
+            @click="viewMode = 'table'"
+          >
+            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16" />
+            </svg>
+          </button>
+          <button
+            type="button"
+            class="rounded-md p-2 transition-colors"
+            :class="
+              viewMode === 'grid'
+                ? 'bg-primary text-white shadow-sm'
+                : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
+            "
+            aria-label="Grid view"
+            @click="viewMode = 'grid'"
+          >
+            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+            </svg>
+          </button>
+        </div>
+        <NuxtLink to="/admin/publications/create" class="btn btn-primary inline-flex items-center gap-2">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+          </svg>
+          Add Publication
+        </NuxtLink>
+      </div>
     </div>
 
     <AdminUiAdminSearchFilter
@@ -41,6 +67,7 @@
     </AdminUiAdminSearchFilter>
 
     <AdminUiAdminDataTable
+      v-if="viewMode === 'table'"
       :columns="columns"
       :data="items"
       :loading="loading"
@@ -107,6 +134,55 @@
       </template>
     </AdminUiAdminDataTable>
 
+    <!-- Grid View -->
+    <div v-if="viewMode === 'grid'">
+      <div v-if="loading" class="flex items-center justify-center py-20">
+        <div class="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+      </div>
+
+      <div v-else-if="items.length === 0">
+        <AdminUiAdminEmptyState
+          title="No publications found"
+          description="Get started by creating your first publication."
+          action-to="/admin/publications/create"
+          action-label="Add Publication"
+        />
+      </div>
+
+      <template v-else>
+        <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          <AdminUiAdminEntityCard
+            v-for="pub in items"
+            :key="pub.id"
+            :title="pub.translations?.en?.title || 'Untitled'"
+            :thumbnail="pub.thumbnail"
+            :selected="false"
+            :edit-url="`/admin/publications/${pub.id}/edit`"
+            :badge-label="pub.type?.replaceAll('-', ' ') || null"
+            :badge-class="typeStyles[pub.type] || 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300'"
+            :metadata="formatPubMeta(pub)"
+            :is-published="pub.isPublished"
+            @click="navigateTo(`/admin/publications/${pub.id}/edit`)"
+            @toggle-select="() => {}"
+            @delete="confirmDelete(pub)"
+          />
+        </div>
+
+        <div class="mt-6 flex items-center justify-between text-sm text-gray-600 dark:text-gray-400">
+          <span>
+            Showing {{ (meta.page - 1) * meta.perPage + 1 }} to
+            {{ Math.min(meta.page * meta.perPage, meta.total) }} of {{ meta.total }} results
+          </span>
+          <AdminUiAdminPagination
+            v-if="meta.lastPage > 1"
+            :current-page="meta.page"
+            :last-page="meta.lastPage"
+            @page-change="handlePageChange"
+          />
+        </div>
+      </template>
+    </div>
+
     <AdminUiAdminConfirmDialog
       v-model="showDeleteDialog"
       title="Delete Publication"
@@ -143,6 +219,30 @@
     { value: 'strategy', label: 'Strategy' },
     { value: 'law', label: 'Law' }
   ]
+
+  const viewMode = ref<'table' | 'grid'>(
+    (typeof localStorage !== 'undefined' &&
+      (localStorage.getItem('admin-publications-view') as 'table' | 'grid')) ||
+      'table'
+  )
+  watch(viewMode, (v) => {
+    if (typeof localStorage !== 'undefined') localStorage.setItem('admin-publications-view', v)
+  })
+
+  const typeStyles: Record<string, string> = {
+    'press-statement': 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300',
+    bulletin: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300',
+    guideline: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300',
+    manual: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300',
+    strategy: 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300',
+    law: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300'
+  }
+
+  function formatPubMeta(pub: AdminPublication): string[] {
+    const meta: string[] = []
+    if (pub.publishedAt) meta.push(new Date(pub.publishedAt).toLocaleDateString())
+    return meta
+  }
 
   const columns = [
     { key: 'translations.en.title', label: 'Title', sortable: true },
