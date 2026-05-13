@@ -9,7 +9,11 @@
   >
     <div
       class="relative bg-gray-100 dark:bg-gray-700 overflow-hidden cursor-pointer"
+      role="button"
+      tabindex="0"
+      :aria-label="`Open ${title}`"
       @click="$emit('click')"
+      @keydown.enter="$emit('click')"
     >
       <div class="aspect-[3/2] w-full">
         <img
@@ -41,6 +45,7 @@
           fill="none"
           stroke="currentColor"
           viewBox="0 0 24 24"
+          aria-hidden="true"
         >
           <path
             stroke-linecap="round"
@@ -67,7 +72,10 @@
       <h3
         class="mb-2 line-clamp-2 text-sm font-semibold leading-snug text-gray-900 dark:text-white cursor-pointer hover:text-primary transition-colors"
         :title="title"
+        role="button"
+        tabindex="0"
         @click="$emit('click')"
+        @keydown.enter="$emit('click')"
       >
         {{ title }}
       </h3>
@@ -94,7 +102,7 @@
           class="inline-flex flex-1 items-center justify-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium text-gray-600 transition-colors hover:bg-gray-100 hover:text-primary dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-primary"
           @click.stop
         >
-          <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
             <path
               stroke-linecap="round"
               stroke-linejoin="round"
@@ -109,7 +117,7 @@
           class="inline-flex flex-1 items-center justify-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium text-gray-600 transition-colors hover:bg-red-50 hover:text-red-600 dark:text-gray-400 dark:hover:bg-red-900/20 dark:hover:text-red-400"
           @click.stop="$emit('delete')"
         >
-          <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
             <path
               stroke-linecap="round"
               stroke-linejoin="round"
