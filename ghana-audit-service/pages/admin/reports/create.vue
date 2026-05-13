@@ -44,16 +44,18 @@
             />
           </div>
 
-          <!-- File Upload -->
+          <!-- Report File -->
           <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
             <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Report File</h2>
-            <AdminFormAdminFileUpload
-              v-model="form.fileUrl"
-              type="report"
-              label="PDF File"
-              required
+            <AdminFormAdminReportFileModal
+              :file-url="form.fileUrl"
+              :file-size="form.fileSize"
+              :thumbnail="form.thumbnail"
               :error="errors.fileUrl"
-              @file-info="handleFileInfo"
+              required
+              @update:file-url="form.fileUrl = $event"
+              @update:file-size="form.fileSize = $event"
+              @update:thumbnail="form.thumbnail = $event"
             />
           </div>
         </div>
@@ -148,16 +150,7 @@
             </div>
           </div>
 
-          <!-- Thumbnail -->
-          <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-            <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Thumbnail</h2>
-            <AdminFormAdminFileUpload
-              v-model="form.thumbnail"
-              type="thumbnail"
-              label="Cover Image"
-              help-text="Optional cover image for the report"
-            />
-          </div>
+
         </div>
       </div>
 
@@ -351,11 +344,6 @@
       }
     }
   )
-
-  // Handle file info
-  function handleFileInfo(info: { filename: string; size: number; mimeType: string }) {
-    form.fileSize = info.size
-  }
 
   // Submit
   async function handleSubmit() {
