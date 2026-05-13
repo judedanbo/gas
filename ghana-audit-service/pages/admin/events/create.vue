@@ -115,6 +115,7 @@
                 v-model="form.endDate"
                 label="End Date"
                 type="datetime-local"
+                :error="errors.endDate"
               />
               <AdminFormAdminSwitch
                 v-model="form.isVirtual"
@@ -188,7 +189,17 @@
     'translations.en.title': [rules.required],
     slug: [rules.required],
     startDate: [rules.required],
-    registrationUrl: [rules.url]
+    registrationUrl: [rules.url],
+    endDate: [
+      (value: unknown) => {
+        if (!value) return true
+        if (!form.startDate) return true
+        const end = Date.parse(String(value))
+        const start = Date.parse(form.startDate)
+        if (isNaN(end)) return 'Invalid date'
+        return end > start || 'End date must be after start date'
+      }
+    ]
   }
 
   const translationFields = [

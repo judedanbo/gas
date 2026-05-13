@@ -111,24 +111,36 @@ export const newsArticleSchema = z.object({
 })
 
 // Events
-export const eventSchema = z.object({
-  slug: slugSchema,
-  startDate: z.string().refine((val) => !isNaN(Date.parse(val)), 'Invalid date'),
-  endDate: z
-    .string()
-    .refine((val) => !isNaN(Date.parse(val)), 'Invalid date')
-    .optional()
-    .nullable(),
-  isVirtual: z.boolean().default(false),
-  registrationUrl: z.string().max(500).optional().nullable(),
-  thumbnail: z.string().max(500).optional().nullable(),
-  isPublished: z.boolean().default(false),
-  translations: translationsSchema({
-    title: z.string().min(1).max(500),
-    description: z.string().optional().nullable(),
-    location: z.string().max(500).optional().nullable()
+export const eventSchema = z
+  .object({
+    slug: slugSchema,
+    startDate: z.string().refine((val) => !isNaN(Date.parse(val)), 'Invalid date'),
+    endDate: z
+      .string()
+      .refine((val) => !isNaN(Date.parse(val)), 'Invalid date')
+      .optional()
+      .nullable(),
+    isVirtual: z.boolean().default(false),
+    registrationUrl: z.string().max(500).optional().nullable(),
+    thumbnail: z.string().max(500).optional().nullable(),
+    isPublished: z.boolean().default(false),
+    translations: translationsSchema({
+      title: z.string().min(1).max(500),
+      description: z.string().optional().nullable(),
+      location: z.string().max(500).optional().nullable()
+    })
   })
-})
+  .superRefine((data, ctx) => {
+    if (data.endDate && data.startDate) {
+      if (Date.parse(data.endDate) <= Date.parse(data.startDate)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'End date must be after start date',
+          path: ['endDate']
+        })
+      }
+    }
+  })
 
 // Vacancies
 export const vacancySchema = z.object({
