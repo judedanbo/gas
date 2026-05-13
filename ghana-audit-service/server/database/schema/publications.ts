@@ -32,6 +32,7 @@ export const publications = mysqlTable(
     ]).notNull(),
     publishedAt: date('published_at').notNull(),
     fileUrl: varchar('file_url', { length: 500 }),
+    fileSize: varchar('file_size', { length: 50 }),
     thumbnail: varchar('thumbnail', { length: 500 }),
     isPublished: boolean('is_published').notNull().default(false),
     createdAt: datetime('created_at')

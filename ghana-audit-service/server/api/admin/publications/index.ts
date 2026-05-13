@@ -124,13 +124,14 @@ async function handleCreate(event: H3Event) {
     await connection.beginTransaction()
 
     const [result] = await connection.execute(
-      `INSERT INTO publications (slug, type, published_at, file_url, thumbnail, is_published, created_by, updated_by)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO publications (slug, type, published_at, file_url, file_size, thumbnail, is_published, created_by, updated_by)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         input.slug,
         input.type,
         new Date(input.publishedAt),
         input.fileUrl || null,
+        input.fileSize || null,
         input.thumbnail || null,
         input.isPublished,
         user.id,

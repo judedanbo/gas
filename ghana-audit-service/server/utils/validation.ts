@@ -84,6 +84,7 @@ export const publicationSchema = z.object({
   type: z.enum(['press-statement', 'bulletin', 'guideline', 'manual', 'strategy', 'law']),
   publishedAt: z.string().refine((val) => !isNaN(Date.parse(val)), 'Invalid date'),
   fileUrl: z.string().max(500).optional().nullable(),
+  fileSize: z.coerce.number().optional().nullable(),
   thumbnail: z.string().max(500).optional().nullable(),
   isPublished: z.boolean().default(false),
   translations: translationsSchema({

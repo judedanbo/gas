@@ -104,12 +104,13 @@ async function handleUpdate(event: H3Event, id: number) {
     await connection.beginTransaction()
 
     await connection.execute(
-      `UPDATE publications SET slug = ?, type = ?, published_at = ?, file_url = ?, thumbnail = ?, is_published = ?, updated_by = ? WHERE id = ?`,
+      `UPDATE publications SET slug = ?, type = ?, published_at = ?, file_url = ?, file_size = ?, thumbnail = ?, is_published = ?, updated_by = ? WHERE id = ?`,
       [
         input.slug,
         input.type,
         new Date(input.publishedAt),
         input.fileUrl || null,
+        input.fileSize || null,
         input.thumbnail || null,
         input.isPublished,
         user.id,
