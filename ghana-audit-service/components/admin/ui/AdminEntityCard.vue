@@ -17,7 +17,7 @@
     >
       <div class="aspect-[3/2] w-full">
         <img
-          :src="thumbnail || '/img/reports/default-cover.svg'"
+          :src="resolvedThumbnail"
           alt=""
           class="w-full h-full object-cover object-top transition-transform duration-300 group-hover:scale-[1.03]"
           loading="lazy"
@@ -133,9 +133,10 @@
 </template>
 
 <script setup lang="ts">
-  defineProps<{
+  const props = defineProps<{
     title: string
     thumbnail: string | null
+    defaultThumbnail?: string
     selected: boolean
     editUrl: string
     badgeLabel: string | null
@@ -143,6 +144,8 @@
     metadata: string[]
     isPublished: boolean
   }>()
+
+  const resolvedThumbnail = computed(() => props.thumbnail || props.defaultThumbnail || '/img/reports/default-cover.png')
 
   defineEmits<{
     click: []

@@ -154,6 +154,7 @@
             :key="evt.id"
             :title="evt.translations?.en?.title || 'Untitled'"
             :thumbnail="evt.thumbnail"
+            default-thumbnail="/img/events/default-cover.png"
             :selected="false"
             :edit-url="`/admin/events/${evt.id}/edit`"
             :badge-label="evt.isVirtual ? 'Virtual' : 'In-Person'"

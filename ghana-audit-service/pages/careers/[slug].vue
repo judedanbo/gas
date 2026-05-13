@@ -78,9 +78,7 @@
                 <h2 class="text-xl font-heading font-bold text-gray-900 dark:text-white mb-4">
                   Job Description
                 </h2>
-                <div class="prose prose-gray dark:prose-invert max-w-none whitespace-pre-line">
-                  {{ vacancy.description }}
-                </div>
+                <div class="prose prose-gray dark:prose-invert max-w-none" v-html="vacancy.description" />
               </div>
 
               <!-- Requirements -->

@@ -86,10 +86,13 @@
                         <input
                           v-model="req.translations.en.description"
                           type="text"
-                          class="form-input w-full"
+                          :class="['form-input w-full', errors[`requirements.${index}.translations.en.description`] ? 'border-red-500' : '']"
                           placeholder="Enter requirement..."
                           required
                         />
+                        <p v-if="errors[`requirements.${index}.translations.en.description`]" class="mt-1 text-sm text-red-600 dark:text-red-400">
+                          {{ errors[`requirements.${index}.translations.en.description`] }}
+                        </p>
                       </div>
                       <div>
                         <label

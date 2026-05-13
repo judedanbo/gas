@@ -7,7 +7,7 @@
     <div class="relative bg-gray-100 dark:bg-gray-700 overflow-hidden">
       <div class="aspect-[4/3] w-full">
         <img
-          :src="report.thumbnail || '/img/reports/default-cover.svg'"
+          :src="report.thumbnail || '/img/reports/default-cover.png'"
           alt=""
           class="w-full h-full object-cover object-top transition-transform duration-300 group-hover:scale-[1.03]"
           loading="lazy"

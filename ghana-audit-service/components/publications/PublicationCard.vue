@@ -1,5 +1,16 @@
 <template>
-  <article class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-6 flex flex-col transition-all hover:border-primary hover:shadow-lg">
+  <article class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden flex flex-col transition-all hover:border-primary hover:shadow-lg">
+    <!-- Thumbnail -->
+    <div class="aspect-video bg-gray-100">
+      <img
+        :src="publication.thumbnail || '/img/publications/default-cover.png'"
+        :alt="publication.title"
+        class="w-full h-full object-cover"
+        loading="lazy"
+      />
+    </div>
+
+    <div class="p-6 flex flex-col flex-1">
     <div class="flex justify-between items-start mb-3">
       <UiBadge :variant="getPublicationTypeVariant(publication.type)" size="sm">
         {{ getPublicationTypeLabel(publication.type) }}
@@ -47,6 +58,7 @@
           {{ $t('common.readMore') }}
         </button>
       </template>
+    </div>
     </div>
   </article>
 </template>

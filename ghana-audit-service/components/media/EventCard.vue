@@ -5,9 +5,9 @@
   >
     <article>
       <!-- Thumbnail or Date Badge -->
-      <div v-if="event.thumbnail" class="aspect-video overflow-hidden relative">
+      <div class="aspect-video overflow-hidden relative">
         <img
-          :src="event.thumbnail"
+          :src="event.thumbnail || '/img/events/default-cover.png'"
           :alt="event.title"
           class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
           loading="lazy"
@@ -16,11 +16,6 @@
           <div class="text-lg font-bold leading-tight">{{ formatDay(event.startDate) }}</div>
           <div class="text-xs uppercase">{{ formatMonth(event.startDate) }}</div>
         </div>
-      </div>
-      <div v-else class="bg-primary text-white p-4 text-center">
-        <div class="text-3xl font-bold">{{ formatDay(event.startDate) }}</div>
-        <div class="text-sm uppercase">{{ formatMonth(event.startDate) }}</div>
-        <div class="text-xs opacity-80">{{ formatYear(event.startDate) }}</div>
       </div>
 
       <!-- Content -->
@@ -83,10 +78,6 @@ function formatDay(dateStr: string): string {
 
 function formatMonth(dateStr: string): string {
   return new Date(dateStr).toLocaleDateString('en-GB', { month: 'short' })
-}
-
-function formatYear(dateStr: string): string {
-  return new Date(dateStr).getFullYear().toString()
 }
 
 function formatDateRange(start: string, end?: string): string {

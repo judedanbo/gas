@@ -19,8 +19,8 @@
       </div>
     </div>
 
-    <p class="text-sm text-gray-600 dark:text-gray-300 mb-4">
-      {{ tender.description }}
+    <p class="text-sm text-gray-600 dark:text-gray-300 line-clamp-2 mb-4">
+      {{ stripHtml(tender.description) }}
     </p>
 
     <div class="flex flex-wrap gap-4 mb-4 text-sm text-gray-600 dark:text-gray-300">
@@ -79,6 +79,11 @@ const statusLabel = computed(() => {
     default: return props.tender.status
   }
 })
+
+function stripHtml(html: string | undefined | null): string {
+  if (!html) return ''
+  return html.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim()
+}
 
 function formatDate(dateStr: string): string {
   const date = new Date(dateStr)

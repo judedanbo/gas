@@ -2,8 +2,22 @@ import { z } from 'zod'
 import type { H3Error } from 'h3'
 
 /**
- * Flatten Zod field errors from arrays to single strings
- * Zod returns { field: ["error1", "error2"] } but we want { field: "error1" }
+ * Collect all Zod issues into dot-path keyed errors, preserving nested paths.
+ * e.g. { "translations.en.description": "Required", "requirements.0.translations.en.description": "Too small" }
+ */
+export function collectZodErrors(error: z.ZodError): Record<string, string> {
+  const errors: Record<string, string> = {}
+  for (const issue of error.issues) {
+    const path = issue.path.join('.')
+    if (path && !errors[path]) {
+      errors[path] = issue.message
+    }
+  }
+  return errors
+}
+
+/**
+ * Flatten Zod field errors from arrays to single strings (legacy helper, kept for direct callers)
  */
 export function flattenZodErrors(
   fieldErrors: Record<string, string[] | undefined>
@@ -36,7 +50,7 @@ export function createValidationError(errors: Record<string, string>): H3Error {
 export function validateBody<T extends z.ZodSchema>(schema: T, body: unknown): z.infer<T> {
   const parsed = schema.safeParse(body)
   if (!parsed.success) {
-    throw createValidationError(flattenZodErrors(parsed.error.flatten().fieldErrors))
+    throw createValidationError(collectZodErrors(parsed.error))
   }
   return parsed.data
 }
@@ -57,9 +71,25 @@ export const slugSchema = z
 
 // Translation schema helper
 function translationsSchema<T extends z.ZodRawShape>(fields: T) {
+  const akFields = Object.fromEntries(
+    Object.entries(fields).map(([key, schema]) => [
+      key,
+      z.preprocess(
+        (val) => (val === '' || val === null ? undefined : val),
+        (schema as z.ZodTypeAny).optional()
+      )
+    ])
+  )
   return z.object({
     en: z.object(fields),
-    ak: z.object(fields).optional()
+    ak: z
+      .object(akFields)
+      .optional()
+      .transform((ak) => {
+        if (!ak) return undefined
+        const hasValue = Object.values(ak).some((v) => v !== undefined)
+        return hasValue ? ak : undefined
+      })
   })
 }
 
@@ -117,9 +147,9 @@ export const eventSchema = z
     startDate: z.string().refine((val) => !isNaN(Date.parse(val)), 'Invalid date'),
     endDate: z
       .string()
-      .refine((val) => !isNaN(Date.parse(val)), 'Invalid date')
       .optional()
-      .nullable(),
+      .nullable()
+      .refine((val) => !val || !isNaN(Date.parse(val)), 'Invalid date'),
     isVirtual: z.boolean().default(false),
     registrationUrl: z.string().max(500).optional().nullable(),
     thumbnail: z.string().max(500).optional().nullable(),

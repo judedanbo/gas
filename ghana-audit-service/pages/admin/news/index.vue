@@ -152,6 +152,7 @@
             :key="article.id"
             :title="article.translations?.en?.title || 'Untitled'"
             :thumbnail="article.thumbnail"
+            default-thumbnail="/img/news/default-cover.png"
             :selected="false"
             :edit-url="`/admin/news/${article.id}/edit`"
             :badge-label="article.author || null"

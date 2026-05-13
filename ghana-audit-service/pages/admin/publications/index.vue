@@ -156,6 +156,7 @@
             :key="pub.id"
             :title="pub.translations?.en?.title || 'Untitled'"
             :thumbnail="pub.thumbnail"
+            default-thumbnail="/img/publications/default-cover.png"
             :selected="false"
             :edit-url="`/admin/publications/${pub.id}/edit`"
             :badge-label="pub.type?.replaceAll('-', ' ') || null"

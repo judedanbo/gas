@@ -142,7 +142,7 @@ async function handleUpdate(event: H3Event, id: number) {
 
     // Update translations
     for (const [locale, trans] of Object.entries(input.translations)) {
-      if (trans) {
+      if (trans?.title) {
         const existingTrans = existingTransMap[locale]
         if (existingTrans) {
           await connection.execute(
@@ -170,7 +170,7 @@ async function handleUpdate(event: H3Event, id: number) {
         const reqId = (reqResult as { insertId: number }).insertId
 
         for (const [locale, trans] of Object.entries(req.translations)) {
-          if (trans) {
+          if (trans?.description) {
             await connection.execute(
               `INSERT INTO vacancy_requirement_translations (requirement_id, locale, description) VALUES (?, ?, ?)`,
               [reqId, locale, trans.description]

@@ -1,0 +1,59 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" width="800" height="600">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#004d2e"/>
+      <stop offset="100%" stop-color="#006B3F"/>
+    </linearGradient>
+    <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+      <path d="M 40 0 L 0 0 0 40" fill="none" stroke="rgba(255,255,255,0.04)" stroke-width="1"/>
+    </pattern>
+  </defs>
+
+  <rect width="800" height="600" fill="url(#bg)"/>
+  <rect width="800" height="600" fill="url(#grid)"/>
+
+  <polygon points="560,0 800,0 800,180" fill="#CE1126" opacity="0.15"/>
+  <polygon points="0,420 0,600 240,600" fill="#FCD116" opacity="0.12"/>
+
+  <rect x="0" y="0" width="800" height="4" fill="#FCD116"/>
+
+  <!-- Calendar icon -->
+  <g transform="translate(400, 220)" fill="none" stroke="rgba(255,255,255,0.85)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+    <!-- Calendar body -->
+    <rect x="-48" y="-50" width="96" height="100" rx="8" fill="rgba(255,255,255,0.08)"/>
+    <!-- Top bar (month header) -->
+    <rect x="-48" y="-50" width="96" height="28" rx="8" fill="rgba(255,255,255,0.1)"/>
+    <line x1="-48" y1="-22" x2="48" y2="-22" stroke="rgba(255,255,255,0.3)"/>
+    <!-- Hanging rings -->
+    <line x1="-24" y1="-62" x2="-24" y2="-44" stroke="rgba(255,255,255,0.7)" stroke-width="3"/>
+    <line x1="24" y1="-62" x2="24" y2="-44" stroke="rgba(255,255,255,0.7)" stroke-width="3"/>
+    <!-- Grid dots (days) -->
+    <circle cx="-28" cy="-6" r="3" fill="rgba(255,255,255,0.2)"/>
+    <circle cx="-8" cy="-6" r="3" fill="rgba(255,255,255,0.2)"/>
+    <circle cx="12" cy="-6" r="3" fill="rgba(255,255,255,0.2)"/>
+    <circle cx="32" cy="-6" r="3" fill="rgba(255,255,255,0.2)"/>
+    <circle cx="-28" cy="14" r="3" fill="rgba(255,255,255,0.2)"/>
+    <circle cx="-8" cy="14" r="3" fill="rgba(255,255,255,0.2)"/>
+    <!-- Highlighted day -->
+    <rect x="4" y="6" width="16" height="16" rx="4" fill="#FCD116" opacity="0.3"/>
+    <circle cx="12" cy="14" r="3" fill="#FCD116" opacity="0.8"/>
+    <circle cx="32" cy="14" r="3" fill="rgba(255,255,255,0.2)"/>
+    <circle cx="-28" cy="34" r="3" fill="rgba(255,255,255,0.2)"/>
+    <circle cx="-8" cy="34" r="3" fill="rgba(255,255,255,0.2)"/>
+    <circle cx="12" cy="34" r="3" fill="rgba(255,255,255,0.15)"/>
+  </g>
+
+  <text x="400" y="370" text-anchor="middle" fill="rgba(255,255,255,0.9)" font-family="system-ui, -apple-system, sans-serif" font-size="20" font-weight="600" letter-spacing="3">
+    GHANA AUDIT SERVICE
+  </text>
+
+  <text x="400" y="400" text-anchor="middle" fill="#FCD116" font-family="system-ui, -apple-system, sans-serif" font-size="14" font-weight="500" letter-spacing="1.5" opacity="0.9">
+    EVENTS &amp; CONFERENCES
+  </text>
+
+  <line x1="320" y1="430" x2="480" y2="430" stroke="rgba(255,255,255,0.15)" stroke-width="1"/>
+
+  <text x="400" y="458" text-anchor="middle" fill="rgba(255,255,255,0.4)" font-family="system-ui, -apple-system, sans-serif" font-size="11" letter-spacing="1">
+    GOOD GOVERNANCE &amp; ACCOUNTABILITY
+  </text>
+</svg>

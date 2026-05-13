@@ -129,7 +129,7 @@ async function handleCreate(event: H3Event) {
 
     // Insert vacancy translations
     for (const [locale, trans] of Object.entries(input.translations)) {
-      if (trans) {
+      if (trans?.title) {
         await connection.execute(
           `INSERT INTO vacancy_translations (vacancy_id, locale, title, description)
            VALUES (?, ?, ?, ?)`,
@@ -148,7 +148,7 @@ async function handleCreate(event: H3Event) {
         const reqId = (reqResult as { insertId: number }).insertId
 
         for (const [locale, trans] of Object.entries(req.translations)) {
-          if (trans) {
+          if (trans?.description) {
             await connection.execute(
               `INSERT INTO vacancy_requirement_translations (requirement_id, locale, description)
                VALUES (?, ?, ?)`,

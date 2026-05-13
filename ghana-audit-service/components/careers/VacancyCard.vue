@@ -77,9 +77,8 @@ function formatDate(dateStr: string): string {
   })
 }
 
-function getExcerpt(description: string): string {
-  // Get first paragraph or first 150 characters
-  const firstParagraph = description.split('\n')[0]
-  return firstParagraph.length > 150 ? firstParagraph.slice(0, 150) + '...' : firstParagraph
+function getExcerpt(html: string): string {
+  const text = html.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim()
+  return text.length > 150 ? text.slice(0, 150) + '...' : text
 }
 </script>

@@ -1,17 +1,14 @@
 <template>
   <article class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden transition-all hover:border-primary hover:shadow-lg">
     <!-- Thumbnail -->
-    <div v-if="article.thumbnail" class="aspect-video bg-gray-100">
+    <div class="aspect-video bg-gray-100">
       <NuxtImg
-        :src="article.thumbnail"
+        :src="article.thumbnail || '/img/news/default-cover.png'"
         :alt="article.title"
         class="w-full h-full object-cover"
         loading="lazy"
         sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
       />
-    </div>
-    <div v-else class="aspect-video bg-gradient-to-br from-primary/10 to-primary/5 flex items-center justify-center">
-      <Icon name="heroicons:newspaper" class="w-20 h-20 text-gray-400 opacity-50" aria-hidden="true" />
     </div>
 
     <!-- Content -->
