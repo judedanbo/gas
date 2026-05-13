@@ -265,12 +265,17 @@
 
       <template v-else>
         <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          <AdminUiAdminReportCard
+          <AdminUiAdminEntityCard
             v-for="report in items"
             :key="report.id"
-            :report="report"
+            :title="report.translations?.en?.title || 'Untitled'"
+            :thumbnail="report.thumbnail"
             :selected="isSelected(report)"
-            :category-class="categoryStyles[report.category] || 'bg-gray-100 text-gray-700'"
+            :edit-url="`/admin/reports/${report.id}/edit`"
+            :badge-label="report.category?.replace('-', ' ') || null"
+            :badge-class="categoryStyles[report.category] || 'bg-gray-100 text-gray-700'"
+            :metadata="formatReportMeta(report)"
+            :is-published="report.isPublished"
             @click="handleRowClick(report)"
             @toggle-select="toggleCardSelect(report)"
             @delete="confirmDelete(report)"
@@ -390,6 +395,14 @@
     if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
     if (bytes < 1024 * 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
     return `${(bytes / (1024 * 1024 * 1024)).toFixed(1)} GB`
+  }
+
+  function formatReportMeta(report: AdminAuditReport): string[] {
+    const meta: string[] = []
+    if (report.publishedAt) meta.push(new Date(report.publishedAt).toLocaleDateString())
+    const size = formatFileSize(report.fileSize)
+    if (size && size !== '—') meta.push(size)
+    return meta
   }
 
   // Years (current year to 2000)

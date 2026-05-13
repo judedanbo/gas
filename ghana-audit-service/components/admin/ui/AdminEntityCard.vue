@@ -7,21 +7,19 @@
         : 'border-gray-200 hover:border-primary/40 hover:shadow-md dark:border-gray-700'
     "
   >
-    <!-- Thumbnail -->
     <div
       class="relative bg-gray-100 dark:bg-gray-700 overflow-hidden cursor-pointer"
       @click="$emit('click')"
     >
       <div class="aspect-[3/2] w-full">
         <img
-          :src="report.thumbnail || '/img/reports/default-cover.svg'"
+          :src="thumbnail || '/img/reports/default-cover.svg'"
           alt=""
           class="w-full h-full object-cover object-top transition-transform duration-300 group-hover:scale-[1.03]"
           loading="lazy"
         />
       </div>
 
-      <!-- Checkbox overlay -->
       <label
         class="absolute top-2 left-2 z-10 flex h-6 w-6 items-center justify-center rounded-md border-2 bg-white/90 backdrop-blur-sm transition-colors cursor-pointer"
         :class="
@@ -53,54 +51,46 @@
         </svg>
       </label>
 
-      <!-- Status badge overlay -->
       <span
         class="absolute top-2 right-2 z-10 inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium shadow-sm"
         :class="
-          report.isPublished
+          isPublished
             ? 'bg-green-100 text-green-700 dark:bg-green-900/60 dark:text-green-300'
             : 'bg-amber-100 text-amber-700 dark:bg-amber-900/60 dark:text-amber-300'
         "
       >
-        {{ report.isPublished ? 'Published' : 'Draft' }}
+        {{ isPublished ? 'Published' : 'Draft' }}
       </span>
     </div>
 
-    <!-- Content -->
     <div class="flex flex-1 flex-col p-4">
-      <!-- Title -->
       <h3
         class="mb-2 line-clamp-2 text-sm font-semibold leading-snug text-gray-900 dark:text-white cursor-pointer hover:text-primary transition-colors"
-        :title="report.translations?.en?.title || 'Untitled'"
+        :title="title"
         @click="$emit('click')"
       >
-        {{ report.translations?.en?.title || 'Untitled' }}
+        {{ title }}
       </h3>
 
-      <!-- Category badge -->
-      <div class="mb-3">
+      <div v-if="badgeLabel" class="mb-3">
         <span
           class="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium capitalize"
-          :class="categoryClass"
+          :class="badgeClass"
         >
-          {{ report.category?.replace('-', ' ') }}
+          {{ badgeLabel }}
         </span>
       </div>
 
-      <!-- Metadata -->
-      <div class="mt-auto flex items-center gap-3 text-xs text-gray-500 dark:text-gray-400">
-        <span v-if="report.publishedAt">
-          {{ new Date(report.publishedAt).toLocaleDateString() }}
-        </span>
-        <span v-if="formattedSize" class="flex items-center gap-1">
-          {{ formattedSize }}
-        </span>
+      <div
+        v-if="metadata.length > 0"
+        class="mt-auto flex items-center gap-3 text-xs text-gray-500 dark:text-gray-400"
+      >
+        <span v-for="(item, i) in metadata" :key="i">{{ item }}</span>
       </div>
 
-      <!-- Actions -->
       <div class="mt-3 flex items-center gap-2 border-t border-gray-100 pt-3 dark:border-gray-700">
         <NuxtLink
-          :to="`/admin/reports/${report.id}/edit`"
+          :to="editUrl"
           class="inline-flex flex-1 items-center justify-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium text-gray-600 transition-colors hover:bg-gray-100 hover:text-primary dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-primary"
           @click.stop
         >
@@ -135,12 +125,15 @@
 </template>
 
 <script setup lang="ts">
-  import type { AdminAuditReport } from '~/types/admin'
-
-  const props = defineProps<{
-    report: AdminAuditReport
+  defineProps<{
+    title: string
+    thumbnail: string | null
     selected: boolean
-    categoryClass: string
+    editUrl: string
+    badgeLabel: string | null
+    badgeClass: string
+    metadata: string[]
+    isPublished: boolean
   }>()
 
   defineEmits<{
@@ -148,18 +141,4 @@
     'toggle-select': []
     delete: []
   }>()
-
-  function formatFileSize(value: unknown): string {
-    if (!value) return ''
-    const str = String(value)
-    if (str.includes('MB') || str.includes('KB') || str.includes('GB')) return str
-    const bytes = Number(str)
-    if (isNaN(bytes) || bytes === 0) return ''
-    if (bytes < 1024) return `${bytes} B`
-    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
-    if (bytes < 1024 * 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
-    return `${(bytes / (1024 * 1024 * 1024)).toFixed(1)} GB`
-  }
-
-  const formattedSize = computed(() => formatFileSize(props.report.fileSize))
 </script>
