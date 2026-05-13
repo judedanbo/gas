@@ -101,68 +101,19 @@
               />
             </div>
 
-            <!-- File Upload -->
+            <!-- Report File -->
             <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
               <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Report File</h2>
-              <AdminFormAdminFileUpload
-                v-model="form.fileUrl"
-                type="report"
-                label="PDF File"
-                required
+              <AdminFormAdminReportFileModal
+                :file-url="form.fileUrl"
+                :file-size="form.fileSize"
+                :thumbnail="form.thumbnail"
                 :error="errors.fileUrl"
-                @file-info="handleFileInfo"
+                required
+                @update:file-url="form.fileUrl = $event"
+                @update:file-size="form.fileSize = $event"
+                @update:thumbnail="form.thumbnail = $event"
               />
-            </div>
-
-            <!-- PDF Preview -->
-            <div
-              v-if="form.fileUrl"
-              class="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden"
-            >
-              <button
-                type="button"
-                class="w-full flex items-center justify-between px-6 py-4 text-left"
-                @click="previewExpanded = !previewExpanded"
-              >
-                <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Preview</h2>
-                <svg
-                  :class="[
-                    'w-5 h-5 text-gray-400 transition-transform',
-                    previewExpanded ? 'rotate-180' : ''
-                  ]"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M19 9l-7 7-7-7"
-                  />
-                </svg>
-              </button>
-              <div v-if="previewExpanded" class="border-t border-gray-200 dark:border-gray-700">
-                <iframe :src="form.fileUrl" class="w-full h-[500px]" title="PDF Preview" />
-                <div class="px-6 py-3 bg-gray-50 dark:bg-gray-700/50 text-sm">
-                  <a
-                    :href="form.fileUrl"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    class="text-primary hover:underline inline-flex items-center gap-1"
-                  >
-                    Open in new tab
-                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        stroke-width="2"
-                        d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
-                      />
-                    </svg>
-                  </a>
-                </div>
-              </div>
             </div>
           </div>
 
@@ -276,17 +227,6 @@
                 label="Category"
                 required
                 :error="errors.category"
-              />
-            </div>
-
-            <!-- Thumbnail -->
-            <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-              <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Thumbnail</h2>
-              <AdminFormAdminFileUpload
-                v-model="form.thumbnail"
-                type="thumbnail"
-                label="Cover Image"
-                help-text="Optional cover image for the report"
               />
             </div>
 
@@ -513,9 +453,6 @@
     translations: form.translations
   }))
 
-  // PDF preview state
-  const previewExpanded = ref(false)
-
   // History state
   const historyExpanded = ref(false)
   const historyLoading = ref(false)
@@ -656,10 +593,6 @@
     fetchHistory()
   })
 
-  function handleFileInfo(info: { filename: string; size: number; mimeType: string }) {
-    form.fileSize = info.size
-  }
-
   function formatDate(date: string): string {
     return new Date(date).toLocaleString()
   }
@@ -745,8 +678,10 @@
       }
       nextTick(() => markSaved())
       fetchHistory()
-    } else if (fieldErrors.value) {
-      setErrors(fieldErrors.value)
+    } else {
+      if (fieldErrors.value) {
+        setErrors(fieldErrors.value)
+      }
       toast.error(error.value || 'Failed to save report')
     }
   }
