@@ -67,7 +67,7 @@ function createModalState(props: {
   }
 }
 
-describe('AdminReportFileModal', () => {
+describe('AdminFileModal', () => {
   describe('inline card display', () => {
     it('shows "Attach Report" when no file is attached', () => {
       const state = createModalState({})

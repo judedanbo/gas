@@ -47,7 +47,9 @@
           <!-- Report File -->
           <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
             <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Report File</h2>
-            <AdminFormAdminReportFileModal
+            <AdminFormAdminFileModal
+              resource="reports"
+              label="Report File"
               :file-url="form.fileUrl"
               :file-size="form.fileSize"
               :thumbnail="form.thumbnail"

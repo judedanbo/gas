@@ -2,7 +2,7 @@
   <div>
     <!-- Inline Card -->
     <AdminFormGroup
-      label="Report File"
+      :label="label"
       :required="required"
       :error="error || undefined"
     >
@@ -39,9 +39,9 @@
             </svg>
           </div>
           <p class="text-sm text-gray-600 dark:text-gray-400">
-            <span class="text-primary font-medium">Attach Report</span>
+            <span class="text-primary font-medium">Attach {{ label }}</span>
           </p>
-          <p class="text-xs text-gray-500 mt-1">PDF files (max 10 MB)</p>
+          <p class="text-xs text-gray-500 mt-1">PDF files</p>
         </div>
 
         <!-- File attached state -->
@@ -87,13 +87,13 @@
     </AdminFormGroup>
 
     <!-- Modal -->
-    <UiBaseModal v-model="isOpen" title="Report File" size="full" max-height="80vh">
+    <UiBaseModal v-model="isOpen" :title="label" size="full" max-height="80vh">
       <div class="space-y-6">
         <!-- Upload Area (shown when no file or replacing) -->
         <div v-if="!modalFileUrl || isReplacing">
           <AdminFormAdminFileUpload
             :model-value="''"
-            type="report"
+            :type="resource === 'reports' ? 'report' : 'publication'"
             label="Upload PDF"
             required
             @update:model-value="handleUploadComplete"
@@ -306,6 +306,8 @@
 
 <script setup lang="ts">
   interface Props {
+    resource: 'reports' | 'publications'
+    label?: string
     fileUrl?: string | null
     fileSize?: number | null
     thumbnail?: string | null
@@ -314,6 +316,7 @@
   }
 
   const props = withDefaults(defineProps<Props>(), {
+    label: 'File',
     fileUrl: null,
     fileSize: null,
     thumbnail: null,
@@ -392,7 +395,7 @@
 
     try {
       const result = await api.post<{ success: boolean; thumbnailUrl: string }>(
-        'reports/generate-thumbnail',
+        `${props.resource}/generate-thumbnail`,
         { fileUrl: modalFileUrl.value }
       )
       modalThumbnail.value = result.thumbnailUrl
