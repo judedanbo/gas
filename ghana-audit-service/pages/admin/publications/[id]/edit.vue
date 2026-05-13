@@ -292,7 +292,7 @@
       form.slug = item.slug
       form.type = item.type
       form.fileUrl = item.fileUrl || ''
-      form.fileSize = (item as any).fileSize || undefined
+      form.fileSize = item.fileSize ? Number(item.fileSize) : undefined
       form.thumbnail = item.thumbnail || ''
       form.isPublished = item.isPublished
       form.publishedAt = item.publishedAt || ''

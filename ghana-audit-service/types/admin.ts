@@ -116,6 +116,7 @@ export interface AdminPublication {
   slug: string
   type: PublicationType
   fileUrl: string | null
+  fileSize: number | null
   thumbnail: string | null
   isPublished: boolean
   publishedAt: string | null
