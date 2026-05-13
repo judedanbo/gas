@@ -77,7 +77,7 @@ describe('AdminFileModal', () => {
 
     it('shows filename when file is attached', () => {
       const state = createModalState({
-        fileUrl: '/uploads/reports/20260513-abc.pdf'
+        fileUrl: '/pdf/reports/20260513-abc.pdf'
       })
       expect(state.displayFilename.value).toBe('20260513-abc.pdf')
     })
@@ -86,7 +86,7 @@ describe('AdminFileModal', () => {
   describe('modal open/close', () => {
     it('opens modal and copies props into local state', () => {
       const state = createModalState({
-        fileUrl: '/uploads/reports/test.pdf',
+        fileUrl: '/pdf/reports/test.pdf',
         fileSize: 2048000,
         thumbnail: '/uploads/thumbnails/thumb.jpg'
       })
@@ -94,7 +94,7 @@ describe('AdminFileModal', () => {
       state.openModal()
 
       expect(state.isOpen.value).toBe(true)
-      expect(state.modalFileUrl.value).toBe('/uploads/reports/test.pdf')
+      expect(state.modalFileUrl.value).toBe('/pdf/reports/test.pdf')
       expect(state.modalFileSize.value).toBe(2048000)
       expect(state.modalThumbnail.value).toBe('/uploads/thumbnails/thumb.jpg')
       expect(state.thumbnailSource.value).toBe('existing')
@@ -114,12 +114,12 @@ describe('AdminFileModal', () => {
 
     it('cancel closes modal without emitting', () => {
       const state = createModalState({
-        fileUrl: '/uploads/reports/test.pdf',
+        fileUrl: '/pdf/reports/test.pdf',
         fileSize: 1024
       })
 
       state.openModal()
-      state.modalFileUrl.value = '/uploads/reports/different.pdf'
+      state.modalFileUrl.value = '/pdf/reports/different.pdf'
       state.handleCancel()
 
       expect(state.isOpen.value).toBe(false)
@@ -131,14 +131,14 @@ describe('AdminFileModal', () => {
       const state = createModalState({})
 
       state.openModal()
-      state.modalFileUrl.value = '/uploads/reports/new.pdf'
+      state.modalFileUrl.value = '/pdf/reports/new.pdf'
       state.modalFileSize.value = 5000000
       state.modalThumbnail.value = '/uploads/thumbnails/new.jpg'
 
       const result = state.handleConfirm()
 
       expect(result).toEqual({
-        fileUrl: '/uploads/reports/new.pdf',
+        fileUrl: '/pdf/reports/new.pdf',
         fileSize: 5000000,
         thumbnail: '/uploads/thumbnails/new.jpg'
       })

@@ -7,6 +7,8 @@ export interface UploadConfig {
   allowedTypes: string[]
   maxSize: number
   directory: string
+  baseDir?: string
+  urlBase?: string
 }
 
 export interface UploadResult {
@@ -20,8 +22,10 @@ export interface UploadResult {
 const uploadConfigs: Record<string, UploadConfig> = {
   report: {
     allowedTypes: ['application/pdf'],
-    maxSize: 10 * 1024 * 1024, // 10MB
-    directory: 'reports'
+    maxSize: 100 * 1024 * 1024, // 100MB
+    directory: 'reports',
+    baseDir: 'public/pdf',
+    urlBase: '/pdf'
   },
   publication: {
     allowedTypes: ['application/pdf'],
@@ -152,7 +156,7 @@ export async function handleFileUpload(
   // Generate filename and path
   const originalName = file.filename || `upload${getExtensionFromMime(file.type || '')}`
   const filename = generateFilename(originalName)
-  const baseDir = getUploadBaseDir()
+  const baseDir = config.baseDir || getUploadBaseDir()
   const uploadDir = join(baseDir, config.directory)
   const filePath = join(uploadDir, filename)
 
@@ -164,8 +168,8 @@ export async function handleFileUpload(
     const writeStream = createWriteStream(filePath)
 
     writeStream.on('finish', () => {
-      // Generate URL path (relative to public directory)
-      const urlPath = `/uploads/${config.directory}/${filename}`
+      const urlBase = config.urlBase || '/uploads'
+      const urlPath = `${urlBase}/${config.directory}/${filename}`
 
       resolve({
         url: urlPath,

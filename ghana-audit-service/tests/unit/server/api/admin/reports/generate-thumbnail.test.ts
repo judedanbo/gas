@@ -20,7 +20,7 @@ async function handleGenerateThumbnail(body: { fileUrl?: string }) {
   if (!fileUrl || typeof fileUrl !== 'string') {
     throw { statusCode: 400, statusMessage: 'fileUrl is required' }
   }
-  if (!fileUrl.startsWith('/uploads/reports/')) {
+  if (!fileUrl.startsWith('/pdf/reports/')) {
     throw { statusCode: 400, statusMessage: 'Invalid file path' }
   }
 
@@ -52,7 +52,7 @@ describe('generate-thumbnail endpoint', () => {
     })
   })
 
-  it('returns 400 when fileUrl does not start with /uploads/reports/', async () => {
+  it('returns 400 when fileUrl does not start with /pdf/reports/', async () => {
     await expect(
       handleGenerateThumbnail({ fileUrl: '/uploads/images/evil.pdf' })
     ).rejects.toMatchObject({
@@ -65,7 +65,7 @@ describe('generate-thumbnail endpoint', () => {
     vi.mocked(resolvePublicAsset).mockReturnValue(null)
 
     await expect(
-      handleGenerateThumbnail({ fileUrl: '/uploads/reports/test.pdf' })
+      handleGenerateThumbnail({ fileUrl: '/pdf/reports/test.pdf' })
     ).rejects.toMatchObject({
       statusCode: 422,
       statusMessage: 'PDF file not found'
@@ -77,7 +77,7 @@ describe('generate-thumbnail endpoint', () => {
     vi.mocked(generateThumbnailFromPdf).mockReturnValue(null)
 
     await expect(
-      handleGenerateThumbnail({ fileUrl: '/uploads/reports/test.pdf' })
+      handleGenerateThumbnail({ fileUrl: '/pdf/reports/test.pdf' })
     ).rejects.toMatchObject({
       statusCode: 422,
       statusMessage: 'Thumbnail generation failed — pdftoppm may not be available'
@@ -89,14 +89,14 @@ describe('generate-thumbnail endpoint', () => {
     vi.mocked(generateThumbnailFromPdf).mockReturnValue('/uploads/thumbnails/20260513-abc.jpg')
 
     const result = await handleGenerateThumbnail({
-      fileUrl: '/uploads/reports/test.pdf'
+      fileUrl: '/pdf/reports/test.pdf'
     })
 
     expect(result).toEqual({
       success: true,
       thumbnailUrl: '/uploads/thumbnails/20260513-abc.jpg'
     })
-    expect(resolvePublicAsset).toHaveBeenCalledWith('/uploads/reports/test.pdf')
+    expect(resolvePublicAsset).toHaveBeenCalledWith('/pdf/reports/test.pdf')
     expect(generateThumbnailFromPdf).toHaveBeenCalledWith('/abs/path/test.pdf')
   })
 })

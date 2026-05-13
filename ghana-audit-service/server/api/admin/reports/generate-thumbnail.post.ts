@@ -12,7 +12,7 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 400, statusMessage: 'fileUrl is required' })
   }
 
-  if (!fileUrl.startsWith('/uploads/reports/')) {
+  if (!fileUrl.startsWith('/pdf/reports/')) {
     throw createError({ statusCode: 400, statusMessage: 'Invalid file path' })
   }
 

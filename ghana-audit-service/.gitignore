@@ -34,10 +34,12 @@ data/
 # Temp files
 .tmp-pdf/
 
-# Downloaded report PDFs (large binaries)
+# Report PDFs (large binaries — stored at /pdf/reports/)
 public/pdf/reports/
+public/uploads/reports/
 
 # Test output
 coverage/
 playwright-report/
 test-results/
+.superpowers/

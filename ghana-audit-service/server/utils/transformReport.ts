@@ -77,9 +77,8 @@ export function transformReport(
     category: report.category,
     publishedAt: formatDate(report.publishedAt),
     year: report.publishedAt ? new Date(report.publishedAt).getFullYear() : 0,
-    // Route downloads through the rate-limited endpoint so direct uploads/
-    // bandwidth is metered. Direct /uploads/reports/*.pdf access is blocked
-    // by server/middleware/rateLimit.ts.
+    // Route downloads through the rate-limited endpoint so direct
+    // bandwidth is metered.
     fileUrl: `/api/downloads/reports/${report.id}`,
     fileSize: formatFileSize(report.fileSize),
     summary: translation.summary || undefined,

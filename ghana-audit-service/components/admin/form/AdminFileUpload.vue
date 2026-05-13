@@ -193,7 +193,7 @@
     report: {
       accept: ['application/pdf'],
       label: 'PDF files',
-      maxSize: 10 * 1024 * 1024
+      maxSize: 100 * 1024 * 1024
     },
     publication: {
       accept: ['application/pdf'],
