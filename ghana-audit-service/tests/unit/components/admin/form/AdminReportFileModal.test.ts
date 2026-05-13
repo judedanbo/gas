@@ -1,45 +1,11 @@
 import { describe, it, expect, vi } from 'vitest'
-import { ref, computed, reactive, nextTick, defineComponent, h } from 'vue'
+import { ref, computed } from 'vue'
 
 vi.stubGlobal('ref', ref)
 vi.stubGlobal('computed', computed)
-vi.stubGlobal('reactive', reactive)
-vi.stubGlobal('nextTick', nextTick)
 vi.stubGlobal('useAdminApi', () => ({
   post: vi.fn()
 }))
-
-const AdminFormGroupStub = defineComponent({
-  name: 'AdminFormGroup',
-  props: ['label', 'error'],
-  setup(_, { slots }) {
-    return () => h('div', { class: 'form-group' }, slots.default?.())
-  }
-})
-
-const UiBaseModalStub = defineComponent({
-  name: 'UiBaseModal',
-  props: ['modelValue', 'title', 'size', 'maxHeight'],
-  emits: ['update:modelValue'],
-  setup(props, { slots }) {
-    return () =>
-      props.modelValue
-        ? h('div', { class: 'modal' }, [
-            slots.default?.(),
-            slots.footer?.()
-          ])
-        : null
-  }
-})
-
-const AdminFileUploadStub = defineComponent({
-  name: 'AdminFormAdminFileUpload',
-  props: ['modelValue', 'type', 'label', 'required'],
-  emits: ['update:modelValue', 'file-info'],
-  setup() {
-    return () => h('div', { class: 'file-upload' })
-  }
-})
 
 function createModalState(props: {
   fileUrl?: string | null
