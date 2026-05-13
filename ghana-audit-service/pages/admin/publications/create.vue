@@ -40,11 +40,16 @@
           </div>
           <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
             <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Document</h2>
-            <AdminFormAdminFileUpload
-              v-model="form.fileUrl"
-              type="publication"
-              label="PDF File"
+            <AdminFormAdminFileModal
+              resource="publications"
+              label="Publication File"
+              :file-url="form.fileUrl"
+              :file-size="form.fileSize"
+              :thumbnail="form.thumbnail"
               :error="errors.fileUrl"
+              @update:file-url="form.fileUrl = $event"
+              @update:file-size="form.fileSize = $event"
+              @update:thumbnail="form.thumbnail = $event"
             />
           </div>
         </div>
@@ -130,14 +135,6 @@
               />
             </div>
           </div>
-          <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-            <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Thumbnail</h2>
-            <AdminFormAdminFileUpload
-              v-model="form.thumbnail"
-              type="thumbnail"
-              label="Cover Image"
-            />
-          </div>
         </div>
       </div>
 
@@ -179,6 +176,7 @@
     slug: '',
     type: 'press-statement',
     fileUrl: '',
+    fileSize: undefined,
     thumbnail: '',
     isPublished: false,
     publishedAt: '',
