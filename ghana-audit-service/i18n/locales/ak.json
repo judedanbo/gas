@@ -123,7 +123,15 @@
     "from": "Firi",
     "to": "Kɔsi",
     "clearFilters": "Yi Filters",
-    "applyFilters": "Fa Filters Di Dwuma"
+    "applyFilters": "Fa Filters Di Dwuma",
+    "commandPalette": {
+      "placeholder": "Hwehwɛ amanneɛbɔ, nwoma, nsɛm...",
+      "hint": "Kyerɛw na hwehwɛ",
+      "viewAll": "Hwɛ nsɛm {count} nyinaa",
+      "noResults": "Yɛanhunu hwee a ɛfa \"{query}\" ho",
+      "close": "To mu",
+      "shortcutHint": "bue hwehwɛ"
+    }
   },
   "contact": {
     "title": "Ka Yɛn",

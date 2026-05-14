@@ -123,7 +123,15 @@
     "from": "From",
     "to": "To",
     "clearFilters": "Clear Filters",
-    "applyFilters": "Apply Filters"
+    "applyFilters": "Apply Filters",
+    "commandPalette": {
+      "placeholder": "Search reports, publications, news...",
+      "hint": "Type to search",
+      "viewAll": "View all {count} results",
+      "noResults": "No results found for \"{query}\"",
+      "close": "Close",
+      "shortcutHint": "to open search"
+    }
   },
   "contact": {
     "title": "Contact Us",
