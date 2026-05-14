@@ -282,7 +282,14 @@ export const pastAGSchema = z.object({
 export const managementTeamSchema = z
   .object({
     slug: slugSchema,
-    role: z.enum(['auditor-general', 'deputy-auditor-general', 'regional-auditor']),
+    role: z.enum([
+      'auditor-general',
+      'deputy-auditor-general',
+      'regional-auditor',
+      'district-auditor',
+      'sector-head',
+      'branch-head'
+    ]),
     officeId: z.number().optional().nullable(),
     departmentId: z.number().optional().nullable(),
     icon: z.string().max(100).optional().nullable(),
@@ -310,13 +317,14 @@ export const managementTeamSchema = z
   })
   .refine(
     (data) => {
-      if (data.role === 'regional-auditor') {
+      const rolesRequiringOffice = ['regional-auditor', 'district-auditor', 'sector-head', 'branch-head']
+      if (rolesRequiringOffice.includes(data.role)) {
         return data.officeId !== null && data.officeId !== undefined
       }
       return true
     },
     {
-      message: 'Regional auditors must be assigned to an office',
+      message: 'This role must be assigned to an office',
       path: ['officeId']
     }
   )
