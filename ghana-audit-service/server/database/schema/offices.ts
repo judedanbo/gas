@@ -7,7 +7,8 @@ import {
   decimal,
   mysqlEnum,
   index,
-  uniqueIndex
+  uniqueIndex,
+  type AnyMySqlColumn
 } from 'drizzle-orm/mysql-core'
 import { sql } from 'drizzle-orm'
 
@@ -38,6 +39,9 @@ export const offices = mysqlTable(
     typeId: int('type_id')
       .notNull()
       .references(() => officeTypes.id),
+    parentId: int('parent_id').references((): AnyMySqlColumn => offices.id, {
+      onDelete: 'set null'
+    }),
     region: varchar('region', { length: 100 }).notNull(),
     phone: varchar('phone', { length: 50 }),
     email: varchar('email', { length: 255 }),
@@ -55,7 +59,8 @@ export const offices = mysqlTable(
   (table) => [
     index('idx_offices_slug').on(table.slug),
     index('idx_offices_region').on(table.region),
-    index('idx_offices_type_id').on(table.typeId)
+    index('idx_offices_type_id').on(table.typeId),
+    index('idx_offices_parent_id').on(table.parentId)
   ]
 )
 
