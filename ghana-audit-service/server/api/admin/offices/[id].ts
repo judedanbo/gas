@@ -96,10 +96,11 @@ async function handleUpdate(event: H3Event, id: number) {
     await connection.beginTransaction()
 
     await connection.execute(
-      `UPDATE offices SET slug = ?, type_id = ?, region = ?, phone = ?, email = ?, latitude = ?, longitude = ?, display_order = ? WHERE id = ?`,
+      `UPDATE offices SET slug = ?, type_id = ?, parent_id = ?, region = ?, phone = ?, email = ?, latitude = ?, longitude = ?, display_order = ? WHERE id = ?`,
       [
         input.slug,
         input.typeId,
+        input.parentId || null,
         input.region,
         input.phone || null,
         input.email || null,

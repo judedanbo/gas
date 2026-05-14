@@ -345,6 +345,7 @@ export const managementTeamSchema = z
 export const officeSchema = z.object({
   slug: slugSchema,
   typeId: z.number().min(1),
+  parentId: z.number().optional().nullable(),
   region: z.string().min(1).max(100),
   phone: z.string().max(50).optional().nullable(),
   email: z.string().email().max(255).optional().nullable(),

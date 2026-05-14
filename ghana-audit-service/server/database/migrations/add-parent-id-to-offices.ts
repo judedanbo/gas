@@ -57,14 +57,29 @@ async function migrate() {
       console.log('No section office type found (may already be renamed), skipping.')
     }
 
-    // 3. Expand management_team role enum
+    // 3. Add 'unit' office type if missing
+    const [unitType] = await connection.execute<mysql.RowDataPacket[]>(
+      `SELECT id FROM office_types WHERE slug = 'unit'`
+    )
+
+    if (unitType.length === 0) {
+      console.log('Adding unit office type...')
+      await connection.execute(
+        `INSERT INTO office_types (slug, name, display_order) VALUES ('unit', 'Unit', 5)`
+      )
+      console.log('Added unit office type.')
+    } else {
+      console.log('Unit office type already exists, skipping.')
+    }
+
+    // 5. Expand management_team role enum
     console.log('Expanding management_team role enum...')
     await connection.execute(
       `ALTER TABLE management_team MODIFY COLUMN role ENUM('auditor-general', 'deputy-auditor-general', 'regional-auditor', 'district-auditor', 'sector-head', 'branch-head') NOT NULL`
     )
     console.log('Expanded role enum to 6 values.')
 
-    // 4. Backfill parent_id for district offices
+    // 6. Backfill parent_id for district offices
     console.log('Backfilling parent_id for district offices...')
     const [districtTypeRow] = await connection.execute<mysql.RowDataPacket[]>(
       `SELECT id FROM office_types WHERE slug = 'district-office'`

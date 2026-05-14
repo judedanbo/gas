@@ -130,10 +130,11 @@ async function handleCreate(event: H3Event) {
     await connection.beginTransaction()
 
     const [result] = await connection.execute(
-      `INSERT INTO offices (slug, type_id, region, phone, email, latitude, longitude, display_order) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO offices (slug, type_id, parent_id, region, phone, email, latitude, longitude, display_order) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         input.slug,
         input.typeId,
+        input.parentId || null,
         input.region,
         input.phone || null,
         input.email || null,

@@ -23,14 +23,15 @@ const dbConfig = {
   database: process.env.DB_NAME || 'ghana_audit_service'
 }
 
-type OfficeTypeSlug = 'head-office' | 'regional-office' | 'district-office' | 'sector' | 'branch'
+type OfficeTypeSlug = 'head-office' | 'regional-office' | 'district-office' | 'sector' | 'branch' | 'unit'
 
 const officeTypesSeed: { slug: OfficeTypeSlug; name: string; displayOrder: number }[] = [
   { slug: 'head-office', name: 'Head Office', displayOrder: 0 },
   { slug: 'regional-office', name: 'Regional Office', displayOrder: 1 },
   { slug: 'district-office', name: 'District Office', displayOrder: 2 },
   { slug: 'sector', name: 'Sector', displayOrder: 3 },
-  { slug: 'branch', name: 'Branch', displayOrder: 4 }
+  { slug: 'branch', name: 'Branch', displayOrder: 4 },
+  { slug: 'unit', name: 'Unit', displayOrder: 5 }
 ]
 
 interface OfficeData {

@@ -112,6 +112,13 @@
                 :error="errors.typeId"
               />
               <AdminFormAdminSelect
+                v-if="parentTypeSlug"
+                v-model="form.parentId"
+                label="Parent Office"
+                :options="parentOfficeOptions"
+                :help-text="parentHelpText"
+              />
+              <AdminFormAdminSelect
                 v-model="form.region"
                 label="Region"
                 :options="regionOptions"
@@ -192,10 +199,43 @@
   let slugCheckTimeout: ReturnType<typeof setTimeout> | null = null
 
   const officeTypesData = ref<{ id: number; slug: string; name: string }[]>([])
+  const allOffices = ref<AdminOffice[]>([])
+
+  const parentTypeMap: Record<string, string> = {
+    'district-office': 'regional-office',
+    'branch': 'sector',
+    'unit': 'branch'
+  }
+
+  const selectedTypeSlug = computed(() => {
+    const t = officeTypesData.value.find((t) => t.id === Number(form.typeId))
+    return t?.slug || ''
+  })
+
+  const parentTypeSlug = computed(() => parentTypeMap[selectedTypeSlug.value] || '')
+
+  const parentHelpText = computed(() => {
+    const labels: Record<string, string> = {
+      'regional-office': 'Select the parent regional office',
+      'sector': 'Select the parent sector',
+      'branch': 'Select the parent branch'
+    }
+    return labels[parentTypeSlug.value] || 'Select the parent office'
+  })
+
+  const parentOfficeOptions = computed(() => {
+    if (!parentTypeSlug.value) return []
+    const parentType = officeTypesData.value.find((t) => t.slug === parentTypeSlug.value)
+    if (!parentType) return []
+    return allOffices.value
+      .filter((o) => o.typeId === parentType.id)
+      .map((o) => ({ value: o.id, label: o.translations?.en?.name || o.slug }))
+  })
 
   const form = reactive<OfficeInput>({
     slug: '',
     typeId: 0,
+    parentId: null,
     region: '',
     phone: '',
     email: '',
@@ -204,6 +244,13 @@
     displayOrder: 0,
     translations: { en: { name: '', address: '' } }
   })
+
+  watch(
+    () => form.typeId,
+    () => {
+      form.parentId = null
+    }
+  )
 
   const validationRules = {
     'translations.en.name': [rules.required],
@@ -320,6 +367,14 @@
     try {
       const types = await getList<{ id: number; slug: string; name: string }>('offices/types')
       officeTypesData.value = (types as unknown as { id: number; slug: string; name: string }[]) || []
+
+      const parentSlugs = Object.values(parentTypeMap)
+      const allParentOffices: AdminOffice[] = []
+      for (const slug of parentSlugs) {
+        const result = await getList<AdminOffice>('offices', { typeSlug: slug })
+        allParentOffices.push(...(result.data || []))
+      }
+      allOffices.value = allParentOffices
     } catch {
       // Types will be empty, form validation will catch it
     }
@@ -330,7 +385,8 @@
 
     const result = await create({
       ...form,
-      typeId: Number(form.typeId)
+      typeId: Number(form.typeId),
+      parentId: form.parentId ? Number(form.parentId) : null
     })
     if (result) {
       router.push('/admin/offices')
