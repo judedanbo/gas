@@ -115,11 +115,6 @@ const inputClasses = computed(() => {
   return [base, errorClass, disabledClass].filter(Boolean).join(' ')
 })
 
-function openPicker() {
-  if (props.disabled) return
-  isOpen.value = true
-}
-
 function closePicker() {
   isOpen.value = false
   emit('blur')
