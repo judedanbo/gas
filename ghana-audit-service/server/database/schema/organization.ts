@@ -209,7 +209,10 @@ export const managementTeam = mysqlTable(
     role: mysqlEnum('role', [
       'auditor-general',
       'deputy-auditor-general',
-      'regional-auditor'
+      'regional-auditor',
+      'district-auditor',
+      'sector-head',
+      'branch-head'
     ]).notNull(),
     officeId: int('office_id').references(() => offices.id, {
       onDelete: 'set null'
