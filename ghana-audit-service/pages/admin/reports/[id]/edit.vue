@@ -144,11 +144,11 @@
                   description="Make this report visible to the public"
                 />
 
-                <AdminFormAdminDatePicker
+                <UiDateTimePicker
                   v-if="form.isPublished"
                   v-model="form.publishedAt"
                   label="Publish Date"
-                  type="datetime-local"
+                  mode="datetime"
                 />
               </div>
             </div>

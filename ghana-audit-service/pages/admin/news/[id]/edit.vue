@@ -117,11 +117,11 @@
                 <AdminFormAdminInput v-model="form.author" label="Author" />
                 <AdminFormAdminInput v-model="form.category" label="Category" />
                 <AdminFormAdminSwitch v-model="form.isPublished" label="Published" />
-                <AdminFormAdminDatePicker
+                <UiDateTimePicker
                   v-if="form.isPublished"
                   v-model="form.publishedAt"
                   label="Publish Date"
-                  type="datetime-local"
+                  mode="datetime"
                 />
               </div>
             </div>

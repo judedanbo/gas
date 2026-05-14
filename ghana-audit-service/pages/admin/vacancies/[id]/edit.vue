@@ -243,17 +243,17 @@
                   label="Department"
                   :options="departmentOptions"
                 />
-                <AdminFormAdminDatePicker
+                <UiDateTimePicker
                   v-model="form.deadline"
                   label="Application Deadline"
-                  type="date"
+                  mode="date"
                   required
                   :error="errors.deadline"
                 />
-                <AdminFormAdminDatePicker
+                <UiDateTimePicker
                   v-model="form.publishedAt"
                   label="Published Date"
-                  type="datetime-local"
+                  mode="datetime"
                   help-text="When this vacancy was/will be published"
                 />
                 <AdminFormAdminSwitch

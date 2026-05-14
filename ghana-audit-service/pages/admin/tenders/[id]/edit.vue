@@ -136,22 +136,22 @@
                   required
                   :error="errors.status"
                 />
-                <AdminFormAdminDatePicker
+                <UiDateTimePicker
                   v-model="form.submissionDeadline"
                   label="Submission Deadline"
-                  type="datetime-local"
+                  mode="datetime"
                   required
                   :error="errors.submissionDeadline"
                 />
-                <AdminFormAdminDatePicker
+                <UiDateTimePicker
                   v-model="form.openingDate"
                   label="Bid Opening Date"
-                  type="datetime-local"
+                  mode="datetime"
                 />
-                <AdminFormAdminDatePicker
+                <UiDateTimePicker
                   v-model="form.publishedAt"
                   label="Published Date"
-                  type="datetime-local"
+                  mode="datetime"
                   help-text="When this tender was/will be published"
                 />
               </div>
