@@ -17,7 +17,6 @@
 
         <!-- Palette -->
         <div
-          ref="paletteRef"
           class="relative w-full max-w-xl bg-white dark:bg-gray-800 rounded-xl shadow-2xl border border-gray-200 dark:border-gray-700 overflow-hidden"
           @keydown.arrow-down.prevent="moveHighlight(1)"
           @keydown.arrow-up.prevent="moveHighlight(-1)"
@@ -168,7 +167,6 @@ const { results, loading, meta, search, clearResults } = useSearch()
 const isOpen = useState('searchPalette', () => false)
 const query = ref('')
 const highlightIndex = ref(-1)
-const paletteRef = ref<HTMLElement | null>(null)
 const inputRef = ref<HTMLInputElement | null>(null)
 
 let debounceTimer: ReturnType<typeof setTimeout> | undefined
