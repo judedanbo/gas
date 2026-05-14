@@ -37,6 +37,11 @@ data/
 # Report PDFs (large binaries — stored at /pdf/reports/)
 public/pdf/reports/
 public/uploads/reports/
+public/uploads/images/
+public/uploads/thumbnails/
+
+# Windows NTFS metadata (WSL)
+*Zone.Identifier
 
 # Test output
 coverage/

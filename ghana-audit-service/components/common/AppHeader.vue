@@ -156,6 +156,7 @@
           <button
             class="touch-target bg-transparent border-none p-2 cursor-pointer text-gray-600 dark:text-gray-300 hover:text-primary transition-colors flex items-center justify-center"
             aria-label="Open search (Ctrl+K)"
+            aria-haspopup="dialog"
             @click="openSearch"
           >
             <Icon name="heroicons:magnifying-glass" class="w-6 h-6" aria-hidden="true" />

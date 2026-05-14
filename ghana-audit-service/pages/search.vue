@@ -303,6 +303,7 @@
   onMounted(() => {
     const q = route.query.q as string
     if (q) {
+      skipDebounce = true
       searchInput.value = q
       searchQuery.value = q
       performSearch()
@@ -314,6 +315,7 @@
     () => route.query.q,
     (newQuery) => {
       if (newQuery && newQuery !== searchQuery.value) {
+        skipDebounce = true
         searchInput.value = newQuery as string
         searchQuery.value = newQuery as string
         performSearch()
@@ -338,9 +340,16 @@
     })
   }
 
+  // Guard flag: skip debounce watcher when searchInput is set programmatically
+  let skipDebounce = false
+
   // Debounced search as user types
   let debounceTimer: ReturnType<typeof setTimeout> | undefined
   watch(searchInput, (val) => {
+    if (skipDebounce) {
+      skipDebounce = false
+      return
+    }
     clearTimeout(debounceTimer)
     const trimmed = val.trim()
     if (trimmed.length < 2) return
@@ -367,6 +376,7 @@
 
   // Search for a suggestion
   function searchFor(term: string) {
+    skipDebounce = true
     searchInput.value = term
     handleSearch()
   }

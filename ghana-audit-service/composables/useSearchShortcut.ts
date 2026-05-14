@@ -4,6 +4,7 @@ export function useSearchShortcut() {
   function shouldIgnore(): boolean {
     const active = document.activeElement
     if (!active) return false
+    if ((active as HTMLElement).closest?.('[role="dialog"]')) return false
     const tag = active.tagName.toLowerCase()
     if (tag === 'input' || tag === 'textarea' || tag === 'select') return true
     if ((active as HTMLElement).isContentEditable) return true
@@ -23,13 +24,13 @@ export function useSearchShortcut() {
     }
   }
 
-  if (typeof window !== 'undefined') {
+  onMounted(() => {
     window.addEventListener('keydown', handleKeydown)
-  }
+  })
 
-  function destroy() {
+  onUnmounted(() => {
     window.removeEventListener('keydown', handleKeydown)
-  }
+  })
 
-  return { isOpen, destroy }
+  return { isOpen }
 }

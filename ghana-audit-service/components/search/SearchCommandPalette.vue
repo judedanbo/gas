@@ -6,7 +6,7 @@
         class="fixed inset-0 z-50 flex items-start justify-center pt-[15vh] px-4"
         role="dialog"
         aria-modal="true"
-        aria-label="Search"
+        :aria-label="$t('common.search')"
         @keydown.esc.stop="close"
       >
         <!-- Backdrop -->
@@ -35,7 +35,7 @@
               type="search"
               class="flex-1 bg-transparent border-none outline-none text-base text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500"
               :placeholder="$t('search.commandPalette.placeholder')"
-              aria-label="Search"
+              :aria-label="$t('common.search')"
               aria-autocomplete="list"
               :aria-activedescendant="highlightedId"
               aria-controls="search-results-list"
@@ -51,7 +51,7 @@
           <div
             id="search-results-list"
             role="listbox"
-            aria-label="Search results"
+            :aria-label="$t('search.commandPalette.resultsLabel')"
             class="max-h-[50vh] overflow-y-auto"
           >
             <!-- Loading -->
@@ -128,7 +128,7 @@
 
               <!-- Live region for screen readers -->
               <div class="sr-only" aria-live="polite" aria-atomic="true">
-                {{ meta.total }} results found
+                {{ $t('search.commandPalette.resultsFound', { count: meta.total }) }}
               </div>
             </template>
           </div>
@@ -146,8 +146,8 @@
               {{ $t('search.commandPalette.viewAll', { count: meta.total }) }}
             </NuxtLink>
             <div class="flex items-center gap-2 text-gray-400 dark:text-gray-500">
-              <span><kbd class="px-1 py-0.5 bg-gray-100 dark:bg-gray-700 rounded border border-gray-200 dark:border-gray-600">&uarr;</kbd><kbd class="px-1 py-0.5 bg-gray-100 dark:bg-gray-700 rounded border border-gray-200 dark:border-gray-600">&darr;</kbd> navigate</span>
-              <span><kbd class="px-1 py-0.5 bg-gray-100 dark:bg-gray-700 rounded border border-gray-200 dark:border-gray-600">&crarr;</kbd> select</span>
+              <span><kbd class="px-1 py-0.5 bg-gray-100 dark:bg-gray-700 rounded border border-gray-200 dark:border-gray-600">&uarr;</kbd><kbd class="px-1 py-0.5 bg-gray-100 dark:bg-gray-700 rounded border border-gray-200 dark:border-gray-600">&darr;</kbd> {{ $t('search.commandPalette.navigate') }}</span>
+              <span><kbd class="px-1 py-0.5 bg-gray-100 dark:bg-gray-700 rounded border border-gray-200 dark:border-gray-600">&crarr;</kbd> {{ $t('search.commandPalette.select') }}</span>
             </div>
           </div>
         </div>

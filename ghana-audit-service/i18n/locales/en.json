@@ -130,7 +130,11 @@
       "viewAll": "View all {count} results",
       "noResults": "No results found for \"{query}\"",
       "close": "Close",
-      "shortcutHint": "to open search"
+      "shortcutHint": "to open search",
+      "resultsLabel": "Search results",
+      "resultsFound": "{count} results found",
+      "navigate": "navigate",
+      "select": "select"
     }
   },
   "contact": {

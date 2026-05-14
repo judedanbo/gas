@@ -130,7 +130,11 @@
       "viewAll": "Hwɛ nsɛm {count} nyinaa",
       "noResults": "Yɛanhunu hwee a ɛfa \"{query}\" ho",
       "close": "To mu",
-      "shortcutHint": "bue hwehwɛ"
+      "shortcutHint": "bue hwehwɛ",
+      "resultsLabel": "Hwehwɛ nsɛm",
+      "resultsFound": "Nsɛm {count} bɛhunu",
+      "navigate": "fa kwan",
+      "select": "yi"
     }
   },
   "contact": {

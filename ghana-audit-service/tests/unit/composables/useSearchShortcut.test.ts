@@ -9,29 +9,37 @@ vi.stubGlobal('useState', vi.fn((_key: string, init: () => boolean) => {
   return mockState
 }))
 
-describe('useSearchShortcut', () => {
-  let cleanup: (() => void) | undefined
+let mountedCb: (() => void) | undefined
+let unmountedCb: (() => void) | undefined
+vi.stubGlobal('onMounted', vi.fn((cb: () => void) => { mountedCb = cb }))
+vi.stubGlobal('onUnmounted', vi.fn((cb: () => void) => { unmountedCb = cb }))
 
+describe('useSearchShortcut', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     vi.resetModules()
     mockState.value = false
+    mountedCb = undefined
+    unmountedCb = undefined
   })
 
   afterEach(() => {
-    cleanup?.()
-    cleanup = undefined
+    unmountedCb?.()
   })
 
-  it('should toggle palette open on Ctrl+K', async () => {
+  async function setup() {
     const { useSearchShortcut } = await import('../../../composables/useSearchShortcut')
-    const { isOpen, destroy } = useSearchShortcut()
-    cleanup = destroy
+    const result = useSearchShortcut()
+    mountedCb?.()
+    return result
+  }
+
+  it('should toggle palette open on Ctrl+K', async () => {
+    const { isOpen } = await setup()
 
     expect(isOpen.value).toBe(false)
 
     const event = new KeyboardEvent('keydown', { key: 'k', ctrlKey: true })
-    Object.defineProperty(event, 'defaultPrevented', { value: false })
     vi.spyOn(event, 'preventDefault')
     window.dispatchEvent(event)
 
@@ -40,9 +48,7 @@ describe('useSearchShortcut', () => {
   })
 
   it('should toggle palette open on Meta+K (Mac)', async () => {
-    const { useSearchShortcut } = await import('../../../composables/useSearchShortcut')
-    const { isOpen, destroy } = useSearchShortcut()
-    cleanup = destroy
+    const { isOpen } = await setup()
 
     const event = new KeyboardEvent('keydown', { key: 'k', metaKey: true })
     vi.spyOn(event, 'preventDefault')
@@ -52,9 +58,7 @@ describe('useSearchShortcut', () => {
   })
 
   it('should close palette on Escape when open', async () => {
-    const { useSearchShortcut } = await import('../../../composables/useSearchShortcut')
-    const { isOpen, destroy } = useSearchShortcut()
-    cleanup = destroy
+    const { isOpen } = await setup()
 
     isOpen.value = true
 
@@ -65,9 +69,7 @@ describe('useSearchShortcut', () => {
   })
 
   it('should not toggle when focus is on an input element', async () => {
-    const { useSearchShortcut } = await import('../../../composables/useSearchShortcut')
-    const { isOpen, destroy } = useSearchShortcut()
-    cleanup = destroy
+    const { isOpen } = await setup()
 
     const input = document.createElement('input')
     document.body.appendChild(input)
@@ -86,9 +88,7 @@ describe('useSearchShortcut', () => {
   })
 
   it('should not toggle when focus is on a textarea', async () => {
-    const { useSearchShortcut } = await import('../../../composables/useSearchShortcut')
-    const { isOpen, destroy } = useSearchShortcut()
-    cleanup = destroy
+    const { isOpen } = await setup()
 
     const textarea = document.createElement('textarea')
     document.body.appendChild(textarea)
@@ -103,5 +103,40 @@ describe('useSearchShortcut', () => {
 
     expect(isOpen.value).toBe(false)
     document.body.removeChild(textarea)
+  })
+
+  it('should allow Ctrl+K from within a dialog (toggle close)', async () => {
+    const { isOpen } = await setup()
+    isOpen.value = true
+
+    const dialog = document.createElement('div')
+    dialog.setAttribute('role', 'dialog')
+    document.body.appendChild(dialog)
+    const input = document.createElement('input')
+    dialog.appendChild(input)
+    input.focus()
+
+    const event = new KeyboardEvent('keydown', {
+      key: 'k',
+      ctrlKey: true,
+      bubbles: true
+    })
+    vi.spyOn(event, 'preventDefault')
+    window.dispatchEvent(event)
+
+    expect(event.preventDefault).toHaveBeenCalled()
+    expect(isOpen.value).toBe(false)
+    document.body.removeChild(dialog)
+  })
+
+  it('should clean up listener on unmount', async () => {
+    const { isOpen } = await setup()
+
+    unmountedCb?.()
+
+    const event = new KeyboardEvent('keydown', { key: 'k', ctrlKey: true })
+    window.dispatchEvent(event)
+
+    expect(isOpen.value).toBe(false)
   })
 })
