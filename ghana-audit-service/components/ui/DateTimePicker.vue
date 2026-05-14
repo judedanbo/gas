@@ -75,7 +75,9 @@ function syncFromModel() {
   workingHours.value = parsed.hours
   workingMinutes.value = parsed.minutes
 
-  if (parsed.date) {
+  // Only reset the calendar view when the popover is closed,
+  // so navigating to a different month isn't undone by time changes
+  if (parsed.date && !isOpen.value) {
     viewMonth.value = parsed.date.getMonth()
     viewYear.value = parsed.date.getFullYear()
   }
@@ -253,7 +255,7 @@ function handleMinutesUpdate(minutes: number) {
     </div>
 
     <!-- Picker Popover -->
-    <UiDateTimePickerPickerPopover
+    <UiDateTimePickerPopover
       :show="isOpen"
       :trigger-ref="triggerRef"
       @close="closePicker"
@@ -287,6 +289,6 @@ function handleMinutesUpdate(minutes: number) {
           @update:minutes="handleMinutesUpdate"
         />
       </div>
-    </UiDateTimePickerPickerPopover>
+    </UiDateTimePickerPopover>
   </AdminFormGroup>
 </template>
