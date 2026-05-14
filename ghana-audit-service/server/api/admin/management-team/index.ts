@@ -118,12 +118,12 @@ async function handleCreate(event: H3Event) {
     await connection.beginTransaction()
 
     const [result] = await connection.execute(
-      `INSERT INTO management_team (slug, role, regional_office_id, department_id, icon, photo, email, phone, display_order, is_active)
+      `INSERT INTO management_team (slug, role, office_id, department_id, icon, photo, email, phone, display_order, is_active)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         input.slug,
         input.role,
-        input.regionalOfficeId || null,
+        input.officeId || null,
         input.departmentId || null,
         input.icon || null,
         input.photo || null,

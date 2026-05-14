@@ -155,8 +155,8 @@ export interface ManagementTeamMember {
   responsibilities: string[]
   order: number
   isActive: boolean
-  regionalOfficeId?: number
-  regionalOfficeName?: string
+  officeId?: number
+  officeName?: string
   departmentId?: number
   departmentName?: string
 }
@@ -214,9 +214,10 @@ export interface ContactFormData {
   message: string
 }
 
-export interface RegionalOffice {
+export interface Office {
   id: string
   name: string
+  type: string
   region: string
   address: string
   phone?: string
@@ -226,6 +227,9 @@ export interface RegionalOffice {
     lng: number
   }
 }
+
+/** @deprecated Use Office instead */
+export type RegionalOffice = Office
 
 // ============================================
 // Statistics Types

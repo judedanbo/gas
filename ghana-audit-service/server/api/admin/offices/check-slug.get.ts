@@ -18,15 +18,14 @@ export default defineEventHandler(async (event) => {
 
   const db = getDatabase()
 
-  // Check if slug exists
-  const conditions = [eq(schema.regionalOffices.slug, slug)]
+  const conditions = [eq(schema.offices.slug, slug)]
   if (excludeId) {
-    conditions.push(ne(schema.regionalOffices.id, excludeId))
+    conditions.push(ne(schema.offices.id, excludeId))
   }
 
   const [existing] = await db
-    .select({ id: schema.regionalOffices.id })
-    .from(schema.regionalOffices)
+    .select({ id: schema.offices.id })
+    .from(schema.offices)
     .where(and(...conditions))
     .limit(1)
 
@@ -34,21 +33,20 @@ export default defineEventHandler(async (event) => {
     return { available: true }
   }
 
-  // Slug is taken, find a suggestion
   let suggestion = slug
   let counter = 2
 
   while (counter <= 100) {
     suggestion = `${slug}-${counter}`
 
-    const suggestionConditions = [eq(schema.regionalOffices.slug, suggestion)]
+    const suggestionConditions = [eq(schema.offices.slug, suggestion)]
     if (excludeId) {
-      suggestionConditions.push(ne(schema.regionalOffices.id, excludeId))
+      suggestionConditions.push(ne(schema.offices.id, excludeId))
     }
 
     const [suggestionExists] = await db
-      .select({ id: schema.regionalOffices.id })
-      .from(schema.regionalOffices)
+      .select({ id: schema.offices.id })
+      .from(schema.offices)
       .where(and(...suggestionConditions))
       .limit(1)
 

@@ -11,7 +11,7 @@ import {
   foreignKey
 } from 'drizzle-orm/mysql-core'
 import { sql } from 'drizzle-orm'
-import { regionalOffices } from './regional-offices'
+import { offices } from './offices'
 
 /**
  * Departments table - Organizational units
@@ -211,7 +211,7 @@ export const managementTeam = mysqlTable(
       'deputy-auditor-general',
       'regional-auditor'
     ]).notNull(),
-    regionalOfficeId: int('regional_office_id').references(() => regionalOffices.id, {
+    officeId: int('office_id').references(() => offices.id, {
       onDelete: 'set null'
     }),
     departmentId: int('department_id').references(() => departments.id, {
@@ -235,7 +235,7 @@ export const managementTeam = mysqlTable(
     index('idx_management_team_slug').on(table.slug),
     index('idx_management_team_role').on(table.role),
     index('idx_management_team_active').on(table.isActive),
-    index('idx_management_team_regional_office').on(table.regionalOfficeId),
+    index('idx_management_team_office').on(table.officeId),
     index('idx_management_team_department').on(table.departmentId)
   ]
 )

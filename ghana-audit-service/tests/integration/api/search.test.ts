@@ -44,8 +44,8 @@ const SCHEMA_TABLE_NAMES = [
   'galleryAlbumTranslations',
   'managementTeam',
   'managementTeamTranslations',
-  'regionalOffices',
-  'regionalOfficeTranslations'
+  'offices',
+  'officeTranslations'
 ] as const
 
 function tableKey(table: unknown): string {
@@ -652,9 +652,9 @@ describe('Search API', () => {
       expect(result.data[0].publishedAt).toBeUndefined()
     })
 
-    it('searches regional offices and links to /contact', async () => {
+    it('searches offices and links to /contact', async () => {
       const schema = await importSchemaTags()
-      tableResults.set(schema.regionalOffices, [
+      tableResults.set(schema.offices, [
         {
           baseId: 1,
           region: 'Greater Accra',

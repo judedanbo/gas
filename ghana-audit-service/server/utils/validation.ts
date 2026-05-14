@@ -283,7 +283,7 @@ export const managementTeamSchema = z
   .object({
     slug: slugSchema,
     role: z.enum(['auditor-general', 'deputy-auditor-general', 'regional-auditor']),
-    regionalOfficeId: z.number().optional().nullable(),
+    officeId: z.number().optional().nullable(),
     departmentId: z.number().optional().nullable(),
     icon: z.string().max(100).optional().nullable(),
     photo: z.string().max(500).optional().nullable(),
@@ -311,13 +311,13 @@ export const managementTeamSchema = z
   .refine(
     (data) => {
       if (data.role === 'regional-auditor') {
-        return data.regionalOfficeId !== null && data.regionalOfficeId !== undefined
+        return data.officeId !== null && data.officeId !== undefined
       }
       return true
     },
     {
-      message: 'Regional auditors must be assigned to a regional office',
-      path: ['regionalOfficeId']
+      message: 'Regional auditors must be assigned to an office',
+      path: ['officeId']
     }
   )
   .refine(
@@ -333,9 +333,10 @@ export const managementTeamSchema = z
     }
   )
 
-// Regional Offices
-export const regionalOfficeSchema = z.object({
+// Offices
+export const officeSchema = z.object({
   slug: slugSchema,
+  typeId: z.number().min(1),
   region: z.string().min(1).max(100),
   phone: z.string().max(50).optional().nullable(),
   email: z.string().email().max(255).optional().nullable(),
@@ -409,7 +410,7 @@ export type DepartmentInput = z.infer<typeof departmentSchema>
 export type TeamMemberInput = z.infer<typeof teamMemberSchema>
 export type PastAGInput = z.infer<typeof pastAGSchema>
 export type ManagementTeamInput = z.infer<typeof managementTeamSchema>
-export type RegionalOfficeInput = z.infer<typeof regionalOfficeSchema>
+export type OfficeInput = z.infer<typeof officeSchema>
 export type GalleryImageInput = z.infer<typeof galleryImageSchema>
 export type VideoInput = z.infer<typeof videoSchema>
 export type TagInput = z.infer<typeof tagSchema>

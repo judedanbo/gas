@@ -117,7 +117,7 @@ describe('API Routes Exist', () => {
     'server/api/gallery.ts',
     'server/api/videos.ts',
     'server/api/tenders.ts',
-    'server/api/regional-offices.ts',
+    'server/api/offices.ts',
     'server/api/newsletter.post.ts',
     'server/api/csrf.get.ts'
   ]

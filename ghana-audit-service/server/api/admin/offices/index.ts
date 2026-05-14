@@ -7,11 +7,7 @@ import {
   buildPaginationMeta
 } from '../../../utils/adminHelpers'
 import { logAuditAction, sanitizeForAudit } from '../../../utils/auditLogger'
-import {
-  regionalOfficeSchema,
-  validateBody,
-  createValidationError
-} from '../../../utils/validation'
+import { officeSchema, validateBody, createValidationError } from '../../../utils/validation'
 
 export default defineEventHandler(async (event) => {
   const method = event.method
@@ -30,20 +26,20 @@ async function handleList(event: H3Event) {
   const db = getDatabase()
 
   const conditions = []
-  if (query.includeDeleted !== 'true') conditions.push(isNull(schema.regionalOffices.deletedAt))
+  if (query.includeDeleted !== 'true') conditions.push(isNull(schema.offices.deletedAt))
 
   const whereClause = conditions.length > 0 ? and(...conditions) : undefined
 
   const [{ count }] = await db
     .select({ count: sql<number>`count(*)` })
-    .from(schema.regionalOffices)
+    .from(schema.offices)
     .where(whereClause)
 
   const offices = await db
     .select()
-    .from(schema.regionalOffices)
+    .from(schema.offices)
     .where(whereClause)
-    .orderBy(asc(schema.regionalOffices.displayOrder))
+    .orderBy(asc(schema.offices.displayOrder))
     .limit(perPage)
     .offset(offset)
 
@@ -52,11 +48,21 @@ async function handleList(event: H3Event) {
     officeIds.length > 0
       ? await db
           .select()
-          .from(schema.regionalOfficeTranslations)
+          .from(schema.officeTranslations)
           .where(
-            sql`${schema.regionalOfficeTranslations.officeId} IN (${sql.join(officeIds, sql`, `)})`
+            sql`${schema.officeTranslations.officeId} IN (${sql.join(officeIds, sql`, `)})`
           )
       : []
+
+  const typeIds = [...new Set(offices.map((o) => o.typeId))]
+  const types =
+    typeIds.length > 0
+      ? await db
+          .select()
+          .from(schema.officeTypes)
+          .where(sql`${schema.officeTypes.id} IN (${sql.join(typeIds, sql`, `)})`)
+      : []
+  const typeMap = Object.fromEntries(types.map((t) => [t.id, t.name]))
 
   const translationsByOffice = translations.reduce(
     (acc, t) => {
@@ -67,7 +73,11 @@ async function handleList(event: H3Event) {
     {} as Record<number, Record<string, { name: string; address: string | null }>>
   )
 
-  const data = offices.map((o) => ({ ...o, translations: translationsByOffice[o.id] || {} }))
+  const data = offices.map((o) => ({
+    ...o,
+    typeName: typeMap[o.typeId] || '',
+    translations: translationsByOffice[o.id] || {}
+  }))
 
   return { data, meta: buildPaginationMeta(Number(count), page, perPage) }
 }
@@ -76,13 +86,13 @@ async function handleCreate(event: H3Event) {
   requirePermission(event, 'create')
 
   const body = await readBody(event)
-  const input = validateBody(regionalOfficeSchema, body)
+  const input = validateBody(officeSchema, body)
   const db = getDatabase()
 
   const [existing] = await db
-    .select({ id: schema.regionalOffices.id })
-    .from(schema.regionalOffices)
-    .where(eq(schema.regionalOffices.slug, input.slug))
+    .select({ id: schema.offices.id })
+    .from(schema.offices)
+    .where(eq(schema.offices.slug, input.slug))
     .limit(1)
 
   if (existing) throw createValidationError({ slug: 'Slug already exists' })
@@ -94,9 +104,10 @@ async function handleCreate(event: H3Event) {
     await connection.beginTransaction()
 
     const [result] = await connection.execute(
-      `INSERT INTO regional_offices (slug, region, phone, email, latitude, longitude, display_order) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO offices (slug, type_id, region, phone, email, latitude, longitude, display_order) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         input.slug,
+        input.typeId,
         input.region,
         input.phone || null,
         input.email || null,
@@ -111,7 +122,7 @@ async function handleCreate(event: H3Event) {
     for (const [locale, trans] of Object.entries(input.translations)) {
       if (trans) {
         await connection.execute(
-          `INSERT INTO regional_office_translations (office_id, locale, name, address) VALUES (?, ?, ?, ?)`,
+          `INSERT INTO office_translations (office_id, locale, name, address) VALUES (?, ?, ?, ?)`,
           [officeId, locale, trans.name, trans.address || null]
         )
       }
@@ -121,14 +132,14 @@ async function handleCreate(event: H3Event) {
 
     const [office] = await db
       .select()
-      .from(schema.regionalOffices)
-      .where(eq(schema.regionalOffices.id, officeId))
+      .from(schema.offices)
+      .where(eq(schema.offices.id, officeId))
       .limit(1)
 
     const translations = await db
       .select()
-      .from(schema.regionalOfficeTranslations)
-      .where(eq(schema.regionalOfficeTranslations.officeId, officeId))
+      .from(schema.officeTranslations)
+      .where(eq(schema.officeTranslations.officeId, officeId))
 
     const translationsMap = translations.reduce(
       (acc, t) => {
@@ -138,7 +149,7 @@ async function handleCreate(event: H3Event) {
       {} as Record<string, { name: string; address: string | null }>
     )
 
-    await logAuditAction(event, 'create', 'regional_office', officeId, {
+    await logAuditAction(event, 'create', 'office', officeId, {
       after: sanitizeForAudit({ ...office, translations: translationsMap })
     })
 

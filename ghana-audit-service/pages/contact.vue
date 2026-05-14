@@ -258,96 +258,144 @@
       </div>
     </section>
 
-    <!-- Regional Offices -->
+    <!-- Offices by Region -->
     <section class="section bg-gray-50 dark:bg-gray-900">
       <div class="container">
         <UiSectionHeader
-          title="Regional Offices"
+          title="Our Offices Nationwide"
           description="Find a Ghana Audit Service office near you"
         />
 
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div class="space-y-8">
           <div
-            v-for="(office, index) in regionalOffices"
-            :key="office.id"
-            class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6 hover:border-primary hover:shadow-lg transition-all"
-            :class="{ 'hidden md:block': !showAllOffices && index >= 6 }"
+            v-for="group in groupedOffices"
+            :key="group.region"
+            class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden"
           >
-            <h4 class="font-semibold text-gray-900 dark:text-white mb-1">{{ office.name }}</h4>
-            <p class="text-sm text-primary dark:text-primary-light mb-3">
-              {{ office.region }} Region
-            </p>
+            <!-- Region Header with Regional Office -->
+            <div class="bg-primary/5 dark:bg-primary/10 border-b border-gray-200 dark:border-gray-700">
+              <button
+                class="w-full flex items-center justify-between p-5 text-left"
+                :aria-expanded="isRegionExpanded(group.region)"
+                @click="toggleRegion(group.region)"
+              >
+                <div class="flex items-center gap-3">
+                  <div class="w-10 h-10 rounded-lg bg-primary/10 dark:bg-primary/20 flex items-center justify-center flex-shrink-0">
+                    <Icon name="heroicons:map-pin" class="w-5 h-5 text-primary dark:text-primary-light" aria-hidden="true" />
+                  </div>
+                  <div>
+                    <h3 class="text-lg font-heading font-bold text-gray-900 dark:text-white">
+                      {{ group.region }} Region
+                    </h3>
+                    <p class="text-sm text-gray-500 dark:text-gray-400">
+                      {{ group.districtOffices.length + (group.regionalOffice ? 1 : 0) }}
+                      {{ group.districtOffices.length + (group.regionalOffice ? 1 : 0) === 1 ? 'office' : 'offices' }}
+                    </p>
+                  </div>
+                </div>
+                <svg
+                  class="w-5 h-5 text-gray-500 transition-transform duration-200"
+                  :class="{ 'rotate-180': isRegionExpanded(group.region) }"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
 
-            <div class="space-y-2 text-sm text-gray-600 dark:text-gray-400">
-              <p class="flex items-start gap-2">
-                <svg
-                  class="w-4 h-4 text-gray-400 mt-0.5 flex-shrink-0"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
-                  />
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
-                  />
-                </svg>
-                <span>{{ office.address }}</span>
+              <!-- Regional Office (always visible as the prominent card) -->
+              <div v-if="group.regionalOffice" class="px-5 pb-5">
+                <div class="bg-white dark:bg-gray-900 rounded-lg border-2 border-primary/30 dark:border-primary/40 p-5 shadow-sm">
+                  <div class="flex items-start justify-between gap-4">
+                    <div class="flex-1">
+                      <div class="flex items-center gap-2 mb-2">
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary-light">
+                          Regional Office
+                        </span>
+                      </div>
+                      <h4 class="text-base font-semibold text-gray-900 dark:text-white mb-3">
+                        {{ group.regionalOffice.name }}
+                      </h4>
+                      <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2 text-sm text-gray-600 dark:text-gray-400">
+                        <p class="flex items-start gap-2">
+                          <Icon name="heroicons:map-pin" class="w-4 h-4 text-gray-400 mt-0.5 flex-shrink-0" aria-hidden="true" />
+                          <span>{{ group.regionalOffice.address }}</span>
+                        </p>
+                        <div class="space-y-2">
+                          <p v-if="group.regionalOffice.phone" class="flex items-center gap-2">
+                            <Icon name="heroicons:phone" class="w-4 h-4 text-gray-400 flex-shrink-0" aria-hidden="true" />
+                            <span>{{ group.regionalOffice.phone }}</span>
+                          </p>
+                          <p v-if="group.regionalOffice.email" class="flex items-center gap-2">
+                            <Icon name="heroicons:envelope" class="w-4 h-4 text-gray-400 flex-shrink-0" aria-hidden="true" />
+                            <a
+                              :href="`mailto:${group.regionalOffice.email}`"
+                              class="text-primary dark:text-primary-light hover:text-primary-dark dark:hover:text-primary"
+                            >{{ group.regionalOffice.email }}</a>
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- District Offices (collapsible) -->
+            <div
+              v-if="group.districtOffices.length > 0"
+              v-show="isRegionExpanded(group.region)"
+              class="p-5"
+            >
+              <p class="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-3">
+                District Offices
               </p>
-              <p v-if="office.phone" class="flex items-center gap-2">
-                <svg
-                  class="w-4 h-4 text-gray-400 flex-shrink-0"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
+              <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div
+                  v-for="office in group.districtOffices"
+                  :key="office.id"
+                  class="rounded-lg border border-gray-200 dark:border-gray-700 p-4 hover:border-primary/50 transition-colors"
                 >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"
-                  />
-                </svg>
-                <span>{{ office.phone }}</span>
-              </p>
-              <p v-if="office.email" class="flex items-center gap-2">
-                <svg
-                  class="w-4 h-4 text-gray-400 flex-shrink-0"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
-                  />
-                </svg>
-                <a
-                  :href="`mailto:${office.email}`"
-                  class="text-primary dark:text-primary-light hover:text-primary-dark dark:hover:text-primary"
-                  >{{ office.email }}</a
-                >
-              </p>
+                  <h5 class="font-medium text-gray-900 dark:text-white text-sm mb-2">
+                    {{ office.name }}
+                  </h5>
+                  <div class="space-y-1.5 text-xs text-gray-600 dark:text-gray-400">
+                    <p class="flex items-start gap-1.5">
+                      <Icon name="heroicons:map-pin" class="w-3.5 h-3.5 text-gray-400 mt-0.5 flex-shrink-0" aria-hidden="true" />
+                      <span>{{ office.address }}</span>
+                    </p>
+                    <p v-if="office.phone" class="flex items-center gap-1.5">
+                      <Icon name="heroicons:phone" class="w-3.5 h-3.5 text-gray-400 flex-shrink-0" aria-hidden="true" />
+                      <span>{{ office.phone }}</span>
+                    </p>
+                    <p v-if="office.email" class="flex items-center gap-1.5">
+                      <Icon name="heroicons:envelope" class="w-3.5 h-3.5 text-gray-400 flex-shrink-0" aria-hidden="true" />
+                      <a
+                        :href="`mailto:${office.email}`"
+                        class="text-primary dark:text-primary-light hover:text-primary-dark dark:hover:text-primary"
+                      >{{ office.email }}</a>
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Expand prompt when collapsed and has district offices -->
+            <div
+              v-if="group.districtOffices.length > 0"
+              v-show="!isRegionExpanded(group.region)"
+              class="px-5 py-3 border-t border-gray-100 dark:border-gray-700/50"
+            >
+              <button
+                class="text-sm text-primary dark:text-primary-light hover:underline"
+                @click="toggleRegion(group.region)"
+              >
+                View {{ group.districtOffices.length }} district
+                {{ group.districtOffices.length === 1 ? 'office' : 'offices' }}
+              </button>
             </div>
           </div>
-        </div>
-
-        <div v-if="regionalOffices && regionalOffices.length > 6" class="text-center mt-6 md:hidden">
-          <button
-            class="btn-outline btn-sm"
-            @click="showAllOffices = !showAllOffices"
-          >
-            {{ showAllOffices ? 'Show Less' : `Show All ${regionalOffices.length} Offices` }}
-          </button>
         </div>
       </div>
     </section>
@@ -389,7 +437,7 @@
 </template>
 
 <script setup lang="ts">
-  import type { RegionalOffice, ContactFormData } from '~/types'
+  import type { Office, ContactFormData } from '~/types'
 
   // SEO
   useSeoMeta({
@@ -433,9 +481,53 @@
     }
   })
 
-  // Fetch regional offices
-  const { data: regionalOffices } = await useFetch<RegionalOffice[]>('/api/regional-offices')
-  const showAllOffices = ref(false)
+  // Fetch offices
+  const { data: offices } = await useFetch<Office[]>('/api/offices')
+  const expandedRegions = ref<Set<string>>(new Set())
+
+  interface RegionGroup {
+    region: string
+    regionalOffice: Office | undefined
+    districtOffices: Office[]
+  }
+
+  const groupedOffices = computed<RegionGroup[]>(() => {
+    if (!offices.value) return []
+
+    const map = new Map<string, { regional: Office | undefined; districts: Office[] }>()
+
+    for (const office of offices.value) {
+      if (!map.has(office.region)) {
+        map.set(office.region, { regional: undefined, districts: [] })
+      }
+      const group = map.get(office.region)!
+      if (office.type === 'Regional Office') {
+        group.regional = office
+      } else {
+        group.districts.push(office)
+      }
+    }
+
+    return Array.from(map.entries())
+      .map(([region, { regional, districts }]) => ({
+        region,
+        regionalOffice: regional,
+        districtOffices: districts
+      }))
+      .sort((a, b) => a.region.localeCompare(b.region))
+  })
+
+  function toggleRegion(region: string) {
+    if (expandedRegions.value.has(region)) {
+      expandedRegions.value.delete(region)
+    } else {
+      expandedRegions.value.add(region)
+    }
+  }
+
+  function isRegionExpanded(region: string) {
+    return expandedRegions.value.has(region)
+  }
 
   // FAQ data
   const faqs = [

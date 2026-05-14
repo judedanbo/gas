@@ -189,7 +189,7 @@
             <template #description>
               <p class="text-xs text-gray-400 dark:text-gray-500 mb-1">{{ auditor.title }}</p>
               <p class="text-xs text-primary dark:text-primary-light font-semibold m-0">
-                {{ auditor.regionalOfficeName }}
+                {{ auditor.officeName }}
               </p>
             </template>
           </UiInfoCard>

@@ -157,7 +157,7 @@
               </div>
             </div>
           </div>
-          <div class="bg-gray-100 dark:bg-gray-800 rounded-lg p-6">
+          <div v-if="isAuthenticated()" class="bg-gray-100 dark:bg-gray-800 rounded-lg p-6">
             <h3 class="mb-2 font-semibold text-gray-900 dark:text-white">AMIS Audit Manuals</h3>
             <p class="text-gray-600 dark:text-gray-400 text-sm mb-4">
               Our audit methodology is documented in comprehensive manuals:
@@ -200,6 +200,8 @@
 </template>
 
 <script setup lang="ts">
+  const { isAuthenticated } = useAdminAuth()
+
   useHead({ title: 'Departmental Profile' })
 
   useSeoMeta({

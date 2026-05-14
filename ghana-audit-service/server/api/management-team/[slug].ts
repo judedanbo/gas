@@ -76,11 +76,11 @@ export default defineEventHandler(async (event): Promise<ManagementTeamMember> =
           .from(schema.departments)
           .where(eq(schema.departments.id, member.departmentId))
       : Promise.resolve([]),
-    member.regionalOfficeId
+    member.officeId
       ? db
           .select()
-          .from(schema.regionalOffices)
-          .where(eq(schema.regionalOffices.id, member.regionalOfficeId))
+          .from(schema.offices)
+          .where(eq(schema.offices.id, member.officeId))
       : Promise.resolve([]),
   ])
 
@@ -109,8 +109,8 @@ export default defineEventHandler(async (event): Promise<ManagementTeamMember> =
     officeResult.length > 0
       ? db
           .select()
-          .from(schema.regionalOfficeTranslations)
-          .where(eq(schema.regionalOfficeTranslations.officeId, officeResult[0].id))
+          .from(schema.officeTranslations)
+          .where(eq(schema.officeTranslations.officeId, officeResult[0].id))
       : Promise.resolve([]),
   ])
 
@@ -126,7 +126,7 @@ export default defineEventHandler(async (event): Promise<ManagementTeamMember> =
     department = { id: deptResult[0].id, translations: deptTranslationsByLocale }
   }
 
-  let regionalOffice:
+  let office:
     | { id: number; region: string; translations: Record<string, { name: string }> }
     | undefined
   if (officeResult.length > 0) {
@@ -137,7 +137,7 @@ export default defineEventHandler(async (event): Promise<ManagementTeamMember> =
       },
       {} as Record<string, { name: string }>
     )
-    regionalOffice = {
+    office = {
       id: officeResult[0].id,
       region: officeResult[0].region,
       translations: officeTranslationsByLocale,
@@ -149,7 +149,7 @@ export default defineEventHandler(async (event): Promise<ManagementTeamMember> =
     translations: translationsByLocale,
     responsibilities: responsibilitiesWithTranslations,
     department,
-    regionalOffice,
+    regionalOffice: office,
   }
 
   return transformManagementTeamMember(memberWithData, locale)

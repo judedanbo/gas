@@ -3,11 +3,7 @@ import { eq, and, isNull } from 'drizzle-orm'
 import { getDatabase, schema } from '../../../database'
 import { requirePermission, isAdmin } from '../../../utils/adminHelpers'
 import { logAuditAction, createChangesObject, sanitizeForAudit } from '../../../utils/auditLogger'
-import {
-  regionalOfficeSchema,
-  validateBody,
-  createValidationError
-} from '../../../utils/validation'
+import { officeSchema, validateBody, createValidationError } from '../../../utils/validation'
 
 export default defineEventHandler(async (event) => {
   const method = event.method
@@ -26,12 +22,12 @@ async function handleGet(event: H3Event, id: number) {
   requirePermission(event, 'read')
   const db = getDatabase()
 
-  const conditions = [eq(schema.regionalOffices.id, id)]
-  if (!isAdmin(event)) conditions.push(isNull(schema.regionalOffices.deletedAt))
+  const conditions = [eq(schema.offices.id, id)]
+  if (!isAdmin(event)) conditions.push(isNull(schema.offices.deletedAt))
 
   const [office] = await db
     .select()
-    .from(schema.regionalOffices)
+    .from(schema.offices)
     .where(and(...conditions))
     .limit(1)
 
@@ -40,8 +36,8 @@ async function handleGet(event: H3Event, id: number) {
 
   const translations = await db
     .select()
-    .from(schema.regionalOfficeTranslations)
-    .where(eq(schema.regionalOfficeTranslations.officeId, id))
+    .from(schema.officeTranslations)
+    .where(eq(schema.officeTranslations.officeId, id))
 
   const translationsMap = translations.reduce(
     (acc, t) => {
@@ -62,8 +58,8 @@ async function handleUpdate(event: H3Event, id: number) {
 
   const [existing] = await db
     .select()
-    .from(schema.regionalOffices)
-    .where(and(eq(schema.regionalOffices.id, id), isNull(schema.regionalOffices.deletedAt)))
+    .from(schema.offices)
+    .where(and(eq(schema.offices.id, id), isNull(schema.offices.deletedAt)))
     .limit(1)
 
   if (!existing)
@@ -71,8 +67,8 @@ async function handleUpdate(event: H3Event, id: number) {
 
   const existingTranslations = await db
     .select()
-    .from(schema.regionalOfficeTranslations)
-    .where(eq(schema.regionalOfficeTranslations.officeId, id))
+    .from(schema.officeTranslations)
+    .where(eq(schema.officeTranslations.officeId, id))
 
   const existingTransMap = existingTranslations.reduce(
     (acc, t) => {
@@ -82,13 +78,13 @@ async function handleUpdate(event: H3Event, id: number) {
     {} as Record<string, { id: number; name: string; address: string | null }>
   )
 
-  const input = validateBody(regionalOfficeSchema, body)
+  const input = validateBody(officeSchema, body)
 
   if (input.slug !== existing.slug) {
     const [duplicate] = await db
-      .select({ id: schema.regionalOffices.id })
-      .from(schema.regionalOffices)
-      .where(eq(schema.regionalOffices.slug, input.slug))
+      .select({ id: schema.offices.id })
+      .from(schema.offices)
+      .where(eq(schema.offices.slug, input.slug))
       .limit(1)
     if (duplicate) throw createValidationError({ slug: 'Slug already exists' })
   }
@@ -100,9 +96,10 @@ async function handleUpdate(event: H3Event, id: number) {
     await connection.beginTransaction()
 
     await connection.execute(
-      `UPDATE regional_offices SET slug = ?, region = ?, phone = ?, email = ?, latitude = ?, longitude = ?, display_order = ? WHERE id = ?`,
+      `UPDATE offices SET slug = ?, type_id = ?, region = ?, phone = ?, email = ?, latitude = ?, longitude = ?, display_order = ? WHERE id = ?`,
       [
         input.slug,
+        input.typeId,
         input.region,
         input.phone || null,
         input.email || null,
@@ -118,12 +115,12 @@ async function handleUpdate(event: H3Event, id: number) {
         const existingTrans = existingTransMap[locale]
         if (existingTrans) {
           await connection.execute(
-            `UPDATE regional_office_translations SET name = ?, address = ? WHERE id = ?`,
+            `UPDATE office_translations SET name = ?, address = ? WHERE id = ?`,
             [trans.name, trans.address || null, existingTrans.id]
           )
         } else {
           await connection.execute(
-            `INSERT INTO regional_office_translations (office_id, locale, name, address) VALUES (?, ?, ?, ?)`,
+            `INSERT INTO office_translations (office_id, locale, name, address) VALUES (?, ?, ?, ?)`,
             [id, locale, trans.name, trans.address || null]
           )
         }
@@ -134,14 +131,14 @@ async function handleUpdate(event: H3Event, id: number) {
 
     const [updated] = await db
       .select()
-      .from(schema.regionalOffices)
-      .where(eq(schema.regionalOffices.id, id))
+      .from(schema.offices)
+      .where(eq(schema.offices.id, id))
       .limit(1)
 
     const translations = await db
       .select()
-      .from(schema.regionalOfficeTranslations)
-      .where(eq(schema.regionalOfficeTranslations.officeId, id))
+      .from(schema.officeTranslations)
+      .where(eq(schema.officeTranslations.officeId, id))
 
     const translationsMap = translations.reduce(
       (acc, t) => {
@@ -156,7 +153,7 @@ async function handleUpdate(event: H3Event, id: number) {
     await logAuditAction(
       event,
       'update',
-      'regional_office',
+      'office',
       id,
       createChangesObject(before as Record<string, unknown>, after as Record<string, unknown>)
     )
@@ -176,21 +173,21 @@ async function handleDelete(event: H3Event, id: number) {
 
   const [existing] = await db
     .select()
-    .from(schema.regionalOffices)
-    .where(and(eq(schema.regionalOffices.id, id), isNull(schema.regionalOffices.deletedAt)))
+    .from(schema.offices)
+    .where(and(eq(schema.offices.id, id), isNull(schema.offices.deletedAt)))
     .limit(1)
 
   if (!existing)
     throw createError({ statusCode: 404, statusMessage: 'Not Found', message: 'Office not found' })
 
   await db
-    .update(schema.regionalOffices)
+    .update(schema.offices)
     .set({ deletedAt: new Date() })
-    .where(eq(schema.regionalOffices.id, id))
+    .where(eq(schema.offices.id, id))
 
-  await logAuditAction(event, 'delete', 'regional_office', id, {
+  await logAuditAction(event, 'delete', 'office', id, {
     before: sanitizeForAudit(existing as Record<string, unknown>)
   })
 
-  return { success: true, message: 'Regional office deleted successfully' }
+  return { success: true, message: 'Office deleted successfully' }
 }

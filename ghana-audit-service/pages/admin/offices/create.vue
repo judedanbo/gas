@@ -2,7 +2,7 @@
   <div>
     <div class="flex items-center gap-4 mb-6">
       <NuxtLink
-        to="/admin/regional-offices"
+        to="/admin/offices"
         class="p-2 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
       >
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -15,8 +15,8 @@
         </svg>
       </NuxtLink>
       <div>
-        <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Add Regional Office</h1>
-        <p class="text-gray-600 dark:text-gray-400 mt-1">Add a new regional office location</p>
+        <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Add Office</h1>
+        <p class="text-gray-600 dark:text-gray-400 mt-1">Add a new office location</p>
       </div>
     </div>
 
@@ -105,6 +105,13 @@
                 </p>
               </div>
               <AdminFormAdminSelect
+                v-model="form.typeId"
+                label="Office Type"
+                :options="officeTypeOptions"
+                required
+                :error="errors.typeId"
+              />
+              <AdminFormAdminSelect
                 v-model="form.region"
                 label="Region"
                 :options="regionOptions"
@@ -156,7 +163,7 @@
       <div
         class="flex items-center justify-end gap-4 pt-6 border-t border-gray-200 dark:border-gray-700"
       >
-        <NuxtLink to="/admin/regional-offices" class="btn btn-ghost">Cancel</NuxtLink>
+        <NuxtLink to="/admin/offices" class="btn btn-ghost">Cancel</NuxtLink>
         <button type="submit" class="btn btn-primary" :disabled="saving">
           {{ saving ? 'Creating...' : 'Add Office' }}
         </button>
@@ -166,30 +173,29 @@
 </template>
 
 <script setup lang="ts">
-  import type { AdminRegionalOffice, RegionalOfficeInput } from '~/types/admin'
+  import type { AdminOffice, OfficeInput } from '~/types/admin'
   definePageMeta({ layout: 'admin' })
 
   const router = useRouter()
-  const { create, saving, error, fieldErrors } =
-    useAdminCrud<AdminRegionalOffice>('regional-offices')
+  const { getList } = useAdminApi()
+  const { create, saving, error, fieldErrors } = useAdminCrud<AdminOffice>('offices')
   const { errors, validate, setErrors, clearFieldError, rules } = useFormValidation()
 
-  // Slug checking state
   const isCheckingSlug = ref(false)
   const isSlugAvailable = ref<boolean | null>(null)
   const slugSuggestion = ref<string | null>(null)
   const slugError = computed(() => {
-    if (isSlugAvailable.value === false) {
-      return 'This slug is already taken'
-    }
+    if (isSlugAvailable.value === false) return 'This slug is already taken'
     return undefined
   })
 
-  // Debounce timer for slug check
   let slugCheckTimeout: ReturnType<typeof setTimeout> | null = null
 
-  const form = reactive<RegionalOfficeInput>({
+  const officeTypesData = ref<{ id: number; slug: string; name: string }[]>([])
+
+  const form = reactive<OfficeInput>({
     slug: '',
+    typeId: 0,
     region: '',
     phone: '',
     email: '',
@@ -202,6 +208,7 @@
   const validationRules = {
     'translations.en.name': [rules.required],
     slug: [rules.required],
+    typeId: [rules.required],
     region: [rules.required],
     email: [rules.email]
   }
@@ -224,6 +231,10 @@
     return result
   })
 
+  const officeTypeOptions = computed(() =>
+    officeTypesData.value.map((t) => ({ value: t.id, label: t.name }))
+  )
+
   const regionOptions = [
     { value: 'Greater Accra', label: 'Greater Accra' },
     { value: 'Ashanti', label: 'Ashanti' },
@@ -244,7 +255,6 @@
     { value: 'Western North', label: 'Western North' }
   ]
 
-  // Generate slug from text
   function generateSlug(text: string): string {
     return text
       .toLowerCase()
@@ -253,7 +263,6 @@
       .replace(/^-|-$/g, '')
   }
 
-  // Check slug availability with debounce
   async function checkSlugAvailability(slug: string) {
     if (!slug) {
       isSlugAvailable.value = null
@@ -267,7 +276,7 @@
 
     try {
       const response = await $fetch<{ available: boolean; suggestion?: string }>(
-        '/api/admin/regional-offices/check-slug',
+        '/api/admin/offices/check-slug',
         { query: { slug } }
       )
       isSlugAvailable.value = response.available
@@ -279,20 +288,15 @@
     }
   }
 
-  // Handle slug input change
   function handleSlugChange(value: string | number) {
     const slugValue = String(value)
 
-    if (slugCheckTimeout) {
-      clearTimeout(slugCheckTimeout)
-    }
-
+    if (slugCheckTimeout) clearTimeout(slugCheckTimeout)
     slugCheckTimeout = setTimeout(() => {
       checkSlugAvailability(slugValue)
     }, 300)
   }
 
-  // Use suggested slug
   function useSlugSuggestion() {
     if (slugSuggestion.value) {
       form.slug = slugSuggestion.value
@@ -301,7 +305,6 @@
     }
   }
 
-  // Auto-generate slug from name
   watch(
     () => form.translations.en?.name,
     (name) => {
@@ -313,12 +316,24 @@
     }
   )
 
+  onMounted(async () => {
+    try {
+      const types = await getList<{ id: number; slug: string; name: string }>('offices/types')
+      officeTypesData.value = (types as unknown as { id: number; slug: string; name: string }[]) || []
+    } catch {
+      // Types will be empty, form validation will catch it
+    }
+  })
+
   async function handleSubmit() {
     if (!validate(form, validationRules)) return
 
-    const result = await create(form)
+    const result = await create({
+      ...form,
+      typeId: Number(form.typeId)
+    })
     if (result) {
-      router.push('/admin/regional-offices')
+      router.push('/admin/offices')
     } else if (fieldErrors.value) {
       setErrors(fieldErrors.value)
     }

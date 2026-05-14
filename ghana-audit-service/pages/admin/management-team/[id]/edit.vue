@@ -180,12 +180,12 @@
                 />
                 <AdminFormAdminSelect
                   v-if="form.role === 'regional-auditor'"
-                  v-model="form.regionalOfficeId"
-                  label="Regional Office"
-                  :options="regionalOfficeOptions"
+                  v-model="form.officeId"
+                  label="Office"
+                  :options="officeOptions"
                   required
-                  :error="errors.regionalOfficeId"
-                  help-text="Select the regional office for this auditor"
+                  :error="errors.officeId"
+                  help-text="Select the office for this auditor"
                 />
                 <AdminFormAdminSelect
                   v-if="form.role === 'deputy-auditor-general'"
@@ -314,7 +314,7 @@
   import type {
     AdminManagementTeamMember,
     ManagementTeamMemberInput,
-    AdminRegionalOffice,
+    AdminOffice,
     AdminDepartment
   } from '~/types/admin'
   definePageMeta({ layout: 'admin' })
@@ -329,12 +329,12 @@
   const { getList } = useAdminApi()
 
   // Fetch regional offices for dropdown
-  const regionalOfficesData = ref<{ data: AdminRegionalOffice[] } | null>(null)
+  const officesData = ref<{ data: AdminOffice[] } | null>(null)
   // Fetch departments for dropdown
   const departmentsData = ref<{ data: AdminDepartment[] } | null>(null)
 
-  const regionalOfficeOptions = computed(() => {
-    return (regionalOfficesData.value?.data || []).map((office) => ({
+  const officeOptions = computed(() => {
+    return (officesData.value?.data || []).map((office) => ({
       value: office.id,
       label: office.translations?.en?.name || office.region
     }))
@@ -364,7 +364,7 @@
   const form = reactive<ManagementTeamMemberInput>({
     slug: '',
     role: 'auditor-general',
-    regionalOfficeId: null,
+    officeId: null,
     departmentId: null,
     icon: '',
     photo: '',
@@ -521,10 +521,10 @@
     // Fetch regional offices and departments for dropdowns
     try {
       const [offices, departments] = await Promise.all([
-        getList<AdminRegionalOffice>('regional-offices'),
+        getList<AdminOffice>('offices'),
         getList<AdminDepartment>('departments')
       ])
-      regionalOfficesData.value = offices
+      officesData.value = offices
       departmentsData.value = departments
     } catch {
       // Silently fail - dropdowns will just be empty
@@ -534,7 +534,7 @@
     if (item) {
       form.slug = item.slug
       form.role = item.role
-      form.regionalOfficeId = item.regionalOfficeId || null
+      form.officeId = item.officeId || null
       form.departmentId = item.departmentId || null
       form.icon = item.icon || ''
       form.photo = item.photo || ''
@@ -560,7 +560,7 @@
     const result = await update(id, {
       ...form,
       displayOrder: Number(form.displayOrder) || 0,
-      regionalOfficeId: form.regionalOfficeId ? Number(form.regionalOfficeId) : null,
+      officeId: form.officeId ? Number(form.officeId) : null,
       departmentId: form.departmentId ? Number(form.departmentId) : null,
       icon: form.icon || null,
       photo: form.photo || null,

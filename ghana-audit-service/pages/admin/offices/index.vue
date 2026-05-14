@@ -2,13 +2,10 @@
   <div>
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
       <div>
-        <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Regional Offices</h1>
-        <p class="text-gray-600 dark:text-gray-400 mt-1">Manage regional office locations</p>
+        <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Offices</h1>
+        <p class="text-gray-600 dark:text-gray-400 mt-1">Manage office locations</p>
       </div>
-      <NuxtLink
-        to="/admin/regional-offices/create"
-        class="btn btn-primary inline-flex items-center gap-2"
-      >
+      <NuxtLink to="/admin/offices/create" class="btn btn-primary inline-flex items-center gap-2">
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path
             stroke-linecap="round"
@@ -23,7 +20,7 @@
 
     <AdminUiAdminSearchFilter
       v-model:search="filters.search"
-      search-placeholder="Search regional offices..."
+      search-placeholder="Search offices..."
       :has-active-filters="hasActiveFilters"
       @clear-filters="clearFilters"
     />
@@ -34,7 +31,7 @@
       :loading="loading"
       :meta="meta"
       @page-change="handlePageChange"
-      @row-click="(row) => navigateTo(`/admin/regional-offices/${row.id}/edit`)"
+      @row-click="(row) => navigateTo(`/admin/offices/${row.id}/edit`)"
     >
       <template #[`cell-translations.en.name`]="{ row }">
         <div class="max-w-xs">
@@ -45,6 +42,9 @@
             {{ row.translations?.en?.address || 'No address' }}
           </p>
         </div>
+      </template>
+      <template #cell-typeName="{ value }">
+        <span class="badge badge-primary">{{ value || 'Unknown' }}</span>
       </template>
       <template #cell-region="{ value }">
         <span class="badge badge-secondary">{{ value }}</span>
@@ -62,7 +62,7 @@
       <template #actions="{ row }">
         <div class="flex items-center justify-end gap-2">
           <NuxtLink
-            :to="`/admin/regional-offices/${row.id}/edit`"
+            :to="`/admin/offices/${row.id}/edit`"
             class="p-2 text-gray-500 hover:text-primary rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
           >
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -92,16 +92,16 @@
       </template>
       <template #empty
         ><AdminUiAdminEmptyState
-          title="No regional offices found"
-          description="Get started by adding your first regional office."
-          action-to="/admin/regional-offices/create"
+          title="No offices found"
+          description="Get started by adding your first office."
+          action-to="/admin/offices/create"
           action-label="Add Office"
       /></template>
     </AdminUiAdminDataTable>
 
     <AdminUiAdminConfirmDialog
       v-model="showDeleteDialog"
-      title="Delete Regional Office"
+      title="Delete Office"
       :message="`Are you sure you want to delete '${itemToDelete?.translations?.en?.name}'?`"
       confirm-text="Delete"
       :loading="deleting"
@@ -111,11 +111,11 @@
 </template>
 
 <script setup lang="ts">
-  import type { AdminRegionalOffice } from '~/types/admin'
+  import type { AdminOffice } from '~/types/admin'
   definePageMeta({ layout: 'admin' })
 
   const { items, loading, deleting, meta, fetchAll, remove } =
-    useAdminCrud<AdminRegionalOffice>('regional-offices')
+    useAdminCrud<AdminOffice>('offices')
 
   const filters = reactive({ search: '' })
   const hasActiveFilters = computed(() => !!filters.search)
@@ -125,15 +125,16 @@
 
   const columns = [
     { key: 'translations.en.name', label: 'Office', sortable: true },
+    { key: 'typeName', label: 'Type', width: '140px' },
     { key: 'region', label: 'Region', width: '140px' },
     { key: 'contact', label: 'Contact', width: '180px' },
     { key: 'displayOrder', label: 'Order', sortable: true, width: '80px' }
   ]
 
   const showDeleteDialog = ref(false)
-  const itemToDelete = ref<AdminRegionalOffice | null>(null)
+  const itemToDelete = ref<AdminOffice | null>(null)
 
-  function confirmDelete(item: AdminRegionalOffice) {
+  function confirmDelete(item: AdminOffice) {
     itemToDelete.value = item
     showDeleteDialog.value = true
   }
