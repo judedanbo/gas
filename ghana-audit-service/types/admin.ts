@@ -260,13 +260,19 @@ export interface AdminTeamMember {
   }>
 }
 
-export type ManagementRole = 'auditor-general' | 'deputy-auditor-general' | 'regional-auditor'
+export type ManagementRole =
+  | 'auditor-general'
+  | 'deputy-auditor-general'
+  | 'regional-auditor'
+  | 'district-auditor'
+  | 'sector-head'
+  | 'branch-head'
 
 export interface AdminManagementTeamMember {
   id: number
   slug: string
   role: ManagementRole
-  regionalOfficeId: number | null
+  officeId: number | null
   departmentId: number | null
   icon: string | null
   photo: string | null
@@ -298,9 +304,13 @@ export interface AdminManagementTeamMember {
   }
 }
 
-export interface AdminRegionalOffice {
+export interface AdminOffice {
   id: number
   slug: string
+  typeId: number
+  parentId: number | null
+  typeName?: string
+  typeSlug?: string
   region: string
   phone: string | null
   email: string | null
@@ -315,6 +325,9 @@ export interface AdminRegionalOffice {
     address?: string | null
   }>
 }
+
+/** @deprecated Use AdminOffice instead */
+export type AdminRegionalOffice = AdminOffice
 
 export interface AdminGalleryImage {
   id: number
@@ -501,8 +514,10 @@ export interface TeamMemberInput {
   }>
 }
 
-export interface RegionalOfficeInput {
+export interface OfficeInput {
   slug: string
+  typeId: number
+  parentId?: number | null
   region: string
   phone?: string | null
   email?: string | null
@@ -514,6 +529,9 @@ export interface RegionalOfficeInput {
     address?: string | null
   }>
 }
+
+/** @deprecated Use OfficeInput instead */
+export type RegionalOfficeInput = OfficeInput
 
 export interface GalleryImageInput {
   url: string
@@ -552,7 +570,7 @@ export interface UserInput {
 export interface ManagementTeamMemberInput {
   slug: string
   role: ManagementRole
-  regionalOfficeId?: number | null
+  officeId?: number | null
   departmentId?: number | null
   icon?: string | null
   photo?: string | null

@@ -35,6 +35,9 @@
           <option value="auditor-general">Auditor-General</option>
           <option value="deputy-auditor-general">Deputy Auditor-General</option>
           <option value="regional-auditor">Regional Auditor</option>
+          <option value="district-auditor">District Auditor</option>
+          <option value="sector-head">Sector Head</option>
+          <option value="branch-head">Branch Head</option>
         </select>
         <select v-model="filters.isActive" class="form-input text-sm">
           <option value="">All Status</option>
@@ -178,7 +181,10 @@
     const labels: Record<ManagementRole, string> = {
       'auditor-general': 'Auditor-General',
       'deputy-auditor-general': 'Deputy AG',
-      'regional-auditor': 'Regional Auditor'
+      'regional-auditor': 'Regional Auditor',
+      'district-auditor': 'District Auditor',
+      'sector-head': 'Sector Head',
+      'branch-head': 'Branch Head'
     }
     return labels[role] || role
   }
@@ -187,7 +193,10 @@
     const classes: Record<ManagementRole, string> = {
       'auditor-general': 'badge-primary',
       'deputy-auditor-general': 'badge-accent',
-      'regional-auditor': 'badge-secondary'
+      'regional-auditor': 'badge-secondary',
+      'district-auditor': 'badge-secondary',
+      'sector-head': 'badge-secondary',
+      'branch-head': 'badge-secondary'
     }
     return classes[role] || ''
   }

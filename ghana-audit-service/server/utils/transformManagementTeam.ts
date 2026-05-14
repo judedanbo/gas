@@ -1,13 +1,19 @@
 import type { ManagementTeamMember } from '~/types'
 
 type SupportedLocale = 'en' | 'ak'
-type ManagementRole = 'auditor-general' | 'deputy-auditor-general' | 'regional-auditor'
+type ManagementRole =
+  | 'auditor-general'
+  | 'deputy-auditor-general'
+  | 'regional-auditor'
+  | 'district-auditor'
+  | 'sector-head'
+  | 'branch-head'
 
 interface DbManagementTeamMember {
   id: number
   slug: string
   role: ManagementRole
-  regionalOfficeId: number | null
+  officeId: number | null
   departmentId: number | null
   icon: string | null
   photo: string | null
@@ -63,11 +69,11 @@ export function transformManagementTeamMember(
     .filter((desc) => desc.length > 0)
 
   // Get regional office name for regional auditors
-  let regionalOfficeName: string | undefined
+  let officeName: string | undefined
   if (member.regionalOffice) {
     const officeTranslation =
       member.regionalOffice.translations[locale] || member.regionalOffice.translations.en
-    regionalOfficeName = officeTranslation?.name || member.regionalOffice.region
+    officeName = officeTranslation?.name || member.regionalOffice.region
   }
 
   // Get department name for deputy auditors-general
@@ -92,8 +98,8 @@ export function transformManagementTeamMember(
     responsibilities,
     order: member.displayOrder,
     isActive: member.isActive,
-    regionalOfficeId: member.regionalOfficeId || undefined,
-    regionalOfficeName,
+    officeId: member.officeId || undefined,
+    officeName: officeName,
     departmentId: member.departmentId || undefined,
     departmentName
   }

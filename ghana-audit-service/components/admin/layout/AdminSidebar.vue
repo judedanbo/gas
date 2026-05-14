@@ -122,9 +122,9 @@
           :collapsed="collapsed"
         />
         <SidebarLink
-          to="/admin/regional-offices"
+          to="/admin/offices"
           icon="location-marker"
-          label="Regional Offices"
+          label="Offices"
           :collapsed="collapsed"
         />
       </SidebarSection>

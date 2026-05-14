@@ -139,11 +139,11 @@
                 />
                 <AdminFormAdminSwitch v-model="form.isPublished" label="Published" />
 
-                <AdminFormAdminDatePicker
+                <UiDateTimePicker
                   v-if="form.isPublished"
                   v-model="form.publishedAt"
                   label="Publish Date"
-                  type="datetime-local"
+                  mode="datetime"
                 />
               </div>
             </div>

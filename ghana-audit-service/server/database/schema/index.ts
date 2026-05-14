@@ -23,7 +23,7 @@ export * from './careers'
 export * from './tenders'
 
 // Location Tables
-export * from './regional-offices'
+export * from './offices'
 
 // Media Tables
 export * from './media'

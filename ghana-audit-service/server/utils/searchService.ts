@@ -614,27 +614,27 @@ async function searchTeam(db: Db, opts: SearchOptions, pattern: string): Promise
 async function searchOffices(db: Db, opts: SearchOptions, pattern: string): Promise<RawHit[]> {
   // Offices have no isPublished column and no publishedAt; match name, address, and region.
   const conditions: SQL[] = [
-    isNull(schema.regionalOffices.deletedAt),
-    inArray(schema.regionalOfficeTranslations.locale, [opts.locale, 'en']),
+    isNull(schema.offices.deletedAt),
+    inArray(schema.officeTranslations.locale, [opts.locale, 'en']),
     or(
-      like(schema.regionalOfficeTranslations.name, pattern),
-      like(schema.regionalOfficeTranslations.address, pattern),
-      like(schema.regionalOffices.region, pattern)
+      like(schema.officeTranslations.name, pattern),
+      like(schema.officeTranslations.address, pattern),
+      like(schema.offices.region, pattern)
     ) as SQL
   ]
 
   const rows = await db
     .select({
-      baseId: schema.regionalOffices.id,
-      region: schema.regionalOffices.region,
-      locale: schema.regionalOfficeTranslations.locale,
-      name: schema.regionalOfficeTranslations.name,
-      address: schema.regionalOfficeTranslations.address
+      baseId: schema.offices.id,
+      region: schema.offices.region,
+      locale: schema.officeTranslations.locale,
+      name: schema.officeTranslations.name,
+      address: schema.officeTranslations.address
     })
-    .from(schema.regionalOffices)
+    .from(schema.offices)
     .innerJoin(
-      schema.regionalOfficeTranslations,
-      eq(schema.regionalOfficeTranslations.officeId, schema.regionalOffices.id)
+      schema.officeTranslations,
+      eq(schema.officeTranslations.officeId, schema.offices.id)
     )
     .where(and(...conditions))
     .limit(MAX_PER_DOMAIN)

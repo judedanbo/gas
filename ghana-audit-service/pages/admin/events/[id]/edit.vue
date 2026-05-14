@@ -116,17 +116,17 @@
                     </button>
                   </p>
                 </div>
-                <AdminFormAdminDatePicker
+                <UiDateTimePicker
                   v-model="form.startDate"
                   label="Start Date"
-                  type="datetime-local"
+                  mode="datetime"
                   required
                   :error="errors.startDate"
                 />
-                <AdminFormAdminDatePicker
+                <UiDateTimePicker
                   v-model="form.endDate"
                   label="End Date"
-                  type="datetime-local"
+                  mode="datetime"
                   :error="errors.endDate"
                 />
                 <AdminFormAdminSwitch v-model="form.isVirtual" label="Virtual Event" />

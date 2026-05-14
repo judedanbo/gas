@@ -1,10 +1,12 @@
-import type { RegionalOffice } from '~/types'
+import type { Office } from '~/types'
 
 type SupportedLocale = 'en' | 'ak'
 
-interface DbRegionalOffice {
+interface DbOffice {
   id: number
   slug: string
+  typeId: number
+  parentId?: number | null
   region: string
   phone: string | null
   email: string | null
@@ -16,25 +18,21 @@ interface DbRegionalOffice {
   deletedAt: Date | string | null
 }
 
-interface RegionalOfficeWithTranslations extends DbRegionalOffice {
+interface OfficeWithTranslations extends DbOffice {
+  typeName?: string
   translations: Record<string, { name: string; address: string }>
 }
 
-/**
- * Transform a database regional office to public API format
- */
-export function transformRegionalOffice(
-  office: RegionalOfficeWithTranslations,
+export function transformOffice(
+  office: OfficeWithTranslations,
   locale: SupportedLocale = 'en'
-): RegionalOffice {
-  // Get translation for requested locale, fallback to English
+): Office {
   const translation = office.translations[locale] ||
     office.translations.en || {
       name: 'Unknown Office',
       address: ''
     }
 
-  // Parse coordinates
   let coordinates: { lat: number; lng: number } | undefined
   if (office.latitude && office.longitude) {
     const lat = parseFloat(office.latitude)
@@ -47,6 +45,7 @@ export function transformRegionalOffice(
   return {
     id: String(office.id),
     name: translation.name,
+    type: office.typeName || '',
     region: office.region,
     address: translation.address,
     phone: office.phone || undefined,
@@ -55,12 +54,9 @@ export function transformRegionalOffice(
   }
 }
 
-/**
- * Transform an array of database regional offices to public API format
- */
-export function transformRegionalOffices(
-  offices: RegionalOfficeWithTranslations[],
+export function transformOffices(
+  offices: OfficeWithTranslations[],
   locale: SupportedLocale = 'en'
-): RegionalOffice[] {
-  return offices.map((office) => transformRegionalOffice(office, locale))
+): Office[] {
+  return offices.map((office) => transformOffice(office, locale))
 }

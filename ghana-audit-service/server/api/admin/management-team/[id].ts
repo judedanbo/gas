@@ -139,11 +139,11 @@ async function handleUpdate(event: H3Event, id: number) {
     await connection.beginTransaction()
 
     await connection.execute(
-      `UPDATE management_team SET slug = ?, role = ?, regional_office_id = ?, department_id = ?, icon = ?, photo = ?, email = ?, phone = ?, display_order = ?, is_active = ? WHERE id = ?`,
+      `UPDATE management_team SET slug = ?, role = ?, office_id = ?, department_id = ?, icon = ?, photo = ?, email = ?, phone = ?, display_order = ?, is_active = ? WHERE id = ?`,
       [
         input.slug,
         input.role,
-        input.regionalOfficeId || null,
+        input.officeId || null,
         input.departmentId || null,
         input.icon || null,
         input.photo || null,

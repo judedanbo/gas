@@ -73,11 +73,11 @@
             <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Publishing</h2>
             <div class="space-y-4">
               <AdminFormAdminSwitch v-model="form.isPublished" label="Published" />
-              <AdminFormAdminDatePicker
+              <UiDateTimePicker
                 v-if="form.isPublished"
                 v-model="form.publishedAt"
                 label="Publish Date"
-                type="datetime-local"
+                mode="datetime"
               />
             </div>
           </div>

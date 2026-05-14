@@ -108,26 +108,26 @@ export default defineEventHandler(async (event): Promise<ManagementTeamMember[]>
   )
 
   // Fetch regional office data for regional auditors
-  const regionalOfficeIds = members
-    .filter((m) => m.role === 'regional-auditor' && m.regionalOfficeId)
-    .map((m) => m.regionalOfficeId!)
+  const officeIds = members
+    .filter((m) => m.role === 'regional-auditor' && m.officeId)
+    .map((m) => m.officeId!)
 
-  let regionalOfficesMap: Record<
+  let officesMap: Record<
     number,
     { id: number; region: string; translations: Record<string, { name: string }> }
   > = {}
 
-  if (regionalOfficeIds.length > 0) {
+  if (officeIds.length > 0) {
     const offices = await db
       .select()
-      .from(schema.regionalOffices)
-      .where(sql`${schema.regionalOffices.id} IN (${sql.join(regionalOfficeIds, sql`, `)})`)
+      .from(schema.offices)
+      .where(sql`${schema.offices.id} IN (${sql.join(officeIds, sql`, `)})`)
 
     const officeTranslations = await db
       .select()
-      .from(schema.regionalOfficeTranslations)
+      .from(schema.officeTranslations)
       .where(
-        sql`${schema.regionalOfficeTranslations.officeId} IN (${sql.join(regionalOfficeIds, sql`, `)})`
+        sql`${schema.officeTranslations.officeId} IN (${sql.join(officeIds, sql`, `)})`
       )
 
     // Group office translations
@@ -143,7 +143,7 @@ export default defineEventHandler(async (event): Promise<ManagementTeamMember[]>
     )
 
     // Build regional offices map
-    regionalOfficesMap = offices.reduce(
+    officesMap = offices.reduce(
       (acc, office) => {
         acc[office.id] = {
           id: office.id,
@@ -212,8 +212,8 @@ export default defineEventHandler(async (event): Promise<ManagementTeamMember[]>
     ...member,
     translations: translationsByMember[member.id] || {},
     responsibilities: responsibilitiesByMember[member.id] || [],
-    regionalOffice: member.regionalOfficeId
-      ? regionalOfficesMap[member.regionalOfficeId]
+    regionalOffice: member.officeId
+      ? officesMap[member.officeId]
       : undefined,
     department: member.departmentId ? departmentsMap[member.departmentId] : undefined
   }))

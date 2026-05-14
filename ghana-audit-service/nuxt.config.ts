@@ -302,7 +302,7 @@ export default defineNuxtConfig({
       '/api/slideshow': { cache: isDev ? false : { maxAge: 300, staleMaxAge: 600 } },
       '/api/team/**': { cache: isDev ? false : { maxAge: 3600, staleMaxAge: 7200 } },
       '/api/gallery/**': { cache: isDev ? false : { maxAge: 600, staleMaxAge: 1200 } },
-      '/api/regional-offices/**': { cache: isDev ? false : { maxAge: 3600, staleMaxAge: 7200 } },
+      '/api/offices/**': { cache: isDev ? false : { maxAge: 3600, staleMaxAge: 7200 } },
       '/api/management-team/**': { cache: isDev ? false : { maxAge: 3600, staleMaxAge: 7200 } },
 
       // Admin routes - hidden from SEO, cached only in production

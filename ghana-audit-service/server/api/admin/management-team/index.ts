@@ -43,7 +43,14 @@ async function handleList(event: H3Event) {
   }
 
   if (query.role && typeof query.role === 'string') {
-    const validRoles = ['auditor-general', 'deputy-auditor-general', 'regional-auditor'] as const
+    const validRoles = [
+      'auditor-general',
+      'deputy-auditor-general',
+      'regional-auditor',
+      'district-auditor',
+      'sector-head',
+      'branch-head'
+    ] as const
     if (validRoles.includes(query.role as ManagementRole)) {
       conditions.push(eq(schema.managementTeam.role, query.role as ManagementRole))
     }
@@ -118,12 +125,12 @@ async function handleCreate(event: H3Event) {
     await connection.beginTransaction()
 
     const [result] = await connection.execute(
-      `INSERT INTO management_team (slug, role, regional_office_id, department_id, icon, photo, email, phone, display_order, is_active)
+      `INSERT INTO management_team (slug, role, office_id, department_id, icon, photo, email, phone, display_order, is_active)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         input.slug,
         input.role,
-        input.regionalOfficeId || null,
+        input.officeId || null,
         input.departmentId || null,
         input.icon || null,
         input.photo || null,

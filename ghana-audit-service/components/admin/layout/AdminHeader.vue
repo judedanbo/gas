@@ -201,7 +201,7 @@
       tenders: 'Tenders',
       departments: 'Departments',
       'team-members': 'Team Members',
-      'regional-offices': 'Regional Offices',
+      offices: 'Offices',
       gallery: 'Gallery',
       videos: 'Videos',
       tags: 'Tags',

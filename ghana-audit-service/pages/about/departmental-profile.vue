@@ -23,15 +23,15 @@
               Our Organizational Structure
             </h2>
             <p class="text-gray-600 dark:text-gray-400 leading-relaxed mb-4">
-              The Ghana Audit Service is organized into specialized departments, each designed to
-              deliver high-quality audit services in specific sectors. This structure ensures
-              comprehensive coverage of all public entities and enables deep expertise in various
-              audit domains.
+              The Audit Service is made up of six (6) departments. A Deputy Auditor-General (DAG)
+              heads each department. Five departments focus on audit delivery across different
+              sectors, while the Finance and Administration Department provides essential support
+              services to audit staff across the country.
             </p>
             <p class="text-gray-600 dark:text-gray-400 leading-relaxed">
-              Our departments work collaboratively under the leadership of the Auditor-General and
-              Deputy Auditors-General to fulfill our constitutional mandate of auditing all public
-              accounts.
+              In addition, several specialized units operate directly under the
+              Auditor-General's Office, providing legal, public affairs, parliamentary liaison,
+              internal audit, and quality assurance services.
             </p>
           </div>
           <UiStatGrid :stats="overviewStats" :columns="3" variant="card" />
@@ -86,26 +86,23 @@
       </div>
     </section>
 
-    <!-- Support Departments -->
+    <!-- Finance & Administration Department -->
     <section class="section">
       <div class="container">
         <UiSectionHeader
-          title="Support Departments"
-          description="Administrative and operational units enabling effective audit delivery"
+          title="Finance & Administration Department"
+          description="Provides support services to all audit staff across the country through nine specialized units"
         />
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           <UiInfoCard
-            v-for="dept in supportDepartments"
-            :key="dept.name"
-            :icon="dept.icon"
-            :title="dept.name"
-            :description="dept.description"
-            variant="centered"
-            :bordered="false"
-            class="bg-gray-100 dark:bg-gray-800"
-          >
-            <UiCheckList :items="dept.functions" icon="dot" spacing="sm" icon-color="gray" />
-          </UiInfoCard>
+            v-for="unit in financeAdminUnits"
+            :key="unit.name"
+            :icon="unit.icon"
+            :title="unit.name"
+            :description="unit.description"
+            variant="horizontal"
+            :bordered="true"
+          />
         </div>
       </div>
     </section>
@@ -114,8 +111,8 @@
     <section class="section bg-gray-50 dark:bg-gray-900">
       <div class="container">
         <UiSectionHeader
-          title="Specialized Units"
-          description="Expert units providing specialized services and support"
+          title="Units Under the Auditor-General's Office"
+          description="Specialized units reporting directly to the Auditor-General"
         />
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           <UiInfoCard
@@ -160,7 +157,7 @@
               </div>
             </div>
           </div>
-          <div class="bg-gray-100 dark:bg-gray-800 rounded-lg p-6">
+          <div v-if="isAuthenticated()" class="bg-gray-100 dark:bg-gray-800 rounded-lg p-6">
             <h3 class="mb-2 font-semibold text-gray-900 dark:text-white">AMIS Audit Manuals</h3>
             <p class="text-gray-600 dark:text-gray-400 text-sm mb-4">
               Our audit methodology is documented in comprehensive manuals:
@@ -203,6 +200,8 @@
 </template>
 
 <script setup lang="ts">
+  const { isAuthenticated } = useAdminAuth()
+
   useHead({ title: 'Departmental Profile' })
 
   useSeoMeta({
@@ -218,212 +217,179 @@
     { label: 'Departmental Profile', path: '/about/departmental-profile' }
   ]
 
-  // Overview stats
   const overviewStats = [
-    { icon: 'heroicons:building-office', value: 6, label: 'DAG Portfolios' },
-    { icon: 'heroicons:chart-bar', value: 12, label: 'Audit Departments', suffix: '+' },
-    { icon: 'heroicons:wrench-screwdriver', value: 8, label: 'Support Units', suffix: '+' }
+    { icon: 'heroicons:building-office', value: 6, label: 'Departments' },
+    { icon: 'heroicons:user-group', value: 6, label: 'Deputy Auditors-General' },
+    { icon: 'heroicons:clipboard-document-list', value: 5, label: "AG's Office Units" }
   ]
 
   const auditDepartments = [
     {
-      name: 'Central Government Audit',
+      name: 'Central Government Audit Department (CGAD)',
       icon: 'heroicons:building-library',
-      dag: 'DAG Central Government',
+      dag: 'Deputy Auditor-General',
       description:
-        'Responsible for auditing all central government ministries, departments, and agencies. This department ensures proper accountability in the management of the Consolidated Fund.',
+        'The CGAD has the primary responsibility for the audit of all the Ministries, Departments and Agencies (MDAs) of Central Government, including Ghana’s foreign missions abroad. The Service maintains offices in most MDAs in Accra, with regional and district-level audit operations.',
       functions: [
-        'Annual financial audits of MDAs',
-        'Special audits and investigations',
-        'Compliance with financial regulations',
-        'Internal control assessments'
+        'Financial audits of Ministries, Departments and Agencies',
+        'Audit of Ghana’s foreign missions abroad',
+        'Regional and district-level audit operations',
+        'Compliance and internal control assessments'
       ],
-      entities: ['Ministries', 'Departments', 'Agencies', 'Commissions', 'Secretariats']
+      entities: ['Ministries', 'Departments', 'Agencies', 'Foreign Missions']
     },
     {
-      name: 'Local Government Audit',
-      icon: 'heroicons:building-office',
-      dag: 'DAG Local Government',
-      description:
-        'Oversees the audit of all Metropolitan, Municipal, and District Assemblies, ensuring accountability in local governance and decentralized fund management.',
-      functions: [
-        'MMDA financial statement audits',
-        'District Assemblies Common Fund audits',
-        'IGF revenue and expenditure audits',
-        'Local government compliance reviews'
-      ],
-      entities: [
-        'Metropolitan Assemblies',
-        'Municipal Assemblies',
-        'District Assemblies',
-        'Regional Coordinating Councils'
-      ]
-    },
-    {
-      name: 'Education Sector Audit',
-      icon: 'heroicons:academic-cap',
-      dag: 'DAG Education Sector',
-      description:
-        'Specialized department for auditing educational institutions at all levels, including universities, colleges, and the Ghana Education Trust Fund.',
-      functions: [
-        'University financial audits',
-        'GETFund accountability audits',
-        'Secondary education audits',
-        'Scholarship secretariat audits'
-      ],
-      entities: [
-        'Public Universities',
-        'Polytechnics',
-        'Colleges of Education',
-        'GETFund',
-        'Secondary Schools'
-      ]
-    },
-    {
-      name: 'Commercial Audit',
+      name: 'Commercial Audit Department (CAD)',
       icon: 'heroicons:briefcase',
-      dag: 'DAG Commercial Audits',
+      dag: 'Deputy Auditor-General',
       description:
-        'Handles audits of state-owned enterprises, public corporations, and government joint venture companies.',
+        'The CAD is responsible for the audit of Public Boards, Corporations, Bank of Ghana, tertiary and other Statutory Institutions.',
       functions: [
-        'State-owned enterprise audits',
-        'Public corporation audits',
-        'Joint venture audits',
-        'Regulatory body audits'
+        'Public Boards and Corporations audits',
+        'Bank of Ghana audits',
+        'Tertiary institution audits',
+        'Statutory institution audits'
       ],
-      entities: ['SOEs', 'Public Corporations', 'Joint Ventures', 'Regulatory Bodies']
+      entities: [
+        'Public Boards',
+        'Corporations',
+        'Bank of Ghana',
+        'Statutory Institutions'
+      ]
     },
     {
-      name: 'Performance Audit',
-      icon: 'heroicons:chart-bar',
-      dag: 'DAG Performance Audit',
+      name: 'Educational Institutions & District Assemblies – Southern Zone (EIDA-South)',
+      icon: 'heroicons:academic-cap',
+      dag: 'Deputy Auditor-General',
       description:
-        'Conducts value-for-money audits assessing economy, efficiency, and effectiveness of government programs and projects.',
+        'Responsible for the audit of Pre-Tertiary and Tertiary Institutions, as well as Metropolitan, Municipal and District Assemblies and Traditional Councils in the Southern Zone of Ghana.',
       functions: [
-        'Value-for-money assessments',
-        'Program effectiveness evaluations',
-        'Project implementation reviews',
-        'Policy impact assessments'
+        'Pre-Tertiary institution audits',
+        'Tertiary institution audits',
+        'Metropolitan, Municipal and District Assembly audits',
+        'Traditional Council audits'
+      ],
+      entities: [
+        'Pre-Tertiary Institutions',
+        'Tertiary Institutions',
+        'MMDAs (Southern Zone)',
+        'Traditional Councils'
+      ]
+    },
+    {
+      name: 'Educational Institutions & District Assemblies – Northern Zone (EIDA-North)',
+      icon: 'heroicons:academic-cap',
+      dag: 'Deputy Auditor-General',
+      description:
+        'Responsible for the audit of Pre-Tertiary and Tertiary Institutions, as well as Metropolitan, Municipal and District Assemblies and Traditional Councils in the Northern Zone of Ghana.',
+      functions: [
+        'Pre-Tertiary institution audits',
+        'Tertiary institution audits',
+        'Metropolitan, Municipal and District Assembly audits',
+        'Traditional Council audits'
+      ],
+      entities: [
+        'Pre-Tertiary Institutions',
+        'Tertiary Institutions',
+        'MMDAs (Northern Zone)',
+        'Traditional Councils'
+      ]
+    },
+    {
+      name: 'Performance & Special Audits Department (PSAD)',
+      icon: 'heroicons:chart-bar',
+      dag: 'Deputy Auditor-General',
+      description:
+        'Section 13(e) of the Audit Service Act 2000 (Act 584) mandates the Auditor-General to audit programs and activities of public offices with due regard to economy, efficiency and effectiveness in the use of resources. The PSAD comprises three sections: Performance Audit, Special Funds Audit, and Information Technology Audit.',
+      functions: [
+        'Performance audits (economy, efficiency, effectiveness)',
+        'Special Funds audits',
+        'Information Technology audits',
+        'Value-for-money assessments of government programs'
       ],
       entities: [
         'Government Programs',
-        'Capital Projects',
-        'Social Interventions',
-        'Infrastructure Projects'
+        'Public Office Activities',
+        'Special Funds',
+        'IT Systems'
       ]
-    },
-    {
-      name: 'IT Audit',
-      icon: 'heroicons:computer-desktop',
-      dag: 'DAG Corporate Services',
-      description:
-        'Reviews information technology systems, cybersecurity controls, and digital transformation initiatives across government.',
-      functions: [
-        'IT systems audits',
-        'Cybersecurity assessments',
-        'Data integrity reviews',
-        'IT governance evaluations'
-      ],
-      entities: [
-        'Government IT Systems',
-        'E-Government Platforms',
-        'Digital Services',
-        'Data Centers'
-      ]
-    },
-    {
-      name: 'Technical Audit',
-      icon: 'heroicons:wrench-screwdriver',
-      dag: 'DAG Central Government',
-      description:
-        'Specializes in auditing engineering projects, infrastructure development, and technical contracts.',
-      functions: [
-        'Infrastructure project audits',
-        'Construction contract reviews',
-        'Technical compliance assessments',
-        'Project cost evaluations'
-      ],
-      entities: ['Road Projects', 'Building Projects', 'Water & Sanitation', 'Energy Projects']
     }
   ]
 
-  const supportDepartments = [
+  const financeAdminUnits = [
     {
-      name: 'Human Resource Management',
+      name: 'Accounts',
+      icon: 'heroicons:calculator',
+      description: 'Manages financial accounting and reporting for the Service.'
+    },
+    {
+      name: 'Budget',
+      icon: 'heroicons:chart-pie',
+      description: 'Handles budget preparation, monitoring and expenditure control.'
+    },
+    {
+      name: 'Payroll',
+      icon: 'heroicons:banknotes',
+      description: 'Processes staff compensation and related payments.'
+    },
+    {
+      name: 'Human Resource',
       icon: 'heroicons:user-group',
-      description: 'Manages recruitment, training, performance, and welfare of staff.',
-      functions: [
-        'Staff recruitment and placement',
-        'Training and development',
-        'Performance management',
-        'Employee welfare'
-      ]
+      description: 'Manages recruitment, placement and staff welfare.'
     },
     {
-      name: 'Finance & Administration',
-      icon: 'heroicons:currency-dollar',
-      description: 'Handles financial management and administrative operations of the Service.',
-      functions: [
-        'Budget preparation and management',
-        'Financial reporting',
-        'Procurement',
-        'Asset management'
-      ]
-    },
-    {
-      name: 'Planning & Quality Assurance',
-      icon: 'heroicons:clipboard-document-list',
-      description: 'Develops strategic plans and ensures quality in audit delivery.',
-      functions: [
-        'Strategic planning',
-        'Audit quality reviews',
-        'Standards compliance',
-        'Performance monitoring'
-      ]
-    },
-    {
-      name: 'Information Technology',
+      name: 'IT Technical',
       icon: 'heroicons:computer-desktop',
-      description: 'Provides IT infrastructure and systems support for audit operations.',
-      functions: [
-        'IT infrastructure management',
-        'AMIS administration',
-        'Network and security',
-        'Help desk support'
-      ]
+      description: 'Provides IT infrastructure and systems support.'
+    },
+    {
+      name: 'Training & Human Resource Development',
+      icon: 'heroicons:academic-cap',
+      description: 'Coordinates professional development and capacity building.'
+    },
+    {
+      name: 'Estates',
+      icon: 'heroicons:building-office-2',
+      description: 'Manages office facilities and property maintenance.'
+    },
+    {
+      name: 'Procurement',
+      icon: 'heroicons:shopping-cart',
+      description: 'Handles purchasing and supply chain operations.'
+    },
+    {
+      name: 'Transport',
+      icon: 'heroicons:truck',
+      description: 'Manages vehicle fleet and transportation logistics.'
     }
   ]
 
   const specializedUnits = [
     {
-      name: 'Legal Unit',
-      icon: 'heroicons:scale',
-      description: 'Provides legal advice and handles litigation matters.'
-    },
-    {
-      name: 'Internal Audit Unit',
+      name: 'Internal Audit',
       icon: 'heroicons:magnifying-glass',
       description: 'Conducts internal audits of the Ghana Audit Service itself.'
     },
     {
+      name: 'Legal',
+      icon: 'heroicons:scale',
+      description: 'Provides legal advice and handles litigation matters for the Service.'
+    },
+    {
       name: 'Public Affairs',
       icon: 'heroicons:megaphone',
-      description: 'Manages public relations, communications, and stakeholder engagement.'
+      description: 'Manages public relations, communications and stakeholder engagement.'
     },
     {
-      name: 'Research & Development',
-      icon: 'heroicons:chart-bar',
-      description: 'Conducts research and develops audit methodologies and tools.'
+      name: 'Parliamentary',
+      icon: 'heroicons:building-library',
+      description:
+        'Coordinates with Parliament on audit reports, PAC hearings and legislative matters.'
     },
     {
-      name: 'Training & Development',
-      icon: 'heroicons:academic-cap',
-      description: 'Coordinates professional development and capacity building.'
-    },
-    {
-      name: 'International Relations',
-      icon: 'heroicons:globe-americas',
-      description: 'Manages relationships with international audit organizations.'
+      name: 'Quality Assurance, Monitoring & Evaluation',
+      icon: 'heroicons:clipboard-document-check',
+      description: 'Ensures audit quality standards, monitors performance and evaluates outcomes.'
     }
   ]
 
