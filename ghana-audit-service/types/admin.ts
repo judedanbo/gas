@@ -260,7 +260,13 @@ export interface AdminTeamMember {
   }>
 }
 
-export type ManagementRole = 'auditor-general' | 'deputy-auditor-general' | 'regional-auditor'
+export type ManagementRole =
+  | 'auditor-general'
+  | 'deputy-auditor-general'
+  | 'regional-auditor'
+  | 'district-auditor'
+  | 'sector-head'
+  | 'branch-head'
 
 export interface AdminManagementTeamMember {
   id: number
@@ -302,7 +308,9 @@ export interface AdminOffice {
   id: number
   slug: string
   typeId: number
+  parentId: number | null
   typeName?: string
+  typeSlug?: string
   region: string
   phone: string | null
   email: string | null
@@ -509,6 +517,7 @@ export interface TeamMemberInput {
 export interface OfficeInput {
   slug: string
   typeId: number
+  parentId?: number | null
   region: string
   phone?: string | null
   email?: string | null

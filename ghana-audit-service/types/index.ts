@@ -144,7 +144,7 @@ export interface PastAuditorGeneral {
 export interface ManagementTeamMember {
   id: string
   slug: string
-  role: 'auditor-general' | 'deputy-auditor-general' | 'regional-auditor'
+  role: 'auditor-general' | 'deputy-auditor-general' | 'regional-auditor' | 'district-auditor' | 'sector-head' | 'branch-head'
   name: string
   title?: string
   bio?: string
