@@ -25,6 +25,7 @@ useHead({
 
 // Initialize accessibility settings on client side
 const { init: initAccessibility } = useAccessibility()
+useSearchShortcut()
 
 onMounted(() => {
   initAccessibility()

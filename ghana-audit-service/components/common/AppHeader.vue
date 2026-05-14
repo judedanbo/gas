@@ -155,9 +155,8 @@
           <!-- Search Button -->
           <button
             class="touch-target bg-transparent border-none p-2 cursor-pointer text-gray-600 dark:text-gray-300 hover:text-primary transition-colors flex items-center justify-center"
-            :aria-label="isSearchOpen ? 'Close search' : 'Open search'"
-            :aria-expanded="isSearchOpen"
-            @click="toggleSearch"
+            aria-label="Open search (Ctrl+K)"
+            @click="openSearch"
           >
             <Icon name="heroicons:magnifying-glass" class="w-6 h-6" aria-hidden="true" />
           </button>
@@ -188,28 +187,17 @@
       </div>
     </div>
 
-    <!-- Search Bar (Expandable) -->
-    <Transition name="slide-down">
-      <div
-        v-if="isSearchOpen"
-        class="bg-gray-50 dark:bg-gray-700 border-t border-gray-200 dark:border-gray-600 py-4"
-      >
-        <div class="container">
-          <CommonSearchBar @close="toggleSearch" />
-        </div>
-      </div>
-    </Transition>
-
     <!-- Mobile Menu -->
     <Transition name="slide-down">
       <CommonMobileMenu v-if="isMobileMenuOpen" @close="closeMobileMenu" />
     </Transition>
   </header>
+  <SearchSearchCommandPalette />
 </template>
 
 <script setup lang="ts">
   const isScrolled = ref(false)
-  const isSearchOpen = ref(false)
+  const isSearchPaletteOpen = useState('searchPalette', () => false)
   const isMobileMenuOpen = ref(false)
 
   // Color mode (dark mode)
@@ -250,19 +238,17 @@
     isScrolled.value = window.scrollY > 50
   }
 
-  // Toggle search panel
-  const toggleSearch = () => {
-    isSearchOpen.value = !isSearchOpen.value
-    if (isSearchOpen.value) {
-      isMobileMenuOpen.value = false
-    }
+  // Open command palette
+  const openSearch = () => {
+    isSearchPaletteOpen.value = true
+    isMobileMenuOpen.value = false
   }
 
   // Toggle mobile menu
   const toggleMobileMenu = () => {
     isMobileMenuOpen.value = !isMobileMenuOpen.value
     if (isMobileMenuOpen.value) {
-      isSearchOpen.value = false
+      isSearchPaletteOpen.value = false
     }
   }
 
@@ -277,7 +263,7 @@
     () => route.path,
     () => {
       isMobileMenuOpen.value = false
-      isSearchOpen.value = false
+      isSearchPaletteOpen.value = false
     }
   )
 
