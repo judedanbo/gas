@@ -54,21 +54,26 @@ function toISODate(value: Date | string | null | undefined): string | undefined 
   return String(value).slice(0, 10)
 }
 
+function stripHtml(html: string): string {
+  return html.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim()
+}
+
 function buildExcerpt(body: string, term: string, max = 200): string {
   if (!body) return ''
-  const lower = body.toLowerCase()
+  const plain = stripHtml(body)
+  const lower = plain.toLowerCase()
   const idx = lower.indexOf(term.toLowerCase())
   if (idx === -1) {
-    const head = body.slice(0, max).trim()
-    return body.length > max ? `${head}…` : head
+    const head = plain.slice(0, max).trim()
+    return plain.length > max ? `${head}…` : head
   }
   const window = Math.max(0, max - term.length)
   const half = Math.floor(window / 2)
   const start = Math.max(0, idx - half)
-  const end = Math.min(body.length, start + max)
-  const snippet = body.slice(start, end).trim()
+  const end = Math.min(plain.length, start + max)
+  const snippet = plain.slice(start, end).trim()
   const prefix = start > 0 ? '…' : ''
-  const suffix = end < body.length ? '…' : ''
+  const suffix = end < plain.length ? '…' : ''
   return `${prefix}${snippet}${suffix}`
 }
 
