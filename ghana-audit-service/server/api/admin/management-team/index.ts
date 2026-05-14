@@ -43,7 +43,14 @@ async function handleList(event: H3Event) {
   }
 
   if (query.role && typeof query.role === 'string') {
-    const validRoles = ['auditor-general', 'deputy-auditor-general', 'regional-auditor'] as const
+    const validRoles = [
+      'auditor-general',
+      'deputy-auditor-general',
+      'regional-auditor',
+      'district-auditor',
+      'sector-head',
+      'branch-head'
+    ] as const
     if (validRoles.includes(query.role as ManagementRole)) {
       conditions.push(eq(schema.managementTeam.role, query.role as ManagementRole))
     }
