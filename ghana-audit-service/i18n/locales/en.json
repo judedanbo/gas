@@ -156,6 +156,12 @@
     "searchPlaceholder": "Search by title or keywords...",
     "filterBy": "Filter by",
     "noReports": "No reports found",
+    "featured": {
+      "eyebrow": "Featured Performance Audit",
+      "title": "Featured Performance Audit",
+      "description": "Spotlighted from our latest performance audits.",
+      "viewReport": "View Report"
+    },
     "categories": {
       "financial": "Financial Audit",
       "performance": "Performance Audit",
