@@ -51,12 +51,12 @@
         <template v-else>
           <!-- Results Count -->
           <p class="text-sm text-gray-600 dark:text-gray-400 mb-6">
-            Showing {{ displayedReports.length }} of {{ meta.total }} reports
+            Showing {{ reports.length }} of {{ meta.total }} reports
           </p>
 
           <!-- Empty State -->
           <div
-            v-if="displayedReports.length === 0"
+            v-if="reports.length === 0"
             class="text-center py-16 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700"
           >
             <Icon
