@@ -17,7 +17,7 @@
       <div>
         <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Add Management Team Member</h1>
         <p class="text-gray-600 dark:text-gray-400 mt-1">
-          Add Auditor-General, Deputy AG, or Regional Auditor
+          Add a new management team member
         </p>
       </div>
     </div>
@@ -160,15 +160,7 @@
                 required
                 :error="errors.role"
               />
-              <AdminFormAdminSelect
-                v-if="form.role === 'regional-auditor'"
-                v-model="form.officeId"
-                label="Office"
-                :options="officeOptions"
-                required
-                :error="errors.officeId"
-                help-text="Select the office for this auditor"
-              />
+              <!-- Deputy AG: Department -->
               <AdminFormAdminSelect
                 v-if="form.role === 'deputy-auditor-general'"
                 v-model="form.departmentId"
@@ -178,6 +170,68 @@
                 :error="errors.departmentId"
                 help-text="Select the department for this DAG"
               />
+
+              <!-- Regional Auditor: Regional Office -->
+              <AdminFormAdminSelect
+                v-if="form.role === 'regional-auditor'"
+                v-model="form.officeId"
+                label="Regional Office"
+                :options="regionalOfficeOptions"
+                required
+                :error="errors.officeId"
+                help-text="Select the regional office"
+              />
+
+              <!-- District Auditor: Region then District -->
+              <template v-if="form.role === 'district-auditor'">
+                <AdminFormAdminSelect
+                  v-model="selectedRegionId"
+                  label="Region"
+                  :options="regionalOfficeOptions"
+                  required
+                  help-text="Select the region first"
+                />
+                <AdminFormAdminSelect
+                  v-model="form.officeId"
+                  label="District Office"
+                  :options="filteredDistrictOptions"
+                  required
+                  :error="errors.officeId"
+                  :disabled="!selectedRegionId"
+                  help-text="Select the district office"
+                />
+              </template>
+
+              <!-- Sector Head: Sector -->
+              <AdminFormAdminSelect
+                v-if="form.role === 'sector-head'"
+                v-model="form.officeId"
+                label="Sector"
+                :options="sectorOptions"
+                required
+                :error="errors.officeId"
+                help-text="Select the sector"
+              />
+
+              <!-- Branch Head: Sector then Branch -->
+              <template v-if="form.role === 'branch-head'">
+                <AdminFormAdminSelect
+                  v-model="selectedSectorId"
+                  label="Sector"
+                  :options="sectorOptions"
+                  required
+                  help-text="Select the sector first"
+                />
+                <AdminFormAdminSelect
+                  v-model="form.officeId"
+                  label="Branch"
+                  :options="filteredBranchOptions"
+                  required
+                  :error="errors.officeId"
+                  :disabled="!selectedSectorId"
+                  help-text="Select the branch"
+                />
+              </template>
               <div>
                 <AdminFormAdminInput
                   v-model="form.slug"
@@ -306,30 +360,68 @@
   const { errors, validate, setErrors, rules } = useFormValidation()
   const { getList } = useAdminApi()
 
-  // Fetch regional offices for dropdown
-  const officesData = ref<{ data: AdminOffice[] } | null>(null)
+  // Office data by type
+  const regionalOffices = ref<AdminOffice[]>([])
+  const districtOffices = ref<AdminOffice[]>([])
+  const sectors = ref<AdminOffice[]>([])
+  const branches = ref<AdminOffice[]>([])
   // Fetch departments for dropdown
   const departmentsData = ref<{ data: AdminDepartment[] } | null>(null)
 
+  // Cascading parent selection state
+  const selectedRegionId = ref<number | null>(null)
+  const selectedSectorId = ref<number | null>(null)
+
   onMounted(async () => {
     try {
-      const [offices, departments] = await Promise.all([
-        getList<AdminOffice>('offices'),
+      const [regOffices, dstOffices, sectorOffices, branchOffices, departments] = await Promise.all([
+        getList<AdminOffice>('offices', { typeSlug: 'regional-office' }),
+        getList<AdminOffice>('offices', { typeSlug: 'district-office' }),
+        getList<AdminOffice>('offices', { typeSlug: 'sector' }),
+        getList<AdminOffice>('offices', { typeSlug: 'branch' }),
         getList<AdminDepartment>('departments')
       ])
-      officesData.value = offices
+      regionalOffices.value = regOffices.data || []
+      districtOffices.value = dstOffices.data || []
+      sectors.value = sectorOffices.data || []
+      branches.value = branchOffices.data || []
       departmentsData.value = departments
     } catch {
       // Silently fail - dropdowns will just be empty
     }
   })
 
-  const officeOptions = computed(() => {
-    return (officesData.value?.data || []).map((office) => ({
-      value: office.id,
-      label: office.translations?.en?.name || office.region
+  const regionalOfficeOptions = computed(() =>
+    regionalOffices.value.map((o) => ({
+      value: o.id,
+      label: o.translations?.en?.name || o.region
     }))
-  })
+  )
+
+  const filteredDistrictOptions = computed(() =>
+    districtOffices.value
+      .filter((o) => o.parentId === selectedRegionId.value)
+      .map((o) => ({
+        value: o.id,
+        label: o.translations?.en?.name || o.region
+      }))
+  )
+
+  const sectorOptions = computed(() =>
+    sectors.value.map((o) => ({
+      value: o.id,
+      label: o.translations?.en?.name || o.slug
+    }))
+  )
+
+  const filteredBranchOptions = computed(() =>
+    branches.value
+      .filter((o) => o.parentId === selectedSectorId.value)
+      .map((o) => ({
+        value: o.id,
+        label: o.translations?.en?.name || o.slug
+      }))
+  )
 
   const departmentOptions = computed(() => {
     return (departmentsData.value?.data || []).map((dept) => ({
@@ -395,7 +487,10 @@
   const roleOptions = [
     { value: 'auditor-general', label: 'Auditor-General' },
     { value: 'deputy-auditor-general', label: 'Deputy Auditor-General' },
-    { value: 'regional-auditor', label: 'Regional Auditor' }
+    { value: 'regional-auditor', label: 'Regional Auditor' },
+    { value: 'district-auditor', label: 'District Auditor' },
+    { value: 'sector-head', label: 'Sector Head' },
+    { value: 'branch-head', label: 'Branch Head' }
   ]
 
   function addResponsibility() {
@@ -433,7 +528,10 @@
     const prefixes: Record<string, string> = {
       'auditor-general': 'ag',
       'deputy-auditor-general': 'dag',
-      'regional-auditor': 'ra'
+      'regional-auditor': 'ra',
+      'district-auditor': 'da',
+      'sector-head': 'sh',
+      'branch-head': 'bh'
     }
     return prefixes[role] || ''
   }
@@ -506,10 +604,16 @@
     }
   )
 
-  // Regenerate slug when role changes
+  // Reset office/department and regenerate slug when role changes
   watch(
     () => form.role,
-    (newRole) => {
+    (newRole, oldRole) => {
+      if (newRole !== oldRole) {
+        form.officeId = null
+        form.departmentId = null
+        selectedRegionId.value = null
+        selectedSectorId.value = null
+      }
       const name = form.translations.en?.name
       if (name) {
         const newSlug = generateSlugWithPrefix(name, newRole)
@@ -518,6 +622,15 @@
       }
     }
   )
+
+  // Reset child selection when parent changes
+  watch(selectedRegionId, () => {
+    form.officeId = null
+  })
+
+  watch(selectedSectorId, () => {
+    form.officeId = null
+  })
 
   async function handleSubmit() {
     if (!validate(form, validationRules)) return
