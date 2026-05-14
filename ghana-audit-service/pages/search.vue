@@ -12,7 +12,7 @@
     <CommonBreadcrumb :crumbs="[{ label: 'Search Results', path: '/search' }]" />
 
     <!-- Main Content -->
-    <section class="section bg-gray-50">
+    <section class="section bg-gray-50 dark:bg-gray-900">
       <div class="container">
         <!-- Search Bar -->
         <div class="mb-8">
@@ -29,14 +29,14 @@
               <input
                 v-model="searchInput"
                 type="search"
-                class="w-full py-3 px-4 pl-12 pr-10 text-base border-2 border-gray-300 rounded-lg bg-white transition-colors focus:outline-none focus:border-primary"
+                class="w-full py-3 px-4 pl-12 pr-10 text-base border-2 border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 dark:text-white transition-colors focus:outline-none focus:border-primary dark:focus:border-primary-light"
                 placeholder="Search reports, publications, news..."
                 aria-label="Search the website"
               />
               <button
                 v-if="searchInput"
                 type="button"
-                class="absolute right-3 bg-transparent border-none p-2 cursor-pointer text-gray-400 text-lg leading-none hover:text-gray-600"
+                class="absolute right-3 bg-transparent border-none p-2 cursor-pointer text-gray-400 dark:text-gray-500 text-lg leading-none hover:text-gray-600 dark:hover:text-gray-300"
                 aria-label="Clear search"
                 @click="clearSearch"
               >
@@ -254,7 +254,7 @@
     </section>
 
     <!-- Help Section -->
-    <section class="section bg-white">
+    <section class="section bg-white dark:bg-gray-800">
       <div class="container text-center">
         <UiSectionHeader
           title="Can't Find What You're Looking For?"

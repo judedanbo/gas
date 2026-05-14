@@ -1,5 +1,5 @@
 <template>
-  <article class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-5 hover:shadow-md transition-shadow">
+  <article class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-5 hover:shadow-md hover:border-primary/30 dark:hover:border-primary-light/30 transition-all">
     <div class="flex items-start gap-4">
       <div class="flex-1 min-w-0">
         <!-- Type Badge -->
