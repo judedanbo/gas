@@ -23,13 +23,13 @@ const dbConfig = {
   database: process.env.DB_NAME || 'ghana_audit_service'
 }
 
-type OfficeTypeSlug = 'head-office' | 'regional-office' | 'district-office' | 'section' | 'branch'
+type OfficeTypeSlug = 'head-office' | 'regional-office' | 'district-office' | 'sector' | 'branch'
 
 const officeTypesSeed: { slug: OfficeTypeSlug; name: string; displayOrder: number }[] = [
   { slug: 'head-office', name: 'Head Office', displayOrder: 0 },
   { slug: 'regional-office', name: 'Regional Office', displayOrder: 1 },
   { slug: 'district-office', name: 'District Office', displayOrder: 2 },
-  { slug: 'section', name: 'Section', displayOrder: 3 },
+  { slug: 'sector', name: 'Sector', displayOrder: 3 },
   { slug: 'branch', name: 'Branch', displayOrder: 4 }
 ]
 
@@ -1081,6 +1081,62 @@ const offices: OfficeData[] = [
     email: 'info@audit.gov.gh',
     displayOrder: 9,
     translation: { name: "Sekondi District 'B'", address: 'Sekondi, Western Region' }
+  },
+
+  // ── Sectors (Central Government Audit Department) ──
+  {
+    slug: 'cg-sector-1',
+    type: 'sector',
+    region: 'Greater Accra',
+    phone: null,
+    email: 'info@audit.gov.gh',
+    displayOrder: 1,
+    translation: { name: 'Sector 1', address: 'Head Office, Accra' }
+  },
+  {
+    slug: 'cg-sector-2',
+    type: 'sector',
+    region: 'Greater Accra',
+    phone: null,
+    email: 'info@audit.gov.gh',
+    displayOrder: 2,
+    translation: { name: 'Sector 2', address: 'Head Office, Accra' }
+  },
+  {
+    slug: 'cg-sector-3',
+    type: 'sector',
+    region: 'Greater Accra',
+    phone: null,
+    email: 'info@audit.gov.gh',
+    displayOrder: 3,
+    translation: { name: 'Sector 3', address: 'Head Office, Accra' }
+  },
+  {
+    slug: 'cg-sector-4',
+    type: 'sector',
+    region: 'Greater Accra',
+    phone: null,
+    email: 'info@audit.gov.gh',
+    displayOrder: 4,
+    translation: { name: 'Sector 4', address: 'Head Office, Accra' }
+  },
+  {
+    slug: 'cg-sector-5',
+    type: 'sector',
+    region: 'Greater Accra',
+    phone: null,
+    email: 'info@audit.gov.gh',
+    displayOrder: 5,
+    translation: { name: 'Sector 5', address: 'Head Office, Accra' }
+  },
+  {
+    slug: 'cg-sector-6',
+    type: 'sector',
+    region: 'Greater Accra',
+    phone: null,
+    email: 'info@audit.gov.gh',
+    displayOrder: 6,
+    translation: { name: 'Sector 6', address: 'Head Office, Accra' }
   }
 ]
 
