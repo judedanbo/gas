@@ -1,7 +1,13 @@
 import type { ManagementTeamMember } from '~/types'
 
 type SupportedLocale = 'en' | 'ak'
-type ManagementRole = 'auditor-general' | 'deputy-auditor-general' | 'regional-auditor'
+type ManagementRole =
+  | 'auditor-general'
+  | 'deputy-auditor-general'
+  | 'regional-auditor'
+  | 'district-auditor'
+  | 'sector-head'
+  | 'branch-head'
 
 interface DbManagementTeamMember {
   id: number

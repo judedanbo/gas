@@ -6,6 +6,7 @@ interface DbOffice {
   id: number
   slug: string
   typeId: number
+  parentId?: number | null
   region: string
   phone: string | null
   email: string | null
