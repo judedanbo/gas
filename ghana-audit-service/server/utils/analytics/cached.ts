@@ -1,4 +1,5 @@
 import type { EventHandler, H3Event } from 'h3'
+import { defineCachedEventHandler } from 'nitropack/runtime'
 
 /**
  * Cache-instrumented event handler. Wraps Nitro's defineCachedEventHandler
