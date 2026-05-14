@@ -414,9 +414,15 @@
     if (isUnassigned.value || !album.value) return
     settingCoverId.value = image.id
     try {
+      // Build the payload from the SAVED album, not the form, so any unsaved
+      // edits in the album form aren't silently persisted when changing the cover.
+      const saved = album.value
       const updated = await api.put<AdminGalleryAlbum>(`gallery/albums/${albumId.value}`, {
-        ...form,
-        coverImageId: image.id
+        slug: saved.slug,
+        coverImageId: image.id,
+        publishedAt: saved.publishedAt,
+        isPublished: saved.isPublished,
+        translations: saved.translations
       })
       album.value = updated
       form.coverImageId = image.id

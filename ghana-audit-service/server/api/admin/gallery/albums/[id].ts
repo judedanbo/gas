@@ -151,12 +151,14 @@ async function handleUpdate(event: H3Event, id: number) {
     }
   }
 
-  // Guard: cover image must belong to this album (or be null)
+  // Guard: cover image must belong to this album and not be soft-deleted
   if (input.coverImageId != null) {
     const [cover] = await db
       .select({ id: schema.galleryImages.id, albumId: schema.galleryImages.albumId })
       .from(schema.galleryImages)
-      .where(eq(schema.galleryImages.id, input.coverImageId))
+      .where(
+        and(eq(schema.galleryImages.id, input.coverImageId), isNull(schema.galleryImages.deletedAt))
+      )
       .limit(1)
     if (!cover || cover.albumId !== id) {
       throw createValidationError({
