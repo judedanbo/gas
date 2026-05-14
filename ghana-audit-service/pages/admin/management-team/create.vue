@@ -400,7 +400,7 @@
 
   const filteredDistrictOptions = computed(() =>
     districtOffices.value
-      .filter((o) => o.parentId === selectedRegionId.value)
+      .filter((o) => o.parentId !== null && o.parentId === Number(selectedRegionId.value))
       .map((o) => ({
         value: o.id,
         label: o.translations?.en?.name || o.region
@@ -416,7 +416,7 @@
 
   const filteredBranchOptions = computed(() =>
     branches.value
-      .filter((o) => o.parentId === selectedSectorId.value)
+      .filter((o) => o.parentId !== null && o.parentId === Number(selectedSectorId.value))
       .map((o) => ({
         value: o.id,
         label: o.translations?.en?.name || o.slug

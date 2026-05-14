@@ -35,6 +35,9 @@
           <option value="auditor-general">Auditor-General</option>
           <option value="deputy-auditor-general">Deputy Auditor-General</option>
           <option value="regional-auditor">Regional Auditor</option>
+          <option value="district-auditor">District Auditor</option>
+          <option value="sector-head">Sector Head</option>
+          <option value="branch-head">Branch Head</option>
         </select>
         <select v-model="filters.isActive" class="form-input text-sm">
           <option value="">All Status</option>
