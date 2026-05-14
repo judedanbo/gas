@@ -8,7 +8,8 @@ export function useSearch() {
     total: 0,
     page: 1,
     perPage: 10,
-    lastPage: 1
+    lastPage: 1,
+    typeCounts: {} as Record<string, number>
   })
 
   async function search(filters: SearchFilters) {
@@ -35,7 +36,7 @@ export function useSearch() {
       )
 
       results.value = response.data
-      meta.value = response.meta
+      meta.value = { ...response.meta, typeCounts: response.meta.typeCounts ?? {} }
     } catch (e) {
       error.value = e instanceof Error ? e.message : 'Search failed'
     } finally {

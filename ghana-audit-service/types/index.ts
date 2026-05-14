@@ -298,6 +298,7 @@ export interface PaginatedResponse<T> {
     page: number
     perPage: number
     lastPage: number
+    typeCounts?: Record<string, number>
   }
 }
 

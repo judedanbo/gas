@@ -78,7 +78,10 @@
                       type="checkbox"
                       class="w-4 h-4 text-primary border-gray-300 dark:border-gray-600 rounded focus:ring-primary dark:bg-gray-700"
                     />
-                    <span class="text-sm text-gray-600 dark:text-gray-400">{{ type.label }}</span>
+                    <span class="text-sm text-gray-600 dark:text-gray-400">
+                      {{ type.label }}
+                      <span v-if="meta.typeCounts?.[type.value]" class="text-gray-400 dark:text-gray-500">({{ meta.typeCounts[type.value] }})</span>
+                    </span>
                   </label>
                 </div>
               </div>
@@ -335,8 +338,25 @@
     })
   }
 
-  // Handle search form submit
+  // Debounced search as user types
+  let debounceTimer: ReturnType<typeof setTimeout> | undefined
+  watch(searchInput, (val) => {
+    clearTimeout(debounceTimer)
+    const trimmed = val.trim()
+    if (trimmed.length < 2) return
+    debounceTimer = setTimeout(() => {
+      searchQuery.value = trimmed
+      meta.value.page = 1
+      router.replace({ query: { q: trimmed } })
+      performSearch()
+    }, 400)
+  })
+
+  onUnmounted(() => clearTimeout(debounceTimer))
+
+  // Handle search form submit (immediate, no debounce)
   function handleSearch() {
+    clearTimeout(debounceTimer)
     if (searchInput.value.trim()) {
       searchQuery.value = searchInput.value.trim()
       meta.value.page = 1

@@ -763,5 +763,10 @@ export async function runGlobalSearch(
   const slice = merged.slice(start, start + perPage)
   const data = slice.map((hit) => toSearchResult(hit, trimmed))
 
-  return { data, meta: { total, page, perPage, lastPage } }
+  const typeCounts: Record<string, number> = {}
+  for (const hit of merged) {
+    typeCounts[hit.type] = (typeCounts[hit.type] || 0) + 1
+  }
+
+  return { data, meta: { total, page, perPage, lastPage, typeCounts } }
 }
