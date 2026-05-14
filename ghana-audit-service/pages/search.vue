@@ -209,7 +209,7 @@
 
               <!-- Results List -->
               <div v-else class="space-y-4">
-                <SearchSearchResultCard
+                <SearchResultCard
                   v-for="result in results"
                   :key="result.id"
                   :result="result"
