@@ -192,7 +192,7 @@
       <CommonMobileMenu v-if="isMobileMenuOpen" @close="closeMobileMenu" />
     </Transition>
   </header>
-  <SearchSearchCommandPalette />
+  <SearchCommandPalette />
 </template>
 
 <script setup lang="ts">
