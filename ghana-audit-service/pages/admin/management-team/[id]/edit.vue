@@ -178,15 +178,7 @@
                   required
                   :error="errors.role"
                 />
-                <AdminFormAdminSelect
-                  v-if="form.role === 'regional-auditor'"
-                  v-model="form.officeId"
-                  label="Office"
-                  :options="officeOptions"
-                  required
-                  :error="errors.officeId"
-                  help-text="Select the office for this auditor"
-                />
+                <!-- Deputy AG: Department -->
                 <AdminFormAdminSelect
                   v-if="form.role === 'deputy-auditor-general'"
                   v-model="form.departmentId"
@@ -196,6 +188,68 @@
                   :error="errors.departmentId"
                   help-text="Select the department for this DAG"
                 />
+
+                <!-- Regional Auditor: Regional Office -->
+                <AdminFormAdminSelect
+                  v-if="form.role === 'regional-auditor'"
+                  v-model="form.officeId"
+                  label="Regional Office"
+                  :options="regionalOfficeOptions"
+                  required
+                  :error="errors.officeId"
+                  help-text="Select the regional office"
+                />
+
+                <!-- District Auditor: Region then District -->
+                <template v-if="form.role === 'district-auditor'">
+                  <AdminFormAdminSelect
+                    v-model="selectedRegionId"
+                    label="Region"
+                    :options="regionalOfficeOptions"
+                    required
+                    help-text="Select the region first"
+                  />
+                  <AdminFormAdminSelect
+                    v-model="form.officeId"
+                    label="District Office"
+                    :options="filteredDistrictOptions"
+                    required
+                    :error="errors.officeId"
+                    :disabled="!selectedRegionId"
+                    help-text="Select the district office"
+                  />
+                </template>
+
+                <!-- Sector Head: Sector -->
+                <AdminFormAdminSelect
+                  v-if="form.role === 'sector-head'"
+                  v-model="form.officeId"
+                  label="Sector"
+                  :options="sectorOptions"
+                  required
+                  :error="errors.officeId"
+                  help-text="Select the sector"
+                />
+
+                <!-- Branch Head: Sector then Branch -->
+                <template v-if="form.role === 'branch-head'">
+                  <AdminFormAdminSelect
+                    v-model="selectedSectorId"
+                    label="Sector"
+                    :options="sectorOptions"
+                    required
+                    help-text="Select the sector first"
+                  />
+                  <AdminFormAdminSelect
+                    v-model="form.officeId"
+                    label="Branch"
+                    :options="filteredBranchOptions"
+                    required
+                    :error="errors.officeId"
+                    :disabled="!selectedSectorId"
+                    help-text="Select the branch"
+                  />
+                </template>
                 <div>
                   <AdminFormAdminInput
                     v-model="form.slug"
@@ -328,17 +382,52 @@
   const { errors, validate, setErrors, clearFieldError, rules } = useFormValidation()
   const { getList } = useAdminApi()
 
-  // Fetch regional offices for dropdown
-  const officesData = ref<{ data: AdminOffice[] } | null>(null)
+  // Office data by type
+  const regionalOffices = ref<AdminOffice[]>([])
+  const districtOffices = ref<AdminOffice[]>([])
+  const sectors = ref<AdminOffice[]>([])
+  const branches = ref<AdminOffice[]>([])
   // Fetch departments for dropdown
   const departmentsData = ref<{ data: AdminDepartment[] } | null>(null)
 
-  const officeOptions = computed(() => {
-    return (officesData.value?.data || []).map((office) => ({
-      value: office.id,
-      label: office.translations?.en?.name || office.region
+  // Cascading parent selection state
+  const selectedRegionId = ref<number | null>(null)
+  const selectedSectorId = ref<number | null>(null)
+
+  // Initialized flag to prevent watchers from resetting values during initial load
+  const initialized = ref(false)
+
+  const regionalOfficeOptions = computed(() =>
+    regionalOffices.value.map((o) => ({
+      value: o.id,
+      label: o.translations?.en?.name || o.region
     }))
-  })
+  )
+
+  const filteredDistrictOptions = computed(() =>
+    districtOffices.value
+      .filter((o) => o.parentId === selectedRegionId.value)
+      .map((o) => ({
+        value: o.id,
+        label: o.translations?.en?.name || o.region
+      }))
+  )
+
+  const sectorOptions = computed(() =>
+    sectors.value.map((o) => ({
+      value: o.id,
+      label: o.translations?.en?.name || o.slug
+    }))
+  )
+
+  const filteredBranchOptions = computed(() =>
+    branches.value
+      .filter((o) => o.parentId === selectedSectorId.value)
+      .map((o) => ({
+        value: o.id,
+        label: o.translations?.en?.name || o.slug
+      }))
+  )
 
   const departmentOptions = computed(() => {
     return (departmentsData.value?.data || []).map((dept) => ({
@@ -404,7 +493,10 @@
   const roleOptions = [
     { value: 'auditor-general', label: 'Auditor-General' },
     { value: 'deputy-auditor-general', label: 'Deputy Auditor-General' },
-    { value: 'regional-auditor', label: 'Regional Auditor' }
+    { value: 'regional-auditor', label: 'Regional Auditor' },
+    { value: 'district-auditor', label: 'District Auditor' },
+    { value: 'sector-head', label: 'Sector Head' },
+    { value: 'branch-head', label: 'Branch Head' }
   ]
 
   function addResponsibility() {
@@ -442,7 +534,10 @@
     const prefixes: Record<string, string> = {
       'auditor-general': 'ag',
       'deputy-auditor-general': 'dag',
-      'regional-auditor': 'ra'
+      'regional-auditor': 'ra',
+      'district-auditor': 'da',
+      'sector-head': 'sh',
+      'branch-head': 'bh'
     }
     return prefixes[role] || ''
   }
@@ -504,11 +599,16 @@
     }
   }
 
-  // Regenerate slug when role changes
+  // Reset office/department and regenerate slug when role changes
   watch(
     () => form.role,
     (newRole, oldRole) => {
-      // Only regenerate if role actually changed and we have a name
+      if (initialized.value && newRole !== oldRole) {
+        form.officeId = null
+        form.departmentId = null
+        selectedRegionId.value = null
+        selectedSectorId.value = null
+      }
       if (newRole !== oldRole && form.translations.en?.name) {
         const newSlug = generateSlugWithPrefix(form.translations.en.name, newRole)
         form.slug = newSlug
@@ -517,14 +617,29 @@
     }
   )
 
+  // Reset child selection when parent changes (only after init)
+  watch(selectedRegionId, () => {
+    if (initialized.value) form.officeId = null
+  })
+
+  watch(selectedSectorId, () => {
+    if (initialized.value) form.officeId = null
+  })
+
   onMounted(async () => {
-    // Fetch regional offices and departments for dropdowns
+    // Fetch offices by type and departments for dropdowns
     try {
-      const [offices, departments] = await Promise.all([
-        getList<AdminOffice>('offices'),
+      const [regOffices, dstOffices, sectorOffices, branchOffices, departments] = await Promise.all([
+        getList<AdminOffice>('offices', { typeSlug: 'regional-office' }),
+        getList<AdminOffice>('offices', { typeSlug: 'district-office' }),
+        getList<AdminOffice>('offices', { typeSlug: 'sector' }),
+        getList<AdminOffice>('offices', { typeSlug: 'branch' }),
         getList<AdminDepartment>('departments')
       ])
-      officesData.value = offices
+      regionalOffices.value = regOffices.data || []
+      districtOffices.value = dstOffices.data || []
+      sectors.value = sectorOffices.data || []
+      branches.value = branchOffices.data || []
       departmentsData.value = departments
     } catch {
       // Silently fail - dropdowns will just be empty
@@ -551,6 +666,26 @@
             ak: { description: r.translations?.ak?.description || '' }
           }
         })) || []
+
+      // Pre-populate cascading parent for district auditors
+      if (item.role === 'district-auditor' && item.officeId) {
+        const office = districtOffices.value.find((o) => o.id === item.officeId)
+        if (office?.parentId) {
+          selectedRegionId.value = office.parentId
+        }
+      }
+
+      // Pre-populate cascading parent for branch heads
+      if (item.role === 'branch-head' && item.officeId) {
+        const office = branches.value.find((o) => o.id === item.officeId)
+        if (office?.parentId) {
+          selectedSectorId.value = office.parentId
+        }
+      }
+
+      nextTick(() => {
+        initialized.value = true
+      })
     }
   })
 
