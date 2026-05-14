@@ -28,6 +28,25 @@ async function handleList(event: H3Event) {
   const conditions = []
   if (query.includeDeleted !== 'true') conditions.push(isNull(schema.offices.deletedAt))
 
+  if (query.typeSlug && typeof query.typeSlug === 'string') {
+    const typeResult = await db
+      .select({ id: schema.officeTypes.id })
+      .from(schema.officeTypes)
+      .where(eq(schema.officeTypes.slug, query.typeSlug))
+      .limit(1)
+    if (typeResult.length > 0) {
+      conditions.push(eq(schema.offices.typeId, typeResult[0].id))
+    }
+  }
+
+  if (query.parentId && typeof query.parentId === 'string') {
+    conditions.push(eq(schema.offices.parentId, Number(query.parentId)))
+  }
+
+  const isDropdownMode = !!query.typeSlug || !!query.parentId
+  const limit = isDropdownMode ? 1000 : perPage
+  const queryOffset = isDropdownMode ? 0 : offset
+
   const whereClause = conditions.length > 0 ? and(...conditions) : undefined
 
   const [{ count }] = await db
@@ -40,8 +59,8 @@ async function handleList(event: H3Event) {
     .from(schema.offices)
     .where(whereClause)
     .orderBy(asc(schema.offices.displayOrder))
-    .limit(perPage)
-    .offset(offset)
+    .limit(limit)
+    .offset(queryOffset)
 
   const officeIds = offices.map((o) => o.id)
   const translations =
@@ -63,6 +82,7 @@ async function handleList(event: H3Event) {
           .where(sql`${schema.officeTypes.id} IN (${sql.join(typeIds, sql`, `)})`)
       : []
   const typeMap = Object.fromEntries(types.map((t) => [t.id, t.name]))
+  const typeSlugMap = Object.fromEntries(types.map((t) => [t.id, t.slug]))
 
   const translationsByOffice = translations.reduce(
     (acc, t) => {
@@ -76,10 +96,16 @@ async function handleList(event: H3Event) {
   const data = offices.map((o) => ({
     ...o,
     typeName: typeMap[o.typeId] || '',
+    typeSlug: typeSlugMap[o.typeId] || '',
     translations: translationsByOffice[o.id] || {}
   }))
 
-  return { data, meta: buildPaginationMeta(Number(count), page, perPage) }
+  return {
+    data,
+    meta: isDropdownMode
+      ? buildPaginationMeta(data.length, 1, data.length || 1)
+      : buildPaginationMeta(Number(count), page, perPage)
+  }
 }
 
 async function handleCreate(event: H3Event) {
