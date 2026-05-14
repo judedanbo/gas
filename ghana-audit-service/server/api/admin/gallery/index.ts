@@ -1,5 +1,5 @@
 import type { H3Event } from 'h3'
-import { eq, and, isNull, sql, desc } from 'drizzle-orm'
+import { eq, and, isNull, sql, desc, like, or, inArray } from 'drizzle-orm'
 import { getDatabase, schema } from '../../../database'
 import {
   requirePermission,
@@ -32,6 +32,39 @@ async function handleList(event: H3Event) {
     conditions.push(eq(schema.galleryImages.category, query.category))
   }
 
+  // Album filter — accept "null"/"0" for the unassigned bucket, or a numeric id.
+  if (typeof query.albumId === 'string' || typeof query.albumId === 'number') {
+    const raw = String(query.albumId)
+    if (raw === 'null' || raw === '0') {
+      conditions.push(isNull(schema.galleryImages.albumId))
+    } else {
+      const n = Number(raw)
+      if (!isNaN(n) && n > 0) conditions.push(eq(schema.galleryImages.albumId, n))
+    }
+  }
+
+  // Optional alt/caption search via translations subquery
+  if (typeof query.search === 'string' && query.search.trim()) {
+    const term = `%${query.search.trim()}%`
+    const matched = await db
+      .select({ imageId: schema.galleryImageTranslations.imageId })
+      .from(schema.galleryImageTranslations)
+      .where(
+        or(
+          like(schema.galleryImageTranslations.alt, term),
+          like(schema.galleryImageTranslations.caption, term)
+        )
+      )
+    const matchedIds = Array.from(new Set(matched.map((r) => r.imageId)))
+    if (matchedIds.length === 0) {
+      return {
+        data: [],
+        meta: buildPaginationMeta(0, page, perPage)
+      }
+    }
+    conditions.push(inArray(schema.galleryImages.id, matchedIds))
+  }
+
   const whereClause = conditions.length > 0 ? and(...conditions) : undefined
 
   const [{ count }] = await db
@@ -53,9 +86,7 @@ async function handleList(event: H3Event) {
       ? await db
           .select()
           .from(schema.galleryImageTranslations)
-          .where(
-            sql`${schema.galleryImageTranslations.imageId} IN (${sql.join(imageIds, sql`, `)})`
-          )
+          .where(inArray(schema.galleryImageTranslations.imageId, imageIds))
       : []
 
   const translationsByImage = translations.reduce(
@@ -86,8 +117,8 @@ async function handleCreate(event: H3Event) {
     await connection.beginTransaction()
 
     const [result] = await connection.execute(
-      `INSERT INTO gallery_images (url, category, created_by) VALUES (?, ?, ?)`,
-      [input.url, input.category || null, user.id]
+      `INSERT INTO gallery_images (url, category, album_id, created_by) VALUES (?, ?, ?, ?)`,
+      [input.url, input.category || null, input.albumId ?? null, user.id]
     )
 
     const imageId = (result as { insertId: number }).insertId

@@ -333,6 +333,7 @@ export interface AdminGalleryImage {
   id: number
   url: string
   category: string | null
+  albumId: number | null
   createdBy: number
   uploadedAt: string
   createdAt: string
@@ -341,6 +342,24 @@ export interface AdminGalleryImage {
   translations: Translations<{
     alt?: string | null
     caption?: string | null
+  }>
+}
+
+export interface AdminGalleryAlbum {
+  id: number
+  slug: string
+  coverImageId: number | null
+  publishedAt: string
+  isPublished: boolean
+  imageCount: number
+  previewImages: string[]
+  createdBy: number | null
+  createdAt: string
+  updatedAt: string
+  deletedAt: string | null
+  translations: Translations<{
+    title: string
+    description?: string | null
   }>
 }
 
@@ -536,9 +555,21 @@ export type RegionalOfficeInput = OfficeInput
 export interface GalleryImageInput {
   url: string
   category?: string | null
+  albumId?: number | null
   translations: Translations<{
     alt?: string | null
     caption?: string | null
+  }>
+}
+
+export interface GalleryAlbumInput {
+  slug: string
+  coverImageId?: number | null
+  publishedAt: string
+  isPublished: boolean
+  translations: Translations<{
+    title: string
+    description?: string | null
   }>
 }
 

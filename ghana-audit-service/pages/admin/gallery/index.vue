@@ -1,152 +1,96 @@
 <template>
   <div>
-    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+    <div class="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
       <div>
-        <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Gallery</h1>
-        <p class="text-gray-600 dark:text-gray-400 mt-1">Manage image gallery</p>
+        <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Photo Gallery</h1>
+        <p class="mt-1 text-gray-600 dark:text-gray-400">
+          Browse and manage albums of gallery images
+        </p>
       </div>
-      <NuxtLink to="/admin/gallery/create" class="btn btn-primary inline-flex items-center gap-2">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            stroke-width="2"
-            d="M12 4v16m8-8H4"
-          />
-        </svg>
-        Upload Image
-      </NuxtLink>
+      <div class="flex flex-wrap items-center gap-2">
+        <NuxtLink
+          to="/admin/gallery/bulk-upload"
+          class="btn btn-ghost inline-flex items-center gap-2"
+        >
+          <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 7.5 7.5 12m4.5-4.5V21"
+            />
+          </svg>
+          Bulk upload
+        </NuxtLink>
+        <NuxtLink to="/admin/gallery/create" class="btn btn-ghost inline-flex items-center gap-2">
+          <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M12 4v16m8-8H4"
+            />
+          </svg>
+          Upload single image
+        </NuxtLink>
+        <NuxtLink
+          to="/admin/gallery/albums/create"
+          class="btn btn-primary inline-flex items-center gap-2"
+        >
+          <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M12 4v16m8-8H4"
+            />
+          </svg>
+          New album
+        </NuxtLink>
+      </div>
     </div>
 
     <AdminUiAdminSearchFilter
       v-model:search="filters.search"
-      search-placeholder="Search images..."
-      :has-active-filters="hasActiveFilters"
-      @clear-filters="clearFilters"
-    >
-      <template #filters>
-        <select v-model="filters.category" class="form-input text-sm">
-          <option value="">All Categories</option>
-          <option v-for="cat in categories" :key="cat" :value="cat">{{ cat }}</option>
-        </select>
-      </template>
-    </AdminUiAdminSearchFilter>
+      search-placeholder="Search albums by name..."
+      :has-active-filters="!!filters.search"
+      @clear-filters="filters.search = ''"
+    />
 
     <div v-if="loading" class="flex items-center justify-center py-12">
-      <div class="animate-spin w-8 h-8 border-2 border-primary border-t-transparent rounded-full" />
+      <div class="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
     </div>
 
-    <div v-else-if="items.length === 0" class="text-center py-12">
+    <div v-else-if="items.length === 0" class="py-12 text-center">
       <AdminUiAdminEmptyState
-        title="No images found"
-        description="Get started by uploading your first image."
-        action-to="/admin/gallery/create"
-        action-label="Upload Image"
+        title="No albums found"
+        :description="
+          filters.search
+            ? 'Try a different search term.'
+            : 'Get started by creating your first album.'
+        "
+        action-to="/admin/gallery/albums/create"
+        action-label="Create album"
       />
     </div>
 
-    <div v-else class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-      <div
-        v-for="image in items"
-        :key="image.id"
-        class="group relative aspect-square bg-gray-100 dark:bg-gray-800 rounded-lg overflow-hidden"
-      >
-        <img
-          :src="image.url"
-          :alt="image.translations?.en?.alt || ''"
-          class="w-full h-full object-cover"
-        />
-        <div
-          class="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2"
-        >
-          <button
-            type="button"
-            class="p-2 bg-white/20 hover:bg-white/30 rounded-lg text-white"
-            @click="viewImage(image)"
-          >
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-              />
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
-              />
-            </svg>
-          </button>
-          <button
-            type="button"
-            class="p-2 bg-red-500/80 hover:bg-red-600 rounded-lg text-white"
-            @click="confirmDelete(image)"
-          >
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-              />
-            </svg>
-          </button>
-        </div>
-        <div v-if="image.category" class="absolute top-2 left-2">
-          <span class="badge badge-secondary text-xs">{{ image.category }}</span>
-        </div>
-        <div
-          class="absolute bottom-0 left-0 right-0 p-2 bg-gradient-to-t from-black/60 to-transparent"
-        >
-          <p class="text-white text-xs truncate">
-            {{ image.translations?.en?.caption || image.translations?.en?.alt || 'No caption' }}
-          </p>
-        </div>
-      </div>
+    <div v-else class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+      <AdminUiAdminGalleryAlbumCard
+        v-for="album in items"
+        :key="album.id"
+        :album="album"
+        @delete="confirmDelete(album)"
+      />
     </div>
 
     <div v-if="meta.lastPage > 1" class="mt-6">
       <AdminUiAdminPagination :meta="meta" @page-change="handlePageChange" />
     </div>
 
-    <!-- View Image Modal -->
-    <div
-      v-if="viewingImage"
-      class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80"
-      @click.self="viewingImage = null"
-    >
-      <div class="relative max-w-4xl max-h-[90vh]">
-        <button
-          type="button"
-          class="absolute -top-10 right-0 text-white hover:text-gray-300"
-          @click="viewingImage = null"
-        >
-          <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M6 18L18 6M6 6l12 12"
-            />
-          </svg>
-        </button>
-        <img
-          :src="viewingImage.url"
-          :alt="viewingImage.translations?.en?.alt || ''"
-          class="max-w-full max-h-[80vh] rounded-lg"
-        />
-        <div v-if="viewingImage.translations?.en?.caption" class="mt-2 text-center text-white">
-          {{ viewingImage.translations?.en?.caption }}
-        </div>
-      </div>
-    </div>
-
     <AdminUiAdminConfirmDialog
       v-model="showDeleteDialog"
-      title="Delete Image"
-      message="Are you sure you want to delete this image? This action cannot be undone."
+      title="Delete album"
+      message="Are you sure you want to delete this album? The images will remain but become unassigned."
       confirm-text="Delete"
       :loading="deleting"
       @confirm="handleDelete"
@@ -155,41 +99,31 @@
 </template>
 
 <script setup lang="ts">
-  import type { AdminGalleryImage } from '~/types/admin'
+  import type { AdminGalleryAlbum } from '~/types/admin'
   definePageMeta({ layout: 'admin' })
 
   const { items, loading, deleting, meta, fetchAll, remove } =
-    useAdminCrud<AdminGalleryImage>('gallery')
+    useAdminCrud<AdminGalleryAlbum>('gallery/albums')
 
-  const filters = reactive({ search: '', category: '' })
-  const hasActiveFilters = computed(() => !!filters.search || !!filters.category)
-  function clearFilters() {
-    filters.search = ''
-    filters.category = ''
-  }
-
-  const categories = computed(() => {
-    const cats = new Set(items.value.map((i) => i.category).filter((c): c is string => Boolean(c)))
-    return Array.from(cats)
-  })
+  const filters = reactive({ search: '' })
 
   const showDeleteDialog = ref(false)
-  const itemToDelete = ref<AdminGalleryImage | null>(null)
-  const viewingImage = ref<AdminGalleryImage | null>(null)
+  const albumToDelete = ref<AdminGalleryAlbum | null>(null)
 
-  function viewImage(image: AdminGalleryImage) {
-    viewingImage.value = image
-  }
-  function confirmDelete(item: AdminGalleryImage) {
-    itemToDelete.value = item
+  function confirmDelete(album: AdminGalleryAlbum) {
+    albumToDelete.value = album
     showDeleteDialog.value = true
   }
+
   async function handleDelete() {
-    if (itemToDelete.value && (await remove(itemToDelete.value.id))) {
+    if (!albumToDelete.value) return
+    if (await remove(albumToDelete.value.id)) {
       showDeleteDialog.value = false
-      itemToDelete.value = null
+      albumToDelete.value = null
+      fetchData({ page: meta.value.page })
     }
   }
+
   function handlePageChange(page: number) {
     fetchData({ page })
   }
@@ -197,14 +131,17 @@
   function fetchData(overrides: Record<string, string | number | boolean | undefined> = {}) {
     const params: Record<string, string | number | boolean | undefined> = {
       page: meta.value.page,
-      perPage: 24,
+      perPage: 20,
       ...overrides
     }
     if (filters.search) params.search = filters.search
-    if (filters.category) params.category = filters.category
     fetchAll(params)
   }
 
-  watch(filters, () => fetchData({ page: 1 }), { deep: true })
+  watch(
+    () => filters.search,
+    () => fetchData({ page: 1 })
+  )
+
   onMounted(() => fetchData())
 </script>
