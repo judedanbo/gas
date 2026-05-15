@@ -387,7 +387,7 @@ describe('Search API', () => {
       const result = await handler(createMockEvent())
 
       expect(result.data).toHaveLength(5)
-      expect(result.meta).toEqual({ total: 12, page: 2, perPage: 5, lastPage: 3 })
+      expect(result.meta).toEqual({ total: 12, page: 2, perPage: 5, lastPage: 3, typeCounts: { news: 12 } })
     })
 
     it('caps perPage at the maximum allowed value', async () => {

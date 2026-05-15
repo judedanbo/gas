@@ -1,4 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { resolvePublicAsset } from '~/server/utils/publicFiles'
+import { generateThumbnailFromPdf } from '~/server/utils/generateThumbnail'
 
 vi.mock('~/server/utils/publicFiles', () => ({
   resolvePublicAsset: vi.fn()
@@ -11,9 +13,6 @@ vi.mock('~/server/utils/generateThumbnail', () => ({
 vi.mock('~/server/utils/adminHelpers', () => ({
   requirePermission: vi.fn()
 }))
-
-import { resolvePublicAsset } from '~/server/utils/publicFiles'
-import { generateThumbnailFromPdf } from '~/server/utils/generateThumbnail'
 
 async function handleGenerateThumbnail(body: { fileUrl?: string }) {
   const fileUrl = body?.fileUrl

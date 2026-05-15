@@ -1,10 +1,9 @@
 import { delay, sanitizeFilename, writeJson } from './utils'
 import { join } from 'node:path'
-import { mkdirSync, existsSync, readFileSync, writeFileSync, unlinkSync, readdirSync, rmdirSync, statSync } from 'node:fs'
+import { mkdirSync, existsSync, readFileSync, writeFileSync, unlinkSync, readdirSync, rmdirSync, statSync, createWriteStream } from 'node:fs'
 import { execFileSync } from 'node:child_process'
 import { pipeline } from 'node:stream/promises'
 import { Readable } from 'node:stream'
-import { createWriteStream } from 'node:fs'
 
 const IMG_DIR = join(process.cwd(), 'public/img/reports')
 const SEED_PATH = join(process.cwd(), 'server/database/seeds/data/reports.json')
@@ -41,6 +40,7 @@ async function downloadPdf(url: string, destPath: string): Promise<DownloadResul
       return { ok: false, sizeBytes: 0 }
     }
     const fileStream = createWriteStream(destPath)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     await pipeline(Readable.fromWeb(res.body as any), fileStream)
     const sizeBytes = statSync(destPath).size
     return { ok: true, sizeBytes }
@@ -129,7 +129,7 @@ async function crawlReportCovers() {
       const outputPrefix = join(TMP_DIR, 'cover')
       const jpegPath = pdfToJpeg(pdfPath, outputPrefix)
 
-      try { unlinkSync(pdfPath) } catch {}
+      try { unlinkSync(pdfPath) } catch { /* cleanup — ignore if already removed */ }
 
       if (!jpegPath) {
         failed++
@@ -139,9 +139,9 @@ async function crawlReportCovers() {
 
       const data = readFileSync(jpegPath)
       writeFileSync(imgPath, data)
-      try { unlinkSync(jpegPath) } catch {}
+      try { unlinkSync(jpegPath) } catch { /* cleanup */ }
     } else {
-      try { unlinkSync(pdfPath) } catch {}
+      try { unlinkSync(pdfPath) } catch { /* cleanup */ }
     }
 
     report.thumbnail = `/img/reports/${imgFilename}`
@@ -162,7 +162,7 @@ async function crawlReportCovers() {
 
   try {
     if (readdirSync(TMP_DIR).length === 0) rmdirSync(TMP_DIR)
-  } catch {}
+  } catch { /* cleanup — ignore if dir already removed */ }
 
   const totalBytes = reports.reduce((sum, r) => sum + (parseInt(r.fileSize) || 0), 0)
   const withSize = reports.filter(r => r.fileSize !== '0').length

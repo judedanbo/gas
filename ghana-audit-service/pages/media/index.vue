@@ -146,8 +146,8 @@
         query: { perPage: 3 }
       })
       news.value = response.data
-    } catch (error) {
-      console.error('Failed to fetch news:', error)
+    } catch {
+      // fetch failed — page shows empty state
     } finally {
       loading.value = false
     }

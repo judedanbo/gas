@@ -307,11 +307,13 @@ export default defineNuxtConfig({
 
       // Admin routes - hidden from SEO, cached only in production
       '/admin/**': {
+        ssr: false,
         prerender: false,
         headers: { 'X-Robots-Tag': 'noindex, nofollow' },
         cache: isDev ? false : { maxAge: 60, staleMaxAge: 120 }
       },
       '/ak/admin/**': {
+        ssr: false,
         prerender: false,
         headers: { 'X-Robots-Tag': 'noindex, nofollow' },
         cache: isDev ? false : { maxAge: 60, staleMaxAge: 120 }

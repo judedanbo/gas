@@ -123,8 +123,8 @@
       upcomingEvents.value = await $fetch<Event[]>('/api/events', {
         query: { filter: 'upcoming' }
       })
-    } catch (error) {
-      console.error('Failed to fetch upcoming events:', error)
+    } catch {
+      // fetch failed — page shows empty state
     } finally {
       loadingUpcoming.value = false
     }
@@ -134,8 +134,8 @@
       pastEvents.value = await $fetch<Event[]>('/api/events', {
         query: { filter: 'past' }
       })
-    } catch (error) {
-      console.error('Failed to fetch past events:', error)
+    } catch {
+      // fetch failed — page shows empty state
     } finally {
       loadingPast.value = false
     }

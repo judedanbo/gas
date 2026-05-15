@@ -229,8 +229,8 @@
       })
       vacancies.value = response.data
       meta.value = response.meta
-    } catch (error) {
-      console.error('Failed to fetch vacancies:', error)
+    } catch {
+      // fetch failed — page shows empty state
     } finally {
       loading.value = false
     }

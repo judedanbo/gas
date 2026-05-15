@@ -7,11 +7,6 @@ import { defineAnalyticsCachedHandler } from '../../../../server/utils/analytics
  * context. We stub them globally with the contract the wrapper relies on,
  * then verify the wrapper's state-machine matches.
  *
- * Stubs are installed in beforeEach (not at module top-level) because the
- * wrapper resolves the globals lazily — only when defineAnalyticsCachedHandler
- * is actually called — so this ordering works without breaking
- * `import/first`.
- *
  * Contract we model:
  *   - defineEventHandler(fn) returns the function unchanged.
  *   - defineCachedEventHandler(fn, opts) returns a function that, when
@@ -28,22 +23,28 @@ type Handler = (e: FakeEvent) => unknown
 let cacheState: 'miss' | 'hit'
 const innerCalls: Array<FakeEvent> = []
 
+// function declaration (not const) so it's hoisted alongside vi.mock
+function fakeCachedHandler(fn: Handler) {
+  let cached: unknown = undefined
+  return async (event: FakeEvent) => {
+    if (cacheState === 'hit' && cached !== undefined) {
+      return cached
+    }
+    innerCalls.push(event)
+    const result = await fn(event)
+    cached = result
+    return result
+  }
+}
+
+vi.mock('nitropack/runtime', () => ({
+  defineCachedEventHandler: fakeCachedHandler
+}))
+
 beforeEach(() => {
   cacheState = 'miss'
   innerCalls.length = 0
   vi.stubGlobal('defineEventHandler', (fn: Handler) => fn)
-  vi.stubGlobal('defineCachedEventHandler', (fn: Handler) => {
-    let cached: unknown = undefined
-    return async (event: FakeEvent) => {
-      if (cacheState === 'hit' && cached !== undefined) {
-        return cached
-      }
-      innerCalls.push(event)
-      const result = await fn(event)
-      cached = result
-      return result
-    }
-  })
 })
 
 describe('analytics/cached', () => {

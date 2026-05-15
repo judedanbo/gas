@@ -156,8 +156,8 @@
       merged.sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime())
 
       allVideos.value = merged
-    } catch (error) {
-      console.error('Failed to fetch videos:', error)
+    } catch {
+      // fetch failed — page shows empty state
     } finally {
       loading.value = false
     }

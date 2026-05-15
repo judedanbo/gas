@@ -248,8 +248,8 @@ async function fetchNews(page = 1) {
     })
     news.value = response.data
     meta.value = response.meta
-  } catch (error) {
-    console.error('Failed to fetch news:', error)
+  } catch {
+    // fetch failed — page shows empty state
   } finally {
     loading.value = false
   }
