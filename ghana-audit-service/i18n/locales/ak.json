@@ -156,6 +156,12 @@
     "searchPlaceholder": "Hwehwɛ din anaa nsɛm...",
     "filterBy": "Hwehwɛ denam",
     "noReports": "Yɛanhu amanneɛbɔ biara",
+    "featured": {
+      "eyebrow": "Adwumayɛ Nsɛmhwɛ a Yɛada No Adi",
+      "title": "Adwumayɛ Nsɛmhwɛ a Yɛada No Adi",
+      "description": "Yɛayi yi afi yɛn adwumayɛ nsɛmhwɛ a ɛyɛ foforɔ mu.",
+      "viewReport": "Hwɛ Amanneɛbɔ No"
+    },
     "categories": {
       "financial": "Sika Ho Nsɛmhwɛ",
       "performance": "Adwumayɛ Nsɛmhwɛ",

@@ -14,6 +14,17 @@
       </div>
     </div>
 
+    <!-- Featured Report -->
+    <section
+      v-if="featuredReport && meta.page === 1"
+      class="section pb-0 bg-gray-50 dark:bg-gray-900"
+      :aria-label="$t('reports.featured.title')"
+    >
+      <div class="container">
+        <ReportsFeaturedReport :report="featuredReport" />
+      </div>
+    </section>
+
     <!-- Main Content -->
     <section class="section bg-gray-50 dark:bg-gray-900">
       <div class="container">
@@ -57,21 +68,22 @@
               No reports match your criteria
             </h3>
             <p class="text-gray-500 dark:text-gray-400 mb-6 max-w-md mx-auto">
-              Try broadening your search by removing filters or using different keywords. Audit reports are published periodically throughout the year.
+              Try broadening your search by removing filters or using different keywords. Audit
+              reports are published periodically throughout the year.
             </p>
             <div class="flex flex-wrap justify-center gap-3">
-              <button class="btn-primary btn-sm" @click="clearAllFilters">
-                Clear All Filters
-              </button>
-              <NuxtLink to="/contact" class="btn-outline btn-sm">
-                Contact Us
-              </NuxtLink>
+              <button class="btn-primary btn-sm" @click="clearAllFilters">Clear All Filters</button>
+              <NuxtLink to="/contact" class="btn-outline btn-sm"> Contact Us </NuxtLink>
             </div>
           </div>
 
           <!-- Reports Grid -->
           <div v-else class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            <ReportsReportCard v-for="report in reports" :key="report.id" :report="report" />
+            <ReportsReportCard
+              v-for="report in displayedReports"
+              :key="report.id"
+              :report="report"
+            />
           </div>
 
           <!-- Pagination -->
@@ -140,6 +152,14 @@
   const route = useRoute()
   const router = useRouter()
   const { reports, loading, error, meta, fetchReports } = useReports()
+  const { reports: featuredList, fetchReports: fetchFeatured } = useReports()
+
+  const featuredReport = computed(() => featuredList.value[0] ?? null)
+  const displayedReports = computed(() =>
+    featuredReport.value
+      ? reports.value.filter((r) => r.id !== featuredReport.value!.id)
+      : reports.value
+  )
 
   // Filters
   const filters = reactive({
@@ -165,11 +185,14 @@
   })
 
   // Re-apply filters when navigating between menu items (client-side)
-  watch(() => route.query, () => {
-    if (syncingUrl) return
-    applyQueryParams()
-    fetchFilteredReports()
-  })
+  watch(
+    () => route.query,
+    () => {
+      if (syncingUrl) return
+      applyQueryParams()
+      fetchFilteredReports()
+    }
+  )
 
   function onFilterChange() {
     meta.value.page = 1
@@ -178,13 +201,23 @@
 
   async function fetchFilteredReports() {
     syncQueryToUrl()
-    await fetchReports({
+    const listPromise = fetchReports({
       search: filters.search || undefined,
       category: filters.category || undefined,
       year: filters.year || undefined,
       page: meta.value.page,
       perPage: 12
     })
+
+    if (meta.value.page === 1) {
+      await Promise.all([
+        listPromise,
+        fetchFeatured({ category: 'performance', perPage: 1, page: 1 })
+      ])
+    } else {
+      featuredList.value = []
+      await listPromise
+    }
   }
 
   function syncQueryToUrl() {
@@ -195,7 +228,9 @@
     if (meta.value.page > 1) query.page = String(meta.value.page)
     syncingUrl = true
     router.replace({ query }).finally(() => {
-      nextTick(() => { syncingUrl = false })
+      nextTick(() => {
+        syncingUrl = false
+      })
     })
   }
 
