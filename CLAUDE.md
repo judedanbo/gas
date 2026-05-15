@@ -7,19 +7,22 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 This repo is a small monorepo wrapping a single application with its infrastructure:
 
 - `ghana-audit-service/` — the Nuxt 3 app (frontend + Nitro server + Drizzle/MySQL data layer + admin panel). Has its own `CLAUDE.md` with app-specific guidance — **read it when working inside that directory**.
-- `docker-compose.yml` — root-level orchestration: builds the frontend image and runs MySQL 8 alongside it on the `gas-network` bridge.
+- `docker-compose.yml` — root-level orchestration: three services (frontend, MySQL 8, Redis 7) on the `gas-network` bridge.
+- `k8s/` — Kubernetes manifests (currently `migrate-job.yaml` for running DB migrations as a Job).
 - `init-db/01-init.sql` — MySQL bootstrap (currently mounted via the commented-out volume in `docker-compose.yml`; uncomment to use).
-- `.env.example` — root-level env vars consumed by `docker-compose.yml` (DB creds, public site config, JWT secret, optional Sentry DSN). The app has a separate `ghana-audit-service/.env.example` for local non-Docker dev.
+- `.env.example` — root-level env vars consumed by `docker-compose.yml` (DB creds, public site config, JWT secret, Redis URL, analytics salt, optional Sentry DSN and MaxMind GeoIP paths). The app has a separate `ghana-audit-service/.env.example` for local non-Docker dev.
 - `PLAN.md`, `component-reusability-plan.md` — historical planning docs, not authoritative; treat the code as the source of truth.
 
 ## Common Commands
 
 ### Running the full stack via Docker
 ```bash
-docker compose up --build      # frontend on :3000, MySQL on :3306
-docker compose down            # stop; add -v to also wipe the mysql-data volume
+docker compose up --build      # frontend on :3000, MySQL on :3306, Redis on :6379
+docker compose down            # stop; add -v to also wipe the mysql-data and redis-data volumes
 ```
-Frontend healthcheck hits `http://localhost:3000/`; MySQL healthcheck uses `mysqladmin ping`.
+Frontend healthcheck hits `http://localhost:3000/`; MySQL healthcheck uses `mysqladmin ping`; Redis healthcheck uses `redis-cli ping`.
+
+Redis is optional for local dev — if `REDIS_URL` is unset, the rate limiter and analytics buffer degrade to in-process fallbacks.
 
 ### Running the app locally (most day-to-day work)
 All app commands run from `ghana-audit-service/`. See that directory's `CLAUDE.md` for the full list. The most common:
@@ -35,6 +38,9 @@ npm run db:generate            # drizzle-kit: emit SQL migrations from schema
 npm run db:migrate             # drizzle-kit push (applies schema to DB)
 npm run db:studio              # Drizzle Studio UI
 npm run db:seed                # seeds via tsx + .env
+npm run db:seed:management-team # targeted seeds also available for departments, news, events, gallery, etc.
+npm run db:apply               # run migrations via tsx (alternative to db:migrate)
+npm run crawl:all              # scrape news, events, gallery, videos, publications from the live site
 ```
 
 The app expects a reachable MySQL. Easiest path: `docker compose up mysql -d` from the repo root, then `npm run dev` inside `ghana-audit-service/`.
@@ -49,7 +55,7 @@ There are two `.env` files and they are **not** interchangeable:
 When changing DB connectivity or JWT, update the relevant file (or both, if you run in both modes).
 
 ### Data layer
-- ORM: **Drizzle** targeting **MySQL 2** (`drizzle-orm/mysql2`). Schema lives in `ghana-audit-service/server/database/schema/` split by domain (`audit-reports`, `news`, `media`, `careers`, `events`, `publications`, `regional-offices`, `tenders`, `users`, `organization`). The aggregated export is `schema/index.ts`.
+- ORM: **Drizzle** targeting **MySQL 2** (`drizzle-orm/mysql2`). Schema lives in `ghana-audit-service/server/database/schema/` split by domain (`audit-reports`, `news`, `media`, `careers`, `events`, `publications`, `offices`, `tenders`, `users`, `organization`, `analytics`). The aggregated export is `schema/index.ts`.
 - Connection: singleton pool in `server/database/index.ts` (`getDatabase()` / `getPool()` / `closeDatabase()`).
 - Migrations: `drizzle-kit generate` writes to `server/database/migrations/`; `drizzle-kit push` applies. `drizzle.config.ts` is the source of truth for credentials during migration commands.
 - Despite `better-sqlite3` being in dependencies, the live config is MySQL — don't get misled by stale references in older docs.
@@ -59,6 +65,17 @@ Nitro routes under `ghana-audit-service/server/api/`:
 - **Public** routes (e.g. `news`, `publications`, `reports`, `vacancies`, `gallery`, `events`, `tenders`, `regional-offices`, `management-team`, `videos`, `search`, `contact.post`, `newsletter.post`, `csrf.get`) — open, no auth.
 - **Admin** routes under `server/api/admin/**` — gated by `server/middleware/adminAuth.ts`, which requires a `Bearer` JWT (verified via `server/utils/jwt.ts`) and looks up the user in `schema.users` to confirm they are still active and not soft-deleted (`isActive=true AND deletedAt IS NULL`). The authenticated user is attached to `event.context.auth`. Only `/api/admin/auth/login` is exempt.
 - DTO shaping happens in `server/utils/transform*.ts` files — keep DB rows out of API responses; route handlers should return transformed objects.
+
+### Analytics & abuse detection
+A server-side analytics subsystem captures per-request telemetry, rolls up route stats, and scores suspicious traffic:
+- **Capture**: `server/middleware/00-analytics.ts` logs every non-static request into a Redis-backed buffer (falls back to in-process if Redis is absent).
+- **Storage**: `server/database/schema/analytics.ts` defines `request_events` (raw log with hashed IPs, never raw IPs), rollup tables, and incident records. Retention is controlled by `ANALYTICS_RETENTION_DAYS` (default 30).
+- **Scoring/detection**: `server/utils/analytics/` — fingerprinting, fuzz-pattern matching, probing-path detection, abuse scoring.
+- **Admin dashboards**: `server/api/admin/analytics/` exposes overview, route detail, bot detection, fuzz attempts, incidents. The frontend uses **ECharts** (`vue-echarts`) for visualization.
+- **Optional enrichment**: GeoIP via MaxMind (`ANALYTICS_GEOIP_DB_PATH`, `ANALYTICS_ASN_DB_PATH`) — disabled if the mmdb files aren't mounted.
+
+### Content crawlers
+`ghana-audit-service/scripts/crawlers/` contains `cheerio`-based scrapers (`crawl-news.ts`, `crawl-events.ts`, `crawl-gallery.ts`, `crawl-videos.ts`, `crawl-publications.ts`, `crawl-report-covers.ts`) for bootstrapping the DB from the existing live site. Run individual crawlers or `npm run crawl:all`.
 
 ### Frontend conventions (summary — see inner CLAUDE.md for details)
 - Nuxt 3 + `<script setup lang="ts">`, auto-imported components prefixed by their folder (`<UiBaseCard />`, `<CommonAppHeader />`, `<AdminLayout... />`).

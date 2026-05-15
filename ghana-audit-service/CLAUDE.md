@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Ghana Audit Service official website — Nuxt 3 (Vue 3 + TypeScript strict) public site with a built-in authenticated **admin panel**. Data is served from MySQL via Drizzle ORM through Nitro server routes. The site is bilingual (English / Akan), PWA-enabled, and aims for WCAG 2.1 AA.
 
-The repo root (`..`) holds `docker-compose.yml` (frontend + MySQL) and another `CLAUDE.md` describing the monorepo. Read that file when work crosses container/infra boundaries.
+The repo root (`..`) holds `docker-compose.yml` (frontend + MySQL + Redis) and another `CLAUDE.md` describing the monorepo. Read that file when work crosses container/infra boundaries.
 
 ## Common Commands
 
@@ -37,7 +37,13 @@ npm run db:generate                # emit SQL migrations from schema/
 npm run db:migrate                 # drizzle-kit push (apply schema)
 npm run db:studio                  # Drizzle Studio
 npm run db:seed                    # full seed via tsx + .env
-npm run db:seed:management-team    # targeted seed
+npm run db:seed:management-team    # targeted seed (also: departments, news, events, gallery, videos, reports, publications, offices)
+npm run db:seed:media              # composite: news + events + gallery + videos
+npm run db:apply                   # apply migrations via tsx (alternative to db:migrate)
+
+# Content crawlers (scrape live site into local DB)
+npm run crawl:all                  # news + events + gallery + videos + publications
+npm run crawl:news                 # individual crawlers also available
 ```
 
 Tests run with `happy-dom` and `@nuxt/test-utils`; layout under `tests/unit/`, `tests/integration/`, `tests/e2e/` with shared `tests/setup.ts`.
@@ -53,6 +59,9 @@ Tests run with `happy-dom` and `@nuxt/test-utils`; layout under `tests/unit/`, `
 - **PWA** via `@vite-pwa/nuxt` (autoUpdate, runtime caching for Google Fonts).
 - **Auth**: JWT (`jsonwebtoken`) + `bcrypt` password hashing; CSRF on mutating public endpoints.
 - **Validation**: `zod` and `validator`.
+- **Rich text**: TipTap (`@tiptap/vue-3` + starter-kit, link, placeholder extensions) for admin content editing.
+- **Charts**: ECharts (`vue-echarts`) for admin analytics dashboards.
+- **Redis**: `ioredis` — used for rate limiting and analytics hot counters. Optional; falls back to in-process if `REDIS_URL` is unset.
 
 ### Directory map
 - `pages/` — file-based routing. `pages/admin/` holds the admin SPA-within-a-site; everything else is public.
@@ -68,9 +77,14 @@ Tests run with `happy-dom` and `@nuxt/test-utils`; layout under `tests/unit/`, `
   - `api/` — Nitro endpoints. **Public** routes at the top level (`reports/`, `news/`, `publications/`, `vacancies/`, `events`, `gallery`, `tenders`, `regional-offices`, `management-team`, `videos`, `search`, `contact.post`, `newsletter.post`, `csrf.get`). **Admin** routes under `server/api/admin/**` (auth, users, audit-logs, content CRUD, uploads).
   - `middleware/adminAuth.ts` — **server-side** gate. Runs on every `/api/admin/**` request except `/api/admin/auth/login`. Verifies the `Bearer` JWT, looks the user up in `schema.users` filtered by `isActive = true AND deletedAt IS NULL`, and attaches `event.context.auth = { user, token }`. Handlers can rely on that context.
   - `middleware/rateLimit.ts` — paired with `server/utils/rateLimiter.ts`.
-  - `database/` — `index.ts` (singleton pool + `getDatabase`/`getPool`/`closeDatabase`/`checkConnection`), `schema/` split by domain, `migrations/`, `seeds/`, `seed.ts`. `schema.old.ts` is legacy — don't add to it.
+  - `database/` — `index.ts` (singleton pool + `getDatabase`/`getPool`/`closeDatabase`/`checkConnection`), `schema/` split by domain (includes `analytics.ts` for request events, rollups, and incidents), `migrations/`, `seeds/`, `seed.ts`. `schema.old.ts` is legacy — don't add to it.
   - `utils/` — JWT, password hashing, CSRF, file upload, audit logging, validation, plus `transform*.ts` DTO shapers (one per domain). **API handlers should return transformed objects, not raw DB rows.**
+  - `utils/analytics/` — analytics subsystem: Redis-backed buffered writes, fingerprinting, fuzz-pattern detection, abuse scoring, GeoIP enrichment (optional MaxMind), download tracking.
+  - `utils/redis.ts` — singleton Redis client; returns `null` when `REDIS_URL` is unset so callers degrade gracefully.
+  - `middleware/00-analytics.ts` — captures per-request telemetry (runs before `adminAuth.ts` and `rateLimit.ts` due to `00-` prefix).
+  - `plugins/analyticsBuffer.ts` — Nitro plugin that periodically flushes the analytics buffer to MySQL.
   - `plugins/` — Nitro server plugins.
+- `scripts/crawlers/` — `cheerio`-based scrapers for bootstrapping the DB from the live site (news, events, gallery, videos, publications, report covers). Run via `npm run crawl:*`.
 - `types/` — shared TS types: `index.ts` (domain), `admin.ts` (admin panel).
 - `utils/` — client-side helpers (e.g. `iconMap.ts`).
 - `i18n/locales/` — `en.json`, `ak.json`. **Both must be updated together** when adding user-facing copy.
@@ -115,6 +129,12 @@ Required for the server to function:
 - `DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD`, `DB_NAME` (defaults to `localhost:3306` / `root` / `ghana_audit_service` if unset — fine for local Docker, dangerous in prod).
 - `JWT_SECRET` (admin auth will be unsafe with the placeholder).
 - `NUXT_API_SECRET` and the `NUXT_PUBLIC_*` vars for site identity.
+
+Optional:
+- `REDIS_URL` — enables shared rate limiting and analytics buffering. Without it, both degrade to in-process fallbacks.
+- `ANALYTICS_IP_SALT` — salt for hashing IPs in analytics (raw IPs are never stored).
+- `ANALYTICS_RETENTION_DAYS` — days to keep raw `request_events` (default 30).
+- `ANALYTICS_GEOIP_DB_PATH`, `ANALYTICS_ASN_DB_PATH` — paths to MaxMind GeoLite2 mmdb files for geo enrichment.
 
 ### Pre-commit
 Husky + lint-staged: `*.{js,ts,vue}` → `eslint --fix` + `prettier --write`; `*.{json,css,md,yml,yaml}` → `prettier --write`. Don't `--no-verify` unless explicitly asked.
