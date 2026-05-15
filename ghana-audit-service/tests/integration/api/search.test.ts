@@ -99,7 +99,8 @@ vi.mock('../../../server/database', () => {
     schema,
     getDatabase: () => ({
       select: () => makeBuilder(),
-      selectDistinct: () => makeBuilder()
+      selectDistinct: () => makeBuilder(),
+      insert: () => ({ values: () => Promise.resolve() })
     }),
     getPool: () => null
   }
