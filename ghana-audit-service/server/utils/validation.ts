@@ -96,7 +96,15 @@ function translationsSchema<T extends z.ZodRawShape>(fields: T) {
 // Audit Reports
 export const auditReportSchema = z.object({
   slug: slugSchema,
-  category: z.enum(['financial', 'compliance', 'it', 'performance', 'technical', 'follow-up', 'special']),
+  category: z.enum([
+    'financial',
+    'compliance',
+    'it',
+    'performance',
+    'technical',
+    'follow-up',
+    'special'
+  ]),
   publishedAt: z.string().refine((val) => !isNaN(Date.parse(val)), 'Invalid date'),
   fileUrl: z.string().max(500).or(z.literal('')),
   fileSize: z.coerce.number().optional().nullable(),
@@ -317,7 +325,12 @@ export const managementTeamSchema = z
   })
   .refine(
     (data) => {
-      const rolesRequiringOffice = ['regional-auditor', 'district-auditor', 'sector-head', 'branch-head']
+      const rolesRequiringOffice = [
+        'regional-auditor',
+        'district-auditor',
+        'sector-head',
+        'branch-head'
+      ]
       if (rolesRequiringOffice.includes(data.role)) {
         return data.officeId !== null && data.officeId !== undefined
       }
@@ -362,10 +375,40 @@ export const officeSchema = z.object({
 export const galleryImageSchema = z.object({
   url: z.string().max(500),
   category: z.string().max(100).optional().nullable(),
+  albumId: z.number().int().positive().optional().nullable(),
   translations: translationsSchema({
     alt: z.string().max(255).optional().nullable(),
     caption: z.string().max(500).optional().nullable()
   })
+})
+
+// Gallery Albums
+export const galleryAlbumSchema = z.object({
+  slug: slugSchema,
+  coverImageId: z.number().int().positive().optional().nullable(),
+  publishedAt: z.string().refine((val) => !isNaN(Date.parse(val)), 'Invalid date'),
+  isPublished: z.boolean().default(false),
+  translations: translationsSchema({
+    title: z.string().min(1).max(500),
+    description: z.string().optional().nullable()
+  })
+})
+
+// Bulk gallery image upload (post-upload DB persistence)
+export const galleryBulkImageSchema = z.object({
+  albumId: z.number().int().positive().nullable(),
+  images: z
+    .array(
+      z.object({
+        url: z.string().min(1).max(500),
+        translations: translationsSchema({
+          alt: z.string().max(255).optional().nullable(),
+          caption: z.string().max(500).optional().nullable()
+        })
+      })
+    )
+    .min(1)
+    .max(50)
 })
 
 // Videos
@@ -421,6 +464,8 @@ export type PastAGInput = z.infer<typeof pastAGSchema>
 export type ManagementTeamInput = z.infer<typeof managementTeamSchema>
 export type OfficeInput = z.infer<typeof officeSchema>
 export type GalleryImageInput = z.infer<typeof galleryImageSchema>
+export type GalleryAlbumInput = z.infer<typeof galleryAlbumSchema>
+export type GalleryBulkImageInput = z.infer<typeof galleryBulkImageSchema>
 export type VideoInput = z.infer<typeof videoSchema>
 export type TagInput = z.infer<typeof tagSchema>
 export type UserInput = z.infer<typeof userSchema>

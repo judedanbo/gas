@@ -85,11 +85,19 @@ async function handleUpdate(event: H3Event, id: number) {
   try {
     await connection.beginTransaction()
 
-    await connection.execute(`UPDATE gallery_images SET url = ?, category = ? WHERE id = ?`, [
-      input.url,
-      input.category || null,
-      id
-    ])
+    await connection.execute(
+      `UPDATE gallery_images SET url = ?, category = ?, album_id = ? WHERE id = ?`,
+      [input.url, input.category || null, input.albumId ?? null, id]
+    )
+
+    // If this image was the cover of its previous album and is moving to a different
+    // album (or to Unassigned), clear that cover reference.
+    if (existing.albumId != null && existing.albumId !== (input.albumId ?? null)) {
+      await connection.execute(
+        `UPDATE gallery_albums SET cover_image_id = NULL WHERE id = ? AND cover_image_id = ?`,
+        [existing.albumId, id]
+      )
+    }
 
     for (const [locale, trans] of Object.entries(input.translations)) {
       if (trans) {
