@@ -1,9 +1,8 @@
 import type { Video } from '~/types'
-import { eq, and, isNull, desc } from 'drizzle-orm'
+import { eq, and, isNull, desc, sql } from 'drizzle-orm'
 import { getDatabase, schema } from '../database'
 import { transformVideos } from '../utils/transformVideos'
 import { getLocaleFromRequest } from '../utils/locale'
-import { sql } from 'drizzle-orm'
 
 export default defineEventHandler(async (event): Promise<Video[]> => {
   const locale = getLocaleFromRequest(event)

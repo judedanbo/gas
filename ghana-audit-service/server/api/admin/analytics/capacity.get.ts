@@ -70,19 +70,18 @@ export default defineEventHandler(async (event) => {
     .orderBy(schema.routeStatsHourly.hour)
 
   // ── Slowest 10 routes by visit-weighted p95 ──────────────────────────
+  const avgP95Expr = sql<number>`COALESCE(SUM(p95_ms * visits) / NULLIF(SUM(visits), 0), 0)`
   const slowest = await db
     .select({
       pattern: schema.routeStatsHourly.routePattern,
       visits: sql<number>`SUM(visits)`,
-      avgP95: sql<number>`
-        COALESCE(SUM(p95_ms * visits) / NULLIF(SUM(visits), 0), 0)
-      `
+      avgP95: avgP95Expr
     })
     .from(schema.routeStatsHourly)
     .where(sql`hour >= (NOW() - INTERVAL ${sql.raw(String(days))} DAY)`)
     .groupBy(schema.routeStatsHourly.routePattern)
     .having(sql`SUM(visits) > 0`)
-    .orderBy(sql`avgP95 DESC`)
+    .orderBy(sql`${avgP95Expr} DESC`)
     .limit(10)
 
   // ── Heaviest 10 routes by total bytes out ────────────────────────────
@@ -136,7 +135,7 @@ export default defineEventHandler(async (event) => {
       oldestRaw: sql<Date | null>`(SELECT MIN(ts) FROM request_events)`,
       downloadRows: sql<number>`(SELECT COUNT(*) FROM download_events)`
     })
-    .from(sql`(SELECT 1) AS dual`)
+    .from(sql`(SELECT 1) AS _stub`)
 
   // ── Redis stats ──────────────────────────────────────────────────────
   const redisInfo = await readRedisInfo()

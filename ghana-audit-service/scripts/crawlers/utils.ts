@@ -42,6 +42,7 @@ export async function downloadImage(
     }
 
     const fileStream = createWriteStream(destPath)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     await pipeline(Readable.fromWeb(res.body as any), fileStream)
     return filename
   } catch (err) {

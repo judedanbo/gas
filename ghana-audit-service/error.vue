@@ -116,21 +116,23 @@
 
   const currentYear = new Date().getFullYear()
 
+  const statusCode = computed(() => props.error?.statusCode ?? 500)
+
   const errorTitle = computed(() => {
-    if (props.error?.statusCode === 404) {
+    if (statusCode.value === 404) {
       return t('errors.notFound')
     }
-    if (props.error?.statusCode >= 500) {
+    if (statusCode.value >= 500) {
       return t('errors.serverError')
     }
     return props.error?.statusMessage || t('errors.serverError')
   })
 
   const errorDescription = computed(() => {
-    if (props.error?.statusCode === 404) {
+    if (statusCode.value === 404) {
       return t('errors.notFoundDesc')
     }
-    if (props.error?.statusCode >= 500) {
+    if (statusCode.value >= 500) {
       return t('errors.serverErrorDesc')
     }
     return props.error?.message || t('errors.serverErrorDesc')

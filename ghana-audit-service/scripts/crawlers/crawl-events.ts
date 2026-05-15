@@ -60,7 +60,7 @@ function parseSingleDate(dateText: string): string | null {
   try {
     const d = new Date(cleaned)
     if (!isNaN(d.getTime())) return d.toISOString().split('T')[0]
-  } catch {}
+  } catch { /* unparseable date */ }
   return null
 }
 

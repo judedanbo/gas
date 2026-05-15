@@ -29,7 +29,6 @@ export function useNewsletter() {
       csrfToken.value = response.token
       return response.token
     } catch {
-      console.error('[Newsletter] Failed to fetch CSRF token')
       return null
     }
   }

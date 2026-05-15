@@ -50,11 +50,11 @@ function parseDate(dateText: string | null): string {
   try {
     const d = new Date(cleaned)
     if (!isNaN(d.getTime())) return d.toISOString().split('T')[0]
-  } catch {}
+  } catch { /* unparseable date — try raw form */ }
   try {
     const d = new Date(dateText)
     if (!isNaN(d.getTime())) return d.toISOString().split('T')[0]
-  } catch {}
+  } catch { /* unparseable date — fall through to default */ }
   return new Date().toISOString().split('T')[0]
 }
 

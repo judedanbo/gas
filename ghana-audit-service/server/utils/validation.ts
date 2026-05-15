@@ -1,5 +1,4 @@
 import { z } from 'zod'
-import type { H3Error } from 'h3'
 
 /**
  * Collect all Zod issues into dot-path keyed errors, preserving nested paths.
@@ -35,7 +34,7 @@ export function flattenZodErrors(
  * Create a validation error with field-level errors
  * Use this for both Zod validation errors and custom field errors (e.g., duplicate slug)
  */
-export function createValidationError(errors: Record<string, string>): H3Error {
+export function createValidationError(errors: Record<string, string>) {
   return createError({
     statusCode: 400,
     statusMessage: 'Validation Error',

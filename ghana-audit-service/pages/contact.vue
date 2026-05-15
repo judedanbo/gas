@@ -476,8 +476,8 @@
     try {
       const response = await $fetch<{ token: string }>('/api/csrf')
       csrfToken.value = response.token
-    } catch (error) {
-      console.error('Failed to fetch CSRF token:', error)
+    } catch {
+      // CSRF fetch failed — form submission will report validation error
     }
   })
 
@@ -639,8 +639,6 @@
 
       submitSuccess.value = true
     } catch (error: unknown) {
-      console.error('Failed to submit form:', error)
-
       // Handle validation errors from server
       if (error && typeof error === 'object' && 'data' in error) {
         const errorData = error as { data?: { errors?: Record<string, string> } }

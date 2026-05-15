@@ -459,9 +459,8 @@
       await api.post('reports/bulk', { action, ids })
       selectedReports.value = []
       await fetchData()
-    } catch (e: unknown) {
-      const err = e as { data?: { message?: string }; message?: string }
-      console.error('Bulk action failed:', err.data?.message || err.message)
+    } catch {
+      // bulk action failed — selection is preserved so user can retry
     } finally {
       bulkLoading.value = false
     }

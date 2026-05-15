@@ -60,11 +60,11 @@ const AGGREGATE_SQL = `
     MAX(CASE WHEN re.has_accept_language = 0 THEN 1 ELSE 0 END) AS any_missing_accept_language,
     MAX(CASE WHEN re.has_accept_encoding = 0 THEN 1 ELSE 0 END) AS any_missing_accept_encoding,
     MAX(CASE WHEN re.http_version = '1.0' THEN 1 ELSE 0 END) AS any_http_10,
-    COALESCE(rl.hits, 0) AS rate_limit_hits,
-    COALESCE(pp.hits, 0) AS probing_hits,
-    COALESCE(fz.hits, 0) AS fuzz_hits,
-    COALESCE(fl.hits, 0) AS failed_logins,
-    COALESCE(dl.dls, 0) AS downloads
+    MAX(COALESCE(rl.hits, 0)) AS rate_limit_hits,
+    MAX(COALESCE(pp.hits, 0)) AS probing_hits,
+    MAX(COALESCE(fz.hits, 0)) AS fuzz_hits,
+    MAX(COALESCE(fl.hits, 0)) AS failed_logins,
+    MAX(COALESCE(dl.dls, 0)) AS downloads
   FROM request_events re
   LEFT JOIN (
     SELECT ip_hash, ua_hash, COUNT(*) AS hits

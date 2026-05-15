@@ -201,8 +201,8 @@
     try {
       const response = await $fetch<{ data: Tender[] }>('/api/tenders')
       tenders.value = response.data
-    } catch (error) {
-      console.error('Failed to fetch tenders:', error)
+    } catch {
+      // fetch failed — page shows empty state
     } finally {
       loading.value = false
     }
