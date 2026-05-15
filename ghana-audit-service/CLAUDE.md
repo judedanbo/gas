@@ -139,6 +139,15 @@ Optional:
 ### Pre-commit
 Husky + lint-staged: `*.{js,ts,vue}` → `eslint --fix` + `prettier --write`; `*.{json,css,md,yml,yaml}` → `prettier --write`. Don't `--no-verify` unless explicitly asked.
 
+### Gotchas
+- **MySQL 8 `ONLY_FULL_GROUP_BY`**: All non-aggregated SELECT columns must be in GROUP BY or wrapped in an aggregate (`MAX`, `ANY_VALUE`). This includes columns from LEFT JOIN subqueries even when they're functionally determined. Always verify raw SQL queries.
+- **Drizzle `.select()` aliases aren't emitted in SQL**: `.select({ myAlias: sql`...` })` maps `myAlias` as a JS key only — don't reference it in `.orderBy(sql`myAlias`)`. Instead, store the expression in a variable and embed it in both `.select()` and `.orderBy()`.
+- **`DUAL` is a MySQL reserved word**: Don't use it as a table alias in `sql` template literals — Drizzle won't backtick-quote it. Use `_stub` or similar.
+- **mysql2 types**: `types/mysql2-overrides.d.ts` adds a permissive `execute(sql, values?: unknown[])` overload because mysql2 v3.22+ excludes `undefined` from `ExecuteValues`. Object.entries on Zod-inferred translation objects produces `unknown` values that don't match.
+- **Admin pages are client-only rendered** (`ssr: false` in routeRules). Auth state lives in localStorage via `useAdminAuth().init()` (a `.client.ts` plugin) — SSR would always render the unauthenticated state causing hydration mismatches.
+- **`vi.mock()` is hoisted above all declarations**: Factory functions must use `function` declarations (hoisted) not `const` (temporal dead zone). Imports after `vi.mock` are fine — Vitest hoists the mock above them.
+- **Nitro virtual modules break in Vitest**: Imports from `nitropack/runtime` fail outside the Nitro server context. Tests must `vi.mock('nitropack/runtime', ...)` before importing source that uses them.
+
 ## Conventions worth remembering
 
 - **Branch prefixes** (from `CONTRIBUTING.md`): `feature/`, `fix/`, `refactor/`, `docs/`, `test/`, `chore/`. **Commit format**: `<type>(<scope>): <description>` (conventional commits).

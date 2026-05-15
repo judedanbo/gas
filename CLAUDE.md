@@ -83,6 +83,13 @@ A server-side analytics subsystem captures per-request telemetry, rolls up route
 - i18n via `@nuxtjs/i18n` with `prefix_except_default` (English at `/`, Akan at `/ak/`). When adding user-facing copy, update **both** `i18n/locales/en.json` and `i18n/locales/ak.json`.
 - Tailwind theme uses Ghana flag colors (`primary`/`ghana-green` `#006B3F`, `secondary`/`ghana-red` `#CE1126`, `accent`/`ghana-gold` `#FCD116`).
 
+### Deployment
+Production deploys via Docker. Code is pushed to `main`, then on the production server: `git pull origin main && docker compose up --build -d`.
+
+### Dependency management
+- Major version bumps (Nuxt 3→4, TypeScript 5→6, Vitest 3→4, vue-router 4→5) are intentionally deferred — don't upgrade them without explicit approval.
+- `npm update` within semver range is safe and should be run periodically. Always run the full quality gate (`typecheck`, `lint`, `test:run`) after updates — semver-compatible type changes can still break `vue-tsc`.
+
 ### Pre-commit
 The app uses Husky + lint-staged (`*.{js,ts,vue}` → eslint --fix + prettier; `*.{json,css,md,yml,yaml}` → prettier). Don't bypass hooks unless explicitly asked.
 
