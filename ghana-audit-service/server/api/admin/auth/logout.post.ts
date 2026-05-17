@@ -1,5 +1,6 @@
 import { getDatabase, schema } from '../../../database'
 import { getClientIP } from '../../../utils/rateLimiter'
+import { revokeSession } from '../../../utils/sessions'
 
 export default defineEventHandler(async (event) => {
   const auth = event.context.auth
@@ -14,6 +15,9 @@ export default defineEventHandler(async (event) => {
 
   const db = getDatabase()
   const clientIP = getClientIP(event)
+
+  // Revoke the server-side session so the token can't be reused.
+  await revokeSession(auth.sessionId)
 
   // Log logout action
   await db.insert(schema.auditLogs).values({

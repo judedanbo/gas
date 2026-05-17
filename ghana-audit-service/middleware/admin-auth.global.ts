@@ -4,7 +4,7 @@ export default defineNuxtRouteMiddleware((to) => {
     return
   }
 
-  const { isAuthenticated } = useAdminAuth()
+  const { isAuthenticated, token, isSessionExpired } = useAdminAuth()
 
   // Redirect logged-in users away from login page
   if (to.path === '/admin/login') {
@@ -16,10 +16,12 @@ export default defineNuxtRouteMiddleware((to) => {
 
   // Check if user is authenticated (init() is called by plugin)
   if (!isAuthenticated()) {
-    // Redirect to login with return URL
-    return navigateTo({
-      path: '/admin/login',
-      query: { redirect: to.fullPath }
-    })
+    // A stored-but-dead session means the user was logged in and timed
+    // out — surface that on the login screen instead of a silent bounce.
+    const query: Record<string, string> = { redirect: to.fullPath }
+    if (token.value && isSessionExpired()) {
+      query.reason = 'expired'
+    }
+    return navigateTo({ path: '/admin/login', query })
   }
 })

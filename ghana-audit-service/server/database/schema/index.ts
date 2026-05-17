@@ -8,6 +8,7 @@
 
 // Users & Authentication
 export * from './users'
+export * from './sessions'
 
 // Content Tables
 export * from './audit-reports'

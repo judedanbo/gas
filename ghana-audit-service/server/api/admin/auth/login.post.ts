@@ -2,7 +2,9 @@ import { eq, and, isNull } from 'drizzle-orm'
 import { z } from 'zod'
 import { getDatabase, schema } from '../../../database'
 import { verifyPassword } from '../../../utils/password'
-import { signToken, getTokenExpiry } from '../../../utils/jwt'
+import { signToken } from '../../../utils/jwt'
+import { createSession } from '../../../utils/sessions'
+import { getSessionConfig } from '../../../utils/duration'
 import { checkRateLimit, createRateLimitKey, getClientIP } from '../../../utils/rateLimiter'
 import { recordIncident } from '../../../utils/analytics/recordIncident'
 
@@ -127,12 +129,24 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  // Generate JWT token
-  const token = signToken({
+  // Create a server-side session and pin the JWT lifetime to the
+  // absolute session cap so the token and session expire together.
+  const { absoluteTimeoutMs } = getSessionConfig()
+  const { sessionId, timing } = await createSession({
     userId: user.id,
-    email: user.email,
-    role: user.role
+    ipAddress: clientIP,
+    userAgent: getHeader(event, 'user-agent') || null
   })
+
+  const token = signToken(
+    {
+      userId: user.id,
+      email: user.email,
+      role: user.role,
+      sid: sessionId
+    },
+    Math.floor(absoluteTimeoutMs / 1000)
+  )
 
   // Update last login timestamp
   await db.update(schema.users).set({ lastLoginAt: new Date() }).where(eq(schema.users.id, user.id))
@@ -148,9 +162,6 @@ export default defineEventHandler(async (event) => {
     userAgent: getHeader(event, 'user-agent') || null
   })
 
-  // Calculate expiry time
-  const expiresAt = getTokenExpiry(token)
-
   return {
     user: {
       id: user.id,
@@ -159,6 +170,7 @@ export default defineEventHandler(async (event) => {
       role: user.role
     },
     token,
-    expiresAt: expiresAt ? new Date(expiresAt).toISOString() : null
+    expiresAt: timing.expiresAt,
+    session: timing
   }
 })

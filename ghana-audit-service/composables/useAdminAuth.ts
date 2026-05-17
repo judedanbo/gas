@@ -1,4 +1,4 @@
-import type { AdminUser, LoginResponse, Permission } from '~/types/admin'
+import type { AdminUser, LoginResponse, MeResponse, Permission, SessionTiming } from '~/types/admin'
 
 const ROLE_PERMISSIONS: Record<string, Permission[]> = {
   admin: ['read', 'create', 'update', 'delete', 'manage_users'],
@@ -9,21 +9,38 @@ const ROLE_PERMISSIONS: Record<string, Permission[]> = {
 export function useAdminAuth() {
   const user = useState<AdminUser | null>('admin-user', () => null)
   const token = useState<string | null>('admin-token', () => null)
+  const session = useState<SessionTiming | null>('admin-session', () => null)
   const loading = ref(false)
   const error = ref<string | null>(null)
+
+  // True once the stored session's soonest expiry is in the past.
+  function isSessionExpired(): boolean {
+    if (!session.value) return false
+    const expiry = Date.parse(session.value.expiresAt)
+    return Number.isFinite(expiry) && expiry <= Date.now()
+  }
 
   // Initialize auth state from localStorage (client-side only)
   function init() {
     if (import.meta.client) {
       const storedToken = localStorage.getItem('admin-token')
       const storedUser = localStorage.getItem('admin-user')
+      const storedSession = localStorage.getItem('admin-session')
 
       if (storedToken && storedUser) {
         try {
           token.value = storedToken
           user.value = JSON.parse(storedUser)
+          session.value = storedSession ? JSON.parse(storedSession) : null
         } catch {
           // Invalid stored data, clear it
+          clearAuth()
+          return
+        }
+
+        // A session that already expired while the tab was closed must not
+        // render the admin UI as authenticated.
+        if (isSessionExpired()) {
           clearAuth()
         }
       }
@@ -31,13 +48,27 @@ export function useAdminAuth() {
   }
 
   // Store auth data
-  function setAuth(userData: AdminUser, authToken: string) {
+  function setAuth(userData: AdminUser, authToken: string, sessionData?: SessionTiming | null) {
     user.value = userData
     token.value = authToken
+    session.value = sessionData ?? null
 
     if (import.meta.client) {
       localStorage.setItem('admin-token', authToken)
       localStorage.setItem('admin-user', JSON.stringify(userData))
+      if (sessionData) {
+        localStorage.setItem('admin-session', JSON.stringify(sessionData))
+      } else {
+        localStorage.removeItem('admin-session')
+      }
+    }
+  }
+
+  // Update only the session timing (after a refresh / keep-alive)
+  function setSession(sessionData: SessionTiming) {
+    session.value = sessionData
+    if (import.meta.client) {
+      localStorage.setItem('admin-session', JSON.stringify(sessionData))
     }
   }
 
@@ -45,10 +76,12 @@ export function useAdminAuth() {
   function clearAuth() {
     user.value = null
     token.value = null
+    session.value = null
 
     if (import.meta.client) {
       localStorage.removeItem('admin-token')
       localStorage.removeItem('admin-user')
+      localStorage.removeItem('admin-session')
     }
   }
 
@@ -63,7 +96,7 @@ export function useAdminAuth() {
         body: { email, password }
       })
 
-      setAuth(response.user, response.token)
+      setAuth(response.user, response.token, response.session ?? null)
       return true
     } catch (e: unknown) {
       const err = e as { data?: { message?: string }; message?: string }
@@ -100,16 +133,19 @@ export function useAdminAuth() {
     error.value = null
 
     try {
-      const userData = await $fetch<AdminUser>('/api/admin/auth/me', {
+      const data = await $fetch<MeResponse>('/api/admin/auth/me', {
         headers: {
           Authorization: `Bearer ${token.value}`
         }
       })
 
-      user.value = userData
+      user.value = data.user
 
       if (import.meta.client) {
-        localStorage.setItem('admin-user', JSON.stringify(userData))
+        localStorage.setItem('admin-user', JSON.stringify(data.user))
+      }
+      if (data.session) {
+        setSession(data.session)
       }
 
       return true
@@ -124,7 +160,7 @@ export function useAdminAuth() {
 
   // Check if user is authenticated
   function isAuthenticated(): boolean {
-    return !!token.value && !!user.value
+    return !!token.value && !!user.value && !isSessionExpired()
   }
 
   // Check if user has a specific role
@@ -162,6 +198,7 @@ export function useAdminAuth() {
     // State
     user: readonly(user),
     token: readonly(token),
+    session: readonly(session),
     loading: readonly(loading),
     error,
 
@@ -170,7 +207,9 @@ export function useAdminAuth() {
     login,
     logout,
     fetchCurrentUser,
+    setSession,
     isAuthenticated,
+    isSessionExpired,
     hasRole,
     hasPermission,
     hasAllPermissions,

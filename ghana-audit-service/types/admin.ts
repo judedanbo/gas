@@ -13,10 +13,42 @@ export interface AdminUser {
 
 export type Permission = 'read' | 'create' | 'update' | 'delete' | 'manage_users'
 
+export interface SessionTiming {
+  createdAt: string
+  lastActivityAt: string
+  idleExpiresAt: string
+  absoluteExpiresAt: string
+  /** Soonest of idle/absolute expiry — what the client counts down to. */
+  expiresAt: string
+  /** Lead time (ms) before `expiresAt` to show the warning modal. */
+  warningBeforeMs: number
+}
+
 export interface LoginResponse {
   user: AdminUser
   token: string
   expiresAt: string | null
+  session?: SessionTiming
+}
+
+export interface RefreshResponse {
+  session: SessionTiming
+  expiresAt: string
+}
+
+export interface MeResponse {
+  user: AdminUser
+  session?: SessionTiming
+}
+
+export interface AdminSessionInfo {
+  id: number
+  current: boolean
+  createdAt: string
+  lastActivityAt: string
+  absoluteExpiresAt: string
+  ipAddress: string | null
+  userAgent: string | null
 }
 
 export interface AuthContext {
