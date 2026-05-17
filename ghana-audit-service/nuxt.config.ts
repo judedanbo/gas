@@ -65,6 +65,9 @@ export default defineNuxtConfig({
       navigateFallback: '/',
       navigateFallbackDenylist: [/^\/api\//],
       globPatterns: ['**/*.{js,css,html,png,svg,ico,woff,woff2}'],
+      // Some report cover images exceed workbox's 2 MiB default and would
+      // abort the service-worker build; raise the precache size ceiling.
+      maximumFileSizeToCacheInBytes: 6 * 1024 * 1024,
       runtimeCaching: [
         {
           urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
