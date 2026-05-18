@@ -10,6 +10,7 @@ export default defineEventHandler((event) => {
   }
 
   return {
-    user: auth.user
+    user: auth.user,
+    session: auth.sessionTiming
   }
 })

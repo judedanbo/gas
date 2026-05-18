@@ -48,7 +48,7 @@ export function useAdminApi() {
       const fetchError = error as { statusCode?: number }
       if (fetchError.statusCode === 401) {
         clearAuth()
-        await router.push('/admin/login')
+        await router.push({ path: '/admin/login', query: { reason: 'expired' } })
       }
 
       // Re-throw the error for component handling
@@ -115,7 +115,7 @@ export function useAdminApi() {
       const fetchError = error as { statusCode?: number }
       if (fetchError.statusCode === 401) {
         clearAuth()
-        await router.push('/admin/login')
+        await router.push({ path: '/admin/login', query: { reason: 'expired' } })
       }
       throw error
     }

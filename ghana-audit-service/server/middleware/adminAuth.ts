@@ -1,5 +1,6 @@
 import { eq, and, isNull } from 'drizzle-orm'
 import { verifyToken } from '../utils/jwt'
+import { validateSession, type SessionTiming } from '../utils/sessions'
 import { getDatabase, schema } from '../database'
 
 export interface AuthenticatedUser {
@@ -12,6 +13,15 @@ export interface AuthenticatedUser {
 export interface AuthContext {
   user: AuthenticatedUser
   token: string
+  sessionId: string
+  sessionTiming: SessionTiming
+}
+
+const SESSION_ERROR_MESSAGES: Record<string, string> = {
+  invalid: 'Your session is no longer valid. Please sign in again.',
+  revoked: 'Your session has been signed out. Please sign in again.',
+  idle: 'Your session expired due to inactivity. Please sign in again.',
+  absolute: 'Your session has expired. Please sign in again.'
 }
 
 // Extend H3Event context type
@@ -88,6 +98,30 @@ export default defineEventHandler(async (event) => {
     })
   }
 
+  // Validate the server-side session. The JWT only carries an opaque
+  // session id; the session row decides whether it is still alive and
+  // slides the idle window forward on activity.
+  const sessionId = payload.sid
+  if (!sessionId) {
+    throw createError({
+      statusCode: 401,
+      statusMessage: 'Unauthorized',
+      message: SESSION_ERROR_MESSAGES.invalid,
+      data: { code: 'session_invalid' }
+    })
+  }
+
+  const session = await validateSession(sessionId, { touch: true })
+  if (!session.ok || session.userId !== user.id) {
+    const reason = session.reason ?? 'invalid'
+    throw createError({
+      statusCode: 401,
+      statusMessage: 'Unauthorized',
+      message: SESSION_ERROR_MESSAGES[reason] ?? SESSION_ERROR_MESSAGES.invalid,
+      data: { code: `session_${reason}` }
+    })
+  }
+
   // Attach authenticated user to event context
   event.context.auth = {
     user: {
@@ -96,6 +130,8 @@ export default defineEventHandler(async (event) => {
       name: user.name,
       role: user.role
     },
-    token
+    token,
+    sessionId,
+    sessionTiming: session.timing!
   }
 })

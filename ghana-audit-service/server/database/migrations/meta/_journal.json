@@ -64,6 +64,13 @@
       "when": 1778676741206,
       "tag": "0008_yielding_the_leader",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "5",
+      "when": 1779019200000,
+      "tag": "0009_admin_sessions",
+      "breakpoints": true
     }
   ]
 }

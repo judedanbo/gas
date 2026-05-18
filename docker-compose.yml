@@ -30,6 +30,10 @@ services:
       - NUXT_API_SECRET=${NUXT_API_SECRET:-change-me-in-production}
       # JWT
       - JWT_SECRET=${JWT_SECRET:-change-this-jwt-secret}
+      # Admin session expiry (durations accept ms/s/m/h/d suffixes)
+      - SESSION_IDLE_TIMEOUT=${SESSION_IDLE_TIMEOUT:-30m}
+      - SESSION_ABSOLUTE_TIMEOUT=${SESSION_ABSOLUTE_TIMEOUT:-8h}
+      - SESSION_WARNING_BEFORE=${SESSION_WARNING_BEFORE:-2m}
       # Redis (rate limiter / analytics hot counters)
       - REDIS_URL=${REDIS_URL:-redis://redis:6379/0}
       # Analytics

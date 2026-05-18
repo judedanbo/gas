@@ -26,6 +26,9 @@
       />
     </Transition>
 
+    <!-- Session expiry warning -->
+    <AdminSessionExpiryModal />
+
     <!-- Toast Notifications -->
     <UiToastContainer />
   </div>

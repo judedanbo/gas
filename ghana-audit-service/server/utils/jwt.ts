@@ -4,6 +4,8 @@ export interface JWTPayload {
   userId: number
   email: string
   role: 'admin' | 'editor' | 'viewer'
+  /** Opaque server-side session id (maps to admin_sessions.session_id). */
+  sid: string
   iat?: number
   exp?: number
 }
@@ -27,11 +29,18 @@ function getExpiresIn(): string {
 }
 
 /**
- * Sign a JWT token with user payload
+ * Sign a JWT token with user payload.
+ *
+ * Pass `expiresInSeconds` to pin the token's lifetime to the session's
+ * absolute timeout so the JWT and the server-side session expire together.
+ * Falls back to JWT_EXPIRES_IN when omitted.
  */
-export function signToken(payload: Omit<JWTPayload, 'iat' | 'exp'>): string {
+export function signToken(
+  payload: Omit<JWTPayload, 'iat' | 'exp'>,
+  expiresInSeconds?: number
+): string {
   const secret = getJWTSecret()
-  const expiresIn = getExpiresIn() as SignOptions['expiresIn']
+  const expiresIn = (expiresInSeconds ?? getExpiresIn()) as SignOptions['expiresIn']
 
   return jwt.sign(payload as object, secret, { expiresIn })
 }
