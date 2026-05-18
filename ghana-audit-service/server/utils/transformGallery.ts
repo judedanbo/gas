@@ -1,4 +1,4 @@
-import type { GalleryImage } from '~/types'
+import type { GalleryImage, GalleryAlbumPublic } from '~/types'
 
 type SupportedLocale = 'en' | 'ak'
 
@@ -69,6 +69,31 @@ export function transformGalleryImages(
   locale: SupportedLocale = 'en'
 ): GalleryImage[] {
   return images.map((image) => transformGalleryImage(image, locale))
+}
+
+interface AlbumPublicInput {
+  id: number
+  slug: string
+  publishedAt: Date | string
+  translations: Record<string, { title: string; description: string | null }>
+  imageCount: number
+  previewImages: string[]
+}
+
+export function transformGalleryAlbumPublic(
+  album: AlbumPublicInput,
+  locale: SupportedLocale = 'en'
+): GalleryAlbumPublic {
+  const t = album.translations[locale] || album.translations.en || { title: '', description: null }
+  return {
+    id: String(album.id),
+    slug: album.slug,
+    title: t.title,
+    description: t.description || undefined,
+    imageCount: album.imageCount,
+    publishedAt: formatDate(album.publishedAt),
+    previewImages: album.previewImages
+  }
 }
 
 /**

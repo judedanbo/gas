@@ -33,14 +33,10 @@
             >
               <div class="aspect-video lg:aspect-auto lg:min-h-[320px] overflow-hidden">
                 <img
-                  v-if="featuredArticle.thumbnail"
-                  :src="featuredArticle.thumbnail"
+                  :src="featuredArticle.thumbnail || '/img/news/default-cover.png'"
                   :alt="featuredArticle.title"
                   class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                 >
-                <div v-else class="w-full h-full bg-gradient-to-br from-primary/10 to-primary/5 flex items-center justify-center">
-                  <Icon name="heroicons:newspaper" class="w-20 h-20 text-gray-400 opacity-50" aria-hidden="true" />
-                </div>
               </div>
               <div class="p-6 lg:p-8 flex flex-col justify-center">
                 <div class="flex items-center gap-3 mb-3">

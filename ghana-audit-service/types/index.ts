@@ -281,6 +281,16 @@ export interface GalleryImage {
   uploadedAt: string
 }
 
+export interface GalleryAlbumPublic {
+  id: string
+  slug: string
+  title: string
+  description?: string
+  imageCount: number
+  publishedAt: string
+  previewImages: string[]
+}
+
 export interface Video {
   id: string
   title: string
