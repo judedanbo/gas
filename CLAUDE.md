@@ -8,7 +8,7 @@ This repo is a small monorepo wrapping a single application with its infrastruct
 
 - `ghana-audit-service/` — the Nuxt 3 app (frontend + Nitro server + Drizzle/MySQL data layer + admin panel). Has its own `CLAUDE.md` with app-specific guidance — **read it when working inside that directory**.
 - `docker-compose.yml` — root-level orchestration: three services (frontend, MySQL 8, Redis 7) on the `gas-network` bridge.
-- `k8s/` — Kubernetes manifests (currently `migrate-job.yaml` for running DB migrations as a Job).
+- `k8s/` — Kubernetes manifests for AKS production deployment: namespace, frontend (Deployment + Service + Ingress + HPA), MySQL (StatefulSet), Redis (Deployment), migration Job, backup CronJob, ConfigMap/Secrets, TLS (cert-manager ClusterIssuer), and Network Policies. See `k8s/README.md` for cluster prerequisites and manual deploy instructions.
 - `init-db/01-init.sql` — MySQL bootstrap (currently mounted via the commented-out volume in `docker-compose.yml`; uncomment to use).
 - `.env.example` — root-level env vars consumed by `docker-compose.yml` (DB creds, public site config, JWT secret, Redis URL, analytics salt, optional Sentry DSN and MaxMind GeoIP paths). The app has a separate `ghana-audit-service/.env.example` for local non-Docker dev.
 - `PLAN.md`, `component-reusability-plan.md` — historical planning docs, not authoritative; treat the code as the source of truth.
@@ -84,7 +84,7 @@ A server-side analytics subsystem captures per-request telemetry, rolls up route
 - Tailwind theme uses Ghana flag colors (`primary`/`ghana-green` `#006B3F`, `secondary`/`ghana-red` `#CE1126`, `accent`/`ghana-gold` `#FCD116`).
 
 ### Deployment
-Production deploys via Docker. Code is pushed to `main`, then on the production server: `git pull origin main && docker compose up --build -d`.
+Production deploys to AKS via GitHub Actions (`.github/workflows/deploy.yml`). Pushing to `main` triggers: CI quality gate → build + push images to ACR → apply K8s manifests (MySQL → Redis → migration Job → frontend). Docker Compose remains available for local development. See `k8s/README.md` for cluster prerequisites and manual deploy runbook.
 
 ### Dependency management
 - Major version bumps (Nuxt 3→4, TypeScript 5→6, Vitest 3→4, vue-router 4→5) are intentionally deferred — don't upgrade them without explicit approval.
