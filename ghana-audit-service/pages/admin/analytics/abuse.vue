@@ -10,12 +10,20 @@
           {{ $t('analytics.abuse.subtitle') }}
         </p>
       </div>
-      <NuxtLink
-        to="/admin/analytics"
-        class="rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700"
-      >
-        ← {{ $t('analytics.abuse.backToOverview') }}
-      </NuxtLink>
+      <div class="flex items-center gap-2">
+        <NuxtLink
+          to="/admin/analytics/report"
+          class="rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700"
+        >
+          {{ $t('analytics.report.fullReport') }}
+        </NuxtLink>
+        <NuxtLink
+          to="/admin/analytics"
+          class="rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700"
+        >
+          ← {{ $t('analytics.abuse.backToOverview') }}
+        </NuxtLink>
+      </div>
     </div>
 
     <div class="grid grid-cols-1 gap-6 xl:grid-cols-2">

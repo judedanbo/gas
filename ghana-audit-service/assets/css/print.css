@@ -1,0 +1,108 @@
+/*
+ * Print stylesheet for the unified analytics report
+ * (pages/admin/analytics/report.vue).
+ *
+ * Two delivery paths share these rules:
+ *   1. Server-side Puppeteer with page.emulateMediaType('print').
+ *   2. Browser File → Print (interactive preview at /admin/analytics/report).
+ */
+
+.report-root {
+  background: #ffffff;
+  color: #111827;
+  min-height: 100vh;
+  font-family:
+    'Open Sans',
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    sans-serif;
+}
+
+.report-root h1,
+.report-root h2,
+.report-root h3 {
+  font-family: 'Plus Jakarta Sans', 'Open Sans', system-ui, sans-serif;
+}
+
+/* Each major section is treated as a print-block. */
+.report-section {
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
+
+.report-chart-card {
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
+
+@page {
+  size: A4;
+  margin: 0;
+}
+
+@media print {
+  /* Force backgrounds (stat cards, badges) to print rather than being
+     stripped out by the user agent. */
+  *,
+  *::before,
+  *::after {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  .report-root {
+    background: #ffffff !important;
+    color: #111827 !important;
+    color-scheme: light !important;
+  }
+
+  /* Hide anything explicitly marked as non-print (filters, action buttons,
+     "back to dashboard" links, etc.). */
+  [data-no-print] {
+    display: none !important;
+  }
+
+  /* Drop dark-mode variants so the PDF always renders light. */
+  .dark\:bg-gray-800,
+  .dark\:bg-gray-900,
+  .dark\:bg-gray-700,
+  .dark\:bg-gray-900\/50 {
+    background-color: #ffffff !important;
+  }
+
+  .dark\:text-white,
+  .dark\:text-gray-200,
+  .dark\:text-gray-300,
+  .dark\:text-gray-400 {
+    color: #111827 !important;
+  }
+
+  .dark\:border-gray-700,
+  .dark\:border-gray-600,
+  .dark\:border-gray-800 {
+    border-color: #e5e7eb !important;
+  }
+
+  /* Each section after the first starts on a fresh page so charts and
+     tables stay together. */
+  .report-section + .report-section {
+    break-before: page;
+    page-break-before: always;
+  }
+
+  /* Charts must have a fixed pixel height inside print — flex/grid heights
+     collapse to zero in print media and ECharts then renders empty. */
+  .report-chart {
+    height: 240px !important;
+  }
+
+  .report-chart-tall {
+    height: 320px !important;
+  }
+
+  /* Compact tables so more rows fit per page. */
+  .report-section table {
+    font-size: 10pt;
+  }
+}

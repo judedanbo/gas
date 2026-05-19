@@ -393,6 +393,46 @@
           "lastSeen": "Last seen"
         }
       }
+    },
+    "report": {
+      "title": "Analytics Report",
+      "subtitle": "Unified printable view of every analytics dashboard.",
+      "backToDashboard": "Back to dashboard",
+      "openReport": "Open report",
+      "fullReport": "Full report",
+      "downloadPdf": "Download PDF",
+      "generating": "Generating…",
+      "print": "Print",
+      "window": {
+        "label": "Window",
+        "options": {
+          "24h": "Last 24 hours",
+          "7d": "Last 7 days",
+          "30d": "Last 30 days"
+        }
+      },
+      "sections": {
+        "overview": {
+          "title": "1. Overview",
+          "subtitle": "Last 24 hours — traffic, downloads, bandwidth, and form submissions."
+        },
+        "routes": {
+          "title": "2. Routes",
+          "subtitle": "Top 50 routes by visits ({window})."
+        },
+        "abuse": {
+          "title": "3. Abuse",
+          "subtitle": "Suspect signatures, incidents, and fuzz attempts ({window})."
+        },
+        "capacity": {
+          "title": "4. Capacity",
+          "subtitle": "Throughput, latency, cache hit, and storage trends ({window})."
+        },
+        "insights": {
+          "title": "5. Insights",
+          "subtitle": "Search behaviour and link rot ({window})."
+        }
+      }
     }
   },
   "advertisement": {

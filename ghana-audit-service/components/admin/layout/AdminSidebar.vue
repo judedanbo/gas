@@ -66,6 +66,12 @@
         label="Insights"
         :collapsed="collapsed"
       />
+      <SidebarLink
+        to="/admin/analytics/report"
+        icon="document-text"
+        label="PDF Report"
+        :collapsed="collapsed"
+      />
 
       <!-- Content Section -->
       <SidebarSection title="Content" :collapsed="collapsed">

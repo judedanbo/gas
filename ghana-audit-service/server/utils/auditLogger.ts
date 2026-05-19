@@ -2,7 +2,7 @@ import type { H3Event } from 'h3'
 import { getDatabase, schema } from '../database'
 import { getClientIP } from './rateLimiter'
 
-export type AuditAction = 'create' | 'update' | 'delete' | 'restore' | 'login' | 'logout'
+export type AuditAction = 'create' | 'update' | 'delete' | 'restore' | 'login' | 'logout' | 'export'
 
 export interface AuditChanges {
   before?: Record<string, unknown>

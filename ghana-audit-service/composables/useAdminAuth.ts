@@ -207,6 +207,7 @@ export function useAdminAuth() {
     login,
     logout,
     fetchCurrentUser,
+    setAuth,
     setSession,
     isAuthenticated,
     isSessionExpired,
