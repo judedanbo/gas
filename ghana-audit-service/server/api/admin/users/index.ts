@@ -3,6 +3,7 @@ import type { AdminUser } from '~/types/admin'
 import { eq, and, isNull, sql, desc } from 'drizzle-orm'
 import { getDatabase, schema } from '../../../database'
 import { requireAdmin, parsePagination, buildPaginationMeta } from '../../../utils/adminHelpers'
+import { resolveUserModules } from '../../../utils/modules'
 import { logAuditAction, sanitizeForAudit } from '../../../utils/auditLogger'
 import { userSchema, validateBody, createValidationError } from '../../../utils/validation'
 import { hashPassword } from '../../../utils/password'
@@ -44,6 +45,7 @@ async function handleList(event: H3Event) {
       email: schema.users.email,
       name: schema.users.name,
       role: schema.users.role,
+      modules: schema.users.modules,
       isActive: schema.users.isActive,
       lastLoginAt: schema.users.lastLoginAt,
       createdAt: schema.users.createdAt,
@@ -56,7 +58,9 @@ async function handleList(event: H3Event) {
     .limit(perPage)
     .offset(offset)
 
-  return { data: users, meta: buildPaginationMeta(Number(count), page, perPage) }
+  const data = users.map((u) => ({ ...u, modules: resolveUserModules(u.role, u.modules) }))
+
+  return { data, meta: buildPaginationMeta(Number(count), page, perPage) }
 }
 
 async function handleCreate(event: H3Event) {
@@ -88,6 +92,8 @@ async function handleCreate(event: H3Event) {
     passwordHash,
     name: input.name,
     role: input.role,
+    // Admins implicitly have all modules — store NULL, never a list.
+    modules: input.role === 'admin' ? null : (input.modules ?? []),
     isActive: input.isActive
   })
 
@@ -97,6 +103,7 @@ async function handleCreate(event: H3Event) {
       email: schema.users.email,
       name: schema.users.name,
       role: schema.users.role,
+      modules: schema.users.modules,
       isActive: schema.users.isActive,
       createdAt: schema.users.createdAt
     })
@@ -104,9 +111,11 @@ async function handleCreate(event: H3Event) {
     .where(eq(schema.users.id, result.insertId))
     .limit(1)
 
+  const created = { ...user, modules: resolveUserModules(user.role, user.modules) }
+
   await logAuditAction(event, 'create', 'user', result.insertId, {
-    after: sanitizeForAudit(user as Record<string, unknown>)
+    after: sanitizeForAudit(created as Record<string, unknown>)
   })
 
-  return user
+  return created
 }

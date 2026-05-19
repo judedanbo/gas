@@ -71,6 +71,21 @@
           formatRole(value as string)
         }}</span>
       </template>
+      <template #cell-modules="{ row }">
+        <div class="flex flex-wrap gap-1">
+          <span v-if="row.role === 'admin'" class="badge badge-primary">All</span>
+          <template v-else-if="row.modules && row.modules.length">
+            <span
+              v-for="m in row.modules"
+              :key="m"
+              class="badge badge-secondary"
+              :title="moduleLabels[m]"
+              >{{ moduleShortLabels[m] }}</span
+            >
+          </template>
+          <span v-else class="text-xs text-gray-400 italic">None</span>
+        </div>
+      </template>
       <template #cell-isActive="{ value }">
         <span :class="value ? 'badge badge-success' : 'badge badge-secondary'">{{
           value ? 'Active' : 'Inactive'
@@ -133,7 +148,7 @@
 </template>
 
 <script setup lang="ts">
-  import type { AdminUser } from '~/types/admin'
+  import type { AdminUser, ModuleKey } from '~/types/admin'
   definePageMeta({ layout: 'admin' })
 
   const { user: currentUser, hasPermission } = useAdminAuth()
@@ -150,9 +165,30 @@
   const columns = [
     { key: 'name', label: 'User', sortable: true },
     { key: 'role', label: 'Role', width: '100px' },
+    { key: 'modules', label: 'Modules' },
     { key: 'isActive', label: 'Status', width: '100px' },
     { key: 'lastLoginAt', label: 'Last Login', width: '140px' }
   ]
+
+  const moduleLabels: Record<ModuleKey, string> = {
+    reports: 'Audit Reports',
+    content: 'Content',
+    careers: 'Careers',
+    organization: 'Organization',
+    media: 'Media',
+    analytics: 'Analytics & Audit Logs',
+    communications: 'Communications'
+  }
+
+  const moduleShortLabels: Record<ModuleKey, string> = {
+    reports: 'Reports',
+    content: 'Content',
+    careers: 'Careers',
+    organization: 'Org',
+    media: 'Media',
+    analytics: 'Analytics',
+    communications: 'Comms'
+  }
 
   const showDeleteDialog = ref(false)
   const itemToDelete = ref<AdminUser | null>(null)

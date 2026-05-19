@@ -1,10 +1,34 @@
 // Admin Dashboard Types
 
+/**
+ * Functional area a user may operate in. Orthogonal to `role`: the role sets
+ * CRUD depth, modules scope which areas. Admins implicitly have all modules.
+ */
+export type ModuleKey =
+  | 'reports'
+  | 'content'
+  | 'careers'
+  | 'organization'
+  | 'media'
+  | 'analytics'
+  | 'communications'
+
+export const ALL_MODULES: ModuleKey[] = [
+  'reports',
+  'content',
+  'careers',
+  'organization',
+  'media',
+  'analytics',
+  'communications'
+]
+
 export interface AdminUser {
   id: number
   email: string
   name: string
   role: 'admin' | 'editor' | 'viewer'
+  modules: ModuleKey[]
   isActive: boolean
   lastLoginAt: string | null
   createdAt: string
@@ -627,6 +651,7 @@ export interface UserInput {
   name: string
   password?: string
   role: 'admin' | 'editor' | 'viewer'
+  modules?: ModuleKey[]
   isActive: boolean
 }
 
