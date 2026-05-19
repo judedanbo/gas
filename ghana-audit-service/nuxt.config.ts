@@ -1,4 +1,8 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
+import { resolve, dirname } from 'node:path'
+import { fileURLToPath } from 'node:url'
+
+const __dirname = dirname(fileURLToPath(import.meta.url))
 const isDev = process.env.NODE_ENV !== 'production'
 
 export default defineNuxtConfig({
@@ -8,9 +12,9 @@ export default defineNuxtConfig({
   // Enable TypeScript
   typescript: {
     strict: true,
-    // Disable vue-tsc checker in dev (has bundled TS missing webworker lib)
-    // Run `npx vue-tsc --noEmit` or `npm run build` for type checking
-    typeCheck: process.env.NODE_ENV === 'production'
+    // Run `npm run typecheck` separately — keeping vue-tsc out of `nuxt build`
+    // avoids a 5-10 min penalty on every deploy (especially on WSL2).
+    typeCheck: false
   },
 
   // Global CSS
@@ -137,12 +141,21 @@ export default defineNuxtConfig({
 
   // Icon configuration
   icon: {
-    // Default icon size
     size: '24px',
-    // Icon class
     class: 'icon',
-    // Server-side bundle for SSR - use only locally installed icon packages
     serverBundle: 'local'
+  },
+
+  // Override the icon server-bundle alias so prerendering resolves icons via
+  // process.cwd() instead of the virtual import.meta.url that Nitro injects.
+  hooks: {
+    'nitro:config'(nitroConfig) {
+      nitroConfig.alias = nitroConfig.alias || {}
+      nitroConfig.alias['#nuxt-icon-server-bundle'] = resolve(
+        __dirname,
+        'server/utils/icon-bundle'
+      )
+    }
   },
 
   // i18n Configuration
@@ -281,11 +294,20 @@ export default defineNuxtConfig({
         '/terms',
         '/accessibility'
       ],
-      // Exclude admin routes from prerendering (they require authentication)
-      ignore: ['/admin', '/admin/**', '/ak/admin', '/ak/admin/**']
+      ignore: [
+        '/admin', '/admin/**', '/ak/admin', '/ak/admin/**',
+        '/_ipx/**',
+        '/api/downloads/**'
+      ]
     },
     // Route rules
     routeRules: {
+      // Exclude image optimization and download routes from prerendering —
+      // the crawler discovers every srcset breakpoint, adding 90+ routes at
+      // ~1s each. Images are generated on-demand at runtime instead.
+      '/_ipx/**': { prerender: false },
+      '/api/downloads/**': { prerender: false },
+
       // PWA service worker - prevent Vue Router warning in dev
       '/sw.js': { prerender: false },
       '/workbox-*.js': { prerender: false },
