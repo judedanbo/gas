@@ -103,7 +103,18 @@
 
             <!-- Report File -->
             <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-              <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Report File</h2>
+              <div class="flex items-start justify-between mb-4">
+                <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Report File</h2>
+                <button
+                  v-if="form.fileUrl"
+                  type="button"
+                  class="btn btn-ghost text-sm"
+                  :disabled="optimization.isRunning.value"
+                  @click="optimizeExistingFile()"
+                >
+                  {{ optimization.isRunning.value ? 'Optimizing…' : 'Optimize PDF' }}
+                </button>
+              </div>
               <AdminFormAdminFileModal
                 resource="reports"
                 label="Report File"
@@ -111,11 +122,69 @@
                 :file-size="form.fileSize"
                 :thumbnail="form.thumbnail"
                 :error="errors.fileUrl"
+                :report-id="id"
                 required
                 @update:file-url="form.fileUrl = $event"
                 @update:file-size="form.fileSize = $event"
                 @update:thumbnail="form.thumbnail = $event"
               />
+              <div
+                v-if="optimization.status.value !== 'idle'"
+                class="mt-4 bg-gray-50 dark:bg-gray-700/30 rounded-lg p-3 text-sm"
+                aria-live="polite"
+              >
+                <div v-if="optimization.isRunning.value" class="space-y-2">
+                  <div class="flex items-center justify-between text-sm">
+                    <span class="font-medium text-gray-700 dark:text-gray-300">
+                      {{ inlinePhaseLabel }}
+                    </span>
+                    <span
+                      v-if="
+                        (optimization.phase.value === 'classify' ||
+                          optimization.phase.value === 'ocr') &&
+                        optimization.totalPages.value > 0
+                      "
+                      class="text-gray-500"
+                    >
+                      Page {{ optimization.page.value }} of {{ optimization.totalPages.value }}
+                    </span>
+                  </div>
+                  <div class="w-full bg-gray-200 dark:bg-gray-600 rounded-full h-2">
+                    <div
+                      class="h-2 bg-primary rounded-full transition-all duration-200"
+                      :style="{ width: `${optimization.progress.value}%` }"
+                    />
+                  </div>
+                </div>
+                <p
+                  v-else-if="optimization.status.value === 'success' && optimization.result.value"
+                  class="text-green-700 dark:text-green-400"
+                >
+                  <template v-if="optimization.result.value.skippedCompression">
+                    File was already well-compressed; original kept.
+                  </template>
+                  <template v-else>
+                    Reduced to {{ formatBytes(optimization.result.value.optimizedSize) }} (saved
+                    {{ formatBytes(optimization.result.value.savedBytes) }})
+                  </template>
+                </p>
+                <p
+                  v-else-if="optimization.status.value === 'error'"
+                  class="text-amber-700 dark:text-amber-400"
+                >
+                  Optimization failed: {{ optimization.error.value }}
+                  <button
+                    v-if="
+                      optimization.error.value && optimization.error.value.includes('HAS_BOOKMARKS')
+                    "
+                    type="button"
+                    class="ml-2 underline"
+                    @click="optimizeExistingFile({ allowDropBookmarks: true })"
+                  >
+                    Optimize anyway (drops bookmarks)
+                  </button>
+                </p>
+              </div>
             </div>
           </div>
 
@@ -414,6 +483,54 @@
     useAdminCrud<AdminAuditReport>('reports')
   const { errors, validate, setErrors, clearFieldError, rules } = useFormValidation()
   const toast = useToast()
+  const optimization = useReportOptimization()
+
+  async function optimizeExistingFile(opts?: { allowDropBookmarks?: boolean }) {
+    if (!form.fileUrl) return
+    await optimization.start({
+      fileUrl: form.fileUrl,
+      preset: 'ebook',
+      reportId: id,
+      allowDropBookmarks: opts?.allowDropBookmarks
+    })
+    if (optimization.status.value === 'success' && optimization.result.value) {
+      if (!optimization.result.value.skippedCompression) {
+        form.fileSize = optimization.result.value.optimizedSize
+        toast.success('PDF optimized')
+      } else {
+        toast.success('Optimization complete — original was already small')
+      }
+      // Refresh the row so other fields (e.g. updatedAt) stay current.
+      await fetchOne(id)
+    } else if (optimization.status.value === 'error') {
+      toast.error(optimization.error.value || 'Optimization failed')
+    }
+  }
+
+  const inlinePhaseLabel = computed(() => {
+    switch (optimization.phase.value) {
+      case 'inspect':
+        return 'Inspecting PDF…'
+      case 'split':
+        return 'Splitting pages…'
+      case 'classify':
+        return 'Classifying pages…'
+      case 'ocr':
+        return 'Running OCR…'
+      case 'merge':
+        return 'Reassembling…'
+      case 'compress':
+        return 'Compressing…'
+      default:
+        return 'Optimizing PDF…'
+    }
+  })
+
+  function formatBytes(bytes: number): string {
+    if (bytes < 1024) return `${bytes} B`
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
+  }
 
   // Slug checking state
   const isCheckingSlug = ref(false)

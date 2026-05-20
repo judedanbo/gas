@@ -34,6 +34,11 @@ declare module 'h3' {
 // Routes that don't require authentication
 const PUBLIC_ADMIN_ROUTES = ['/api/admin/auth/login']
 
+// SSE endpoints — EventSource cannot set custom headers, so for these routes
+// only we additionally accept the Bearer token via a `token` query parameter.
+// Keep this list small and append-only.
+const QUERY_TOKEN_ROUTES = ['/api/admin/reports/optimize-stream']
+
 export default defineEventHandler(async (event) => {
   const path = event.path || ''
 
@@ -47,17 +52,24 @@ export default defineEventHandler(async (event) => {
     return
   }
 
-  // Extract Bearer token from Authorization header
+  // Extract Bearer token from Authorization header, or — for SSE routes where
+  // EventSource cannot set headers — from a `token` query parameter.
+  let token: string | undefined
   const authHeader = getHeader(event, 'Authorization')
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+  if (authHeader && authHeader.startsWith('Bearer ')) {
+    token = authHeader.substring(7)
+  } else if (QUERY_TOKEN_ROUTES.includes(path)) {
+    const queryToken = getQuery(event).token
+    if (typeof queryToken === 'string' && queryToken) token = queryToken
+  }
+
+  if (!token) {
     throw createError({
       statusCode: 401,
       statusMessage: 'Unauthorized',
       message: 'Missing or invalid authorization header'
     })
   }
-
-  const token = authHeader.substring(7)
 
   // Verify JWT token
   const payload = verifyToken(token)

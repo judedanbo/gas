@@ -67,6 +67,16 @@ ENV NODE_ENV=production
 ENV HOST=0.0.0.0
 ENV PORT=3000
 
+# PDF optimization toolchain — pdftoppm/pdfinfo/pdffonts/pdfimages/pdftotext
+# (poppler-utils), tesseract OCR, Ghostscript, and qpdf. Required by
+# server/utils/pdfOptimizer.ts and server/utils/generateThumbnail.ts.
+RUN apk add --no-cache \
+    poppler-utils \
+    tesseract-ocr \
+    tesseract-ocr-data-eng \
+    ghostscript \
+    qpdf
+
 # Create non-root user for security
 RUN addgroup --system --gid 1001 nodejs && \
     adduser --system --uid 1001 nuxtjs

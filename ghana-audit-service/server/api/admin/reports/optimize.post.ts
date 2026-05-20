@@ -1,0 +1,133 @@
+import { statSync } from 'node:fs'
+import { eq } from 'drizzle-orm'
+import { getDatabase, schema } from '../../../database'
+import { requirePermission } from '../../../utils/adminHelpers'
+import { resolvePublicAsset } from '../../../utils/publicFiles'
+import { logAuditAction } from '../../../utils/auditLogger'
+import {
+  optimizeReportPdf,
+  PdfOptimizerError,
+  type CompressionPreset
+} from '../../../utils/pdfOptimizer'
+import { createJob, pushEvent, updateJob } from '../../../utils/pdfOptimizationJobs'
+
+const ALLOWED_PRESETS: CompressionPreset[] = ['screen', 'ebook', 'printer']
+
+interface OptimizeBody {
+  fileUrl?: string
+  preset?: CompressionPreset
+  reportId?: number
+  allowDropBookmarks?: boolean
+}
+
+export default defineEventHandler(async (event) => {
+  requirePermission(event, 'update')
+
+  const body = await readBody<OptimizeBody>(event)
+  const fileUrl = body?.fileUrl
+  const preset: CompressionPreset =
+    body?.preset && ALLOWED_PRESETS.includes(body.preset) ? body.preset : 'ebook'
+  const reportId = typeof body?.reportId === 'number' ? body.reportId : null
+  const allowDropBookmarks = body?.allowDropBookmarks === true
+
+  if (!fileUrl || typeof fileUrl !== 'string') {
+    throw createError({ statusCode: 400, statusMessage: 'fileUrl is required' })
+  }
+
+  if (!fileUrl.startsWith('/pdf/reports/')) {
+    throw createError({ statusCode: 400, statusMessage: 'Invalid file path' })
+  }
+
+  const pdfPath = resolvePublicAsset(fileUrl)
+  if (!pdfPath) {
+    throw createError({ statusCode: 422, statusMessage: 'PDF file not found' })
+  }
+
+  const job = createJob(fileUrl, reportId)
+
+  // Run the optimizer detached from the request lifetime. The SSE endpoint
+  // (optimize-stream.get.ts) streams the job's events to the admin UI.
+  void runOptimization(job.id, pdfPath, preset, allowDropBookmarks, event, reportId)
+
+  return { jobId: job.id }
+})
+
+async function runOptimization(
+  jobId: string,
+  pdfPath: string,
+  preset: CompressionPreset,
+  allowDropBookmarks: boolean,
+  event: Parameters<typeof logAuditAction>[0],
+  reportId: number | null
+): Promise<void> {
+  updateJob(jobId, { status: 'running' })
+  try {
+    const result = await optimizeReportPdf(pdfPath, {
+      preset,
+      allowDropBookmarks,
+      onProgress: (e) => pushEvent(jobId, e)
+    })
+
+    // Persist the new file size when the optimization is tied to a saved
+    // report row. For the unsaved create flow (no reportId yet), the UI
+    // reads the new size from the SSE 'done' event.
+    if (reportId && !result.skippedCompression) {
+      try {
+        const db = getDatabase()
+        await db
+          .update(schema.auditReports)
+          .set({ fileSize: String(result.optimizedSize) })
+          .where(eq(schema.auditReports.id, reportId))
+      } catch (dbErr) {
+        console.error('[pdfOptimizer] failed to update fileSize:', dbErr)
+      }
+    }
+
+    updateJob(jobId, { status: 'success', result })
+
+    void logAuditAction(event, 'update', 'report_optimization', reportId, {
+      after: {
+        fileUrl: pdfPath,
+        preset,
+        originalSize: result.originalSize,
+        optimizedSize: result.optimizedSize,
+        savedBytes: result.savedBytes,
+        nativePages: result.nativePages,
+        scannedPages: result.scannedPages,
+        skippedCompression: result.skippedCompression
+      }
+    })
+  } catch (err) {
+    const message =
+      err instanceof PdfOptimizerError
+        ? `${err.code}: ${err.message}`
+        : err instanceof Error
+          ? err.message
+          : 'Unknown optimization error'
+
+    // The file is left untouched on any error path (the optimizer only
+    // renames into place after the optimized variant is fully written and
+    // verified). Surface a final stat so the UI can show "original X MB".
+    let currentSize: number | undefined
+    try {
+      currentSize = statSync(pdfPath).size
+    } catch {
+      currentSize = undefined
+    }
+
+    updateJob(jobId, { status: 'error', error: message })
+    pushEvent(jobId, {
+      phase: 'done',
+      originalSize: currentSize ?? 0,
+      optimizedSize: currentSize ?? 0,
+      savedBytes: 0,
+      skippedCompression: true,
+      nativePages: 0,
+      scannedPages: 0
+    })
+
+    void logAuditAction(event, 'update', 'report_optimization', reportId, {
+      after: { fileUrl: pdfPath, preset, error: message }
+    })
+  }
+}

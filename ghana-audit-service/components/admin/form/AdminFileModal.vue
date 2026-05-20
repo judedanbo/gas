@@ -1,11 +1,7 @@
 <template>
   <div>
     <!-- Inline Card -->
-    <AdminFormGroup
-      :label="label"
-      :required="required"
-      :error="error || undefined"
-    >
+    <AdminFormGroup :label="label" :required="required" :error="error || undefined">
       <button
         type="button"
         class="w-full text-left"
@@ -59,12 +55,7 @@
             v-else
             class="w-14 h-14 bg-red-100 dark:bg-red-900/20 rounded-lg flex items-center justify-center flex-shrink-0"
           >
-            <svg
-              class="w-7 h-7 text-red-600"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
+            <svg class="w-7 h-7 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path
                 stroke-linecap="round"
                 stroke-linejoin="round"
@@ -107,6 +98,107 @@
           >
             Cancel replacement
           </button>
+        </div>
+
+        <!-- Compression preset selector (reports only) -->
+        <div
+          v-if="resource === 'reports' && !modalFileUrl"
+          class="bg-gray-50 dark:bg-gray-700/30 rounded-lg p-4"
+        >
+          <label
+            for="optimize-preset"
+            class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+          >
+            Compression
+          </label>
+          <select
+            id="optimize-preset"
+            v-model="optimizePreset"
+            class="w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white text-sm"
+          >
+            <option value="ebook">Balanced (150 DPI, recommended)</option>
+            <option value="screen">Aggressive (72 DPI, smallest file)</option>
+            <option value="printer">Conservative (300 DPI, print-quality)</option>
+          </select>
+          <p class="text-xs text-gray-500 mt-1">
+            Only images are downsampled. Vector text, tables, and charts are preserved.
+          </p>
+        </div>
+
+        <!-- Optimization progress / result panel (reports only) -->
+        <div
+          v-if="resource === 'reports' && modalFileUrl && optimization.status.value !== 'idle'"
+          class="bg-gray-50 dark:bg-gray-700/30 rounded-lg p-4"
+          aria-live="polite"
+        >
+          <div v-if="optimization.isRunning.value" class="space-y-2">
+            <div class="flex items-center justify-between text-sm">
+              <span class="font-medium text-gray-700 dark:text-gray-300">
+                {{ optimizationPhaseLabel }}
+              </span>
+              <span
+                v-if="
+                  (optimization.phase.value === 'classify' || optimization.phase.value === 'ocr') &&
+                  optimization.totalPages.value > 0
+                "
+                class="text-gray-500"
+              >
+                Page {{ optimization.page.value }} of {{ optimization.totalPages.value }}
+              </span>
+            </div>
+            <div class="w-full bg-gray-200 dark:bg-gray-600 rounded-full h-2 overflow-hidden">
+              <div
+                class="h-2 bg-primary transition-all duration-200"
+                :style="{ width: `${optimization.progress.value}%` }"
+              />
+            </div>
+            <p
+              v-if="optimization.nativePages.value > 0 || optimization.scannedPages.value > 0"
+              class="text-xs text-gray-500"
+            >
+              {{ optimization.nativePages.value }} native ·
+              {{ optimization.scannedPages.value }} scanned
+            </p>
+          </div>
+
+          <div
+            v-else-if="optimization.status.value === 'success' && optimization.result.value"
+            class="text-sm space-y-1"
+          >
+            <p
+              v-if="optimization.result.value.skippedCompression"
+              class="text-gray-600 dark:text-gray-300"
+            >
+              File was already well-compressed; original kept.
+            </p>
+            <p v-else class="text-green-700 dark:text-green-400 font-medium">
+              Reduced {{ formatFileSize(optimization.result.value.originalSize) }} &rarr;
+              {{ formatFileSize(optimization.result.value.optimizedSize) }} (saved
+              {{ formatFileSize(optimization.result.value.savedBytes) }})
+            </p>
+            <p class="text-xs text-gray-500">
+              {{ optimization.result.value.nativePages }} native ·
+              {{ optimization.result.value.scannedPages }} scanned
+            </p>
+          </div>
+
+          <div v-else-if="optimization.status.value === 'error'" class="text-sm space-y-2">
+            <p class="text-amber-700 dark:text-amber-400">
+              Optimization failed:
+              <span class="font-mono text-xs">{{ optimization.error.value }}</span>
+            </p>
+            <p class="text-xs text-gray-500">
+              The original file will be used. You can retry from the edit page.
+            </p>
+            <button
+              v-if="optimization.error.value && optimization.error.value.includes('HAS_BOOKMARKS')"
+              type="button"
+              class="btn btn-ghost text-sm"
+              @click="retryWithBookmarksDropped"
+            >
+              Optimize anyway (drops bookmarks)
+            </button>
+          </div>
         </div>
 
         <!-- File Details + Preview (shown when file exists) -->
@@ -155,11 +247,7 @@
           <div>
             <h3 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Preview</h3>
             <div class="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
-              <iframe
-                :src="modalFileUrl"
-                class="w-full h-[400px]"
-                title="PDF Preview"
-              />
+              <iframe :src="modalFileUrl" class="w-full h-[400px]" title="PDF Preview" />
               <div class="px-4 py-2 bg-gray-50 dark:bg-gray-700/50 text-sm">
                 <a
                   :href="modalFileUrl"
@@ -168,12 +256,7 @@
                   class="text-primary hover:underline inline-flex items-center gap-1"
                 >
                   Open in new tab
-                  <svg
-                    class="w-3.5 h-3.5"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path
                       stroke-linecap="round"
                       stroke-linejoin="round"
@@ -198,9 +281,7 @@
                   <div
                     class="animate-spin w-8 h-8 border-2 border-primary border-t-transparent rounded-full mx-auto mb-2"
                   />
-                  <p class="text-sm text-gray-500 dark:text-gray-400">
-                    Generating thumbnail...
-                  </p>
+                  <p class="text-sm text-gray-500 dark:text-gray-400">Generating thumbnail...</p>
                 </div>
                 <img
                   v-else-if="modalThumbnail"
@@ -232,15 +313,11 @@
                   <template v-if="thumbnailSource === 'generated'">
                     Auto-generated from PDF
                   </template>
-                  <template v-else-if="thumbnailSource === 'custom'">
-                    Custom upload
-                  </template>
+                  <template v-else-if="thumbnailSource === 'custom'"> Custom upload </template>
                   <template v-else-if="thumbnailSource === 'existing'">
                     Existing thumbnail
                   </template>
-                  <template v-else>
-                    No thumbnail set
-                  </template>
+                  <template v-else> No thumbnail set </template>
                 </p>
 
                 <p v-if="thumbnailError" class="text-sm text-amber-600 dark:text-amber-400">
@@ -293,10 +370,10 @@
           <button
             type="button"
             class="btn btn-primary"
-            :disabled="!modalFileUrl"
+            :disabled="!modalFileUrl || optimization.isRunning.value"
             @click="handleConfirm"
           >
-            Confirm
+            {{ optimization.isRunning.value ? 'Optimizing…' : 'Confirm' }}
           </button>
         </div>
       </template>
@@ -305,6 +382,8 @@
 </template>
 
 <script setup lang="ts">
+  import type { CompressionPreset } from '~/composables/useReportOptimization'
+
   interface Props {
     resource: 'reports' | 'publications'
     label?: string
@@ -313,6 +392,7 @@
     thumbnail?: string | null
     error?: string
     required?: boolean
+    reportId?: number | null
   }
 
   const props = withDefaults(defineProps<Props>(), {
@@ -321,7 +401,8 @@
     fileSize: null,
     thumbnail: null,
     error: undefined,
-    required: false
+    required: false,
+    reportId: null
   })
 
   const emit = defineEmits<{
@@ -331,6 +412,7 @@
   }>()
 
   const api = useAdminApi()
+  const optimization = useReportOptimization()
 
   // Modal state
   const isOpen = ref(false)
@@ -344,6 +426,21 @@
   const modalFileUrl = ref<string | null>(null)
   const modalFileSize = ref<number | null>(null)
   const modalThumbnail = ref<string | null>(null)
+
+  // Compression preset for the optimization pipeline. Only applies to
+  // reports — publications skip optimization. Persisted in localStorage so
+  // the admin's preference sticks across uploads.
+  const PRESET_STORAGE_KEY = 'gas:report-optimize-preset'
+  const optimizePreset = ref<CompressionPreset>('ebook')
+  if (import.meta.client) {
+    const stored = window.localStorage.getItem(PRESET_STORAGE_KEY) as CompressionPreset | null
+    if (stored === 'screen' || stored === 'ebook' || stored === 'printer') {
+      optimizePreset.value = stored
+    }
+  }
+  watch(optimizePreset, (val) => {
+    if (import.meta.client) window.localStorage.setItem(PRESET_STORAGE_KEY, val)
+  })
 
   // What the card displays (committed values from props)
   const cardFileUrl = computed(() => props.fileUrl || null)
@@ -363,6 +460,25 @@
     return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
   }
 
+  const optimizationPhaseLabel = computed(() => {
+    switch (optimization.phase.value) {
+      case 'inspect':
+        return 'Inspecting PDF…'
+      case 'split':
+        return 'Splitting pages…'
+      case 'classify':
+        return 'Classifying pages…'
+      case 'ocr':
+        return 'Running OCR on scanned pages…'
+      case 'merge':
+        return 'Reassembling document…'
+      case 'compress':
+        return 'Compressing…'
+      default:
+        return 'Optimizing PDF…'
+    }
+  })
+
   function openModal() {
     modalFileUrl.value = props.fileUrl || null
     modalFileSize.value = props.fileSize || null
@@ -371,16 +487,45 @@
     thumbnailError.value = null
     isReplacing.value = false
     isUploadingCustomThumbnail.value = false
+    optimization.reset()
     isOpen.value = true
   }
 
-  function handleUploadComplete(url: string) {
+  async function handleUploadComplete(url: string) {
     modalFileUrl.value = url
     isReplacing.value = false
     thumbnailError.value = null
     modalThumbnail.value = null
     thumbnailSource.value = null
+
+    // Reports run through the optimization pipeline before thumbnailing.
+    // The cover (page 1) is preserved byte-for-byte, so the thumbnail it
+    // produces is identical to one taken before optimization, but the
+    // generated file is smaller and (where applicable) searchable.
+    if (props.resource === 'reports') {
+      await runOptimization()
+    }
+
     generateThumbnail()
+  }
+
+  async function runOptimization(opts?: { allowDropBookmarks?: boolean }) {
+    if (!modalFileUrl.value) return
+    await optimization.start({
+      fileUrl: modalFileUrl.value,
+      preset: optimizePreset.value,
+      reportId: props.reportId,
+      allowDropBookmarks: opts?.allowDropBookmarks
+    })
+    // The pipeline replaces the file in place, so the URL is unchanged.
+    // Pick up the new size when the optimizer reports it.
+    if (optimization.result.value && !optimization.result.value.skippedCompression) {
+      modalFileSize.value = optimization.result.value.optimizedSize
+    }
+  }
+
+  function retryWithBookmarksDropped() {
+    runOptimization({ allowDropBookmarks: true })
   }
 
   function handleUploadFileInfo(info: { filename: string; size: number; mimeType: string }) {
@@ -401,8 +546,7 @@
       modalThumbnail.value = result.thumbnailUrl
       thumbnailSource.value = 'generated'
     } catch {
-      thumbnailError.value =
-        'Thumbnail generation failed. You can upload a custom image instead.'
+      thumbnailError.value = 'Thumbnail generation failed. You can upload a custom image instead.'
     } finally {
       thumbnailGenerating.value = false
     }
