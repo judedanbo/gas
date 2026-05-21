@@ -58,7 +58,8 @@ async function seed() {
       console.log('Hashing password...')
       const passwordHash = await bcrypt.hash(adminPassword, SALT_ROUNDS)
 
-      // Create admin user
+      // Create admin user. `modules` is intentionally left NULL — admins
+      // implicitly have access to every module (see resolveUserModules).
       console.log('Creating admin user...')
       const [result] = await db.insert(schema.users).values({
         email: adminEmail.toLowerCase(),

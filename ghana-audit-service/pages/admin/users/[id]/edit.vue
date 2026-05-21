@@ -102,6 +102,44 @@
             </p>
           </div>
 
+          <fieldset
+            class="border-t border-gray-200 dark:border-gray-700 pt-6"
+            aria-describedby="modules-help"
+          >
+            <legend class="font-medium text-gray-900 dark:text-white">Module access</legend>
+            <p id="modules-help" class="text-sm text-gray-500 dark:text-gray-400 mt-1 mb-4">
+              Select which functional areas this user can manage. The role controls what they can
+              do; modules control where.
+            </p>
+            <p
+              v-if="isAdminRole"
+              class="text-sm text-primary bg-primary/5 border border-primary/20 rounded-lg p-3"
+            >
+              Admins have full access to all modules.
+            </p>
+            <div v-else class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <label
+                v-for="m in ALL_MODULES"
+                :key="m"
+                class="flex items-center gap-3 p-3 rounded-lg border border-gray-200 dark:border-gray-700"
+                :class="
+                  isCurrentUser
+                    ? 'opacity-60 cursor-not-allowed'
+                    : 'cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/50'
+                "
+              >
+                <input
+                  v-model="form.modules"
+                  type="checkbox"
+                  :value="m"
+                  :disabled="isCurrentUser"
+                  class="w-4 h-4 text-primary rounded border-gray-300 focus:ring-primary"
+                />
+                <span class="text-sm text-gray-700 dark:text-gray-300">{{ moduleLabels[m] }}</span>
+              </label>
+            </div>
+          </fieldset>
+
           <div class="p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
             <h3 class="font-medium text-gray-900 dark:text-white mb-2">Role Permissions</h3>
             <ul class="text-sm text-gray-600 dark:text-gray-400 space-y-1">
@@ -110,11 +148,11 @@
                 delete all content; manage users
               </li>
               <li v-else-if="form.role === 'editor'">
-                <span class="font-medium text-accent">Editor:</span> Create and edit content; cannot
-                delete or manage users
+                <span class="font-medium text-accent">Editor:</span> Create and edit content (within
+                assigned modules); cannot delete or manage users
               </li>
               <li v-else>
-                <span class="font-medium">Viewer:</span> Read-only access to dashboard and content
+                <span class="font-medium">Viewer:</span> Read-only access to assigned modules
               </li>
             </ul>
           </div>
@@ -140,7 +178,8 @@
 </template>
 
 <script setup lang="ts">
-  import type { AdminUser, UserInput } from '~/types/admin'
+  import type { AdminUser, ModuleKey, UserInput } from '~/types/admin'
+  import { ALL_MODULES } from '~/types/admin'
   definePageMeta({ layout: 'admin' })
 
   const route = useRoute()
@@ -163,9 +202,22 @@
     email: '',
     password: '',
     role: 'editor',
+    modules: [],
     isActive: true
   })
   const confirmPassword = ref('')
+
+  const isAdminRole = computed(() => form.role === 'admin')
+
+  const moduleLabels: Record<ModuleKey, string> = {
+    reports: 'Audit Reports',
+    content: 'Content (Publications, News, Events, Tags)',
+    careers: 'Careers (Vacancies, Tenders)',
+    organization: 'Organization (Team, Departments, Offices)',
+    media: 'Media (Gallery, Videos)',
+    analytics: 'Analytics & Audit Logs',
+    communications: 'Communications (Newsletter, Contact Forms)'
+  }
 
   const validationRules = {
     name: [rules.required],
@@ -190,6 +242,7 @@
       form.name = item.name
       form.email = item.email
       form.role = item.role
+      form.modules = item.modules ?? []
       form.isActive = item.isActive
       form.password = ''
     }
@@ -209,10 +262,11 @@
       updateData.password = form.password
     }
 
-    // Don't allow changing own role/status
+    // Don't allow changing own role/status/modules
     if (!isCurrentUser.value) {
       updateData.role = form.role
       updateData.isActive = form.isActive
+      updateData.modules = form.modules
     }
 
     const result = await update(id, updateData as UserInput)

@@ -42,57 +42,66 @@
     <nav class="p-3 space-y-1 overflow-y-auto h-[calc(100vh-4rem)]">
       <!-- Dashboard -->
       <SidebarLink to="/admin" icon="home" label="Dashboard" :collapsed="collapsed" />
-      <SidebarLink
-        to="/admin/analytics"
-        icon="chart-bar"
-        label="Analytics"
-        :collapsed="collapsed"
-      />
-      <SidebarLink
-        to="/admin/analytics/abuse"
-        icon="shield-exclamation"
-        label="Abuse"
-        :collapsed="collapsed"
-      />
-      <SidebarLink
-        to="/admin/analytics/capacity"
-        icon="server"
-        label="Capacity"
-        :collapsed="collapsed"
-      />
-      <SidebarLink
-        to="/admin/analytics/insights"
-        icon="light-bulb"
-        label="Insights"
-        :collapsed="collapsed"
-      />
-      <SidebarLink
-        to="/admin/analytics/report"
-        icon="document-text"
-        label="PDF Report"
-        :collapsed="collapsed"
-      />
+      <template v-if="hasModule('analytics')">
+        <SidebarLink
+          to="/admin/analytics"
+          icon="chart-bar"
+          label="Analytics"
+          :collapsed="collapsed"
+        />
+        <SidebarLink
+          to="/admin/analytics/abuse"
+          icon="shield-exclamation"
+          label="Abuse"
+          :collapsed="collapsed"
+        />
+        <SidebarLink
+          to="/admin/analytics/capacity"
+          icon="server"
+          label="Capacity"
+          :collapsed="collapsed"
+        />
+        <SidebarLink
+          to="/admin/analytics/insights"
+          icon="light-bulb"
+          label="Insights"
+          :collapsed="collapsed"
+        />
+        <SidebarLink
+          to="/admin/analytics/report"
+          icon="document-text"
+          label="PDF Report"
+          :collapsed="collapsed"
+        />
+      </template>
 
       <!-- Content Section -->
-      <SidebarSection title="Content" :collapsed="collapsed">
+      <SidebarSection
+        v-if="hasModule('reports') || hasModule('content')"
+        title="Content"
+        :collapsed="collapsed"
+      >
         <SidebarLink
+          v-if="hasModule('reports')"
           to="/admin/reports"
           icon="document-report"
           label="A-G Reports"
           :collapsed="collapsed"
         />
-        <SidebarLink
-          to="/admin/publications"
-          icon="document-text"
-          label="Publications"
-          :collapsed="collapsed"
-        />
-        <SidebarLink to="/admin/news" icon="newspaper" label="News" :collapsed="collapsed" />
-        <SidebarLink to="/admin/events" icon="calendar" label="Events" :collapsed="collapsed" />
+        <template v-if="hasModule('content')">
+          <SidebarLink
+            to="/admin/publications"
+            icon="document-text"
+            label="Publications"
+            :collapsed="collapsed"
+          />
+          <SidebarLink to="/admin/news" icon="newspaper" label="News" :collapsed="collapsed" />
+          <SidebarLink to="/admin/events" icon="calendar" label="Events" :collapsed="collapsed" />
+        </template>
       </SidebarSection>
 
       <!-- Careers Section -->
-      <SidebarSection title="Careers" :collapsed="collapsed">
+      <SidebarSection v-if="hasModule('careers')" title="Careers" :collapsed="collapsed">
         <SidebarLink
           to="/admin/vacancies"
           icon="briefcase"
@@ -108,7 +117,7 @@
       </SidebarSection>
 
       <!-- Organization Section -->
-      <SidebarSection title="Organization" :collapsed="collapsed">
+      <SidebarSection v-if="hasModule('organization')" title="Organization" :collapsed="collapsed">
         <SidebarLink
           to="/admin/management-team"
           icon="user-circle"
@@ -136,14 +145,24 @@
       </SidebarSection>
 
       <!-- Media Section -->
-      <SidebarSection title="Media" :collapsed="collapsed">
+      <SidebarSection v-if="hasModule('media')" title="Media" :collapsed="collapsed">
         <SidebarLink to="/admin/gallery" icon="photograph" label="Gallery" :collapsed="collapsed" />
         <SidebarLink to="/admin/videos" icon="video-camera" label="Videos" :collapsed="collapsed" />
       </SidebarSection>
 
-      <!-- Settings Section (admin only) -->
-      <SidebarSection title="Settings" :collapsed="collapsed">
-        <SidebarLink to="/admin/tags" icon="tag" label="Tags" :collapsed="collapsed" />
+      <!-- Settings Section -->
+      <SidebarSection
+        v-if="hasModule('content') || hasPermission('manage_users')"
+        title="Settings"
+        :collapsed="collapsed"
+      >
+        <SidebarLink
+          v-if="hasModule('content')"
+          to="/admin/tags"
+          icon="tag"
+          label="Tags"
+          :collapsed="collapsed"
+        />
         <SidebarLink
           v-if="hasPermission('manage_users')"
           to="/admin/users"
@@ -154,20 +173,32 @@
       </SidebarSection>
 
       <!-- Activity Section -->
-      <SidebarSection title="Activity" :collapsed="collapsed">
+      <SidebarSection
+        v-if="hasModule('analytics') || hasModule('communications')"
+        title="Activity"
+        :collapsed="collapsed"
+      >
         <SidebarLink
+          v-if="hasModule('analytics')"
           to="/admin/audit-logs"
           icon="clipboard-list"
           label="Audit Logs"
           :collapsed="collapsed"
         />
-        <SidebarLink to="/admin/newsletter" icon="mail" label="Newsletter" :collapsed="collapsed" />
-        <SidebarLink
-          to="/admin/contact-submissions"
-          icon="chat-alt-2"
-          label="Contact Forms"
-          :collapsed="collapsed"
-        />
+        <template v-if="hasModule('communications')">
+          <SidebarLink
+            to="/admin/newsletter"
+            icon="mail"
+            label="Newsletter"
+            :collapsed="collapsed"
+          />
+          <SidebarLink
+            to="/admin/contact-submissions"
+            icon="chat-alt-2"
+            label="Contact Forms"
+            :collapsed="collapsed"
+          />
+        </template>
       </SidebarSection>
     </nav>
 
@@ -200,7 +231,7 @@
     toggle: []
   }>()
 
-  const { hasPermission } = useAdminAuth()
+  const { hasPermission, hasModule } = useAdminAuth()
 
   // Sidebar Link Component
   const SidebarLink = defineComponent({

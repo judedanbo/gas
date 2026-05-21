@@ -430,11 +430,22 @@ export const tagSchema = z.object({
 })
 
 // Users (for admin management)
+const moduleKeysEnum = z.enum([
+  'reports',
+  'content',
+  'careers',
+  'organization',
+  'media',
+  'analytics',
+  'communications'
+])
+
 export const userSchema = z.object({
   email: z.string().email().max(255),
   password: z.string().min(8).optional(),
   name: z.string().min(1).max(255),
   role: z.enum(['admin', 'editor', 'viewer']).default('viewer'),
+  modules: z.array(moduleKeysEnum).optional(),
   isActive: z.boolean().default(true)
 })
 

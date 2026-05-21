@@ -1,10 +1,12 @@
+import { moduleForAdminPage } from '~/composables/useAdminAuth'
+
 export default defineNuxtRouteMiddleware((to) => {
   // Only apply to admin routes
   if (!to.path.startsWith('/admin')) {
     return
   }
 
-  const { isAuthenticated, token, isSessionExpired } = useAdminAuth()
+  const { isAuthenticated, token, isSessionExpired, hasModule } = useAdminAuth()
 
   // Redirect logged-in users away from login page
   if (to.path === '/admin/login') {
@@ -23,5 +25,11 @@ export default defineNuxtRouteMiddleware((to) => {
       query.reason = 'expired'
     }
     return navigateTo({ path: '/admin/login', query })
+  }
+
+  // Block deep-linking to a page outside the user's module scope.
+  const pageModule = moduleForAdminPage(to.path)
+  if (pageModule && !hasModule(pageModule)) {
+    return navigateTo('/admin')
   }
 })

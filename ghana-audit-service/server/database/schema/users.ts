@@ -21,6 +21,9 @@ export const users = mysqlTable(
     passwordHash: varchar('password_hash', { length: 255 }).notNull(),
     name: varchar('name', { length: 255 }).notNull(),
     role: mysqlEnum('role', ['admin', 'editor', 'viewer']).notNull().default('viewer'),
+    // Functional module scope (orthogonal to role). NULL for admins, who
+    // implicitly have every module; an explicit list for editor/viewer.
+    modules: json('modules').$type<string[]>(),
     isActive: boolean('is_active').notNull().default(true),
     lastLoginAt: datetime('last_login_at'),
     createdAt: datetime('created_at')
