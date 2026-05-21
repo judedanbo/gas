@@ -1,6 +1,9 @@
 import type { H3Event } from 'h3'
 import type { AuthenticatedUser } from '../middleware/adminAuth'
 
+export { requireModuleAccess, userHasModule } from './modules'
+export type { ModuleKey } from './modules'
+
 export type Permission = 'read' | 'create' | 'update' | 'delete' | 'manage_users'
 
 // Role permissions mapping
