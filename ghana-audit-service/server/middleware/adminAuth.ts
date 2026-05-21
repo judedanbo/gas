@@ -34,7 +34,13 @@ declare module 'h3' {
 }
 
 // Routes that don't require authentication
-const PUBLIC_ADMIN_ROUTES = ['/api/admin/auth/login']
+const PUBLIC_ADMIN_ROUTES = [
+  '/api/admin/auth/login',
+  // PDF-token exchange authenticates via a single-use signed token in the
+  // body, minted server-side by the report.pdf endpoint after the admin's
+  // Bearer JWT was already validated.
+  '/api/admin/auth/exchange-pdf-token'
+]
 
 export default defineEventHandler(async (event) => {
   const path = event.path || ''

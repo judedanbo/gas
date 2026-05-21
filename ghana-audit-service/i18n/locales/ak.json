@@ -393,6 +393,46 @@
           "lastSeen": "Bere kɔɔ"
         }
       }
+    },
+    "report": {
+      "title": "Nsɛm Hwɛ Report",
+      "subtitle": "Nsɛm hwɛ dashboards nyinaa wɔ baako mu a wobɛtumi atintim.",
+      "backToDashboard": "San kɔ dashboard",
+      "openReport": "Bue report",
+      "fullReport": "Report nyinaa",
+      "downloadPdf": "Twe PDF",
+      "generating": "Ɛreyɛ…",
+      "print": "Tintim",
+      "window": {
+        "label": "Bere",
+        "options": {
+          "24h": "Nnɔnhwere 24 a atwam",
+          "7d": "Nna 7 a atwam",
+          "30d": "Nna 30 a atwam"
+        }
+      },
+      "sections": {
+        "overview": {
+          "title": "1. Nsɛm Tiawa",
+          "subtitle": "Nnɔnhwere 24 a atwam — akwantu, nneɛma a wɔatwe, ne form mu nsɛm."
+        },
+        "routes": {
+          "title": "2. Akwan",
+          "subtitle": "Akwan 50 a wɔahwɛ ({window})."
+        },
+        "abuse": {
+          "title": "3. Atrasoɔ",
+          "subtitle": "Nsɛm a wonim, asɛmpa, ne fuzz mmɔden ({window})."
+        },
+        "capacity": {
+          "title": "4. Ɛkwan Tumi",
+          "subtitle": "Akwantu, latency, cache hit, ne storage trends ({window})."
+        },
+        "insights": {
+          "title": "5. Nimdeɛ",
+          "subtitle": "Hwehwɛ behavior ne link rot ({window})."
+        }
+      }
     }
   },
   "advertisement": {

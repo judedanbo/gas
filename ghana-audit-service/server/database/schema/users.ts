@@ -51,7 +51,8 @@ export const auditLogs = mysqlTable(
       'delete',
       'restore',
       'login',
-      'logout'
+      'logout',
+      'export'
     ]).notNull(),
     entityType: varchar('entity_type', { length: 100 }).notNull(),
     entityId: int('entity_id'),
