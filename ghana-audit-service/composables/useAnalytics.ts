@@ -315,6 +315,42 @@ export function useAnalytics() {
     return api.get<FuzzAttemptsResponse>('analytics/fuzz-attempts', { window })
   }
 
+  /**
+   * Download the unified analytics report as a PDF. Hits the
+   * server-side Puppeteer endpoint, receives a blob, and triggers a
+   * browser download — no new page navigation.
+   */
+  async function downloadReportPdf(window: AnalyticsWindow = '7d'): Promise<void> {
+    const { token } = useAdminAuth()
+    if (!token.value) {
+      throw new Error('Not authenticated')
+    }
+    const blob = await $fetch<Blob>(`/api/admin/analytics/report.pdf?window=${window}`, {
+      method: 'GET',
+      responseType: 'blob',
+      headers: { Authorization: `Bearer ${token.value}` }
+    })
+    if (!import.meta.client) return
+    const url = URL.createObjectURL(blob)
+    try {
+      const a = document.createElement('a')
+      a.href = url
+      const stamp = new Date()
+        .toISOString()
+        .replace(/[-:]/g, '')
+        .replace(/\..+$/, '')
+        .replace('T', '-')
+      a.download = `gas-analytics-${window}-${stamp}.pdf`
+      document.body.appendChild(a)
+      a.click()
+      a.remove()
+    } finally {
+      // Defer revoke so the click handler can finish; revoking immediately
+      // can race in some browsers and abort the download.
+      setTimeout(() => URL.revokeObjectURL(url), 1000)
+    }
+  }
+
   return {
     fetchOverview,
     fetchRoutes,
@@ -325,6 +361,7 @@ export function useAnalytics() {
     fetchCapacity,
     fetchInsights,
     fetchFormSubmissions,
-    fetchFuzzAttempts
+    fetchFuzzAttempts,
+    downloadReportPdf
   }
 }

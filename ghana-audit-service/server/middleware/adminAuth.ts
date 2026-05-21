@@ -1,6 +1,7 @@
 import { eq, and, isNull } from 'drizzle-orm'
 import { verifyToken } from '../utils/jwt'
 import { validateSession, type SessionTiming } from '../utils/sessions'
+import { moduleForPath, resolveUserModules, type ModuleKey } from '../utils/modules'
 import { getDatabase, schema } from '../database'
 
 export interface AuthenticatedUser {
@@ -8,6 +9,7 @@ export interface AuthenticatedUser {
   email: string
   name: string
   role: 'admin' | 'editor' | 'viewer'
+  modules: ModuleKey[]
 }
 
 export interface AuthContext {
@@ -32,7 +34,13 @@ declare module 'h3' {
 }
 
 // Routes that don't require authentication
-const PUBLIC_ADMIN_ROUTES = ['/api/admin/auth/login']
+const PUBLIC_ADMIN_ROUTES = [
+  '/api/admin/auth/login',
+  // PDF-token exchange authenticates via a single-use signed token in the
+  // body, minted server-side by the report.pdf endpoint after the admin's
+  // Bearer JWT was already validated.
+  '/api/admin/auth/exchange-pdf-token'
+]
 
 // SSE endpoints — EventSource cannot set custom headers, so for these routes
 // only we additionally accept the Bearer token via a `token` query parameter.
@@ -89,6 +97,7 @@ export default defineEventHandler(async (event) => {
       email: schema.users.email,
       name: schema.users.name,
       role: schema.users.role,
+      modules: schema.users.modules,
       isActive: schema.users.isActive,
       deletedAt: schema.users.deletedAt
     })
@@ -134,13 +143,27 @@ export default defineEventHandler(async (event) => {
     })
   }
 
+  // Resolve functional module scope (admins implicitly get all modules) and
+  // gate the request on the module its path belongs to. Paths not in the
+  // map (auth, upload, users) are not module-gated here.
+  const resolvedModules = resolveUserModules(user.role, user.modules ?? null)
+  const moduleKey = moduleForPath(path)
+  if (moduleKey && user.role !== 'admin' && !resolvedModules.includes(moduleKey)) {
+    throw createError({
+      statusCode: 403,
+      statusMessage: 'Forbidden',
+      message: `You don't have access to the ${moduleKey} module`
+    })
+  }
+
   // Attach authenticated user to event context
   event.context.auth = {
     user: {
       id: user.id,
       email: user.email,
       name: user.name,
-      role: user.role
+      role: user.role,
+      modules: resolvedModules
     },
     token,
     sessionId,

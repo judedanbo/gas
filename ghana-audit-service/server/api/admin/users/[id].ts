@@ -2,6 +2,7 @@ import type { H3Event } from 'h3'
 import { eq, and, isNull } from 'drizzle-orm'
 import { getDatabase, schema } from '../../../database'
 import { requireAdmin, getCurrentUser } from '../../../utils/adminHelpers'
+import { resolveUserModules } from '../../../utils/modules'
 import { logAuditAction, createChangesObject, sanitizeForAudit } from '../../../utils/auditLogger'
 import { userUpdateSchema, validateBody, createValidationError } from '../../../utils/validation'
 import { hashPassword } from '../../../utils/password'
@@ -29,6 +30,7 @@ async function handleGet(event: H3Event, id: number) {
       email: schema.users.email,
       name: schema.users.name,
       role: schema.users.role,
+      modules: schema.users.modules,
       isActive: schema.users.isActive,
       lastLoginAt: schema.users.lastLoginAt,
       createdAt: schema.users.createdAt,
@@ -42,7 +44,7 @@ async function handleGet(event: H3Event, id: number) {
   if (!user)
     throw createError({ statusCode: 404, statusMessage: 'Not Found', message: 'User not found' })
 
-  return user
+  return { ...user, modules: resolveUserModules(user.role, user.modules) }
 }
 
 async function handleUpdate(event: H3Event, id: number) {
@@ -89,6 +91,18 @@ async function handleUpdate(event: H3Event, id: number) {
   if (typeof input.isActive === 'boolean') updateData.isActive = input.isActive
   if (input.password) updateData.passwordHash = await hashPassword(input.password)
 
+  // Keep module scope consistent with the effective role: admins store NULL
+  // (implicitly all modules); demoting away from admin without an explicit
+  // list starts the user with no modules.
+  const effectiveRole = input.role ?? existing.role
+  if (effectiveRole === 'admin') {
+    updateData.modules = null
+  } else if (input.modules !== undefined) {
+    updateData.modules = input.modules
+  } else if (existing.role === 'admin') {
+    updateData.modules = []
+  }
+
   if (Object.keys(updateData).length > 0) {
     await db.update(schema.users).set(updateData).where(eq(schema.users.id, id))
   }
@@ -99,6 +113,7 @@ async function handleUpdate(event: H3Event, id: number) {
       email: schema.users.email,
       name: schema.users.name,
       role: schema.users.role,
+      modules: schema.users.modules,
       isActive: schema.users.isActive,
       lastLoginAt: schema.users.lastLoginAt,
       createdAt: schema.users.createdAt,
@@ -108,17 +123,20 @@ async function handleUpdate(event: H3Event, id: number) {
     .where(eq(schema.users.id, id))
     .limit(1)
 
+  const updatedResolved = { ...updated, modules: resolveUserModules(updated.role, updated.modules) }
+
   const before = sanitizeForAudit({
     id: existing.id,
     email: existing.email,
     name: existing.name,
     role: existing.role,
+    modules: resolveUserModules(existing.role, existing.modules),
     isActive: existing.isActive
   })
-  const after = sanitizeForAudit(updated as Record<string, unknown>)
+  const after = sanitizeForAudit(updatedResolved as Record<string, unknown>)
   await logAuditAction(event, 'update', 'user', id, createChangesObject(before, after))
 
-  return updated
+  return updatedResolved
 }
 
 async function handleDelete(event: H3Event, id: number) {

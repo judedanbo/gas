@@ -1,9 +1,45 @@
-import type { AdminUser, LoginResponse, MeResponse, Permission, SessionTiming } from '~/types/admin'
+import type {
+  AdminUser,
+  LoginResponse,
+  MeResponse,
+  ModuleKey,
+  Permission,
+  SessionTiming
+} from '~/types/admin'
 
 const ROLE_PERMISSIONS: Record<string, Permission[]> = {
   admin: ['read', 'create', 'update', 'delete', 'manage_users'],
   editor: ['read', 'create', 'update'],
   viewer: ['read']
+}
+
+// Maps an admin page path to the module that gates it. Pages absent from this
+// map (dashboard, login, profile, users) are always reachable when authed.
+const ADMIN_PAGE_MODULES: Array<{ prefix: string; module: ModuleKey }> = [
+  { prefix: '/admin/reports', module: 'reports' },
+  { prefix: '/admin/publications', module: 'content' },
+  { prefix: '/admin/news', module: 'content' },
+  { prefix: '/admin/events', module: 'content' },
+  { prefix: '/admin/tags', module: 'content' },
+  { prefix: '/admin/vacancies', module: 'careers' },
+  { prefix: '/admin/tenders', module: 'careers' },
+  { prefix: '/admin/management-team', module: 'organization' },
+  { prefix: '/admin/departments', module: 'organization' },
+  { prefix: '/admin/team-members', module: 'organization' },
+  { prefix: '/admin/offices', module: 'organization' },
+  { prefix: '/admin/gallery', module: 'media' },
+  { prefix: '/admin/videos', module: 'media' },
+  { prefix: '/admin/analytics', module: 'analytics' },
+  { prefix: '/admin/audit-logs', module: 'analytics' },
+  { prefix: '/admin/newsletter', module: 'communications' },
+  { prefix: '/admin/contact-submissions', module: 'communications' }
+]
+
+export function moduleForAdminPage(path: string): ModuleKey | null {
+  const match = ADMIN_PAGE_MODULES.find(
+    (entry) => path === entry.prefix || path.startsWith(`${entry.prefix}/`)
+  )
+  return match?.module ?? null
 }
 
 export function useAdminAuth() {
@@ -186,6 +222,18 @@ export function useAdminAuth() {
     return permissions.some((p) => hasPermission(p))
   }
 
+  // Check if user can access a functional module (admins get all modules)
+  function hasModule(module: ModuleKey): boolean {
+    if (!user.value) return false
+    if (user.value.role === 'admin') return true
+    return (user.value.modules ?? []).includes(module)
+  }
+
+  // Check both module scope and CRUD-depth permission
+  function canAccess(module: ModuleKey, permission: Permission): boolean {
+    return hasModule(module) && hasPermission(permission)
+  }
+
   // Get auth headers for API calls
   function getAuthHeaders(): Record<string, string> {
     if (!token.value) return {}
@@ -207,6 +255,7 @@ export function useAdminAuth() {
     login,
     logout,
     fetchCurrentUser,
+    setAuth,
     setSession,
     isAuthenticated,
     isSessionExpired,
@@ -214,6 +263,8 @@ export function useAdminAuth() {
     hasPermission,
     hasAllPermissions,
     hasAnyPermission,
+    hasModule,
+    canAccess,
     getAuthHeaders,
     clearAuth
   }

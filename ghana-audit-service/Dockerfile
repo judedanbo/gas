@@ -67,15 +67,23 @@ ENV NODE_ENV=production
 ENV HOST=0.0.0.0
 ENV PORT=3000
 
-# PDF optimization toolchain — pdftoppm/pdfinfo/pdffonts/pdfimages/pdftotext
-# (poppler-utils), tesseract OCR, Ghostscript, and qpdf. Required by
-# server/utils/pdfOptimizer.ts and server/utils/generateThumbnail.ts.
 RUN apk add --no-cache \
-    poppler-utils \
-    tesseract-ocr \
-    tesseract-ocr-data-eng \
-    ghostscript \
-    qpdf
+        chromium \
+        nss \
+        freetype \
+        harfbuzz \
+        ca-certificates \
+        ttf-freefont \
+        ttf-opensans \
+        fontconfig \
+        poppler-utils \
+        tesseract-ocr \
+        tesseract-ocr-data-eng \
+        ghostscript \
+        qpdf && \
+    fc-cache -f
+ENV PUPPETEER_SKIP_DOWNLOAD=true
+ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser
 
 # Create non-root user for security
 RUN addgroup --system --gid 1001 nodejs && \

@@ -17,6 +17,22 @@
         >
           {{ $t('analytics.overview.viewRoutes') }}
         </NuxtLink>
+        <NuxtLink
+          to="/admin/analytics/report"
+          class="rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700"
+        >
+          {{ $t('analytics.report.openReport') }}
+        </NuxtLink>
+        <button
+          type="button"
+          class="rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-white shadow-sm hover:opacity-90 disabled:opacity-50"
+          :disabled="downloadingPdf"
+          @click="onDownloadPdf"
+        >
+          {{
+            downloadingPdf ? $t('analytics.report.generating') : $t('analytics.report.downloadPdf')
+          }}
+        </button>
         <button
           type="button"
           class="rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 disabled:opacity-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700"
@@ -283,11 +299,26 @@
 
   definePageMeta({ layout: 'admin' })
 
-  const { fetchOverview, fetchFormSubmissions } = useAnalytics()
+  const { fetchOverview, fetchFormSubmissions, downloadReportPdf } = useAnalytics()
+  const toast = useToast()
   const data = ref<AnalyticsOverview | null>(null)
   const formData = ref<FormSubmissionsResponse | null>(null)
   const loading = ref(false)
   const error = ref<string | null>(null)
+  const downloadingPdf = ref(false)
+
+  async function onDownloadPdf() {
+    if (downloadingPdf.value) return
+    downloadingPdf.value = true
+    try {
+      await downloadReportPdf('7d')
+    } catch (e: unknown) {
+      const err = e as { data?: { message?: string }; message?: string }
+      toast.error(err.data?.message || err.message || 'PDF download failed')
+    } finally {
+      downloadingPdf.value = false
+    }
+  }
 
   async function refresh() {
     loading.value = true

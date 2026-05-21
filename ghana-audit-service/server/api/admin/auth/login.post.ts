@@ -3,6 +3,7 @@ import { z } from 'zod'
 import { getDatabase, schema } from '../../../database'
 import { verifyPassword } from '../../../utils/password'
 import { signToken } from '../../../utils/jwt'
+import { resolveUserModules } from '../../../utils/modules'
 import { createSession } from '../../../utils/sessions'
 import { getSessionConfig } from '../../../utils/duration'
 import { checkRateLimit, createRateLimitKey, getClientIP } from '../../../utils/rateLimiter'
@@ -167,7 +168,8 @@ export default defineEventHandler(async (event) => {
       id: user.id,
       email: user.email,
       name: user.name,
-      role: user.role
+      role: user.role,
+      modules: resolveUserModules(user.role, user.modules ?? null)
     },
     token,
     expiresAt: timing.expiresAt,

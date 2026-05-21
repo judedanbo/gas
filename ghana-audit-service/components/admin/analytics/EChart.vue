@@ -6,6 +6,7 @@
       :autoresize="true"
       :loading="loading"
       :theme="theme"
+      @finished="onFinished"
     />
     <template #fallback>
       <div
@@ -52,6 +53,15 @@
     option: EChartsOption
     loading?: boolean
   }>()
+
+  // ECharts' `finished` event fires after each render pass. The report
+  // page subscribes to it to detect when all charts are visible so the
+  // PDF capture knows the document is ready.
+  const emit = defineEmits<{ ready: [] }>()
+
+  function onFinished() {
+    emit('ready')
+  }
 
   const colorMode = useColorMode()
   const theme = computed(() => (colorMode.value === 'dark' ? 'dark' : 'light'))
