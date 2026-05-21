@@ -67,8 +67,6 @@ ENV NODE_ENV=production
 ENV HOST=0.0.0.0
 ENV PORT=3000
 
-# Chromium runtime for server-side PDF generation (Puppeteer-core points
-# at the system binary; the npm package is not bundled in the image).
 RUN apk add --no-cache \
         chromium \
         nss \
@@ -77,7 +75,12 @@ RUN apk add --no-cache \
         ca-certificates \
         ttf-freefont \
         ttf-opensans \
-        fontconfig && \
+        fontconfig \
+        poppler-utils \
+        tesseract-ocr \
+        tesseract-ocr-data-eng \
+        ghostscript \
+        qpdf && \
     fc-cache -f
 ENV PUPPETEER_SKIP_DOWNLOAD=true
 ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser

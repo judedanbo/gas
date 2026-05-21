@@ -151,10 +151,7 @@ export default defineNuxtConfig({
   hooks: {
     'nitro:config'(nitroConfig) {
       nitroConfig.alias = nitroConfig.alias || {}
-      nitroConfig.alias['#nuxt-icon-server-bundle'] = resolve(
-        __dirname,
-        'server/utils/icon-bundle'
-      )
+      nitroConfig.alias['#nuxt-icon-server-bundle'] = resolve(__dirname, 'server/utils/icon-bundle')
     }
   },
 
@@ -294,11 +291,7 @@ export default defineNuxtConfig({
         '/terms',
         '/accessibility'
       ],
-      ignore: [
-        '/admin', '/admin/**', '/ak/admin', '/ak/admin/**',
-        '/_ipx/**',
-        '/api/downloads/**'
-      ]
+      ignore: ['/admin', '/admin/**', '/ak/admin', '/ak/admin/**', '/_ipx/**', '/api/downloads/**']
     },
     // Route rules
     routeRules: {
@@ -345,6 +338,11 @@ export default defineNuxtConfig({
       },
       '/api/admin/**': {
         cache: false // No caching for admin API (real-time data needed)
+      },
+      // PDF optimization SSE stream — must not be buffered or compressed.
+      '/api/admin/reports/optimize-stream': {
+        cache: false,
+        headers: { 'Cache-Control': 'no-cache, no-transform', 'X-Accel-Buffering': 'no' }
       },
 
       // Security headers for all routes
