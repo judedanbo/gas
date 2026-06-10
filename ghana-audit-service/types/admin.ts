@@ -107,7 +107,7 @@ export interface AuditLogEntry {
     name: string
     email: string
   } | null
-  action: 'create' | 'update' | 'delete' | 'login' | 'logout'
+  action: 'create' | 'update' | 'delete' | 'restore' | 'login' | 'logout' | 'export'
   entityType: string
   entityId: number | null
   changes: Record<string, unknown>
