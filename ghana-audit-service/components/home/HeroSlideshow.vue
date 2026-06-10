@@ -20,14 +20,14 @@
   <!-- Fallback: static green hero (matches original HeroCarousel) -->
   <section
     v-else-if="error || slides.length === 0"
-    class="bg-gradient-to-br from-primary to-primary-dark py-20 text-center text-white"
+    class="bg-gradient-to-br from-primary to-primary-dark py-20 text-center text-white dark:text-gray-100"
   >
     <div class="container">
       <div class="mx-auto max-w-[800px]">
-        <h1 class="mb-4 text-3xl text-white md:text-5xl">
+        <h1 class="mb-4 text-3xl text-white dark:text-white md:text-5xl">
           {{ $t('home.hero.title', 'Ghana Audit Service') }}
         </h1>
-        <p class="mb-4 text-xl font-semibold text-accent md:text-2xl">
+        <p class="mb-4 text-xl font-semibold text-accent dark:text-gray-200 md:text-2xl">
           {{
             $t(
               'home.hero.subtitle',
@@ -35,7 +35,7 @@
             )
           }}
         </p>
-        <p class="mb-8 text-lg leading-relaxed text-white/90">
+        <p class="mb-8 text-lg leading-relaxed text-white/90 dark:text-gray-300">
           {{
             $t(
               'home.hero.description',
@@ -49,7 +49,7 @@
           </NuxtLink>
           <NuxtLink
             to="/about"
-            class="btn border-2 border-white text-white hover:bg-white hover:text-primary"
+            class="btn border-2 border-white text-white dark:text-white hover:bg-white hover:text-primary"
           >
             {{ $t('home.hero.learnMore', 'Learn More') }}
           </NuxtLink>

@@ -18,7 +18,7 @@
 
   body {
     @apply font-sans text-gray-900 bg-white leading-normal;
-    @apply dark:text-gray-100 dark:bg-gray-900;
+    @apply dark:text-gray-100 dark:bg-gray-800;
     /* Font feature settings for better typography */
     font-feature-settings:
       'kern' 1,
