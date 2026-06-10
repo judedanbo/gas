@@ -233,6 +233,8 @@
 
   const { hasPermission, hasModule } = useAdminAuth()
 
+  /* eslint-disable vue/one-component-per-file -- small colocated render-function helpers used only by this sidebar */
+
   // Sidebar Link Component
   const SidebarLink = defineComponent({
     props: {

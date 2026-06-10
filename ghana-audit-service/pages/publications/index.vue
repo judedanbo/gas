@@ -169,10 +169,12 @@
                 {{ formatDate(selectedPublication.publishedAt) }}
               </span>
             </div>
+            <!-- eslint-disable vue/no-v-html -- content sanitized via sanitizeHtml() (DOMPurify) -->
             <div
               class="prose prose-gray dark:prose-invert max-w-none"
-              v-html="selectedPublication.content || selectedPublication.excerpt"
+              v-html="sanitizeHtml(selectedPublication.content || selectedPublication.excerpt)"
             ></div>
+            <!-- eslint-enable vue/no-v-html -->
           </div>
           <div
             class="sticky bottom-0 bg-gray-50 dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700 px-6 py-4"
@@ -189,6 +191,7 @@
 
 <script setup lang="ts">
   import type { Publication } from '~/types'
+  import { sanitizeHtml } from '~/utils/sanitizeHtml'
 
   // SEO
   useSeoMeta({
