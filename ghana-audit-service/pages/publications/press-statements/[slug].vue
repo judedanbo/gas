@@ -90,10 +90,12 @@
                 v-else-if="publication.content"
                 class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-8"
               >
+                <!-- eslint-disable vue/no-v-html -- content sanitized via sanitizeHtml() (DOMPurify) -->
                 <div
                   class="prose prose-lg dark:prose-invert max-w-none"
-                  v-html="publication.content"
+                  v-html="sanitizeHtml(publication.content)"
                 ></div>
+                <!-- eslint-enable vue/no-v-html -->
               </div>
 
               <div
@@ -272,6 +274,7 @@
 
 <script setup lang="ts">
   import type { Publication, PaginatedResponse } from '~/types'
+  import { sanitizeHtml } from '~/utils/sanitizeHtml'
 
   const route = useRoute()
   const slug = route.params.slug as string

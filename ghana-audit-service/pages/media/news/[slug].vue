@@ -72,7 +72,8 @@
 
               <!-- Article Content -->
               <div class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-8">
-                <div class="prose prose-lg dark:prose-invert max-w-none" v-html="article.content"></div>
+                <!-- eslint-disable-next-line vue/no-v-html -- content sanitized via sanitizeHtml() (DOMPurify) -->
+                <div class="prose prose-lg dark:prose-invert max-w-none" v-html="sanitizeHtml(article.content)"></div>
 
                 <!-- Article Photo Gallery -->
                 <div v-if="article.images?.length" class="mt-8 pt-6 border-t border-gray-200 dark:border-gray-700">
@@ -273,6 +274,7 @@
 
 <script setup lang="ts">
 import type { NewsArticle } from '~/types'
+import { sanitizeHtml } from '~/utils/sanitizeHtml'
 
 const route = useRoute()
 const { getNewsArticleSchema, getBreadcrumbSchema } = useSchemaOrg()

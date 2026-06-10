@@ -78,7 +78,8 @@
                 <h2 class="text-xl font-heading font-bold text-gray-900 dark:text-white mb-4">
                   Job Description
                 </h2>
-                <div class="prose prose-gray dark:prose-invert max-w-none" v-html="vacancy.description" />
+                <!-- eslint-disable-next-line vue/no-v-html -- content sanitized via sanitizeHtml() (DOMPurify) -->
+                <div class="prose prose-gray dark:prose-invert max-w-none" v-html="sanitizeHtml(vacancy.description)" />
               </div>
 
               <!-- Requirements -->
@@ -163,6 +164,7 @@
 
 <script setup lang="ts">
 import type { Vacancy } from '~/types'
+import { sanitizeHtml } from '~/utils/sanitizeHtml'
 
 const route = useRoute()
 

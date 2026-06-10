@@ -83,7 +83,8 @@
 
               <!-- Event Description -->
               <div class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-8">
-                <div class="prose prose-lg dark:prose-invert max-w-none" v-html="eventData.content"></div>
+                <!-- eslint-disable-next-line vue/no-v-html -- content sanitized via sanitizeHtml() (DOMPurify) -->
+                <div class="prose prose-lg dark:prose-invert max-w-none" v-html="sanitizeHtml(eventData.content)"></div>
 
                 <!-- Event Photo Gallery -->
                 <div v-if="eventData.images?.length" class="mt-8 pt-6 border-t border-gray-200 dark:border-gray-700">
@@ -245,6 +246,7 @@
 
 <script setup lang="ts">
 import type { Event } from '~/types'
+import { sanitizeHtml } from '~/utils/sanitizeHtml'
 
 const route = useRoute()
 
