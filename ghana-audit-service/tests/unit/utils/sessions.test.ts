@@ -18,7 +18,10 @@ function row(overrides: Partial<Parameters<typeof evaluateSession>[0]> = {}) {
 describe('evaluateSession', () => {
   it('accepts a live session and reports timing', () => {
     const now = Date.now()
-    const res = evaluateSession(row(), now, IDLE, WARN)
+    // Pin lastActivityAt to the same `now` the assertion uses. row()'s default
+    // captures its own Date.now(), which can tick 1ms past the outer `now`
+    // between the two calls and make the expiry assertion flaky.
+    const res = evaluateSession(row({ lastActivityAt: new Date(now - 60_000) }), now, IDLE, WARN)
     expect(res.ok).toBe(true)
     expect(res.timing?.warningBeforeMs).toBe(WARN)
     // Soonest expiry is the idle window (lastActivity + 30m), not the 8h cap.
