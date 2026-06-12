@@ -29,6 +29,37 @@ spec:
         fsGroup: 1001
         seccompProfile:
           type: RuntimeDefault
+      initContainers:
+        - name: seed-public
+          image: gasacr.azurecr.io/gas-frontend:latest
+          command:
+            - sh
+            - -c
+            - |
+              # busybox `cp -rn /src/. /dst/` is broken (copies nothing); use
+              # find + per-file no-clobber. Verified in node:24-alpine.
+              # pdf is runtime-write-only (no baked content), so it is not seeded.
+              for d in img images uploads; do
+                ( cd /app/.output/public/$d 2>/dev/null && find . -type f | while IFS= read -r f; do
+                    [ -e "/seed/$d/$f" ] || { mkdir -p "/seed/$d/$(dirname "$f")"; cp "/app/.output/public/$d/$f" "/seed/$d/$f"; }
+                  done )
+              done
+          volumeMounts:
+            - { name: public-files, mountPath: /seed/img, subPath: img }
+            - { name: public-files, mountPath: /seed/images, subPath: images }
+            - { name: public-files, mountPath: /seed/uploads, subPath: uploads }
+          resources:
+            requests:
+              cpu: 25m
+              memory: 64Mi
+            limits:
+              cpu: 250m
+              memory: 128Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
       containers:
         - name: frontend
           image: gasacr.azurecr.io/gas-frontend:latest
@@ -40,6 +71,15 @@ spec:
                 name: gas-config
             - secretRef:
                 name: gas-secrets
+          volumeMounts:
+            - { name: public-files, mountPath: /app/public/img, subPath: img }
+            - { name: public-files, mountPath: /app/.output/public/img, subPath: img }
+            - { name: public-files, mountPath: /app/public/images, subPath: images }
+            - { name: public-files, mountPath: /app/.output/public/images, subPath: images }
+            - { name: public-files, mountPath: /app/public/uploads, subPath: uploads }
+            - { name: public-files, mountPath: /app/.output/public/uploads, subPath: uploads }
+            - { name: public-files, mountPath: /app/public/pdf, subPath: pdf }
+            - { name: public-files, mountPath: /app/.output/public/pdf, subPath: pdf }
           resources:
             requests:
               cpu: 100m
@@ -74,3 +114,7 @@ spec:
             capabilities:
               drop:
                 - ALL
+      volumes:
+        - name: public-files
+          persistentVolumeClaim:
+            claimName: gas-public-pvc

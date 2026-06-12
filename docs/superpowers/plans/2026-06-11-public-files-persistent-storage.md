@@ -239,8 +239,9 @@ Replace the container/spec block. The current file ends the pod spec at the `con
             - |
               # busybox `cp -rn /src/. /dst/` is broken (copies nothing); use
               # find + per-file no-clobber. Verified in Task 3.
+              # pdf is runtime-write-only (no baked content), so it is not seeded.
               for d in img images uploads; do
-                ( cd /app/.output/public/$d 2>/dev/null && find . -type f | while read f; do
+                ( cd /app/.output/public/$d 2>/dev/null && find . -type f | while IFS= read -r f; do
                     [ -e "/seed/$d/$f" ] || { mkdir -p "/seed/$d/$(dirname "$f")"; cp "/app/.output/public/$d/$f" "/seed/$d/$f"; }
                   done )
               done
@@ -248,7 +249,6 @@ Replace the container/spec block. The current file ends the pod spec at the `con
             - { name: public-files, mountPath: /seed/img, subPath: img }
             - { name: public-files, mountPath: /seed/images, subPath: images }
             - { name: public-files, mountPath: /seed/uploads, subPath: uploads }
-            - { name: public-files, mountPath: /seed/pdf, subPath: pdf }
           resources:
             requests:
               cpu: 25m
@@ -300,7 +300,7 @@ Run:
 ```bash
 grep -c "public-files" k8s/frontend/deployment.yaml
 ```
-Expected: `13` (1 volume + 4 init mounts + 8 container mounts).
+Expected: `12` (1 volume + 3 init mounts + 8 container mounts).
 
 - [ ] **Step 4: Commit**
 
