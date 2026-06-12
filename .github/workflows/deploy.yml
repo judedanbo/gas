@@ -128,6 +128,7 @@ jobs:
           JOB_SUFFIX: ${{ github.sha }}
         run: |
           export JOB_SUFFIX=$(echo ${{ github.sha }} | cut -c1-7)
+          export ACR_REGISTRY=${{ secrets.ACR_NAME }}
           envsubst < k8s/jobs/migrate-job.yaml | kubectl apply -f -
           kubectl wait --for=condition=complete \
             job/gas-migrate-${JOB_SUFFIX} \
