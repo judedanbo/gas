@@ -98,6 +98,8 @@ jobs:
           NUXT_API_SECRET: ${{ secrets.NUXT_API_SECRET }}
           ANALYTICS_IP_SALT: ${{ secrets.ANALYTICS_IP_SALT }}
           MYSQL_ROOT_PASSWORD: ${{ secrets.MYSQL_ROOT_PASSWORD }}
+          AZURE_STORAGE_ACCOUNT_NAME: ${{ secrets.AZURE_STORAGE_ACCOUNT_NAME }}
+          AZURE_STORAGE_ACCOUNT_KEY: ${{ secrets.AZURE_STORAGE_ACCOUNT_KEY }}
         run: |
           envsubst < k8s/config/secrets.yaml | kubectl apply -f -
 
@@ -124,6 +126,12 @@ jobs:
             job/gas-migrate-${JOB_SUFFIX} \
             -n gas \
             --timeout=120s
+
+      - name: Apply storage (PV/PVC)
+        run: |
+          kubectl apply -f k8s/storage/public-files.yaml
+          kubectl wait --for=jsonpath='{.status.phase}'=Bound \
+            pvc/gas-public-pvc -n gas --timeout=60s
 
       - name: Apply frontend
         run: |
