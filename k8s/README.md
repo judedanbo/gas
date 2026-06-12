@@ -53,6 +53,8 @@ Configure these in the GitHub repository settings under Settings > Secrets and v
 | `JWT_SECRET` | JWT signing secret (generate with `openssl rand -hex 32`) |
 | `NUXT_API_SECRET` | Nuxt API secret (generate with `openssl rand -hex 32`) |
 | `ANALYTICS_IP_SALT` | Analytics IP hashing salt (generate with `openssl rand -hex 32`) |
+| `AZURE_STORAGE_ACCOUNT_NAME` | Azure Storage account name backing the gas-public file share |
+| `AZURE_STORAGE_ACCOUNT_KEY` | Azure Storage account access key for the gas-public file share |
 
 ## Manual Deploy
 
@@ -67,7 +69,7 @@ kubectl apply -f k8s/namespace.yaml
 kubectl apply -f k8s/config/configmap.yaml
 
 # 3. Apply secrets (set env vars first)
-export DB_USER=gas_user DB_PASSWORD=... JWT_SECRET=... NUXT_API_SECRET=... ANALYTICS_IP_SALT=... MYSQL_ROOT_PASSWORD=...
+export DB_USER=gas_user DB_PASSWORD=... JWT_SECRET=... NUXT_API_SECRET=... ANALYTICS_IP_SALT=... MYSQL_ROOT_PASSWORD=... AZURE_STORAGE_ACCOUNT_NAME=... AZURE_STORAGE_ACCOUNT_KEY=...
 envsubst < k8s/config/secrets.yaml | kubectl apply -f -
 
 # 4. Apply infrastructure
@@ -81,18 +83,22 @@ export JOB_SUFFIX=$(date +%s)
 envsubst < k8s/jobs/migrate-job.yaml | kubectl apply -f -
 kubectl wait --for=condition=complete job/gas-migrate-${JOB_SUFFIX} -n gas --timeout=120s
 
-# 6. Deploy frontend (replace image tag)
+# 6. Apply persistent storage
+kubectl apply -f k8s/storage/public-files.yaml
+kubectl wait --for=jsonpath='{.status.phase}'=Bound pvc/gas-public-pvc -n gas --timeout=60s
+
+# 7. Deploy frontend (replace image tag)
 sed "s|gasacr.azurecr.io/gas-frontend:latest|gasacr.azurecr.io/gas-frontend:<TAG>|g" \
   k8s/frontend/deployment.yaml | kubectl apply -f -
 kubectl apply -f k8s/frontend/service.yaml
 kubectl apply -f k8s/frontend/ingress.yaml
 kubectl apply -f k8s/frontend/hpa.yaml
 
-# 7. Apply policies and backup
+# 8. Apply policies and backup
 kubectl apply -f k8s/network/network-policies.yaml
 kubectl apply -f k8s/jobs/mysql-backup-cronjob.yaml
 
-# 8. Verify
+# 9. Verify
 kubectl rollout status deployment/gas-frontend -n gas
 kubectl get pods -n gas
 ```
@@ -148,4 +154,41 @@ k8s/
     cluster-issuer.yaml       # Let's Encrypt ClusterIssuer
   network/
     network-policies.yaml     # Default-deny + per-service allow rules
+  storage/
+    public-files.yaml         # Static PV/PVC for Azure Files (gas-public share)
 ```
+
+## Persistent storage for public files
+
+`public/{img,images,uploads,pdf}` are backed by a single static Azure File
+share (`gas-public`) via `k8s/storage/public-files.yaml`. Provision it before
+the first deploy:
+
+```bash
+# 1. Storage account (Standard, LRS) — reuse an existing one if you have it.
+az storage account create \
+  --name <storageaccount> \
+  --resource-group <rg> \
+  --sku Standard_LRS \
+  --kind StorageV2
+
+# 2. File share (quota in GiB; must be >= the PV capacity, 50Gi).
+az storage share-rm create \
+  --resource-group <rg> \
+  --storage-account <storageaccount> \
+  --name gas-public \
+  --quota 50
+
+# 3. Account key -> set as GitHub Actions secrets used by deploy.yml:
+#    AZURE_STORAGE_ACCOUNT_NAME, AZURE_STORAGE_ACCOUNT_KEY
+az storage account keys list \
+  --resource-group <rg> \
+  --account-name <storageaccount> \
+  --query '[0].value' -o tsv
+```
+
+The Deployment's `seed-public` initContainer copies baked `img`/`images`/
+`uploads` assets into the share on first run (no-clobber), so committed
+static files survive the overlay and runtime uploads are never overwritten
+(`pdf` is mounted but not seeded — it is runtime-write-only).
+Reclaim policy is `Retain`: deleting the PVC/PV leaves the share intact.
