@@ -1,0 +1,57 @@
+# Static Azure Files volume backing public/{img,images,uploads,pdf}.
+# Provisioned out-of-band: an Azure Storage account + File share named
+# "gas-public" must exist, and azure-storage-secret must hold its
+# account name/key. See k8s/README.md.
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: gas-public-pv
+  labels:
+    app.kubernetes.io/name: gas-public
+    app.kubernetes.io/part-of: ghana-audit-service
+spec:
+  capacity:
+    storage: 50Gi
+  accessModes:
+    - ReadWriteMany
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: ""
+  claimRef:
+    name: gas-public-pvc
+    namespace: gas
+  mountOptions:
+    - dir_mode=0755
+    - file_mode=0644
+    - uid=1001
+    - gid=1001
+    - mfsymlinks
+    - nobrl
+    - serverino
+    - cache=strict
+    - actimeo=30
+  csi:
+    driver: file.csi.azure.com
+    # Cluster-unique, stable handle. Format is conventional, not parsed by name.
+    volumeHandle: gas-public-share
+    volumeAttributes:
+      shareName: gas-public
+    nodeStageSecretRef:
+      name: azure-storage-secret
+      namespace: gas
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: gas-public-pvc
+  namespace: gas
+  labels:
+    app.kubernetes.io/name: gas-public
+    app.kubernetes.io/part-of: ghana-audit-service
+spec:
+  accessModes:
+    - ReadWriteMany
+  storageClassName: ""
+  volumeName: gas-public-pv
+  resources:
+    requests:
+      storage: 50Gi

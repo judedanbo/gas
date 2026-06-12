@@ -85,12 +85,15 @@ every replica, served correctly in production, and managed at runtime — with t
 - `accessModes: [ReadWriteMany]`
 - `storageClassName: ""` (static binding; no dynamic provisioner)
 - `persistentVolumeReclaimPolicy: Retain`
+- `claimRef: { name: gas-public-pvc, namespace: gas }` (pre-binds to its PVC; prevents accidental binding by other claims)
 - `csi:`
   - `driver: file.csi.azure.com`
   - `volumeHandle: gas-public-share` (cluster-unique, stable)
   - `volumeAttributes: { shareName: gas-public }`
   - `nodeStageSecretRef: { name: azure-storage-secret, namespace: gas }`
-- `mountOptions: [dir_mode=0755, file_mode=0644, uid=1001, gid=1001, mfsymlinks, cache=strict, actimeo=30]`
+- `mountOptions: [dir_mode=0755, file_mode=0644, uid=1001, gid=1001, mfsymlinks, nobrl, serverino, cache=strict, actimeo=30]`
+  - `nobrl`: disable byte-range locking (required so Node.js/libuv file writes over SMB don't hang)
+  - `serverino`: use server-side inode numbers for better consistency
 
 **PersistentVolumeClaim `gas-public-pvc`** (namespace `gas`)
 - `accessModes: [ReadWriteMany]`

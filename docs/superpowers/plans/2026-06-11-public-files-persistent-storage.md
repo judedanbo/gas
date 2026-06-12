@@ -108,12 +108,17 @@ spec:
     - ReadWriteMany
   persistentVolumeReclaimPolicy: Retain
   storageClassName: ""
+  claimRef:
+    name: gas-public-pvc
+    namespace: gas
   mountOptions:
     - dir_mode=0755
     - file_mode=0644
     - uid=1001
     - gid=1001
     - mfsymlinks
+    - nobrl
+    - serverino
     - cache=strict
     - actimeo=30
   csi:
