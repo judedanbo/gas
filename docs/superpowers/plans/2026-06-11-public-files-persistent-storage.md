@@ -185,30 +185,29 @@ docker run --rm node:24-alpine sh -c '
   echo keep-runtime > /seed/uploads/existing.txt   # runtime file: must survive
   echo keep-old     > /seed/img/logo.png           # already seeded: must NOT be clobbered
 
+  mkdir -p /app/.output/public/uploads/images
+  echo nested > /app/.output/public/uploads/images/nested.png
+
   # --- the seed command (as it will appear in the initContainer) ---
+  # NOTE: busybox `cp -rn /src/. /dst/` is BROKEN — it copies nothing (verified
+  # in node:24-alpine, BusyBox 1.37). Use the find + per-file no-clobber form,
+  # which is dotfile-safe, recurses into subdirs, and never overwrites.
   for d in img images uploads; do
-    cp -rn /app/.output/public/$d/. /seed/$d/ 2>/dev/null || true
+    ( cd /app/.output/public/$d 2>/dev/null && find . -type f | while read f; do
+        [ -e "/seed/$d/$f" ] || { mkdir -p "/seed/$d/$(dirname "$f")"; cp "/app/.output/public/$d/$f" "/seed/$d/$f"; }
+      done )
   done
 
   # --- assertions ---
-  [ "$(cat /seed/img/logo.png)" = "keep-old" ]        || { echo "FAIL: clobbered already-seeded file"; exit 1; }
-  [ "$(cat /seed/images/hero.jpg)" = "baked-image" ]  || { echo "FAIL: did not seed images"; exit 1; }
+  [ "$(cat /seed/img/logo.png)" = "keep-old" ]            || { echo "FAIL: clobbered already-seeded file"; exit 1; }
+  [ "$(cat /seed/images/hero.jpg)" = "baked-image" ]      || { echo "FAIL: did not seed images"; exit 1; }
   [ "$(cat /seed/uploads/existing.txt)" = "keep-runtime" ] || { echo "FAIL: clobbered runtime file"; exit 1; }
-  [ "$(cat /seed/uploads/seed.txt)" = "baked-seed" ]  || { echo "FAIL: did not seed uploads"; exit 1; }
+  [ "$(cat /seed/uploads/seed.txt)" = "baked-seed" ]      || { echo "FAIL: did not seed uploads"; exit 1; }
+  [ "$(cat /seed/uploads/images/nested.png)" = "nested" ] || { echo "FAIL: did not seed nested subdir"; exit 1; }
   echo "ALL SEED ASSERTIONS PASS"
 '
 ```
-Expected: final line `ALL SEED ASSERTIONS PASS`.
-
-If instead it prints a `FAIL:` line (e.g. busybox `cp` lacks `-n` and clobbers), STOP — the fallback is to replace the loop body with an explicit-skip form and re-run this test until it passes:
-```sh
-for d in img images uploads; do
-  for f in $(cd /app/.output/public/$d 2>/dev/null && find . -type f); do
-    [ -e "/seed/$d/$f" ] || { mkdir -p "/seed/$d/$(dirname "$f")"; cp "/app/.output/public/$d/$f" "/seed/$d/$f"; }
-  done
-done
-```
-Carry whichever form passed into Task 4 Step 1.
+Expected: final line `ALL SEED ASSERTIONS PASS`. (Verified passing during plan authoring.)
 
 - [ ] **Step 2: No commit** (test only — nothing changed on disk).
 
@@ -233,8 +232,12 @@ Replace the container/spec block. The current file ends the pod spec at the `con
             - sh
             - -c
             - |
+              # busybox `cp -rn /src/. /dst/` is broken (copies nothing); use
+              # find + per-file no-clobber. Verified in Task 3.
               for d in img images uploads; do
-                cp -rn /app/.output/public/$d/. /seed/$d/ 2>/dev/null || true
+                ( cd /app/.output/public/$d 2>/dev/null && find . -type f | while read f; do
+                    [ -e "/seed/$d/$f" ] || { mkdir -p "/seed/$d/$(dirname "$f")"; cp "/app/.output/public/$d/$f" "/seed/$d/$f"; }
+                  done )
               done
           volumeMounts:
             - { name: public-files, mountPath: /seed/img, subPath: img }
@@ -254,8 +257,6 @@ Replace the container/spec block. The current file ends the pod spec at the `con
               drop:
                 - ALL
 ```
-
-> If Task 3 required the fallback `for`/`find` form, replace the two-line `for d` body above with that form (preserve the `|` block and indentation).
 
 **(b)** Add `volumeMounts:` to the `frontend` container. Insert immediately after line 42 (`                name: gas-secrets`) and before `resources:` (line 43), at the container-field indentation (10 spaces):
 
