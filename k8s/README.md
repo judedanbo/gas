@@ -39,22 +39,59 @@ az aks update --name <CLUSTER> --resource-group <RG> --attach-acr gasacr
 
 ## GitHub Secrets
 
-Configure these in the GitHub repository settings under Settings > Secrets and variables > Actions:
+Configure these as **environment** secrets on the `production` environment
+(Settings > Environments > production > Secrets), **not** repository-level
+secrets. Both the `build-and-push` and `deploy` jobs declare
+`environment: production`, so an environment-scoped secret that the build job
+cannot see will make `azure/login` fail with empty credentials.
 
-| Secret | Description |
-|--------|-------------|
-| `AZURE_CREDENTIALS` | Service principal JSON (`az ad sp create-for-rbac --sdk-auth`) |
-| `ACR_NAME` | ACR name (e.g., `gasacr`) |
-| `AKS_CLUSTER_NAME` | AKS cluster name |
-| `AKS_RESOURCE_GROUP` | Azure resource group |
-| `DB_USER` | MySQL user (e.g., `gas_user`) |
-| `DB_PASSWORD` | MySQL user password |
-| `MYSQL_ROOT_PASSWORD` | MySQL root password |
-| `JWT_SECRET` | JWT signing secret (generate with `openssl rand -hex 32`) |
-| `NUXT_API_SECRET` | Nuxt API secret (generate with `openssl rand -hex 32`) |
-| `ANALYTICS_IP_SALT` | Analytics IP hashing salt (generate with `openssl rand -hex 32`) |
-| `AZURE_STORAGE_ACCOUNT_NAME` | Azure Storage account name backing the gas-public file share |
-| `AZURE_STORAGE_ACCOUNT_KEY` | Azure Storage account access key for the gas-public file share |
+| Secret                       | Description                                                      |
+| ---------------------------- | ---------------------------------------------------------------- |
+| `AZURE_CLIENT_ID`            | App registration Application (client) ID — used for OIDC login   |
+| `AZURE_TENANT_ID`            | Microsoft Entra Directory (tenant) ID                            |
+| `AZURE_SUBSCRIPTION_ID`      | Azure subscription ID (`az account show --query id -o tsv`)      |
+| `ACR_NAME`                   | ACR name (e.g., `gasacr`)                                        |
+| `AKS_CLUSTER_NAME`           | AKS cluster name                                                 |
+| `AKS_RESOURCE_GROUP`         | Azure resource group                                             |
+| `DB_USER`                    | MySQL user (e.g., `gas_user`)                                    |
+| `DB_PASSWORD`                | MySQL user password                                              |
+| `MYSQL_ROOT_PASSWORD`        | MySQL root password                                              |
+| `JWT_SECRET`                 | JWT signing secret (generate with `openssl rand -hex 32`)        |
+| `NUXT_API_SECRET`            | Nuxt API secret (generate with `openssl rand -hex 32`)           |
+| `ANALYTICS_IP_SALT`          | Analytics IP hashing salt (generate with `openssl rand -hex 32`) |
+| `AZURE_STORAGE_ACCOUNT_NAME` | Azure Storage account name backing the gas-public file share     |
+| `AZURE_STORAGE_ACCOUNT_KEY`  | Azure Storage account access key for the gas-public file share   |
+
+### Azure authentication (OIDC federated)
+
+The workflow logs in with `azure/login` using **OIDC federated credentials**
+(no long-lived secret). The app registration referenced by `AZURE_CLIENT_ID`
+needs a federated credential authorizing this repo's `production` environment,
+plus RBAC to push images and deploy:
+
+```bash
+# Federated credential — lets GitHub Actions exchange its OIDC token for an
+# Azure token when running in the `production` environment.
+az ad app federated-credential create --id <AZURE_CLIENT_ID> --parameters '{
+  "name": "gh-gas-production",
+  "issuer": "https://token.actions.githubusercontent.com",
+  "subject": "repo:judedanbo/gas:environment:production",
+  "audiences": ["api://AzureADTokenExchange"]
+}'
+
+# RBAC for the service principal behind the app registration:
+SP_ID=$(az ad sp show --id <AZURE_CLIENT_ID> --query id -o tsv)
+az role assignment create --assignee-object-id "$SP_ID" \
+  --assignee-principal-type ServicePrincipal \
+  --role AcrPush --scope <ACR_RESOURCE_ID>            # push images
+az role assignment create --assignee-object-id "$SP_ID" \
+  --assignee-principal-type ServicePrincipal \
+  --role "Azure Kubernetes Service Cluster User Role" --scope <AKS_RESOURCE_ID>
+```
+
+The deploy job also needs Kubernetes RBAC inside the cluster to apply manifests
+(e.g. bind the identity to a suitable ClusterRole), or use a cluster-admin
+credential via `az aks get-credentials --admin` in a trusted runner.
 
 ## Manual Deploy
 
