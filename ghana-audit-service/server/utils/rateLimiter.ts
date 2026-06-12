@@ -17,8 +17,79 @@ import { getRedis } from './redis'
  * async (Redis is the network).
  */
 
-// Trusted proxy IPs (configure via environment variable in production)
-const TRUSTED_PROXIES = process.env.TRUSTED_PROXIES?.split(',').map((ip) => ip.trim()) || []
+// Trusted reverse-proxy sources, parsed once at startup. Each entry is either
+// a bare IP ("10.0.0.5") or an IPv4 CIDR range ("10.244.0.0/16"). The frontend
+// only honours forwarded client-IP headers when the connecting peer matches one
+// of these — see getClientIP / isTrustedProxy.
+const TRUSTED_PROXIES =
+  process.env.TRUSTED_PROXIES?.split(',')
+    .map((p) => p.trim())
+    .filter(Boolean) || []
+
+/**
+ * Node frequently reports proxy peers as IPv4-mapped IPv6 (e.g.
+ * "::ffff:10.244.1.7"). Strip that prefix so an IPv4 comparison can match.
+ */
+function normalizeIp(ip: string): string {
+  return ip.startsWith('::ffff:') ? ip.slice(7) : ip
+}
+
+/**
+ * Convert a dotted-quad IPv4 string to a 32-bit unsigned integer, or null if it
+ * isn't a syntactically valid IPv4 address.
+ */
+function ipv4ToInt(ip: string): number | null {
+  const octets = ip.split('.')
+  if (octets.length !== 4) return null
+  let value = 0
+  for (const octet of octets) {
+    const n = Number(octet)
+    if (!Number.isInteger(n) || n < 0 || n > 255 || (octet.length > 1 && octet.startsWith('0'))) {
+      return null
+    }
+    value = (value << 8) | n
+  }
+  return value >>> 0
+}
+
+/**
+ * Decide whether a connecting peer is a configured trusted proxy.
+ *
+ * `remoteAddress` is the already-normalized peer IP (IPv4 string). `entries` are
+ * the configured TRUSTED_PROXIES — a mix of bare IPs ("10.0.0.5") and IPv4 CIDR
+ * ranges ("10.244.0.0/16"). Return true iff `remoteAddress` matches any entry.
+ *
+ * Implemented by the maintainer — see exported wrapper below for context.
+ */
+export function isTrustedProxy(
+  remoteAddress: string,
+  entries: string[] = TRUSTED_PROXIES
+): boolean {
+  if (!remoteAddress) return false
+
+  for (const entry of entries) {
+    if (!entry.includes('/')) {
+      // Bare IP: exact match.
+      if (entry === remoteAddress) return true
+      continue
+    }
+
+    // CIDR range: compare the masked network portions.
+    const [network, prefixStr] = entry.split('/')
+    const prefix = Number(prefixStr)
+    if (!Number.isInteger(prefix) || prefix < 0 || prefix > 32) continue // fail closed
+
+    const networkInt = ipv4ToInt(network)
+    const ipInt = ipv4ToInt(remoteAddress)
+    if (networkInt === null || ipInt === null) continue // fail closed
+
+    // Shifting a 32-bit value by 32 is a no-op in JS, so special-case /0.
+    const mask = prefix === 0 ? 0 : (0xffffffff << (32 - prefix)) >>> 0
+    if ((ipInt & mask) >>> 0 === (networkInt & mask) >>> 0) return true
+  }
+
+  return false
+}
 
 // ---------------------------------------------------------------------------
 // Backend layer — memory fallback + Redis primary
@@ -134,9 +205,9 @@ export function createRateLimitKey(ip: string, route: string): string {
  * Only trusts x-forwarded-for header if request comes from a trusted proxy.
  */
 export function getClientIP(event: H3Event): string {
-  const remoteAddress = event.node?.req?.socket?.remoteAddress || ''
+  const remoteAddress = normalizeIp(event.node?.req?.socket?.remoteAddress || '')
 
-  if (TRUSTED_PROXIES.length > 0 && TRUSTED_PROXIES.includes(remoteAddress)) {
+  if (TRUSTED_PROXIES.length > 0 && isTrustedProxy(remoteAddress)) {
     const forwarded = getHeader(event, 'x-forwarded-for')
     if (forwarded) {
       return forwarded.split(',')[0].trim()

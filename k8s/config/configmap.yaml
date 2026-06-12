@@ -18,6 +18,12 @@ data:
   SESSION_ABSOLUTE_TIMEOUT: "8h"
   SESSION_WARNING_BEFORE: "2m"
   ANALYTICS_RETENTION_DAYS: "30"
+  # Trusted reverse-proxy sources. The frontend only honours X-Forwarded-For /
+  # X-Real-IP when the connecting peer falls within this list (exact IPs or
+  # CIDR ranges, comma-separated). In-cluster the peer is the ingress-nginx
+  # controller pod, so this must cover the pod network. Default below is the
+  # kubenet pod CIDR; for Azure CNI set it to your node/pod subnet instead.
+  TRUSTED_PROXIES: "10.244.0.0/16"
   NODE_ENV: "production"
   HOST: "0.0.0.0"
   PORT: "3000"
