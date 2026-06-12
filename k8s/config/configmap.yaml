@@ -1,0 +1,29 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: gas-config
+  namespace: gas
+  labels:
+    app.kubernetes.io/part-of: ghana-audit-service
+data:
+  DB_HOST: "mysql.gas.svc.cluster.local"
+  DB_PORT: "3306"
+  DB_NAME: "ghana_audit_service"
+  NUXT_PUBLIC_SITE_URL: "https://audit.gov.gh"
+  NUXT_PUBLIC_SITE_NAME: "Ghana Audit Service"
+  NUXT_PUBLIC_CONTACT_EMAIL: "info@audit.gov.gh"
+  NUXT_PUBLIC_CONTACT_PHONE: "+233 (302) 664929"
+  REDIS_URL: "redis://redis.gas.svc.cluster.local:6379/0"
+  SESSION_IDLE_TIMEOUT: "30m"
+  SESSION_ABSOLUTE_TIMEOUT: "8h"
+  SESSION_WARNING_BEFORE: "2m"
+  ANALYTICS_RETENTION_DAYS: "30"
+  # Trusted reverse-proxy sources. The frontend only honours X-Forwarded-For /
+  # X-Real-IP when the connecting peer falls within this list (exact IPs or
+  # CIDR ranges, comma-separated). In-cluster the peer is the ingress-nginx
+  # controller pod, so this must cover the pod network. Default below is the
+  # kubenet pod CIDR; for Azure CNI set it to your node/pod subnet instead.
+  TRUSTED_PROXIES: "10.244.0.0/16"
+  NODE_ENV: "production"
+  HOST: "0.0.0.0"
+  PORT: "3000"

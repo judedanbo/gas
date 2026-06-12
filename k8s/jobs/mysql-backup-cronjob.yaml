@@ -1,0 +1,91 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: mysql-backup
+  namespace: gas
+  labels:
+    app.kubernetes.io/name: mysql-backup
+    app.kubernetes.io/part-of: ghana-audit-service
+spec:
+  schedule: "0 2 * * *"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 1
+      ttlSecondsAfterFinished: 3600
+      template:
+        metadata:
+          labels:
+            app.kubernetes.io/name: mysql-backup
+            app.kubernetes.io/part-of: ghana-audit-service
+        spec:
+          restartPolicy: Never
+          securityContext:
+            runAsUser: 999
+            runAsGroup: 999
+            runAsNonRoot: true
+            seccompProfile:
+              type: RuntimeDefault
+          containers:
+            - name: backup
+              image: mysql:8.0
+              command:
+                - /bin/sh
+                - -c
+                - |
+                  set -e
+                  TIMESTAMP=$(date +%Y%m%d-%H%M%S)
+                  BACKUP_FILE="/backups/gas-${TIMESTAMP}.sql.gz"
+                  echo "Starting backup: ${BACKUP_FILE}"
+                  mysqldump \
+                    -h mysql.gas.svc.cluster.local \
+                    -u "${MYSQL_USER}" \
+                    -p"${MYSQL_PASSWORD}" \
+                    --single-transaction \
+                    --routines \
+                    --triggers \
+                    "${MYSQL_DATABASE}" | gzip > "${BACKUP_FILE}"
+                  echo "Backup complete: $(du -h ${BACKUP_FILE} | cut -f1)"
+                  echo "Cleaning backups older than 7 days..."
+                  find /backups -name "gas-*.sql.gz" -mtime +7 -delete
+                  echo "Remaining backups:"
+                  ls -lh /backups/gas-*.sql.gz
+              envFrom:
+                - secretRef:
+                    name: gas-db-credentials
+              resources:
+                requests:
+                  cpu: 50m
+                  memory: 128Mi
+                limits:
+                  cpu: 500m
+                  memory: 512Mi
+              volumeMounts:
+                - name: backup-storage
+                  mountPath: /backups
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+          volumes:
+            - name: backup-storage
+              persistentVolumeClaim:
+                claimName: mysql-backups
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: mysql-backups
+  namespace: gas
+  labels:
+    app.kubernetes.io/name: mysql-backup
+    app.kubernetes.io/part-of: ghana-audit-service
+spec:
+  accessModes: ["ReadWriteOnce"]
+  storageClassName: managed-csi
+  resources:
+    requests:
+      storage: 10Gi

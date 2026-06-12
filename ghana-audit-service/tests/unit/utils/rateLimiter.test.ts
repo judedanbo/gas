@@ -4,6 +4,7 @@ import {
   checkMultiWindowRateLimit,
   createRateLimitKey,
   getClientIP,
+  isTrustedProxy,
   RATE_LIMITS
 } from '../../../server/utils/rateLimiter'
 
@@ -135,6 +136,47 @@ describe('rateLimiter', () => {
       const ip = getClientIP(mockEvent)
 
       expect(ip).toBe('unknown')
+    })
+  })
+
+  describe('isTrustedProxy', () => {
+    it('matches a bare IP exactly', () => {
+      expect(isTrustedProxy('10.0.0.5', ['10.0.0.5'])).toBe(true)
+      expect(isTrustedProxy('10.0.0.6', ['10.0.0.5'])).toBe(false)
+    })
+
+    it('matches an address inside a CIDR range', () => {
+      expect(isTrustedProxy('10.244.1.7', ['10.244.0.0/16'])).toBe(true)
+      expect(isTrustedProxy('10.244.255.254', ['10.244.0.0/16'])).toBe(true)
+    })
+
+    it('rejects an address outside the CIDR range', () => {
+      expect(isTrustedProxy('10.245.1.7', ['10.244.0.0/16'])).toBe(false)
+      expect(isTrustedProxy('192.168.1.1', ['10.244.0.0/16'])).toBe(false)
+    })
+
+    it('handles the /0 and /32 boundary prefixes', () => {
+      expect(isTrustedProxy('8.8.8.8', ['0.0.0.0/0'])).toBe(true)
+      expect(isTrustedProxy('10.0.0.5', ['10.0.0.5/32'])).toBe(true)
+      expect(isTrustedProxy('10.0.0.6', ['10.0.0.5/32'])).toBe(false)
+    })
+
+    it('fails closed on malformed entries but still checks valid ones', () => {
+      expect(isTrustedProxy('10.244.1.7', ['not-an-ip', '10.244.0.0/99', '10.244.0.0/16'])).toBe(
+        true
+      )
+      expect(isTrustedProxy('10.244.1.7', ['10.244.0.0/abc'])).toBe(false)
+      expect(isTrustedProxy('', ['10.244.0.0/16'])).toBe(false)
+    })
+
+    it('matches across the signed-bit boundary (high octets)', () => {
+      // 200.x masks to a value with the top bit set; guards against signed-int comparison bugs.
+      expect(isTrustedProxy('200.1.2.3', ['200.0.0.0/8'])).toBe(true)
+      expect(isTrustedProxy('201.1.2.3', ['200.0.0.0/8'])).toBe(false)
+    })
+
+    it('returns false when no proxies are configured', () => {
+      expect(isTrustedProxy('10.0.0.5', [])).toBe(false)
     })
   })
 

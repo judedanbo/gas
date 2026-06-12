@@ -1,0 +1,90 @@
+# Default: deny all ingress in the gas namespace.
+# Each service then explicitly opens the ports it needs.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny-ingress
+  namespace: gas
+  labels:
+    app.kubernetes.io/part-of: ghana-audit-service
+spec:
+  podSelector: {}
+  policyTypes:
+    - Ingress
+---
+# Frontend: allow ingress from the NGINX Ingress Controller.
+# The ingress-nginx namespace label must match your cluster's Ingress
+# Controller installation — "ingress-nginx" is the Helm default.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-frontend-ingress
+  namespace: gas
+  labels:
+    app.kubernetes.io/part-of: ghana-audit-service
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: gas-frontend
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: ingress-nginx
+      ports:
+        - port: 3000
+          protocol: TCP
+---
+# MySQL: allow ingress only from frontend pods and backup pods.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-mysql-ingress
+  namespace: gas
+  labels:
+    app.kubernetes.io/part-of: ghana-audit-service
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: mysql
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: gas-frontend
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: gas-migrate
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: mysql-backup
+      ports:
+        - port: 3306
+          protocol: TCP
+---
+# Redis: allow ingress only from frontend pods.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-redis-ingress
+  namespace: gas
+  labels:
+    app.kubernetes.io/part-of: ghana-audit-service
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: redis
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: gas-frontend
+      ports:
+        - port: 6379
+          protocol: TCP

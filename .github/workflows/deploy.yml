@@ -1,0 +1,158 @@
+name: Deploy to AKS
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+env:
+  IMAGE_TAG: ${{ github.sha }}
+  SHORT_SHA: ${{ github.sha }}
+
+jobs:
+  ci:
+    name: Quality Gate
+    uses: ./.github/workflows/ci.yml
+
+  build-and-push:
+    name: Build & Push Images
+    needs: ci
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Login to Azure
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Login to ACR
+        run: az acr login --name ${{ secrets.ACR_NAME }}
+
+      - name: Build and push frontend image
+        run: |
+          docker build \
+            --target runner \
+            --build-arg NUXT_PUBLIC_SITE_URL=https://audit.gov.gh \
+            -t ${{ secrets.ACR_NAME }}.azurecr.io/gas-frontend:${{ env.IMAGE_TAG }} \
+            -t ${{ secrets.ACR_NAME }}.azurecr.io/gas-frontend:latest \
+            ./ghana-audit-service
+
+      - name: Build and push migrate image
+        run: |
+          docker build \
+            --target migrator \
+            -t ${{ secrets.ACR_NAME }}.azurecr.io/gas-migrate:${{ env.IMAGE_TAG }} \
+            -t ${{ secrets.ACR_NAME }}.azurecr.io/gas-migrate:latest \
+            ./ghana-audit-service
+
+      - name: Push images
+        run: |
+          docker push ${{ secrets.ACR_NAME }}.azurecr.io/gas-frontend:${{ env.IMAGE_TAG }}
+          docker push ${{ secrets.ACR_NAME }}.azurecr.io/gas-frontend:latest
+          docker push ${{ secrets.ACR_NAME }}.azurecr.io/gas-migrate:${{ env.IMAGE_TAG }}
+          docker push ${{ secrets.ACR_NAME }}.azurecr.io/gas-migrate:latest
+
+  deploy:
+    name: Deploy to AKS
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    environment: production
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Login to Azure
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Set up kubectl
+        uses: azure/aks-set-context@v4
+        with:
+          cluster-name: ${{ secrets.AKS_CLUSTER_NAME }}
+          resource-group: ${{ secrets.AKS_RESOURCE_GROUP }}
+
+      - name: Apply namespace
+        run: kubectl apply -f k8s/namespace.yaml
+
+      - name: Apply ConfigMap
+        run: kubectl apply -f k8s/config/configmap.yaml
+
+      - name: Apply Secrets
+        env:
+          DB_USER: ${{ secrets.DB_USER }}
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
+          NUXT_API_SECRET: ${{ secrets.NUXT_API_SECRET }}
+          ANALYTICS_IP_SALT: ${{ secrets.ANALYTICS_IP_SALT }}
+          MYSQL_ROOT_PASSWORD: ${{ secrets.MYSQL_ROOT_PASSWORD }}
+          AZURE_STORAGE_ACCOUNT_NAME: ${{ secrets.AZURE_STORAGE_ACCOUNT_NAME }}
+          AZURE_STORAGE_ACCOUNT_KEY: ${{ secrets.AZURE_STORAGE_ACCOUNT_KEY }}
+        run: |
+          envsubst < k8s/config/secrets.yaml | kubectl apply -f -
+
+      - name: Apply TLS ClusterIssuer
+        run: kubectl apply -f k8s/tls/cluster-issuer.yaml
+
+      - name: Apply MySQL
+        run: |
+          kubectl apply -f k8s/mysql/
+          kubectl rollout status statefulset/mysql -n gas --timeout=120s
+
+      - name: Apply Redis
+        run: |
+          kubectl apply -f k8s/redis/
+          kubectl rollout status deployment/redis -n gas --timeout=60s
+
+      - name: Run migration Job
+        env:
+          JOB_SUFFIX: ${{ github.sha }}
+        run: |
+          export JOB_SUFFIX=$(echo ${{ github.sha }} | cut -c1-7)
+          envsubst < k8s/jobs/migrate-job.yaml | kubectl apply -f -
+          kubectl wait --for=condition=complete \
+            job/gas-migrate-${JOB_SUFFIX} \
+            -n gas \
+            --timeout=120s
+
+      - name: Apply storage (PV/PVC)
+        run: |
+          kubectl apply -f k8s/storage/public-files.yaml
+          kubectl wait --for=jsonpath='{.status.phase}'=Bound \
+            pvc/gas-public-pvc -n gas --timeout=60s
+
+      - name: Apply frontend
+        run: |
+          sed "s|gasacr.azurecr.io/gas-frontend:latest|${{ secrets.ACR_NAME }}.azurecr.io/gas-frontend:${{ env.IMAGE_TAG }}|g" \
+            k8s/frontend/deployment.yaml | kubectl apply -f -
+          kubectl apply -f k8s/frontend/service.yaml
+          kubectl apply -f k8s/frontend/ingress.yaml
+          kubectl apply -f k8s/frontend/hpa.yaml
+
+      - name: Apply Network Policies
+        run: kubectl apply -f k8s/network/network-policies.yaml
+
+      - name: Apply backup CronJob
+        run: kubectl apply -f k8s/jobs/mysql-backup-cronjob.yaml
+
+      - name: Verify rollout
+        run: |
+          kubectl rollout status deployment/gas-frontend -n gas --timeout=180s
+          echo "--- Pod status ---"
+          kubectl get pods -n gas
+          echo "--- Service endpoints ---"
+          kubectl get svc -n gas
+          echo "--- Ingress ---"
+          kubectl get ingress -n gas

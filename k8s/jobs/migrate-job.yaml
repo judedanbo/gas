@@ -1,0 +1,45 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: gas-migrate-${JOB_SUFFIX}
+  namespace: gas
+  labels:
+    app.kubernetes.io/name: gas-migrate
+    app.kubernetes.io/part-of: ghana-audit-service
+spec:
+  backoffLimit: 2
+  ttlSecondsAfterFinished: 600
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: gas-migrate
+        app.kubernetes.io/part-of: ghana-audit-service
+    spec:
+      restartPolicy: Never
+      securityContext:
+        runAsUser: 1000
+        runAsGroup: 1000
+        runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: migrate
+          image: gasacr.azurecr.io/gas-migrate:latest
+          imagePullPolicy: Always
+          envFrom:
+            - configMapRef:
+                name: gas-config
+            - secretRef:
+                name: gas-secrets
+          resources:
+            requests:
+              cpu: 50m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
