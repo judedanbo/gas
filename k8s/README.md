@@ -93,6 +93,65 @@ The deploy job also needs Kubernetes RBAC inside the cluster to apply manifests
 (e.g. bind the identity to a suitable ClusterRole), or use a cluster-admin
 credential via `az aks get-credentials --admin` in a trusted runner.
 
+### Setting the secrets (step by step)
+
+All secrets above must live on the **`production`** environment, because both
+the `build-and-push` and `deploy` jobs run with `environment: production`.
+
+1. **Create the `production` environment** (skip if it already exists):
+   - UI: repo **Settings → Environments → New environment**, name it `production`.
+   - or CLI: `gh api -X PUT repos/judedanbo/gas/environments/production`
+
+2. **Gather the values:**
+   - `AZURE_CLIENT_ID` — the OIDC app registration's Application (client) ID.
+   - `AZURE_TENANT_ID` — `az account show --query tenantId -o tsv`.
+   - `AZURE_SUBSCRIPTION_ID` — `az account show --query id -o tsv`.
+   - `ACR_NAME`, `AKS_CLUSTER_NAME`, `AKS_RESOURCE_GROUP` — your Azure resource names.
+   - `DB_USER`, `DB_PASSWORD`, `MYSQL_ROOT_PASSWORD` — chosen MySQL credentials.
+   - `JWT_SECRET`, `NUXT_API_SECRET`, `ANALYTICS_IP_SALT` — generate each with `openssl rand -hex 32`.
+   - `AZURE_STORAGE_ACCOUNT_NAME` — your storage account name (see [Persistent storage](#persistent-storage-for-public-files)).
+   - `AZURE_STORAGE_ACCOUNT_KEY` — `az storage account keys list --account-name <acct> --query '[0].value' -o tsv`.
+
+3. **Set each secret** on the `production` environment. Via the UI:
+   **Settings → Environments → production → Add secret** (one per row in the table above).
+   Or via the `gh` CLI (omitting `--body` makes `gh` prompt, keeping the value out of shell history — preferred for sensitive values):
+
+   ```bash
+   ENV=production
+
+   # Azure auth (OIDC)
+   gh secret set AZURE_CLIENT_ID       --env $ENV   # paste the app (client) ID
+   gh secret set AZURE_TENANT_ID       --env $ENV --body "$(az account show --query tenantId -o tsv)"
+   gh secret set AZURE_SUBSCRIPTION_ID --env $ENV --body "$(az account show --query id -o tsv)"
+
+   # ACR / AKS
+   gh secret set ACR_NAME              --env $ENV --body "gasacr"
+   gh secret set AKS_CLUSTER_NAME      --env $ENV   # paste cluster name
+   gh secret set AKS_RESOURCE_GROUP    --env $ENV   # paste resource group
+
+   # Database
+   gh secret set DB_USER               --env $ENV --body "gas_user"
+   gh secret set DB_PASSWORD           --env $ENV   # paste DB password
+   gh secret set MYSQL_ROOT_PASSWORD   --env $ENV   # paste root password
+
+   # App secrets (generate fresh)
+   gh secret set JWT_SECRET            --env $ENV --body "$(openssl rand -hex 32)"
+   gh secret set NUXT_API_SECRET       --env $ENV --body "$(openssl rand -hex 32)"
+   gh secret set ANALYTICS_IP_SALT     --env $ENV --body "$(openssl rand -hex 32)"
+
+   # Azure Files (persistent storage)
+   gh secret set AZURE_STORAGE_ACCOUNT_NAME --env $ENV   # paste storage account name
+   gh secret set AZURE_STORAGE_ACCOUNT_KEY  --env $ENV --body "$(az storage account keys list --account-name <acct> --query '[0].value' -o tsv)"
+   ```
+
+4. **Verify all 14 are present:**
+
+   ```bash
+   gh secret list --env production
+   ```
+
+5. Don't forget the [federated credential](#azure-authentication-oidc-federated) — the secrets alone are not enough for OIDC login.
+
 ## Manual Deploy
 
 If you need to deploy manually (not via GitHub Actions):
