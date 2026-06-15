@@ -1,0 +1,5 @@
+# Env files hold real cluster secrets — ignore every variant,
+# but keep the committed placeholder template.
+.env
+.env.*
+!.env.example

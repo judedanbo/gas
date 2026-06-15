@@ -1,4 +1,9 @@
+# Env files: ignore all variants (they hold secrets) but keep the
+# placeholder templates that are intentionally committed.
 .env
+.env.*
+!.env.example
+!.env.docker
 .claude/
 .playwright-mcp/
 .superpowers/
