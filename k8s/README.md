@@ -53,8 +53,13 @@ Configure these in the GitHub repository settings under Settings > Secrets and v
 | `JWT_SECRET` | JWT signing secret (generate with `openssl rand -hex 32`) |
 | `NUXT_API_SECRET` | Nuxt API secret (generate with `openssl rand -hex 32`) |
 | `ANALYTICS_IP_SALT` | Analytics IP hashing salt (generate with `openssl rand -hex 32`) |
+| `ADMIN_EMAIL` | Initial admin login email — consumed by the seed Job (see below) |
+| `ADMIN_PASSWORD` | Initial admin login password — consumed by the seed Job |
+| `ADMIN_NAME` | Initial admin display name (optional; defaults to `Administrator`) |
 | `AZURE_STORAGE_ACCOUNT_NAME` | Azure Storage account name backing the gas-public file share |
 | `AZURE_STORAGE_ACCOUNT_KEY` | Azure Storage account access key for the gas-public file share |
+| `AZURE_STORAGE_CONNECTION_STRING` | Connection string for the Blob backend that stores report PDFs (see [Report PDFs](#report-pdfs--azure-blob-storage)). May reuse the gas-public storage account. |
+| `AZURE_BLOB_CONTAINER` | Blob container name for report PDFs (e.g. `reports`) |
 
 ## Manual Deploy
 
@@ -82,6 +87,12 @@ kubectl apply -f k8s/redis/
 export JOB_SUFFIX=$(date +%s)
 envsubst < k8s/jobs/migrate-job.yaml | kubectl apply -f -
 kubectl wait --for=condition=complete job/gas-migrate-${JOB_SUFFIX} -n gas --timeout=120s
+
+# 5b. (One-time bootstrap) Seed the admin user + content. Idempotent — re-running
+#     skips existing rows. Requires ADMIN_EMAIL/ADMIN_PASSWORD in gas-secrets and a
+#     migrator image rebuilt with the seed scripts. See k8s/jobs/seed-job.yaml header.
+envsubst < k8s/jobs/seed-job.yaml | kubectl apply -f -
+kubectl wait --for=condition=complete job/gas-seed-job -n gas --timeout=300s
 
 # 6. Apply persistent storage
 kubectl apply -f k8s/storage/public-files.yaml
@@ -149,6 +160,7 @@ k8s/
     service.yaml              # ClusterIP Service
   jobs/
     migrate-job.yaml          # DB migration (runs before each deploy)
+    seed-job.yaml             # One-time DB seed: admin user + content (manual)
     mysql-backup-cronjob.yaml # Daily mysqldump (02:00 UTC, 7-day retention)
   tls/
     cluster-issuer.yaml       # Let's Encrypt ClusterIssuer
@@ -192,3 +204,61 @@ The Deployment's `seed-public` initContainer copies baked `img`/`images`/
 static files survive the overlay and runtime uploads are never overwritten
 (`pdf` is mounted but not seeded — it is runtime-write-only).
 Reclaim policy is `Retain`: deleting the PVC/PV leaves the share intact.
+
+> **Report PDFs are migrating off this Files share to Blob Storage** — see the
+> next section. Once cut over, the two `pdf` volumeMounts in
+> `frontend/deployment.yaml` can be removed.
+
+## Report PDFs — Azure Blob Storage
+
+Report PDFs (`audit_reports.fileUrl`) are stored in a private Azure **Blob**
+container rather than baked into the container image (~2.6 GB raw, ~7.5 GB after
+Nitro pre-compression) or kept on the gas-public **Files** share. The app uploads
+to and streams from Blob through the existing `/api/downloads/**` indirection, so
+no client-facing URLs change.
+
+**This is feature-flagged by env vars** (see `server/utils/blobStorage.ts`):
+
+- **Both unset** → the app falls back to on-disk `public/pdf` (the Files mount).
+  This is the current/default behaviour, so deploying the code is a no-op until
+  the vars are set.
+- **Both set** → uploads write to Blob and downloads stream from Blob, falling
+  back to disk per-file for anything not yet migrated.
+
+### One-time cutover
+
+```bash
+# 1. Create a private container in a storage account (may reuse gas-public's).
+az storage container create \
+  --account-name <storageaccount> \
+  --name reports \
+  --auth-mode login
+
+# 2. Build the connection string and set it as GitHub Actions secrets:
+#    AZURE_STORAGE_CONNECTION_STRING, AZURE_BLOB_CONTAINER=reports
+az storage account show-connection-string \
+  --resource-group <rg> \
+  --name <storageaccount> \
+  --query connectionString -o tsv
+
+# 3. Wire both into gas-secrets (config/secrets.yaml -> envFrom on the frontend
+#    Deployment), then redeploy so the app picks up the env vars.
+
+# 4. Upload the existing PDFs (idempotent — skips blobs already present).
+#    Run from ghana-audit-service/ with the same env vars exported, or as a
+#    one-off Job built on the migrator image:
+npm run pdf:migrate-blob
+
+# 5. Verify a few downloads stream from Blob:
+#    GET /api/downloads/reports/<id>           (attachment)
+#    GET /api/downloads/reports/<id>?view=1    (inline)
+
+# 6. Drop the baked PDFs from the image: `git rm -r ghana-audit-service/public/pdf`
+#    and add `public/pdf/` to ghana-audit-service/.dockerignore. Remove the two
+#    `pdf` volumeMounts from frontend/deployment.yaml. Rebuild — image content
+#    drops to ~1 GB.
+```
+
+> Do **not** do step 6 before steps 1–5 verify in production: until the blobs
+> exist and the env vars are set, the on-disk `public/pdf` (image or Files mount)
+> is the only source, and removing it would 404 every report download.
