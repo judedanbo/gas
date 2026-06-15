@@ -7,18 +7,18 @@ metadata:
     app.kubernetes.io/name: gas-frontend
     app.kubernetes.io/part-of: ghana-audit-service
   annotations:
-    cert-manager.io/cluster-issuer: letsencrypt-prod
-    nginx.ingress.kubernetes.io/proxy-body-size: "10m"
-    nginx.ingress.kubernetes.io/proxy-read-timeout: "60"
-    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    cert-manager.io/cluster-issuer: infosys-issuer
+    # nginx.ingress.kubernetes.io/proxy-body-size: "10m"
+    # nginx.ingress.kubernetes.io/proxy-read-timeout: "60"
+    # nginx.ingress.kubernetes.io/ssl-redirect: "true"
 spec:
   ingressClassName: nginx
   tls:
     - hosts:
-        - audit.gov.gh
+        - test.audit.gov.gh
       secretName: gas-tls
   rules:
-    - host: audit.gov.gh
+    - host: test.audit.gov.gh
       http:
         paths:
           - path: /

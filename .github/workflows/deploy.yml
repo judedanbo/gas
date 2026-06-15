@@ -10,6 +10,9 @@ concurrency:
   cancel-in-progress: false
 
 env:
+  ACR_NAME: regisry
+  AKS_CLUSTER: infosys
+  RESOURCE_GROUP: infosys
   IMAGE_TAG: ${{ github.sha }}
   SHORT_SHA: ${{ github.sha }}
 
@@ -40,31 +43,31 @@ jobs:
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
       - name: Login to ACR
-        run: az acr login --name ${{ secrets.ACR_NAME }}
+        run: az acr login --name ${{ env.ACR_NAME }}
 
       - name: Build and push frontend image
         run: |
           docker build \
             --target runner \
             --build-arg NUXT_PUBLIC_SITE_URL=https://audit.gov.gh \
-            -t ${{ secrets.ACR_NAME }}.azurecr.io/gas-frontend:${{ env.IMAGE_TAG }} \
-            -t ${{ secrets.ACR_NAME }}.azurecr.io/gas-frontend:latest \
+            -t ${{ env.ACR_NAME }}.azurecr.io/gas-frontend:${{ env.IMAGE_TAG }} \
+            -t ${{ env.ACR_NAME }}.azurecr.io/gas-frontend:latest \
             ./ghana-audit-service
 
       - name: Build and push migrate image
         run: |
           docker build \
             --target migrator \
-            -t ${{ secrets.ACR_NAME }}.azurecr.io/gas-migrate:${{ env.IMAGE_TAG }} \
-            -t ${{ secrets.ACR_NAME }}.azurecr.io/gas-migrate:latest \
+            -t ${{ env.ACR_NAME }}.azurecr.io/gas-migrate:${{ env.IMAGE_TAG }} \
+            -t ${{ env.ACR_NAME }}.azurecr.io/gas-migrate:latest \
             ./ghana-audit-service
 
       - name: Push images
         run: |
-          docker push ${{ secrets.ACR_NAME }}.azurecr.io/gas-frontend:${{ env.IMAGE_TAG }}
-          docker push ${{ secrets.ACR_NAME }}.azurecr.io/gas-frontend:latest
-          docker push ${{ secrets.ACR_NAME }}.azurecr.io/gas-migrate:${{ env.IMAGE_TAG }}
-          docker push ${{ secrets.ACR_NAME }}.azurecr.io/gas-migrate:latest
+          docker push ${{ env.ACR_NAME }}.azurecr.io/gas-frontend:${{ env.IMAGE_TAG }}
+          docker push ${{ env.ACR_NAME }}.azurecr.io/gas-frontend:latest
+          docker push ${{ env.ACR_NAME }}.azurecr.io/gas-migrate:${{ env.IMAGE_TAG }}
+          docker push ${{ env.ACR_NAME }}.azurecr.io/gas-migrate:latest
 
   deploy:
     name: Deploy to AKS
@@ -107,6 +110,10 @@ jobs:
           MYSQL_ROOT_PASSWORD: ${{ secrets.MYSQL_ROOT_PASSWORD }}
           AZURE_STORAGE_ACCOUNT_NAME: ${{ secrets.AZURE_STORAGE_ACCOUNT_NAME }}
           AZURE_STORAGE_ACCOUNT_KEY: ${{ secrets.AZURE_STORAGE_ACCOUNT_KEY }}
+          # Blob backend for report PDFs. Unset until cutover -> envsubst renders
+          # empty -> app stays on disk fallback. See k8s/README.md.
+          AZURE_STORAGE_CONNECTION_STRING: ${{ secrets.AZURE_STORAGE_CONNECTION_STRING }}
+          AZURE_BLOB_CONTAINER: ${{ secrets.AZURE_BLOB_CONTAINER }}
         run: |
           envsubst < k8s/config/secrets.yaml | kubectl apply -f -
 
@@ -128,7 +135,7 @@ jobs:
           JOB_SUFFIX: ${{ github.sha }}
         run: |
           export JOB_SUFFIX=$(echo ${{ github.sha }} | cut -c1-7)
-          export ACR_REGISTRY=${{ secrets.ACR_NAME }}
+          export ACR_REGISTRY=${{ env.ACR_NAME }}
           envsubst < k8s/jobs/migrate-job.yaml | kubectl apply -f -
           kubectl wait --for=condition=complete \
             job/gas-migrate-${JOB_SUFFIX} \
@@ -143,7 +150,7 @@ jobs:
 
       - name: Apply frontend
         run: |
-          sed "s|gasacr.azurecr.io/gas-frontend:latest|${{ secrets.ACR_NAME }}.azurecr.io/gas-frontend:${{ env.IMAGE_TAG }}|g" \
+          sed "s|gasacr.azurecr.io/gas-frontend:latest|${{ env.ACR_NAME }}.azurecr.io/gas-frontend:${{ env.IMAGE_TAG }}|g" \
             k8s/frontend/deployment.yaml | kubectl apply -f -
           kubectl apply -f k8s/frontend/service.yaml
           kubectl apply -f k8s/frontend/ingress.yaml

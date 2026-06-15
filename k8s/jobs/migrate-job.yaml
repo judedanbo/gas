@@ -1,7 +1,7 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: gas-migrate-${JOB_SUFFIX}
+  name: gas-migrate-job # ${JOB_SUFFIX}
   namespace: gas
   labels:
     app.kubernetes.io/name: gas-migrate
@@ -27,7 +27,7 @@ spec:
           # ACR_REGISTRY is substituted from the ACR_NAME secret by envsubst in
           # the deploy workflow's "Run migration Job" step — single source of
           # truth, so it always matches where build-and-push pushed the image.
-          image: ${ACR_REGISTRY}.azurecr.io/gas-migrate:latest
+          image: regisry.azurecr.io/gas-migrate-test
           imagePullPolicy: Always
           envFrom:
             - configMapRef:
