@@ -30,7 +30,8 @@ export default defineNuxtConfig({
     '@nuxt/image',
     '@nuxtjs/color-mode',
     '@nuxtjs/sitemap',
-    '@vite-pwa/nuxt'
+    '@vite-pwa/nuxt',
+    'nuxt-security'
   ],
 
   // PWA configuration
@@ -400,11 +401,55 @@ export default defineNuxtConfig({
           'Referrer-Policy': 'strict-origin-when-cross-origin',
           'Permissions-Policy': 'camera=(), microphone=(), geolocation=(self)',
           'Strict-Transport-Security': 'max-age=31536000; includeSubDomains',
-          'X-DNS-Prefetch-Control': 'off',
-          'Content-Security-Policy':
-            "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self'; frame-src 'self' https://www.youtube.com https://audit.gov.gh"
+          'X-DNS-Prefetch-Control': 'off'
+          // Content-Security-Policy is managed by nuxt-security (see `security` config
+          // below) so it can attach a per-request nonce and drop script-src 'unsafe-inline'
+          // / 'unsafe-eval'. A static header here cannot carry a nonce.
         }
       }
+    }
+  },
+
+  // Security (nuxt-security) — scoped to nonce-based CSP only.
+  // All other security headers stay in the routeRules `/**` block above, so the
+  // header-management features here are disabled to avoid duplicate/conflicting headers,
+  // and the request-handling features are disabled because the app already provides them
+  // (rate limiting, CSRF) or they would break legitimate flows (large PDF uploads, admin
+  // rich-text). See SECURITY-ASSESSMENT.md finding M-1.
+  security: {
+    nonce: true,
+    removeLoggers: false, // preserve existing console.* logging (e.g. analytics salt warning)
+    sri: false,
+    rateLimiter: false, // app has its own server/utils/rateLimiter.ts
+    requestSizeLimiter: false, // report uploads are up to 100MB (validated in fileUpload.ts)
+    xssValidator: false, // admin TipTap rich-text would otherwise be rejected
+    corsHandler: false, // same-origin app; do not introduce CORS headers
+    allowedMethodsRestricter: false,
+    headers: {
+      contentSecurityPolicy: {
+        'default-src': ["'self'"],
+        'script-src': ["'self'", "'nonce-{{nonce}}'"], // no 'unsafe-inline' / no 'unsafe-eval'
+        'style-src': ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
+        'font-src': ["'self'", 'https://fonts.gstatic.com'],
+        'img-src': ["'self'", 'data:', 'https:'],
+        'connect-src': ["'self'"],
+        'frame-src': ["'self'", 'https://www.youtube.com', 'https://audit.gov.gh'],
+        'base-uri': ["'self'"],
+        'object-src': ["'none'"]
+      },
+      // Headers below are owned by the routeRules `/**` block; disable here to avoid
+      // duplicates. COEP/COOP/CORP defaults would also break YouTube embeds + Google Fonts.
+      crossOriginEmbedderPolicy: false,
+      crossOriginOpenerPolicy: false,
+      crossOriginResourcePolicy: false,
+      strictTransportSecurity: false,
+      xFrameOptions: false,
+      xContentTypeOptions: false,
+      referrerPolicy: false,
+      permissionsPolicy: false,
+      xXSSProtection: false,
+      xDNSPrefetchControl: false,
+      originAgentCluster: false
     }
   },
 

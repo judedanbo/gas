@@ -68,7 +68,7 @@ inventory of the live environment.
 
 | ID | Finding | Severity | Area | Location |
 |----|---------|----------|------|----------|
-| M-1 | CSP allows `'unsafe-inline'` and `'unsafe-eval'` in `script-src` | Medium | Web/Headers | `ghana-audit-service/nuxt.config.ts:404` |
+| M-1 | CSP allows `'unsafe-inline'` and `'unsafe-eval'` in `script-src` — **Remediated** | Medium | Web/Headers | `ghana-audit-service/nuxt.config.ts` |
 | M-2 | Redis runs without authentication; DB/Redis ports exposed in compose | Medium | Infra | `k8s/redis/deployment.yaml:45`, `docker-compose.yml:83,123` |
 | M-3 | Analytics IP-salt fails open to unsalted (reversible) hashing | Medium | Privacy | `ghana-audit-service/server/utils/analytics/fingerprint.ts:19,25` |
 | M-4 | Open redirect via stored publication `fileUrl` | Medium | Web | `ghana-audit-service/server/api/downloads/publications/[id].get.ts:72` |
@@ -99,6 +99,16 @@ and no third-party script origins are allowed — so the practical XSS exposure 
 **Recommendation:** Move toward a nonce/hash-based CSP for inline scripts and drop
 `'unsafe-eval'` where the Nuxt/Vue runtime permits. Track as a hardening item; verify in a
 staging build because Vue's runtime compiler may require `'unsafe-eval'` in some modes.
+
+**Status (2026-06-16): Remediated.** Integrated `nuxt-security` to manage a per-request
+nonce-based CSP. The served policy is now `script-src 'self' 'nonce-{{nonce}}'` (both
+`'unsafe-inline'` and `'unsafe-eval'` removed); `style-src` retains `'unsafe-inline'` by
+design (Vue/Tailwind inline `style=""` attributes cannot be nonced). The module is scoped to
+CSP only — its rate limiter, request-size limiter, XSS validator, and CORS/COEP handling are
+disabled so they don't collide with the app's existing controls or break 100MB PDF uploads
+and YouTube/Google-Fonts embeds. All other security headers remain owned by the
+`routeRules['/**']` block. *Residual:* validated via the quality gate + production build;
+a browser smoke test for CSP violations is still advisable before production.
 
 #### M-2 — Redis without authentication; DB/Redis ports exposed in Docker Compose
 **Location:** `k8s/redis/deployment.yaml:45-46` (no `--requirepass`); `docker-compose.yml:83`
@@ -296,7 +306,7 @@ The following controls are implemented well and should be preserved:
 | 5 | Add `npm audit` + CodeQL to CI, Trivy to deploy, approval gate on prod | M-5 | Medium |
 | 6 | Add per-account login lockout / backoff | M-6 | Medium |
 | 7 | Pin JWT `algorithms: ['HS256']` | L-1 | Low |
-| 8 | Tighten CSP toward nonce/hash; drop `'unsafe-eval'`/`data:` where possible | M-1, L-4 | Medium |
+| 8 | ~~Tighten CSP toward nonce/hash; drop `'unsafe-eval'`~~ **(done — M-1)**; still drop `data:` from `img-src` where possible | M-1, L-4 | Medium |
 | 9 | Schedule `@nuxtjs/i18n` major upgrade (deferred deps) | §5 | High |
 | 10 | Sanitize contact `message` on storage; minimize SSE query-token allowlist | L-3, L-2 | Low |
 
