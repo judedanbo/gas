@@ -290,31 +290,35 @@ export default defineNuxtConfig({
       '30 3 * * *': ['analytics:bot-decay']
     },
     prerender: {
-      crawlLinks: true,
-      routes: [
-        '/',
-        '/about',
-        '/reports',
-        '/publications',
-        '/publications/press-statements',
-        '/publications/guidelines',
-        '/publications/amis-manuals',
-        '/publications/pfm-strategy',
-        '/publications/applicable-laws',
-        '/media',
-        '/media/news',
-        '/media/gallery',
-        '/careers',
-        '/contact',
-        '/search',
-        '/privacy-policy',
-        '/terms',
-        '/accessibility'
-      ],
+      // Only fully static pages are prerendered at build time. DB-backed pages
+      // moved to ISR (see routeRules) so `nuxt build` needs no MySQL and the
+      // crawler can't wander into data routes (e.g. /publications/[slug]) and
+      // fail. crawlLinks is off to keep prerendering to this explicit list.
+      crawlLinks: false,
+      routes: ['/about', '/privacy-policy', '/terms', '/accessibility', '/search'],
       ignore: ['/admin', '/admin/**', '/ak/admin', '/ak/admin/**', '/_ipx/**', '/api/downloads/**']
     },
     // Route rules
     routeRules: {
+      // ── Page rendering (ISR) ──────────────────────────────────────────
+      // DB-backed content pages render on demand and are cached + revalidated
+      // (incremental static regeneration). Unlike build-time prerender, the
+      // first request happens at runtime where MySQL exists — so `nuxt build`
+      // needs no database, and content refreshes every TTL instead of being
+      // frozen at deploy. TTLs are seconds; tune to how often each changes.
+      '/': { isr: 600 },
+      '/reports': { isr: 600 },
+      '/reports/**': { isr: 600 },
+      '/publications': { isr: 600 },
+      '/publications/**': { isr: 3600 },
+      '/media': { isr: 600 },
+      '/media/**': { isr: 600 },
+      '/careers': { isr: 600 },
+      '/careers/**': { isr: 600 },
+      '/contact': { isr: 3600 },
+      '/about/management-team': { isr: 3600 },
+      '/about/management-team/**': { isr: 3600 },
+
       // Exclude image optimization and download routes from prerendering —
       // the crawler discovers every srcset breakpoint, adding 90+ routes at
       // ~1s each. Images are generated on-demand at runtime instead.
