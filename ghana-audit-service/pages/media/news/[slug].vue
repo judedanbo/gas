@@ -66,7 +66,9 @@
                   :src="article.thumbnail"
                   :alt="article.title"
                   class="w-full"
-                  sizes="(max-width: 768px) 100vw, (max-width: 1024px) 66vw, 800px"
+                  :width="1200"
+                  :height="675"
+                  sizes="xs:100vw sm:100vw md:100vw lg:66vw xl:800px"
                 />
               </div>
 
