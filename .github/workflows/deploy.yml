@@ -150,6 +150,10 @@ jobs:
 
       - name: Apply Redis
         run: |
+          # Provision the Redis TLS cert first; the redis pod (and frontend)
+          # mount the redis-tls secret cert-manager creates from this.
+          kubectl apply -f k8s/redis/tls.yaml
+          kubectl wait --for=condition=Ready certificate/redis-server-tls -n gas --timeout=120s
           kubectl apply -f k8s/redis/
           kubectl rollout status deployment/redis -n gas --timeout=60s
 

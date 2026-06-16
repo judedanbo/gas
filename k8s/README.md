@@ -78,6 +78,22 @@ and then **pauses for approval** before applying to the cluster. CI security sca
 regardless (npm audit + Trivy in the workflows, CodeQL in `codeql.yml`); CodeQL on a private
 repo additionally requires GitHub Advanced Security to be enabled.
 
+### Redis TLS
+
+Redis is encrypted in-cluster (in addition to `--requirepass` auth). `k8s/redis/tls.yaml`
+defines cert-manager resources — a self-signed CA chain (`gas-selfsigned` → `redis-ca` →
+`gas-ca-issuer`) that issues the `redis-server-tls` Certificate into the **`redis-tls`** secret
+(server keypair + CA). The Redis pod serves TLS-only on 6379 from that secret; the frontend
+connects via `rediss://` (in `gas-secrets` `REDIS_URL`) and verifies the server against the CA
+mounted from `redis-tls` (`REDIS_CA_FILE=/tls/redis-ca.crt`).
+
+`deploy.yml` applies `tls.yaml` and waits for the certificate **before** rolling out Redis. The
+frontend's CA mount is `optional`, the client never throws on a missing CA, and any TLS/connect
+failure degrades to the in-process rate-limit fallback — so a misconfigured cert does **not**
+take the site down (only shared rate-limit state degrades to per-instance). To keep encryption
+but bypass a bad cert chain as a stopgap, set `REDIS_TLS_REJECT_UNAUTHORIZED=false`. Requires
+cert-manager (Prerequisite 2). Local docker-compose stays plain `redis://`.
+
 ### Azure authentication (OIDC federated)
 
 The workflow logs in with `azure/login` using **OIDC federated credentials**

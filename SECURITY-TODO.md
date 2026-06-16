@@ -55,7 +55,10 @@ verification scope). Validate before/at production rollout.
 ### Low
 
 ### Future hardening
-- [ ] 🔴 **Redis TLS** (defense-in-depth on top of M-2's `requirepass`).
+- [x] 🟢 **Redis TLS** — k8s Redis serves TLS (cert-manager `redis-tls`); frontend connects
+  via `rediss://` and verifies the mounted CA (`REDIS_CA_FILE`), with graceful fallback if TLS
+  is absent/broken (optional CA mount + non-throwing client + `REDIS_TLS_REJECT_UNAUTHORIZED`
+  escape hatch). *Residual:* live cluster handshake verification (staging).
 
 ---
 

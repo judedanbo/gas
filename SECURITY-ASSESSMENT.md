@@ -135,8 +135,10 @@ workflow templates `REDIS_PASSWORD` into the Secret; **a `REDIS_PASSWORD` GitHub
 `production` secret must be set to switch auth on** (if unset, Redis degrades to no-auth
 rather than failing the deploy — documented in `k8s/README.md`). In `docker-compose.yml`,
 the MySQL (`3306`) and Redis (`6479`) host ports are now bound to `127.0.0.1`; local-dev
-Redis auth was intentionally deferred (optional and network-isolated). Redis TLS remains a
-future hardening item (tracked under finding #6). *Verified via quality gate + static YAML
+Redis auth was intentionally deferred (optional and network-isolated). **Redis TLS is now
+implemented** (cert-manager `redis-tls`; Redis serves TLS-only on 6379; the frontend connects
+via `rediss://` and verifies against the mounted CA, with graceful fallback if TLS is
+unavailable — see `k8s/redis/tls.yaml`, `server/utils/redis.ts`). *Verified via quality gate + static YAML
 validation; live auth enforcement requires a cluster.*
 
 #### M-3 — Analytics IP-salt fails open to unsalted hashing

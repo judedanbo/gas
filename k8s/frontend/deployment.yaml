@@ -72,7 +72,16 @@ spec:
                 name: gas-config
             - secretRef:
                 name: gas-secrets
+          env:
+            # CA used to verify the Redis server when REDIS_URL is rediss://.
+            # The volume is optional (below), so a missing redis-tls secret
+            # leaves this path absent; the client tolerates that and falls back.
+            - name: REDIS_CA_FILE
+              value: /tls/redis-ca.crt
           volumeMounts:
+            - name: redis-ca
+              mountPath: /tls
+              readOnly: true
             - { name: public-files, mountPath: /app/public/img, subPath: img }
             - {
                 name: public-files,
@@ -143,3 +152,12 @@ spec:
         - name: public-files
           persistentVolumeClaim:
             claimName: gas-public-files-pvc
+        # CA for verifying Redis TLS. optional:true so the frontend still starts
+        # if the redis-tls secret hasn't been provisioned yet (no site outage).
+        - name: redis-ca
+          secret:
+            secretName: redis-tls
+            optional: true
+            items:
+              - key: ca.crt
+                path: redis-ca.crt

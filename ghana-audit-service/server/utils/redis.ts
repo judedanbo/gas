@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs'
 import { Redis, type RedisOptions } from 'ioredis'
 
 /**
@@ -8,11 +9,42 @@ import { Redis, type RedisOptions } from 'ioredis'
  * an in-process backend. This keeps local dev / unit tests / CI green
  * without a live Redis, and keeps the site up if Redis goes away in prod
  * (the rate limiter degrades to per-instance counters with a warn log).
+ *
+ * TLS: when REDIS_URL is a `rediss://` URL (k8s), the client verifies the
+ * server against the CA at REDIS_CA_FILE. Everything here degrades gracefully —
+ * a missing/unreadable CA only warns (never throws), and any TLS/connection
+ * failure is handled by the callers' in-process fallback. So the app keeps
+ * serving even when TLS is misconfigured.
  */
 
 let client: Redis | null = null
 let initialised = false
 let warnedConnect = false
+
+/**
+ * Build TLS options from the environment, or undefined for a non-TLS client.
+ * Never throws: a missing/unreadable CA file logs a warning and returns
+ * undefined so Redis init stays graceful.
+ */
+export function redisTlsOptions(): RedisOptions['tls'] | undefined {
+  const caFile = process.env.REDIS_CA_FILE?.trim()
+  // Escape hatch: keep encryption but skip server-identity verification if a
+  // cert chain misbehaves (default is to verify).
+  const rejectUnauthorized = process.env.REDIS_TLS_REJECT_UNAUTHORIZED !== 'false'
+
+  if (!caFile) {
+    // No CA configured. Only override verification if explicitly disabled;
+    // otherwise let ioredis derive TLS from a rediss:// URL with defaults.
+    return rejectUnauthorized ? undefined : { rejectUnauthorized: false }
+  }
+
+  try {
+    return { ca: readFileSync(caFile), rejectUnauthorized }
+  } catch (err) {
+    console.warn('[redis] failed to read REDIS_CA_FILE; proceeding without it:', (err as Error).message)
+    return rejectUnauthorized ? undefined : { rejectUnauthorized: false }
+  }
+}
 
 function buildClient(url: string): Redis {
   const opts: RedisOptions = {
@@ -30,6 +62,8 @@ function buildClient(url: string): Redis {
       return Math.min(times * 200, 10_000)
     }
   }
+  const tls = redisTlsOptions()
+  if (tls) opts.tls = tls
   return new Redis(url, opts)
 }
 

@@ -52,6 +52,21 @@ spec:
             - allkeys-lru
             - --requirepass
             - $(REDIS_PASSWORD)
+            # TLS-only: disable the plaintext port and serve TLS on 6379. Clients
+            # authenticate with the password + verify the server cert; client
+            # certs are not required (--tls-auth-clients no).
+            - --port
+            - "0"
+            - --tls-port
+            - "6379"
+            - --tls-cert-file
+            - /tls/tls.crt
+            - --tls-key-file
+            - /tls/tls.key
+            - --tls-ca-cert-file
+            - /tls/ca.crt
+            - --tls-auth-clients
+            - "no"
           env:
             # Password for --requirepass above (k8s expands $(REDIS_PASSWORD) from env).
             - name: REDIS_PASSWORD
@@ -76,21 +91,28 @@ spec:
             limits:
               cpu: 100m
               memory: 256Mi
+          # Probes connect over TLS to localhost. --insecure skips verification
+          # for this in-pod check only (the cert SANs are the Service names, not
+          # localhost); REDISCLI_AUTH supplies the password. The real client
+          # (frontend) verifies the server cert against the CA.
           readinessProbe:
             exec:
-              command: ["redis-cli", "ping"]
+              command: ["redis-cli", "--tls", "--insecure", "-p", "6379", "ping"]
             initialDelaySeconds: 5
             periodSeconds: 10
             timeoutSeconds: 3
           livenessProbe:
             exec:
-              command: ["redis-cli", "ping"]
+              command: ["redis-cli", "--tls", "--insecure", "-p", "6379", "ping"]
             initialDelaySeconds: 10
             periodSeconds: 30
             timeoutSeconds: 3
           volumeMounts:
             - name: redis-data
               mountPath: /data
+            - name: redis-tls
+              mountPath: /tls
+              readOnly: true
           securityContext:
             allowPrivilegeEscalation: false
             capabilities:
@@ -100,3 +122,6 @@ spec:
         - name: redis-data
           persistentVolumeClaim:
             claimName: redis-data
+        - name: redis-tls
+          secret:
+            secretName: redis-tls
