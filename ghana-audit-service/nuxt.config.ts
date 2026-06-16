@@ -143,7 +143,27 @@ export default defineNuxtConfig({
   icon: {
     size: '24px',
     class: 'icon',
-    serverBundle: 'local'
+    // Resolve icons through the same-origin server endpoint (/api/_nuxt_icon),
+    // backed by the local server bundle below. This is the universal resolver
+    // for dynamic / DB-sourced icon names (e.g. organization.icon) that the
+    // client-bundle scanner cannot see as static literals.
+    provider: 'server',
+    serverBundle: 'local',
+    // Ship icons in the client JS so client-rendered pages (e.g. ssr:false
+    // /admin/**) never reach for the Iconify CDN, which CSP `connect-src 'self'`
+    // blocks. scan picks up literal `prefix:name` strings; .ts/.js are added to
+    // the default globs because utils/iconMap.ts holds icon aliases as plain TS.
+    clientBundle: {
+      scan: {
+        globInclude: ['**/*.{vue,jsx,tsx,ts,js,md,mdc,mdx}']
+      },
+      // Safety net for any name the scanner cannot see as a plain literal.
+      icons: [],
+      sizeLimitKb: 512 // headroom above the 256 default; current usage is far less
+    },
+    // Never fall back to the remote Iconify API — a missing icon should render
+    // nothing rather than violate CSP. All collections are bundled locally.
+    fallbackToApi: false
   },
 
   // Override the icon server-bundle alias so prerendering resolves icons via
