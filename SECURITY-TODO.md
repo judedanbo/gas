@@ -52,9 +52,6 @@ verification scope). Validate before/at production rollout.
 - [ ] 🔴 **M-3 — Fail-fast on missing `ANALYTICS_IP_SALT`.** `fingerprint.ts` only warns,
   then hashes IPs unsalted (reversible). Add a boot-time check (Nitro plugin) that errors in
   production if the salt is unset/short. *(Good next quick win.)*
-- [ ] 🔴 **M-6 — Per-account login lockout / backoff.** `login.post.ts` has per-IP rate
-  limiting only; add account-scoped lockout (and/or CAPTCHA) to resist distributed brute force.
-
 ### Low
 - [ ] 🔴 **L-1 — Pin JWT `algorithms: ['HS256']`** in `server/utils/jwt.ts` sign/verify.
 - [ ] 🔴 **L-2 — Keep the SSE query-token allowlist minimal** (`adminAuth.ts`
@@ -95,4 +92,8 @@ verification scope). Validate before/at production rollout.
 - [x] 🟢 **M-5 — CI/CD security scanning.** npm audit (fail-on-critical) in `ci.yml`, Trivy
   image scan in `deploy.yml`, new `codeql.yml`. *(Two manual follow-ups in §1: enable
   Required reviewers; enable GHAS if the repo is private.)*
+- [x] 🟢 **M-6 — Per-account login lockout** (`server/utils/loginLockout.ts` + `users` columns,
+  migration `0001`). 10 fails/15m → exponential backoff (15m→…→24h cap), env-configurable.
+  *Optional follow-up:* an admin "unlock account" action (clear the lockout columns) — not
+  required since locks auto-expire and a successful login resets them.
 - [x] 🟢 **Security assessment report** (`SECURITY-ASSESSMENT.md`). Commit `65f1ff0`.

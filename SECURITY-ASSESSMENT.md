@@ -73,7 +73,7 @@ inventory of the live environment.
 | M-3 | Analytics IP-salt fails open to unsalted (reversible) hashing | Medium | Privacy | `ghana-audit-service/server/utils/analytics/fingerprint.ts:19,25` |
 | M-4 | Open redirect via stored publication `fileUrl` — **Remediated** | Medium | Web | `ghana-audit-service/server/api/downloads/publications/[id].get.ts` |
 | M-5 | No SAST / dependency / image scanning or approval gate in CI/CD — **Remediated** | Medium | CI/CD | `.github/workflows/ci.yml`, `deploy.yml`, `codeql.yml` |
-| M-6 | No account lockout on login (per-IP rate limit only) | Medium | Auth | `ghana-audit-service/server/api/admin/auth/login.post.ts:34` |
+| M-6 | No account lockout on login (per-IP rate limit only) — **Remediated** | Medium | Auth | `ghana-audit-service/server/api/admin/auth/login.post.ts` |
 | L-1 | JWT verification does not pin `algorithms` | Low | Auth | `ghana-audit-service/server/utils/jwt.ts:55` |
 | L-2 | SSE auth token passed via query string | Low | Auth | `ghana-audit-service/server/middleware/adminAuth.ts:48,69` |
 | L-3 | Contact `message` stored unescaped (display-time sanitized) | Low | Web | `ghana-audit-service/server/api/contact.post.ts:131` |
@@ -205,6 +205,17 @@ strong password policy, and full audit logging of failed logins are all in place
 **Recommendation:** Add a temporary per-account lockout (e.g. exponential backoff after N
 failures within a window) and/or CAPTCHA after repeated failures.
 
+**Status (2026-06-16): Remediated.** Added a per-account lockout
+(`server/utils/loginLockout.ts`) backed by new `users` columns (`failed_login_attempts`,
+`lockout_count`, `locked_until`, `last_failed_login_at`; migration `0001_spotty_hex.sql`).
+Default policy: **10 failures within 15 min** locks the account, with **exponential backoff**
+on repeat lockouts (`15m → 30m → 1h → …`, capped at 24h), all env-configurable
+(`LOGIN_LOCKOUT_*`). A locked account is rejected with **429 + Retry-After** before password
+verification (a correct password cannot bypass an active lock); a successful login resets the
+counters. Lockout keys on existing accounts only. Covered by
+`tests/unit/server/utils/loginLockout.test.ts`. *Note:* a locked account returns 429 vs 401
+for bad credentials — accepted (the attacker already targets a known email).
+
 ### Low
 
 #### L-1 — JWT verification does not pin `algorithms`
@@ -335,7 +346,7 @@ The following controls are implemented well and should be preserved:
 | 3 | Set Redis `--requirepass`; bind compose DB/Redis ports to localhost | M-2 | Low |
 | 4 | Add allowlist validation to publication redirect | M-4 | Low |
 | 5 | ~~Add `npm audit` + CodeQL to CI, Trivy to deploy~~ **(done — M-5)**; enable prod approval gate (Required reviewers) | M-5 | Medium |
-| 6 | Add per-account login lockout / backoff | M-6 | Medium |
+| 6 | ~~Add per-account login lockout / backoff~~ **(done — M-6)** | M-6 | Medium |
 | 7 | Pin JWT `algorithms: ['HS256']` | L-1 | Low |
 | 8 | ~~Tighten CSP toward nonce/hash; drop `'unsafe-eval'`~~ **(done — M-1)**; still drop `data:` from `img-src` where possible | M-1, L-4 | Medium |
 | 9 | Schedule `@nuxtjs/i18n` major upgrade (deferred deps) | §5 | High |

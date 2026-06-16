@@ -8,6 +8,13 @@
       "when": 1781453046275,
       "tag": "0000_init_squash",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "5",
+      "when": 1781629547928,
+      "tag": "0001_spotty_hex",
+      "breakpoints": true
     }
   ]
 }
