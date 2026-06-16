@@ -77,7 +77,7 @@ inventory of the live environment.
 | L-1 | JWT verification does not pin `algorithms` — **Remediated** | Low | Auth | `ghana-audit-service/server/utils/jwt.ts` |
 | L-2 | SSE auth token passed via query string — **Remediated** | Low | Auth | `ghana-audit-service/server/middleware/adminAuth.ts`, `server/utils/sseTicket.ts` |
 | L-3 | Contact `message` stored unescaped (display-time sanitized) — **Remediated** | Low | Web | `ghana-audit-service/server/api/contact.post.ts`, `server/utils/sanitizeText.ts` |
-| L-4 | Config-dependent hardening (CSP `data:`, Redis-less rate-limit fallback, `TRUSTED_PROXIES`) | Low | Infra | `nuxt.config.ts:405`, `server/utils/rateLimiter.ts` |
+| L-4 | Config-dependent hardening (CSP `data:`, Redis-less rate-limit fallback, `TRUSTED_PROXIES`) — **Remediated** | Low | Infra | `nuxt.config.ts`, `server/plugins/validateConfig.ts` |
 | L-5 | Weak placeholder default secrets in examples/compose | Low | Config | `.env.example`, `docker-compose.yml` |
 
 ---
@@ -268,15 +268,15 @@ entity-encoded), so the stored value is safe under any render path while the exi
 output-escaping consumers (Vue interpolation, the email `escapeHtml`) don't double-escape it.
 Covered by `tests/unit/server/utils/sanitizeText.test.ts`.
 
-#### L-4 — Config-dependent hardening notes
-- **CSP `img-src data:`** (`nuxt.config.ts:405`) — permits data-URI images; minor
-  exfiltration surface. Remove if not required.
-- **Rate-limiter single-instance fallback** (`server/utils/rateLimiter.ts`) — without
-  `REDIS_URL`, limits are per-process, so a multi-replica deployment without Redis would not
-  share counters. Require Redis in production.
-- **`TRUSTED_PROXIES`** — client-IP derivation trusts `X-Forwarded-For` only from configured
-  proxies; if unset behind a load balancer, rate limiting keys on the LB IP. Document as a
-  required production env var.
+#### L-4 — Config-dependent hardening notes — **Remediated**
+- **CSP `img-src data:`** — removed; `img-src` is now `'self' https:` (no data-URI images,
+  which were unused in source/build). `nuxt.config.ts` `security.headers.contentSecurityPolicy`.
+- **Rate-limiter single-instance fallback** — `server/plugins/validateConfig.ts` now logs a
+  production startup **warning** when `REDIS_URL` is unset (rate limits would be per-process,
+  not shared across replicas). Redis stays optional-with-fallback by design (no hard-fail);
+  `.env.example` documents it as required for multi-instance production.
+- **`TRUSTED_PROXIES`** — already warned on at startup in `validateConfig.ts` for production;
+  set in `k8s/config/configmap.yaml` for the cluster.
 
 #### L-5 — Weak placeholder default secrets
 **Location:** `.env.example` (root and app), `docker-compose.yml`
@@ -369,7 +369,7 @@ The following controls are implemented well and should be preserved:
 | 5 | ~~Add `npm audit` + CodeQL to CI, Trivy to deploy~~ **(done — M-5)**; enable prod approval gate (Required reviewers) | M-5 | Medium |
 | 6 | ~~Add per-account login lockout / backoff~~ **(done — M-6)** | M-6 | Medium |
 | 7 | ~~Pin JWT `algorithms: ['HS256']`~~ **(done — L-1)** | L-1 | Low |
-| 8 | ~~Tighten CSP toward nonce/hash; drop `'unsafe-eval'`~~ **(done — M-1)**; still drop `data:` from `img-src` where possible | M-1, L-4 | Medium |
+| 8 | ~~Tighten CSP toward nonce/hash; drop `'unsafe-eval'`~~ **(done — M-1)**; ~~drop `data:` from `img-src`~~ **(done — L-4)** | M-1, L-4 | Medium |
 | 9 | Schedule `@nuxtjs/i18n` major upgrade (deferred deps) | §5 | High |
 | 10 | ~~Sanitize contact `message` on storage~~ **(done — L-3)**; ~~SSE query-token~~ **(done — L-2)** | L-3, L-2 | Low |
 

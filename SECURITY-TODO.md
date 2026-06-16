@@ -53,9 +53,6 @@ verification scope). Validate before/at production rollout.
   then hashes IPs unsalted (reversible). Add a boot-time check (Nitro plugin) that errors in
   production if the salt is unset/short. *(Good next quick win.)*
 ### Low
-- [ ] 🔴 **L-4 — CSP/config hardening:** drop `data:` from `img-src` if unneeded; require
-  Redis in production (rate-limiter is per-process without it); ensure `TRUSTED_PROXIES` is
-  set behind the load balancer.
 - [ ] 🔴 **L-5 — Replace weak placeholder default secrets** in `.env.example` /
   `docker-compose.yml`; ensure prod overrides and that the seed (with `ADMIN_PASSWORD`) never
   runs against production.
@@ -99,4 +96,7 @@ verification scope). Validate before/at production rollout.
 - [x] 🟢 **L-3 — Contact `message` stripped to safe plain text on storage**
   (`server/utils/sanitizeText.ts` `stripHtmlToText`); safe under any render path, no
   double-escaping. + unit test.
+- [x] 🟢 **L-4 — Config hardening:** dropped `data:` from CSP `img-src`; production startup
+  warning when `REDIS_URL` is unset (`validateConfig.ts`); `TRUSTED_PROXIES` warning already
+  present + documented.
 - [x] 🟢 **Security assessment report** (`SECURITY-ASSESSMENT.md`). Commit `65f1ff0`.

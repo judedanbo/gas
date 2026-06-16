@@ -20,6 +20,13 @@ export default defineNitroPlugin(() => {
     if (!process.env.TRUSTED_PROXIES) {
       console.warn('[Security] No trusted proxies configured. Rate limiting may not work correctly behind a reverse proxy.')
     }
+
+    // Redis backs shared rate limiting and analytics counters. Without it both
+    // degrade to per-process fallbacks, so rate limits are NOT shared across
+    // instances — a multi-replica deployment effectively multiplies the quota.
+    if (!process.env.REDIS_URL) {
+      console.warn('[Security] REDIS_URL is not set. Rate limiting and analytics use per-process fallbacks; set REDIS_URL for a correct multi-instance production deployment.')
+    }
   }
 
   // Log successful startup in development
