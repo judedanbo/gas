@@ -53,8 +53,6 @@ verification scope). Validate before/at production rollout.
   then hashes IPs unsalted (reversible). Add a boot-time check (Nitro plugin) that errors in
   production if the salt is unset/short. *(Good next quick win.)*
 ### Low
-- [ ] 🔴 **L-3 — Sanitize the contact `message` on storage** (`contact.post.ts`), so it's
-  safe regardless of the rendering path (currently relies on display-time DOMPurify).
 - [ ] 🔴 **L-4 — CSP/config hardening:** drop `data:` from `img-src` if unneeded; require
   Redis in production (rate-limiter is per-process without it); ensure `TRUSTED_PROXIES` is
   set behind the load balancer.
@@ -98,4 +96,7 @@ verification scope). Validate before/at production rollout.
 - [x] 🟢 **L-2 — Short-TTL SSE ticket** (`server/utils/sseTicket.ts`) replaces the session
   JWT in the `optimize-stream` URL; minted in the optimize POST, validated by `adminAuth`.
   *Residual:* manual smoke test of the report-optimize progress UI.
+- [x] 🟢 **L-3 — Contact `message` stripped to safe plain text on storage**
+  (`server/utils/sanitizeText.ts` `stripHtmlToText`); safe under any render path, no
+  double-escaping. + unit test.
 - [x] 🟢 **Security assessment report** (`SECURITY-ASSESSMENT.md`). Commit `65f1ff0`.

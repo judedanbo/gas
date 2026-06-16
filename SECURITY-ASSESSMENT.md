@@ -76,7 +76,7 @@ inventory of the live environment.
 | M-6 | No account lockout on login (per-IP rate limit only) — **Remediated** | Medium | Auth | `ghana-audit-service/server/api/admin/auth/login.post.ts` |
 | L-1 | JWT verification does not pin `algorithms` — **Remediated** | Low | Auth | `ghana-audit-service/server/utils/jwt.ts` |
 | L-2 | SSE auth token passed via query string — **Remediated** | Low | Auth | `ghana-audit-service/server/middleware/adminAuth.ts`, `server/utils/sseTicket.ts` |
-| L-3 | Contact `message` stored unescaped (display-time sanitized) | Low | Web | `ghana-audit-service/server/api/contact.post.ts:131` |
+| L-3 | Contact `message` stored unescaped (display-time sanitized) — **Remediated** | Low | Web | `ghana-audit-service/server/api/contact.post.ts`, `server/utils/sanitizeText.ts` |
 | L-4 | Config-dependent hardening (CSP `data:`, Redis-less rate-limit fallback, `TRUSTED_PROXIES`) | Low | Infra | `nuxt.config.ts:405`, `server/utils/rateLimiter.ts` |
 | L-5 | Weak placeholder default secrets in examples/compose | Low | Config | `.env.example`, `docker-compose.yml` |
 
@@ -261,6 +261,13 @@ a future consumer renders the field without sanitization.
 **Recommendation:** Document the output-escaping dependency, or escape/sanitize on storage as
 well so the stored value is safe regardless of the rendering path.
 
+**Status (2026-06-16): Remediated.** The message is now reduced to safe plain text at storage
+via `stripHtmlToText` (`server/utils/sanitizeText.ts`) — DOMPurify strips all tags and
+dangerous content, returning the fragment's `textContent` (literal characters, **not**
+entity-encoded), so the stored value is safe under any render path while the existing
+output-escaping consumers (Vue interpolation, the email `escapeHtml`) don't double-escape it.
+Covered by `tests/unit/server/utils/sanitizeText.test.ts`.
+
 #### L-4 — Config-dependent hardening notes
 - **CSP `img-src data:`** (`nuxt.config.ts:405`) — permits data-URI images; minor
   exfiltration surface. Remove if not required.
@@ -364,7 +371,7 @@ The following controls are implemented well and should be preserved:
 | 7 | ~~Pin JWT `algorithms: ['HS256']`~~ **(done — L-1)** | L-1 | Low |
 | 8 | ~~Tighten CSP toward nonce/hash; drop `'unsafe-eval'`~~ **(done — M-1)**; still drop `data:` from `img-src` where possible | M-1, L-4 | Medium |
 | 9 | Schedule `@nuxtjs/i18n` major upgrade (deferred deps) | §5 | High |
-| 10 | Sanitize contact `message` on storage; ~~SSE query-token~~ **(done — L-2)** | L-3, L-2 | Low |
+| 10 | ~~Sanitize contact `message` on storage~~ **(done — L-3)**; ~~SSE query-token~~ **(done — L-2)** | L-3, L-2 | Low |
 
 ---
 
