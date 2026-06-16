@@ -104,6 +104,10 @@ jobs:
           JWT_SECRET: ${{ secrets.JWT_SECRET }}
           NUXT_API_SECRET: ${{ secrets.NUXT_API_SECRET }}
           ANALYTICS_IP_SALT: ${{ secrets.ANALYTICS_IP_SALT }}
+          # Redis auth (server/utils/redis.ts via REDIS_URL). If unset, envsubst
+          # renders an empty password and Redis starts without auth — set this
+          # secret in the production environment to enable Redis authentication.
+          REDIS_PASSWORD: ${{ secrets.REDIS_PASSWORD }}
           MYSQL_ROOT_PASSWORD: ${{ secrets.MYSQL_ROOT_PASSWORD }}
           AZURE_STORAGE_ACCOUNT_NAME: ${{ secrets.AZURE_STORAGE_ACCOUNT_NAME }}
           AZURE_STORAGE_ACCOUNT_KEY: ${{ secrets.AZURE_STORAGE_ACCOUNT_KEY }}

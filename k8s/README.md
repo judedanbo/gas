@@ -58,6 +58,7 @@ cannot see will make `azure/login` fail with empty credentials.
 | `JWT_SECRET`                      | JWT signing secret (generate with `openssl rand -hex 32`)                                                               |
 | `NUXT_API_SECRET`                 | Nuxt API secret (generate with `openssl rand -hex 32`)                                                                  |
 | `ANALYTICS_IP_SALT`               | Analytics IP hashing salt (generate with `openssl rand -hex 32`)                                                        |
+| `REDIS_PASSWORD`                  | Redis `--requirepass` password (generate with `openssl rand -hex 32`). Unset ⇒ Redis runs **without** auth             |
 | `AZURE_STORAGE_ACCOUNT_NAME`      | Azure Storage account name backing the gas-public file share                                                            |
 | `AZURE_STORAGE_ACCOUNT_KEY`       | Azure Storage account access key for the gas-public file share                                                          |
 | `ADMIN_EMAIL`                     | Initial admin login email — consumed by the seed Job                                                                    |
@@ -144,6 +145,7 @@ the `build-and-push` and `deploy` jobs run with `environment: production`.
    gh secret set JWT_SECRET            --env $ENV --body "$(openssl rand -hex 32)"
    gh secret set NUXT_API_SECRET       --env $ENV --body "$(openssl rand -hex 32)"
    gh secret set ANALYTICS_IP_SALT     --env $ENV --body "$(openssl rand -hex 32)"
+   gh secret set REDIS_PASSWORD        --env $ENV --body "$(openssl rand -hex 32)"
 
    # Azure Files (persistent storage)
    gh secret set AZURE_STORAGE_ACCOUNT_NAME --env $ENV   # paste storage account name
@@ -215,7 +217,7 @@ kubectl apply -f k8s/namespace.yaml
 kubectl apply -f k8s/config/configmap.yaml
 
 # 3. Apply secrets (set env vars first)
-export DB_USER=gas_user DB_PASSWORD=... JWT_SECRET=... NUXT_API_SECRET=... ANALYTICS_IP_SALT=... MYSQL_ROOT_PASSWORD=... AZURE_STORAGE_ACCOUNT_NAME=... AZURE_STORAGE_ACCOUNT_KEY=...
+export DB_USER=gas_user DB_PASSWORD=... JWT_SECRET=... NUXT_API_SECRET=... ANALYTICS_IP_SALT=... REDIS_PASSWORD=... MYSQL_ROOT_PASSWORD=... AZURE_STORAGE_ACCOUNT_NAME=... AZURE_STORAGE_ACCOUNT_KEY=...
 envsubst < k8s/config/secrets.yaml | kubectl apply -f -
 
 # 4. Apply infrastructure

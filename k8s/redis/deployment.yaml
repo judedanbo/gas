@@ -50,6 +50,22 @@ spec:
             - 256mb
             - --maxmemory-policy
             - allkeys-lru
+            - --requirepass
+            - $(REDIS_PASSWORD)
+          env:
+            # Password for --requirepass above (k8s expands $(REDIS_PASSWORD) from env).
+            - name: REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: gas-secrets
+                  key: REDIS_PASSWORD
+            # redis-cli reads REDISCLI_AUTH automatically, so the health probes
+            # below authenticate without putting the password on the command line.
+            - name: REDISCLI_AUTH
+              valueFrom:
+                secretKeyRef:
+                  name: gas-secrets
+                  key: REDIS_PASSWORD
           ports:
             - containerPort: 6379
               name: redis

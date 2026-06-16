@@ -13,7 +13,8 @@ data:
   NUXT_PUBLIC_SITE_NAME: "Ghana Audit Service"
   NUXT_PUBLIC_CONTACT_EMAIL: "info@audit.gov.gh"
   NUXT_PUBLIC_CONTACT_PHONE: "+233 (302) 664929"
-  REDIS_URL: "redis://redis.gas.svc.cluster.local:6379/0"
+  # REDIS_URL moved to the gas-secrets Secret so it can carry the Redis password
+  # (redis://:<password>@host). It is injected into the frontend via envFrom.
   SESSION_IDLE_TIMEOUT: "30m"
   SESSION_ABSOLUTE_TIMEOUT: "8h"
   SESSION_WARNING_BEFORE: "2m"

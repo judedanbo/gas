@@ -69,7 +69,7 @@ inventory of the live environment.
 | ID | Finding | Severity | Area | Location |
 |----|---------|----------|------|----------|
 | M-1 | CSP allows `'unsafe-inline'` and `'unsafe-eval'` in `script-src` — **Remediated** | Medium | Web/Headers | `ghana-audit-service/nuxt.config.ts` |
-| M-2 | Redis runs without authentication; DB/Redis ports exposed in compose | Medium | Infra | `k8s/redis/deployment.yaml:45`, `docker-compose.yml:83,123` |
+| M-2 | Redis runs without authentication; DB/Redis ports exposed in compose — **Remediated** | Medium | Infra | `k8s/redis/deployment.yaml`, `docker-compose.yml` |
 | M-3 | Analytics IP-salt fails open to unsalted (reversible) hashing | Medium | Privacy | `ghana-audit-service/server/utils/analytics/fingerprint.ts:19,25` |
 | M-4 | Open redirect via stored publication `fileUrl` | Medium | Web | `ghana-audit-service/server/api/downloads/publications/[id].get.ts:72` |
 | M-5 | No SAST / dependency / image scanning or approval gate in CI/CD | Medium | CI/CD | `.github/workflows/ci.yml`, `deploy.yml` |
@@ -125,6 +125,19 @@ contains the k8s risk. The compose exposure is local-development only.
 **Recommendation:** Set `--requirepass` (sourced from a secret) on Redis and configure the
 `ioredis` client accordingly; consider Redis TLS for defense-in-depth. For non-dev compose
 usage, remove the host port mappings or bind them to `127.0.0.1` only.
+
+**Status (2026-06-16): Remediated.** The k8s Redis Deployment now runs with
+`--requirepass $(REDIS_PASSWORD)`, the password sourced from the `gas-secrets` Secret
+(`REDIS_PASSWORD`); `REDIS_URL` moved from the ConfigMap into the Secret as
+`redis://:<password>@redis...` so the frontend connects authenticated (no app code change —
+`ioredis` parses the URL). Health probes authenticate via `REDISCLI_AUTH`. The deploy
+workflow templates `REDIS_PASSWORD` into the Secret; **a `REDIS_PASSWORD` GitHub
+`production` secret must be set to switch auth on** (if unset, Redis degrades to no-auth
+rather than failing the deploy — documented in `k8s/README.md`). In `docker-compose.yml`,
+the MySQL (`3306`) and Redis (`6479`) host ports are now bound to `127.0.0.1`; local-dev
+Redis auth was intentionally deferred (optional and network-isolated). Redis TLS remains a
+future hardening item (tracked under finding #6). *Verified via quality gate + static YAML
+validation; live auth enforcement requires a cluster.*
 
 #### M-3 — Analytics IP-salt fails open to unsalted hashing
 **Location:** `ghana-audit-service/server/utils/analytics/fingerprint.ts:19,25,40`
