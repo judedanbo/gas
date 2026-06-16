@@ -75,7 +75,7 @@ inventory of the live environment.
 | M-5 | No SAST / dependency / image scanning or approval gate in CI/CD — **Remediated** | Medium | CI/CD | `.github/workflows/ci.yml`, `deploy.yml`, `codeql.yml` |
 | M-6 | No account lockout on login (per-IP rate limit only) — **Remediated** | Medium | Auth | `ghana-audit-service/server/api/admin/auth/login.post.ts` |
 | L-1 | JWT verification does not pin `algorithms` — **Remediated** | Low | Auth | `ghana-audit-service/server/utils/jwt.ts` |
-| L-2 | SSE auth token passed via query string | Low | Auth | `ghana-audit-service/server/middleware/adminAuth.ts:48,69` |
+| L-2 | SSE auth token passed via query string — **Remediated** | Low | Auth | `ghana-audit-service/server/middleware/adminAuth.ts`, `server/utils/sseTicket.ts` |
 | L-3 | Contact `message` stored unescaped (display-time sanitized) | Low | Web | `ghana-audit-service/server/api/contact.post.ts:131` |
 | L-4 | Config-dependent hardening (CSP `data:`, Redis-less rate-limit fallback, `TRUSTED_PROXIES`) | Low | Infra | `nuxt.config.ts:405`, `server/utils/rateLimiter.ts` |
 | L-5 | Weak placeholder default secrets in examples/compose | Low | Config | `.env.example`, `docker-compose.yml` |
@@ -242,6 +242,15 @@ session-bound JWTs.
 **Recommendation:** Keep the allowlist minimal (already done); consider a single-use,
 short-TTL SSE ticket instead of the full session token.
 
+**Status (2026-06-16): Remediated.** The session JWT no longer travels in the SSE URL. The
+optimize endpoint now mints a short-lived (~2 min), `aud: 'sse-stream'`-scoped ticket
+(`server/utils/sseTicket.ts`, HS256-pinned) and returns it alongside `jobId`; the frontend
+passes it as `?ticket=` and `adminAuth` validates it for the one SSE route (the `?token=`
+JWT path was removed). The ticket is reusable within its short TTL so EventSource reconnects
+keep working; downstream user/active and live-session checks are unchanged (the ticket's
+`sid` must still map to a live session). Covered by `tests/unit/server/utils/sseTicket.test.ts`.
+*Residual:* the live EventSource flow needs a manual smoke test of the report-optimize UI.
+
 #### L-3 — Contact `message` stored without escaping
 **Location:** `ghana-audit-service/server/api/contact.post.ts:131`
 **Description:** Unlike name/email/subject (which are `validator.escape()`d), the message
@@ -355,7 +364,7 @@ The following controls are implemented well and should be preserved:
 | 7 | ~~Pin JWT `algorithms: ['HS256']`~~ **(done — L-1)** | L-1 | Low |
 | 8 | ~~Tighten CSP toward nonce/hash; drop `'unsafe-eval'`~~ **(done — M-1)**; still drop `data:` from `img-src` where possible | M-1, L-4 | Medium |
 | 9 | Schedule `@nuxtjs/i18n` major upgrade (deferred deps) | §5 | High |
-| 10 | Sanitize contact `message` on storage; minimize SSE query-token allowlist | L-3, L-2 | Low |
+| 10 | Sanitize contact `message` on storage; ~~SSE query-token~~ **(done — L-2)** | L-3, L-2 | Low |
 
 ---
 

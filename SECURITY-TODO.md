@@ -53,8 +53,6 @@ verification scope). Validate before/at production rollout.
   then hashes IPs unsalted (reversible). Add a boot-time check (Nitro plugin) that errors in
   production if the salt is unset/short. *(Good next quick win.)*
 ### Low
-- [ ] 🔴 **L-2 — Keep the SSE query-token allowlist minimal** (`adminAuth.ts`
-  `QUERY_TOKEN_ROUTES`); consider a single-use short-TTL SSE ticket instead of the session JWT.
 - [ ] 🔴 **L-3 — Sanitize the contact `message` on storage** (`contact.post.ts`), so it's
   safe regardless of the rendering path (currently relies on display-time DOMPurify).
 - [ ] 🔴 **L-4 — CSP/config hardening:** drop `data:` from `img-src` if unneeded; require
@@ -97,4 +95,7 @@ verification scope). Validate before/at production rollout.
   required since locks auto-expire and a successful login resets them.
 - [x] 🟢 **L-1 — Pin JWT `algorithms: ['HS256']`** in `server/utils/jwt.ts` sign + verify
   (+ `jwt.test.ts` proving a non-HS256 token is rejected).
+- [x] 🟢 **L-2 — Short-TTL SSE ticket** (`server/utils/sseTicket.ts`) replaces the session
+  JWT in the `optimize-stream` URL; minted in the optimize POST, validated by `adminAuth`.
+  *Residual:* manual smoke test of the report-optimize progress UI.
 - [x] 🟢 **Security assessment report** (`SECURITY-ASSESSMENT.md`). Commit `65f1ff0`.

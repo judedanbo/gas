@@ -1,5 +1,6 @@
 import { eq, and, isNull } from 'drizzle-orm'
 import { verifyToken } from '../utils/jwt'
+import { verifySseTicket } from '../utils/sseTicket'
 import { validateSession, type SessionTiming } from '../utils/sessions'
 import { moduleForPath, resolveUserModules, type ModuleKey } from '../utils/modules'
 import { getDatabase, schema } from '../database'
@@ -43,9 +44,10 @@ const PUBLIC_ADMIN_ROUTES = [
 ]
 
 // SSE endpoints — EventSource cannot set custom headers, so for these routes
-// only we additionally accept the Bearer token via a `token` query parameter.
-// Keep this list small and append-only.
-const QUERY_TOKEN_ROUTES = ['/api/admin/reports/optimize-stream']
+// only we additionally accept a short-lived, aud-scoped ticket (see
+// server/utils/sseTicket.ts) via a `ticket` query parameter, instead of the
+// long-lived session JWT. Keep this list small and append-only.
+const SSE_TICKET_ROUTES = ['/api/admin/reports/optimize-stream']
 
 export default defineEventHandler(async (event) => {
   const path = event.path || ''
@@ -60,32 +62,38 @@ export default defineEventHandler(async (event) => {
     return
   }
 
-  // Extract Bearer token from Authorization header, or — for SSE routes where
-  // EventSource cannot set headers — from a `token` query parameter.
-  let token: string | undefined
+  // Resolve the credential to a userId + session id. Normal requests use a
+  // Bearer JWT; SSE routes (EventSource can't set headers) instead use a
+  // short-lived ticket in the `ticket` query parameter (see sseTicket.ts).
+  let credentialUserId: number | undefined
+  let credentialSid: string | undefined
+  let token = ''
+
   const authHeader = getHeader(event, 'Authorization')
   if (authHeader && authHeader.startsWith('Bearer ')) {
     token = authHeader.substring(7)
-  } else if (QUERY_TOKEN_ROUTES.includes(path)) {
-    const queryToken = getQuery(event).token
-    if (typeof queryToken === 'string' && queryToken) token = queryToken
+    const payload = verifyToken(token)
+    if (payload) {
+      credentialUserId = payload.userId
+      credentialSid = payload.sid
+    }
+  } else if (SSE_TICKET_ROUTES.includes(path)) {
+    const ticket = getQuery(event).ticket
+    if (typeof ticket === 'string' && ticket) {
+      const verified = verifySseTicket(ticket)
+      if (verified) {
+        token = ticket
+        credentialUserId = verified.userId
+        credentialSid = verified.sid
+      }
+    }
   }
 
-  if (!token) {
+  if (credentialUserId === undefined) {
     throw createError({
       statusCode: 401,
       statusMessage: 'Unauthorized',
-      message: 'Missing or invalid authorization header'
-    })
-  }
-
-  // Verify JWT token
-  const payload = verifyToken(token)
-  if (!payload) {
-    throw createError({
-      statusCode: 401,
-      statusMessage: 'Unauthorized',
-      message: 'Invalid or expired token'
+      message: 'Missing or invalid authorization'
     })
   }
 
@@ -104,7 +112,7 @@ export default defineEventHandler(async (event) => {
     .from(schema.users)
     .where(
       and(
-        eq(schema.users.id, payload.userId),
+        eq(schema.users.id, credentialUserId),
         eq(schema.users.isActive, true),
         isNull(schema.users.deletedAt)
       )
@@ -119,10 +127,10 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  // Validate the server-side session. The JWT only carries an opaque
+  // Validate the server-side session. The credential only carries an opaque
   // session id; the session row decides whether it is still alive and
   // slides the idle window forward on activity.
-  const sessionId = payload.sid
+  const sessionId = credentialSid
   if (!sessionId) {
     throw createError({
       statusCode: 401,

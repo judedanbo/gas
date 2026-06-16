@@ -10,6 +10,7 @@ import {
   type CompressionPreset
 } from '../../../utils/pdfOptimizer'
 import { createJob, pushEvent, updateJob } from '../../../utils/pdfOptimizationJobs'
+import { signSseTicket } from '../../../utils/sseTicket'
 
 const ALLOWED_PRESETS: CompressionPreset[] = ['screen', 'ebook', 'printer']
 
@@ -49,7 +50,12 @@ export default defineEventHandler(async (event) => {
   // (optimize-stream.get.ts) streams the job's events to the admin UI.
   void runOptimization(job.id, pdfPath, preset, allowDropBookmarks, event, reportId)
 
-  return { jobId: job.id }
+  // Mint a short-lived SSE ticket so the EventSource auth travels as a ~2min
+  // aud-scoped ticket rather than the long-lived session JWT in the URL.
+  const auth = event.context.auth!
+  const sseTicket = signSseTicket({ userId: auth.user.id, sid: auth.sessionId })
+
+  return { jobId: job.id, sseTicket }
 })
 
 async function runOptimization(
