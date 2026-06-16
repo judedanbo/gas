@@ -71,7 +71,7 @@ inventory of the live environment.
 | M-1 | CSP allows `'unsafe-inline'` and `'unsafe-eval'` in `script-src` — **Remediated** | Medium | Web/Headers | `ghana-audit-service/nuxt.config.ts` |
 | M-2 | Redis runs without authentication; DB/Redis ports exposed in compose — **Remediated** | Medium | Infra | `k8s/redis/deployment.yaml`, `docker-compose.yml` |
 | M-3 | Analytics IP-salt fails open to unsalted (reversible) hashing | Medium | Privacy | `ghana-audit-service/server/utils/analytics/fingerprint.ts:19,25` |
-| M-4 | Open redirect via stored publication `fileUrl` | Medium | Web | `ghana-audit-service/server/api/downloads/publications/[id].get.ts:72` |
+| M-4 | Open redirect via stored publication `fileUrl` — **Remediated** | Medium | Web | `ghana-audit-service/server/api/downloads/publications/[id].get.ts` |
 | M-5 | No SAST / dependency / image scanning or approval gate in CI/CD | Medium | CI/CD | `.github/workflows/ci.yml`, `deploy.yml` |
 | M-6 | No account lockout on login (per-IP rate limit only) | Medium | Auth | `ghana-audit-service/server/api/admin/auth/login.post.ts:34` |
 | L-1 | JWT verification does not pin `algorithms` | Low | Auth | `ghana-audit-service/server/utils/jwt.ts:55` |
@@ -161,6 +161,13 @@ host.
 post-compromise amplification, not an unauthenticated open redirect.
 **Recommendation:** Validate the redirect target against an allowlist of expected hosts
 (e.g. the Azure Blob storage account / organization domains) before redirecting.
+
+**Status (2026-06-16): Remediated.** The redirect is now gated by an exact-host allowlist
+(`server/utils/downloadRedirect.ts`): the configured site host (`NUXT_PUBLIC_SITE_URL`) and
+`audit.gov.gh` are always allowed, extendable via the `DOWNLOAD_REDIRECT_ALLOWED_HOSTS` CSV
+env var; non-http(s) schemes, userinfo host-spoofing, and any non-allowlisted host return
+404. Covered by `tests/unit/server/utils/downloadRedirect.test.ts`. (The reports endpoint has
+no redirect branch and was unaffected.)
 
 #### M-5 — No automated security scanning or approval gate in CI/CD
 **Location:** `.github/workflows/ci.yml`, `.github/workflows/deploy.yml`

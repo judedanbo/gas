@@ -44,9 +44,6 @@ verification scope). Validate before/at production rollout.
 - [ ] 🔴 **M-3 — Fail-fast on missing `ANALYTICS_IP_SALT`.** `fingerprint.ts` only warns,
   then hashes IPs unsalted (reversible). Add a boot-time check (Nitro plugin) that errors in
   production if the salt is unset/short. *(Good next quick win.)*
-- [ ] 🔴 **M-4 — Allowlist the publication-download redirect.** Validate the destination host
-  before `sendRedirect` in `server/api/downloads/publications/[id].get.ts` (open-redirect via
-  stored `fileUrl`).
 - [ ] 🔴 **M-5 — Add security scanning + approval gate to CI/CD.** `npm audit` (or Snyk) and
   CodeQL in `ci.yml`; Trivy image scan in `deploy.yml`; GitHub Environment manual-approval
   gate on the `production` deploy.
@@ -88,4 +85,6 @@ verification scope). Validate before/at production rollout.
   `'self' 'nonce-{{nonce}}'` (removed `'unsafe-inline'` + `'unsafe-eval'`). Commit `5712620`.
 - [x] 🟢 **M-2 — Redis auth (k8s) + loopback-bound compose ports.** Commit `0e48896`.
   *(Manual `REDIS_PASSWORD` secret still required — see §1.)*
+- [x] 🟢 **M-4 — Allowlisted publication-download redirect** (`server/utils/downloadRedirect.ts`
+  + unit test). Disallowed hosts now 404. *(M-3 skipped for now, still open in §3.)*
 - [x] 🟢 **Security assessment report** (`SECURITY-ASSESSMENT.md`). Commit `65f1ff0`.
