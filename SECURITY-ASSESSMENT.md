@@ -322,18 +322,22 @@ they execute at build time, not in the running server:
 **Recommendation:** Track these; schedule the `@nuxtjs/i18n` major upgrade as a separate,
 tested change. Because they are build-time, the runtime risk to the deployed app is low.
 
-### Runtime-relevant (fixable without breaking changes)
-- **nodemailer ≤ 8.0.8** (moderate, **direct dep**, used by `server/utils/email.ts`) —
-  CRLF header injection (`GHSA-268h-hp4c-crq3`), improper TLS cert validation in OAuth2
-  token fetch (`GHSA-r7g4-qg5f-qqm2`), jsonTransport file/URL access bypass. **Most relevant
-  finding here** since it runs server-side on contact/newsletter flows.
-- **ws** (high) — memory-exhaustion DoS (`GHSA-96hv-2xvq-fx4p`), transitive.
-- **js-yaml ≤ 4.1.1** (moderate) — quadratic-complexity DoS, transitive.
-- **launch-editor** (moderate) — Windows-only NTLM hash disclosure (dev tooling).
+### Runtime-relevant (fixable without breaking changes) — **Remediated (2026-06-16)**
+`npm audit fix` (non-breaking, lockfile-only) patched all four:
+- **nodemailer** ≤8.0.8 → **8.0.11** (direct dep, `server/utils/email.ts`) — CRLF header
+  injection (`GHSA-268h-hp4c-crq3`), OAuth2 TLS validation (`GHSA-r7g4-qg5f-qqm2`),
+  jsonTransport file/URL bypass.
+- **ws** → **8.21.0** — memory-exhaustion DoS (`GHSA-96hv-2xvq-fx4p`).
+- **js-yaml** ≤4.1.1 → **4.2.0** — quadratic-complexity DoS.
+- **launch-editor** → **2.14.1** — Windows NTLM hash disclosure (dev tooling).
+After the fix: **0 critical / 0 moderate / 0 low**; the remaining highs are exclusively the
+build-time esbuild/vite/vitest/nuxt/`@nuxtjs/i18n` toolchain (see below). Verified with
+typecheck, lint, test:run (667) and a production build.
 
-**Recommendation:** Run `npm audit fix` (non-breaking) to remediate nodemailer, ws, js-yaml,
-and launch-editor, then re-run the full quality gate (`typecheck`, `lint`, `test:run`) per
-`CLAUDE.md`. Add `npm audit` to CI to catch regressions (see M-5).
+**Remaining (deferred):** the build-time chain's fix requires semver-major upgrades
+(`@nuxtjs/i18n` 10.x, vitest 4, etc.), intentionally deferred per `CLAUDE.md` — these run at
+build time and are not exploitable in the deployed runtime. `npm audit` now runs in CI (M-5)
+to catch new regressions.
 
 ---
 
@@ -374,7 +378,7 @@ The following controls are implemented well and should be preserved:
 | Priority | Action | Finding | Effort |
 |----------|--------|---------|--------|
 | 1 | Fail-fast on missing/short `ANALYTICS_IP_SALT` in production | M-3 | Low |
-| 2 | Run `npm audit fix` (nodemailer/ws/js-yaml/launch-editor); re-run quality gate | §5 | Low |
+| 2 | ~~Run `npm audit fix` (nodemailer/ws/js-yaml/launch-editor)~~ **(done)** | §5 | Low |
 | 3 | Set Redis `--requirepass`; bind compose DB/Redis ports to localhost | M-2 | Low |
 | 4 | Add allowlist validation to publication redirect | M-4 | Low |
 | 5 | ~~Add `npm audit` + CodeQL to CI, Trivy to deploy~~ **(done — M-5)**; enable prod approval gate (Required reviewers) | M-5 | Medium |

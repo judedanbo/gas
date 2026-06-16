@@ -64,9 +64,8 @@ verification scope). Validate before/at production rollout.
 
 ## 4. Dependency maintenance (from the npm audit, 2026-06-16)
 
-- [ ] 🔴 **Run `npm audit fix`** (non-breaking) for runtime-relevant advisories:
-  **nodemailer** (CRLF header injection + TLS validation), **ws** (DoS), **js-yaml** (DoS),
-  **launch-editor**. Then re-run the full quality gate.
+- [x] 🟢 **Ran `npm audit fix`** (non-breaking, lockfile-only): nodemailer 8.0.11, ws 8.21.0,
+  js-yaml 4.2.0, launch-editor 2.14.1. Now 0 critical/moderate/low; quality gate + build green.
 - [ ] 🔴 **Schedule the `@nuxtjs/i18n` major upgrade** (10.x) to clear the build-time
   esbuild/vite/i18n highs — deferred per `CLAUDE.md` dependency policy; needs explicit
   approval + testing.
