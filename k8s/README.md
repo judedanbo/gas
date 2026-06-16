@@ -45,22 +45,28 @@ secrets. Both the `build-and-push` and `deploy` jobs declare
 `environment: production`, so an environment-scoped secret that the build job
 cannot see will make `azure/login` fail with empty credentials.
 
-| Secret                       | Description                                                      |
-| ---------------------------- | ---------------------------------------------------------------- |
-| `AZURE_CLIENT_ID`            | App registration Application (client) ID — used for OIDC login   |
-| `AZURE_TENANT_ID`            | Microsoft Entra Directory (tenant) ID                            |
-| `AZURE_SUBSCRIPTION_ID`      | Azure subscription ID (`az account show --query id -o tsv`)      |
-| `ACR_NAME`                   | ACR name (e.g., `gasacr`)                                        |
-| `AKS_CLUSTER_NAME`           | AKS cluster name                                                 |
-| `AKS_RESOURCE_GROUP`         | Azure resource group                                             |
-| `DB_USER`                    | MySQL user (e.g., `gas_user`)                                    |
-| `DB_PASSWORD`                | MySQL user password                                              |
-| `MYSQL_ROOT_PASSWORD`        | MySQL root password                                              |
-| `JWT_SECRET`                 | JWT signing secret (generate with `openssl rand -hex 32`)        |
-| `NUXT_API_SECRET`            | Nuxt API secret (generate with `openssl rand -hex 32`)           |
-| `ANALYTICS_IP_SALT`          | Analytics IP hashing salt (generate with `openssl rand -hex 32`) |
-| `AZURE_STORAGE_ACCOUNT_NAME` | Azure Storage account name backing the gas-public file share     |
-| `AZURE_STORAGE_ACCOUNT_KEY`  | Azure Storage account access key for the gas-public file share   |
+| Secret                            | Description                                                                                                             |
+| --------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| `AZURE_CLIENT_ID`                 | App registration Application (client) ID — used for OIDC login                                                          |
+| `AZURE_TENANT_ID`                 | Microsoft Entra Directory (tenant) ID                                                                                   |
+| `AZURE_SUBSCRIPTION_ID`           | Azure subscription ID (`az account show --query id -o tsv`)                                                             |
+| `AKS_CLUSTER_NAME`                | AKS cluster name                                                                                                        |
+| `AKS_RESOURCE_GROUP`              | Azure resource group                                                                                                    |
+| `DB_USER`                         | MySQL user (e.g., `gas_user`)                                                                                           |
+| `DB_PASSWORD`                     | MySQL user password                                                                                                     |
+| `MYSQL_ROOT_PASSWORD`             | MySQL root password                                                                                                     |
+| `JWT_SECRET`                      | JWT signing secret (generate with `openssl rand -hex 32`)                                                               |
+| `NUXT_API_SECRET`                 | Nuxt API secret (generate with `openssl rand -hex 32`)                                                                  |
+| `ANALYTICS_IP_SALT`               | Analytics IP hashing salt (generate with `openssl rand -hex 32`)                                                        |
+| `AZURE_STORAGE_ACCOUNT_NAME`      | Azure Storage account name backing the gas-public file share                                                            |
+| `AZURE_STORAGE_ACCOUNT_KEY`       | Azure Storage account access key for the gas-public file share                                                          |
+| `ADMIN_EMAIL`                     | Initial admin login email — consumed by the seed Job                                                                    |
+| `ADMIN_PASSWORD`                  | Initial admin login password — consumed by the seed Job                                                                 |
+| `ADMIN_NAME`                      | Initial admin display name (optional; defaults to `Administrator`)                                                      |
+| `AZURE_STORAGE_CONNECTION_STRING` | Optional — Blob backend for report PDFs (see [Report PDFs](#report-pdfs--azure-blob-storage)); unset = on-disk fallback |
+| `AZURE_BLOB_CONTAINER`            | Optional — Blob container for report PDFs (e.g. `reports`)                                                              |
+
+> `ACR_NAME` is **not** a secret — it is a workflow `env:` value in `deploy.yml`.
 
 ### Azure authentication (OIDC federated)
 
@@ -144,13 +150,57 @@ the `build-and-push` and `deploy` jobs run with `environment: production`.
    gh secret set AZURE_STORAGE_ACCOUNT_KEY  --env $ENV --body "$(az storage account keys list --account-name <acct> --query '[0].value' -o tsv)"
    ```
 
-4. **Verify all 14 are present:**
+4. **Verify** all required secrets are present (or run `k8s/check-deploy-secrets.sh`):
 
    ```bash
    gh secret list --env production
    ```
 
 5. Don't forget the [federated credential](#azure-authentication-oidc-federated) — the secrets alone are not enough for OIDC login.
+
+## Pre-Deploy Checklist
+
+Run through this before the first automated deploy (push to `main`) or a manual
+deploy to a cluster. Applies to the **staging** target (`test.audit.gov.gh`);
+production (`audit.gov.gh`) will be a separate deployment.
+
+1. **Migration ledger (most common failure).** The migrate Job runs file-based
+   Drizzle migrations (`db:apply`), which read the `__drizzle_migrations` ledger.
+   The history is squashed to `0000_init_squash`, and a schema created with
+   `drizzle-kit push` leaves that ledger empty — so the Job would try to
+   `CREATE TABLE` over existing tables and fail. Diagnose:
+
+   ```bash
+   kubectl exec -n gas mysql-0 -- sh -c \
+     'mysql -uroot -p"$MYSQL_ROOT_PASSWORD" -e "SHOW TABLES IN ghana_audit_service; SELECT hash FROM ghana_audit_service.__drizzle_migrations"'
+   ```
+
+   - No tables yet → do nothing; the Job creates the schema on first run.
+   - Tables exist **and** the ledger has a row → no action.
+   - Tables exist but ledger empty/missing → run the one-time baseline first
+     (idempotent; precondition: schema already matches the current Drizzle
+     schema — confirm `drizzle-kit push` reports no changes):
+
+     ```bash
+     kubectl exec -i -n gas mysql-0 -- sh -c \
+       'mysql -uroot -p"$MYSQL_ROOT_PASSWORD" ghana_audit_service' \
+       < k8s/jobs/baseline-prod-drizzle-migrations.sql
+     ```
+
+2. **GitHub `production` environment secrets exist.** All keys in the
+   [GitHub Secrets](#github-secrets) table must be set. Unset secrets render
+   empty via `envsubst`; in particular empty `ADMIN_EMAIL`/`ADMIN_PASSWORD`/
+   `ADMIN_NAME` make the seed Job exit 1.
+
+3. **Public-files PVC storage class.** The frontend mounts `gas-public-files-pvc`
+   (`storage/prod-pvc.yaml`, `storageClassName: azureblob-nfs-premium`).
+   `storageClassName` is immutable — if the PVC already exists with a different
+   class, `kubectl apply` is rejected; delete and recreate it to switch.
+
+4. **Cluster has the assumed dependencies:** the `infosys-issuer` ClusterIssuer
+   (referenced by the ingress, managed outside this repo), the `ingress-nginx`
+   controller + namespace, the `managed-csi` and `azureblob-nfs-premium` storage
+   classes, and metrics-server (for the frontend HPA).
 
 ## Manual Deploy
 
@@ -169,23 +219,34 @@ export DB_USER=gas_user DB_PASSWORD=... JWT_SECRET=... NUXT_API_SECRET=... ANALY
 envsubst < k8s/config/secrets.yaml | kubectl apply -f -
 
 # 4. Apply infrastructure
-kubectl apply -f k8s/tls/cluster-issuer.yaml
+#    (TLS: the ingress uses the pre-existing `infosys-issuer` ClusterIssuer,
+#     managed outside this repo — nothing to apply here.)
 kubectl apply -f k8s/mysql/
 kubectl rollout status statefulset/mysql -n gas --timeout=120s
 kubectl apply -f k8s/redis/
 
 # 5. Run migration
+export ACR_REGISTRY=<ACR_NAME>   # e.g. regisry — must match where you pushed the image
+export IMAGE_TAG=<TAG>           # the tag you pushed, e.g. the commit SHA
 export JOB_SUFFIX=$(date +%s)
 envsubst < k8s/jobs/migrate-job.yaml | kubectl apply -f -
 kubectl wait --for=condition=complete job/gas-migrate-${JOB_SUFFIX} -n gas --timeout=120s
 
-# 6. Apply persistent storage
-kubectl apply -f k8s/storage/public-files.yaml
-kubectl wait --for=jsonpath='{.status.phase}'=Bound pvc/gas-public-pvc -n gas --timeout=60s
+# 5b. (One-time bootstrap) Seed the admin user + content. Idempotent — re-running
+#     skips existing rows. Requires ADMIN_EMAIL/ADMIN_PASSWORD in gas-secrets and a
+#     migrator image rebuilt with the seed scripts. See k8s/jobs/seed-job.yaml header.
+envsubst < k8s/jobs/seed-job.yaml | kubectl apply -f -
+kubectl wait --for=condition=complete job/gas-seed-job -n gas --timeout=300s
 
-# 7. Deploy frontend (replace image tag)
-sed "s|gasacr.azurecr.io/gas-frontend:latest|gasacr.azurecr.io/gas-frontend:<TAG>|g" \
-  k8s/frontend/deployment.yaml | kubectl apply -f -
+# 6. Apply persistent storage (dynamically-provisioned blob PVC)
+kubectl apply -f k8s/storage/prod-pvc.yaml
+kubectl wait --for=jsonpath='{.status.phase}'=Bound pvc/gas-public-files-pvc -n gas --timeout=60s
+
+# 7. Deploy frontend (pin image via envsubst — restricted so the seed-public
+#    initContainer's busybox script ($d/$f) is left untouched)
+export ACR_REGISTRY=<ACR_NAME>   # e.g. regisry
+export IMAGE_TAG=<TAG>           # the tag you pushed, e.g. the commit SHA
+envsubst '${ACR_REGISTRY} ${IMAGE_TAG}' < k8s/frontend/deployment.yaml | kubectl apply -f -
 kubectl apply -f k8s/frontend/service.yaml
 kubectl apply -f k8s/frontend/ingress.yaml
 kubectl apply -f k8s/frontend/hpa.yaml
@@ -245,20 +306,27 @@ k8s/
     service.yaml              # ClusterIP Service
   jobs/
     migrate-job.yaml          # DB migration (runs before each deploy)
+    seed-job.yaml             # One-time DB seed: admin user + content (manual)
     mysql-backup-cronjob.yaml # Daily mysqldump (02:00 UTC, 7-day retention)
-  tls/
-    cluster-issuer.yaml       # Let's Encrypt ClusterIssuer
   network/
     network-policies.yaml     # Default-deny + per-service allow rules
   storage/
-    public-files.yaml         # Static PV/PVC for Azure Files (gas-public share)
+    prod-pvc.yaml             # Active: dynamic ReadWriteMany PVC (gas-public-files-pvc)
+    public-files.yaml         # Legacy: static PV/PVC for Azure Files (gas-public share)
 ```
 
 ## Persistent storage for public files
 
-`public/{img,images,uploads,pdf}` are backed by a single static Azure File
-share (`gas-public`) via `k8s/storage/public-files.yaml`. Provision it before
-the first deploy:
+`public/{img,images,uploads,pdf}` are backed by a single ReadWriteMany volume
+mounted by the frontend Deployment (`claimName: gas-public-files-pvc`).
+
+The **active** deploy path uses `k8s/storage/prod-pvc.yaml` — a dynamically
+provisioned PVC (storageClassName `azureblob-nfs-premium`, 50Gi) that the cluster
+binds automatically; no manual share provisioning is required.
+
+The static Azure Files approach below (`k8s/storage/public-files.yaml`,
+`gas-public-pvc`) is the **legacy** alternative, retained for reference. It
+requires provisioning the share before the first deploy:
 
 ```bash
 # 1. Storage account (Standard, LRS) — reuse an existing one if you have it.
@@ -288,3 +356,61 @@ The Deployment's `seed-public` initContainer copies baked `img`/`images`/
 static files survive the overlay and runtime uploads are never overwritten
 (`pdf` is mounted but not seeded — it is runtime-write-only).
 Reclaim policy is `Retain`: deleting the PVC/PV leaves the share intact.
+
+> **Report PDFs are migrating off this Files share to Blob Storage** — see the
+> next section. Once cut over, the two `pdf` volumeMounts in
+> `frontend/deployment.yaml` can be removed.
+
+## Report PDFs — Azure Blob Storage
+
+Report PDFs (`audit_reports.fileUrl`) are stored in a private Azure **Blob**
+container rather than baked into the container image (~2.6 GB raw, ~7.5 GB after
+Nitro pre-compression) or kept on the gas-public **Files** share. The app uploads
+to and streams from Blob through the existing `/api/downloads/**` indirection, so
+no client-facing URLs change.
+
+**This is feature-flagged by env vars** (see `server/utils/blobStorage.ts`):
+
+- **Both unset** → the app falls back to on-disk `public/pdf` (the Files mount).
+  This is the current/default behaviour, so deploying the code is a no-op until
+  the vars are set.
+- **Both set** → uploads write to Blob and downloads stream from Blob, falling
+  back to disk per-file for anything not yet migrated.
+
+### One-time cutover
+
+```bash
+# 1. Create a private container in a storage account (may reuse gas-public's).
+az storage container create \
+  --account-name <storageaccount> \
+  --name reports \
+  --auth-mode login
+
+# 2. Build the connection string and set it as GitHub Actions secrets:
+#    AZURE_STORAGE_CONNECTION_STRING, AZURE_BLOB_CONTAINER=reports
+az storage account show-connection-string \
+  --resource-group <rg> \
+  --name <storageaccount> \
+  --query connectionString -o tsv
+
+# 3. Wire both into gas-secrets (config/secrets.yaml -> envFrom on the frontend
+#    Deployment), then redeploy so the app picks up the env vars.
+
+# 4. Upload the existing PDFs (idempotent — skips blobs already present).
+#    Run from ghana-audit-service/ with the same env vars exported, or as a
+#    one-off Job built on the migrator image:
+npm run pdf:migrate-blob
+
+# 5. Verify a few downloads stream from Blob:
+#    GET /api/downloads/reports/<id>           (attachment)
+#    GET /api/downloads/reports/<id>?view=1    (inline)
+
+# 6. Drop the baked PDFs from the image: `git rm -r ghana-audit-service/public/pdf`
+#    and add `public/pdf/` to ghana-audit-service/.dockerignore. Remove the two
+#    `pdf` volumeMounts from frontend/deployment.yaml. Rebuild — image content
+#    drops to ~1 GB.
+```
+
+> Do **not** do step 6 before steps 1–5 verify in production: until the blobs
+> exist and the env vars are set, the on-disk `public/pdf` (image or Files mount)
+> is the only source, and removing it would 404 every report download.

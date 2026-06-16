@@ -1,7 +1,9 @@
 import { randomUUID } from 'crypto'
-import { createWriteStream, existsSync, mkdirSync } from 'fs'
+import { existsSync, mkdirSync } from 'fs'
+import { writeFile } from 'fs/promises'
 import { join, extname } from 'path'
 import type { H3Event, MultiPartData } from 'h3'
+import { blobKeyFromFileUrl, getContainerClient, uploadBlob } from './blobStorage'
 
 export interface UploadConfig {
   allowedTypes: string[]
@@ -9,6 +11,12 @@ export interface UploadConfig {
   directory: string
   baseDir?: string
   urlBase?: string
+  /**
+   * Where persisted bytes go. 'blob' uploads to Azure Blob Storage when
+   * configured (falling back to disk otherwise); omitted/'disk' always writes
+   * to the local filesystem.
+   */
+  backend?: 'blob' | 'disk'
 }
 
 export interface UploadResult {
@@ -25,7 +33,8 @@ const uploadConfigs: Record<string, UploadConfig> = {
     maxSize: 100 * 1024 * 1024, // 100MB
     directory: 'reports',
     baseDir: 'public/pdf',
-    urlBase: '/pdf'
+    urlBase: '/pdf',
+    backend: 'blob'
   },
   publication: {
     allowedTypes: ['application/pdf'],
@@ -112,6 +121,40 @@ function validateFile(
 }
 
 /**
+ * Persist validated file bytes and return the public-facing URL.
+ *
+ * For `backend: 'blob'` configs the bytes go to Azure Blob Storage when a
+ * container client is available; otherwise (no Azure config, or 'disk' backend)
+ * they are written to the local filesystem. The returned URL is identical
+ * either way, so the DB `fileUrl` contract and the `/api/downloads/**`
+ * indirection are unchanged regardless of backend.
+ */
+export async function persistUpload(
+  config: UploadConfig,
+  filename: string,
+  data: Buffer,
+  mimeType: string
+): Promise<string> {
+  const urlBase = config.urlBase || '/uploads'
+  const urlPath = `${urlBase}/${config.directory}/${filename}`
+
+  if (config.backend === 'blob' && getContainerClient()) {
+    const key = blobKeyFromFileUrl(urlPath)
+    if (!key) {
+      throw new Error(`Could not derive a blob key from "${urlPath}"`)
+    }
+    await uploadBlob(key, data, mimeType)
+    return urlPath
+  }
+
+  const baseDir = config.baseDir || getUploadBaseDir()
+  const uploadDir = join(baseDir, config.directory)
+  ensureDirectoryExists(uploadDir)
+  await writeFile(join(uploadDir, filename), data)
+  return urlPath
+}
+
+/**
  * Handle file upload
  */
 export async function handleFileUpload(
@@ -153,46 +196,30 @@ export async function handleFileUpload(
     })
   }
 
-  // Generate filename and path
+  // Generate filename
   const originalName = file.filename || `upload${getExtensionFromMime(file.type || '')}`
   const filename = generateFilename(originalName)
-  const baseDir = config.baseDir || getUploadBaseDir()
-  const uploadDir = join(baseDir, config.directory)
-  const filePath = join(uploadDir, filename)
+  const mimeType = file.type || 'application/octet-stream'
 
-  // Ensure directory exists
-  ensureDirectoryExists(uploadDir)
-
-  // Write file
-  return new Promise((resolve, reject) => {
-    const writeStream = createWriteStream(filePath)
-
-    writeStream.on('finish', () => {
-      const urlBase = config.urlBase || '/uploads'
-      const urlPath = `${urlBase}/${config.directory}/${filename}`
-
-      resolve({
-        url: urlPath,
-        filename,
-        originalName,
-        size: file.data!.length,
-        mimeType: file.type || 'application/octet-stream'
-      })
+  // Persist to the configured backend (Blob for reports, disk otherwise)
+  let url: string
+  try {
+    url = await persistUpload(config, filename, file.data, mimeType)
+  } catch (error) {
+    throw createError({
+      statusCode: 500,
+      statusMessage: 'Failed to save file',
+      data: { error: error instanceof Error ? error.message : String(error) }
     })
+  }
 
-    writeStream.on('error', (error) => {
-      reject(
-        createError({
-          statusCode: 500,
-          statusMessage: 'Failed to save file',
-          data: { error: error.message }
-        })
-      )
-    })
-
-    writeStream.write(file.data)
-    writeStream.end()
-  })
+  return {
+    url,
+    filename,
+    originalName,
+    size: file.data.length,
+    mimeType
+  }
 }
 
 /**

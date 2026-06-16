@@ -4,6 +4,7 @@ import { extname, basename } from 'node:path'
 import { and, eq, isNull } from 'drizzle-orm'
 import { getDatabase, schema } from '../../../database'
 import { resolvePublicAsset } from '../../../utils/publicFiles'
+import { tryBlobSource } from '../../../utils/blobStorage'
 import { recordDownload } from '../../../utils/analytics/recordDownload'
 
 export default defineEventHandler(async (event) => {
@@ -38,31 +39,42 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 404, statusMessage: 'Report not found' })
   }
 
+  const ext = extname(report.fileUrl) || '.pdf'
+  const downloadName = `${report.slug || basename(report.fileUrl, ext)}${ext}`
+  const query = getQuery(event)
+  const isInlineView = query.view === '1' || query.view === 'true'
+
+  const setDownloadHeaders = (contentLength: number) => {
+    setHeader(event, 'Content-Type', 'application/pdf')
+    setHeader(event, 'Content-Length', contentLength)
+    setHeader(
+      event,
+      'Content-Disposition',
+      `${isInlineView ? 'inline' : 'attachment'}; filename="${downloadName.replace(/"/g, '')}"`
+    )
+    setHeader(
+      event,
+      'Cache-Control',
+      isInlineView ? 'private, max-age=300' : 'private, no-store, must-revalidate'
+    )
+  }
+
+  // Prefer Blob storage; fall back to the on-disk asset when Blob is
+  // unconfigured or the object is missing (e.g. legacy files not yet migrated).
+  const blob = await tryBlobSource(report.fileUrl)
+  if (blob) {
+    setDownloadHeaders(blob.contentLength)
+    recordDownload(event, { kind: 'report', targetId: report.id, slug: report.slug })
+    return sendStream(event, blob.stream)
+  }
+
   const filePath = resolvePublicAsset(report.fileUrl)
   if (!filePath) {
     throw createError({ statusCode: 404, statusMessage: 'Report file not available' })
   }
 
   const fileStat = await stat(filePath)
-  const ext = extname(filePath) || '.pdf'
-  const downloadName = `${report.slug || basename(filePath, ext)}${ext}`
-  const query = getQuery(event)
-  const isInlineView = query.view === '1' || query.view === 'true'
-
-  setHeader(event, 'Content-Type', 'application/pdf')
-  setHeader(event, 'Content-Length', fileStat.size)
-  setHeader(
-    event,
-    'Content-Disposition',
-    `${isInlineView ? 'inline' : 'attachment'}; filename="${downloadName.replace(/"/g, '')}"`
-  )
-  setHeader(
-    event,
-    'Cache-Control',
-    isInlineView ? 'private, max-age=300' : 'private, no-store, must-revalidate'
-  )
-
+  setDownloadHeaders(fileStat.size)
   recordDownload(event, { kind: 'report', targetId: report.id, slug: report.slug })
-
   return sendStream(event, createReadStream(filePath))
 })

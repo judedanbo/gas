@@ -7,7 +7,7 @@ metadata:
     app.kubernetes.io/name: gas-frontend
     app.kubernetes.io/part-of: ghana-audit-service
 spec:
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
       app.kubernetes.io/name: gas-frontend
@@ -31,7 +31,7 @@ spec:
           type: RuntimeDefault
       initContainers:
         - name: seed-public
-          image: gasacr.azurecr.io/gas-frontend:latest
+          image: ${ACR_REGISTRY}.azurecr.io/gas-frontend:${IMAGE_TAG}
           command:
             - sh
             - -c
@@ -63,7 +63,7 @@ spec:
                 - ALL
       containers:
         - name: frontend
-          image: gasacr.azurecr.io/gas-frontend:latest
+          image: ${ACR_REGISTRY}.azurecr.io/gas-frontend:${IMAGE_TAG}
           ports:
             - containerPort: 3000
               name: http
@@ -74,13 +74,37 @@ spec:
                 name: gas-secrets
           volumeMounts:
             - { name: public-files, mountPath: /app/public/img, subPath: img }
-            - { name: public-files, mountPath: /app/.output/public/img, subPath: img }
-            - { name: public-files, mountPath: /app/public/images, subPath: images }
-            - { name: public-files, mountPath: /app/.output/public/images, subPath: images }
-            - { name: public-files, mountPath: /app/public/uploads, subPath: uploads }
-            - { name: public-files, mountPath: /app/.output/public/uploads, subPath: uploads }
+            - {
+                name: public-files,
+                mountPath: /app/.output/public/img,
+                subPath: img,
+              }
+            - {
+                name: public-files,
+                mountPath: /app/public/images,
+                subPath: images,
+              }
+            - {
+                name: public-files,
+                mountPath: /app/.output/public/images,
+                subPath: images,
+              }
+            - {
+                name: public-files,
+                mountPath: /app/public/uploads,
+                subPath: uploads,
+              }
+            - {
+                name: public-files,
+                mountPath: /app/.output/public/uploads,
+                subPath: uploads,
+              }
             - { name: public-files, mountPath: /app/public/pdf, subPath: pdf }
-            - { name: public-files, mountPath: /app/.output/public/pdf, subPath: pdf }
+            - {
+                name: public-files,
+                mountPath: /app/.output/public/pdf,
+                subPath: pdf,
+              }
           resources:
             requests:
               cpu: 100m
@@ -118,4 +142,4 @@ spec:
       volumes:
         - name: public-files
           persistentVolumeClaim:
-            claimName: gas-public-pvc
+            claimName: gas-public-files-pvc
