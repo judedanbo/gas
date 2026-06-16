@@ -61,6 +61,50 @@ Configure these in the GitHub repository settings under Settings > Secrets and v
 | `AZURE_STORAGE_CONNECTION_STRING` | Connection string for the Blob backend that stores report PDFs (see [Report PDFs](#report-pdfs--azure-blob-storage)). May reuse the gas-public storage account. |
 | `AZURE_BLOB_CONTAINER` | Blob container name for report PDFs (e.g. `reports`) |
 
+## Pre-Deploy Checklist
+
+Run through this before the first automated deploy (push to `main`) or a manual
+deploy to a cluster. Applies to the **staging** target (`test.audit.gov.gh`);
+production (`audit.gov.gh`) will be a separate deployment.
+
+1. **Migration ledger (most common failure).** The migrate Job runs file-based
+   Drizzle migrations (`db:apply`), which read the `__drizzle_migrations` ledger.
+   The history is squashed to `0000_init_squash`, and a schema created with
+   `drizzle-kit push` leaves that ledger empty — so the Job would try to
+   `CREATE TABLE` over existing tables and fail. Diagnose:
+
+   ```bash
+   kubectl exec -n gas mysql-0 -- sh -c \
+     'mysql -uroot -p"$MYSQL_ROOT_PASSWORD" -e "SHOW TABLES IN ghana_audit_service; SELECT hash FROM ghana_audit_service.__drizzle_migrations"'
+   ```
+
+   - No tables yet → do nothing; the Job creates the schema on first run.
+   - Tables exist **and** the ledger has a row → no action.
+   - Tables exist but ledger empty/missing → run the one-time baseline first
+     (idempotent; precondition: schema already matches the current Drizzle
+     schema — confirm `drizzle-kit push` reports no changes):
+
+     ```bash
+     kubectl exec -i -n gas mysql-0 -- sh -c \
+       'mysql -uroot -p"$MYSQL_ROOT_PASSWORD" ghana_audit_service' \
+       < k8s/jobs/baseline-prod-drizzle-migrations.sql
+     ```
+
+2. **GitHub `production` environment secrets exist.** All keys in the
+   [GitHub Secrets](#github-secrets) table must be set. Unset secrets render
+   empty via `envsubst`; in particular empty `ADMIN_EMAIL`/`ADMIN_PASSWORD`/
+   `ADMIN_NAME` make the seed Job exit 1.
+
+3. **Public-files PVC storage class.** The frontend mounts `gas-public-files-pvc`
+   (`storage/prod-pvc.yaml`, `storageClassName: azureblob-nfs-premium`).
+   `storageClassName` is immutable — if the PVC already exists with a different
+   class, `kubectl apply` is rejected; delete and recreate it to switch.
+
+4. **Cluster has the assumed dependencies:** the `infosys-issuer` ClusterIssuer
+   (referenced by the ingress, managed outside this repo), the `ingress-nginx`
+   controller + namespace, the `managed-csi` and `azureblob-nfs-premium` storage
+   classes, and metrics-server (for the frontend HPA).
+
 ## Manual Deploy
 
 If you need to deploy manually (not via GitHub Actions):

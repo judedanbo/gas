@@ -51,6 +51,8 @@ COPY --from=deps /app/node_modules ./node_modules
 COPY package.json ./
 COPY server/database/migrations ./server/database/migrations
 COPY server/database/migrate.ts ./server/database/migrate.ts
+# migrate.ts imports baseline.ts (squash-baseline reconciliation) — both required.
+COPY server/database/baseline.ts ./server/database/baseline.ts
 # reset.ts powers the (manual, suspended) k8s/jobs/reset-job.yaml. It is NOT the
 # default command and is heavily guarded; see that manifest.
 COPY server/database/reset.ts ./server/database/reset.ts
