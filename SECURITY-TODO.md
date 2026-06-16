@@ -53,9 +53,6 @@ verification scope). Validate before/at production rollout.
   then hashes IPs unsalted (reversible). Add a boot-time check (Nitro plugin) that errors in
   production if the salt is unset/short. *(Good next quick win.)*
 ### Low
-- [ ] 🔴 **L-5 — Replace weak placeholder default secrets** in `.env.example` /
-  `docker-compose.yml`; ensure prod overrides and that the seed (with `ADMIN_PASSWORD`) never
-  runs against production.
 
 ### Future hardening
 - [ ] 🔴 **Redis TLS** (defense-in-depth on top of M-2's `requirepass`).
@@ -99,4 +96,8 @@ verification scope). Validate before/at production rollout.
 - [x] 🟢 **L-4 — Config hardening:** dropped `data:` from CSP `img-src`; production startup
   warning when `REDIS_URL` is unset (`validateConfig.ts`); `TRUSTED_PROXIES` warning already
   present + documented.
+- [x] 🟢 **L-5 — Placeholder secrets:** production startup warning for placeholder/short
+  `JWT_SECRET`/`NUXT_API_SECRET`/`ANALYTICS_IP_SALT` (`server/utils/secretChecks.ts` + test);
+  `.env.example`/compose documented as insecure-local-only with `openssl` generation hints;
+  seed confirmed manual-only.
 - [x] 🟢 **Security assessment report** (`SECURITY-ASSESSMENT.md`). Commit `65f1ff0`.

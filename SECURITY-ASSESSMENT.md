@@ -78,7 +78,7 @@ inventory of the live environment.
 | L-2 | SSE auth token passed via query string — **Remediated** | Low | Auth | `ghana-audit-service/server/middleware/adminAuth.ts`, `server/utils/sseTicket.ts` |
 | L-3 | Contact `message` stored unescaped (display-time sanitized) — **Remediated** | Low | Web | `ghana-audit-service/server/api/contact.post.ts`, `server/utils/sanitizeText.ts` |
 | L-4 | Config-dependent hardening (CSP `data:`, Redis-less rate-limit fallback, `TRUSTED_PROXIES`) — **Remediated** | Low | Infra | `nuxt.config.ts`, `server/plugins/validateConfig.ts` |
-| L-5 | Weak placeholder default secrets in examples/compose | Low | Config | `.env.example`, `docker-compose.yml` |
+| L-5 | Weak placeholder default secrets in examples/compose — **Remediated** | Low | Config | `.env.example`, `docker-compose.yml`, `server/plugins/validateConfig.ts` |
 
 ---
 
@@ -278,7 +278,7 @@ Covered by `tests/unit/server/utils/sanitizeText.test.ts`.
 - **`TRUSTED_PROXIES`** — already warned on at startup in `validateConfig.ts` for production;
   set in `k8s/config/configmap.yaml` for the cluster.
 
-#### L-5 — Weak placeholder default secrets
+#### L-5 — Weak placeholder default secrets — **Remediated**
 **Location:** `.env.example` (root and app), `docker-compose.yml`
 **Description:** Example/compose defaults such as `JWT_SECRET`/`NUXT_API_SECRET`/
 `ANALYTICS_IP_SALT` placeholders and `ADMIN_PASSWORD=change-this-password` are insecure by
@@ -288,6 +288,15 @@ correctly requires `JWT_SECRET` at runtime (throws if missing) and contains no h
 secrets.
 **Recommendation:** Enforce strong secret generation in the deploy runbook; ensure the seed
 script (which consumes `ADMIN_PASSWORD`) never runs against production.
+
+**Status (2026-06-16): Remediated.** Per chosen scope, compose keeps its local-dev defaults
+(now clearly commented as insecure local-only) rather than hard-failing. Defense added at
+runtime: `server/plugins/validateConfig.ts` now warns in production when `JWT_SECRET`,
+`NUXT_API_SECRET`, or `ANALYTICS_IP_SALT` look like placeholders or are too short (logic in
+`server/utils/secretChecks.ts`, unit-tested). `.env.example` files document `openssl rand
+-hex 32` generation and flag every value as an insecure placeholder. The admin seed remains
+**manual** (k8s `seed-job.yaml`, not in `deploy.yml`); the docs note to use a strong unique
+`ADMIN_PASSWORD` and rotate after first login.
 
 ---
 

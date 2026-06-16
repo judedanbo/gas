@@ -13,6 +13,9 @@ services:
     ports:
       - "3300:3000"
     environment:
+      # NOTE: the `:-` fallbacks below are INSECURE local-dev defaults. Provide a
+      # populated .env (see .env.example) for any non-local use — secrets left at
+      # these values are flagged at startup by server/plugins/validateConfig.ts.
       - NODE_ENV=production
       - HOST=0.0.0.0
       - PORT=3000
