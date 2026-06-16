@@ -7,7 +7,9 @@
         :alt="article.title"
         class="w-full h-full object-cover"
         loading="lazy"
-        sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+        :width="640"
+        :height="360"
+        sizes="xs:100vw sm:100vw md:50vw lg:33vw"
       />
     </div>
 
