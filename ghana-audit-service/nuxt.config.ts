@@ -295,7 +295,16 @@ export default defineNuxtConfig({
       // crawler can't wander into data routes (e.g. /publications/[slug]) and
       // fail. crawlLinks is off to keep prerendering to this explicit list.
       crawlLinks: false,
-      routes: ['/about', '/privacy-policy', '/terms', '/accessibility', '/search'],
+      routes: [
+        '/about',
+        '/about/the-service',
+        '/about/departmental-profile',
+        '/about/past-auditors-general',
+        '/privacy-policy',
+        '/terms',
+        '/accessibility',
+        '/search'
+      ],
       ignore: ['/admin', '/admin/**', '/ak/admin', '/ak/admin/**', '/_ipx/**', '/api/downloads/**']
     },
     // Route rules
@@ -318,6 +327,19 @@ export default defineNuxtConfig({
       '/contact': { isr: 3600 },
       '/about/management-team': { isr: 3600 },
       '/about/management-team/**': { isr: 3600 },
+      // Akan locale variants (i18n prefix_except_default) — mirror the TTLs above.
+      '/ak': { isr: 600 },
+      '/ak/reports': { isr: 600 },
+      '/ak/reports/**': { isr: 600 },
+      '/ak/publications': { isr: 600 },
+      '/ak/publications/**': { isr: 3600 },
+      '/ak/media': { isr: 600 },
+      '/ak/media/**': { isr: 600 },
+      '/ak/careers': { isr: 600 },
+      '/ak/careers/**': { isr: 600 },
+      '/ak/contact': { isr: 3600 },
+      '/ak/about/management-team': { isr: 3600 },
+      '/ak/about/management-team/**': { isr: 3600 },
 
       // Exclude image optimization and download routes from prerendering —
       // the crawler discovers every srcset breakpoint, adding 90+ routes at
