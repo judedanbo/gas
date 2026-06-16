@@ -74,7 +74,7 @@ inventory of the live environment.
 | M-4 | Open redirect via stored publication `fileUrl` — **Remediated** | Medium | Web | `ghana-audit-service/server/api/downloads/publications/[id].get.ts` |
 | M-5 | No SAST / dependency / image scanning or approval gate in CI/CD — **Remediated** | Medium | CI/CD | `.github/workflows/ci.yml`, `deploy.yml`, `codeql.yml` |
 | M-6 | No account lockout on login (per-IP rate limit only) — **Remediated** | Medium | Auth | `ghana-audit-service/server/api/admin/auth/login.post.ts` |
-| L-1 | JWT verification does not pin `algorithms` | Low | Auth | `ghana-audit-service/server/utils/jwt.ts:55` |
+| L-1 | JWT verification does not pin `algorithms` — **Remediated** | Low | Auth | `ghana-audit-service/server/utils/jwt.ts` |
 | L-2 | SSE auth token passed via query string | Low | Auth | `ghana-audit-service/server/middleware/adminAuth.ts:48,69` |
 | L-3 | Contact `message` stored unescaped (display-time sanitized) | Low | Web | `ghana-audit-service/server/api/contact.post.ts:131` |
 | L-4 | Config-dependent hardening (CSP `data:`, Redis-less rate-limit fallback, `TRUSTED_PROXIES`) | Low | Infra | `nuxt.config.ts:405`, `server/utils/rateLimiter.ts` |
@@ -227,6 +227,11 @@ by default, so classic algorithm-confusion is not exploitable here. Pinning is a
 defense-in-depth best practice.
 **Recommendation:** Pass `{ algorithms: ['HS256'] }` to both sign and verify.
 
+**Status (2026-06-16): Remediated.** `signToken` now sets `algorithm: 'HS256'` and
+`verifyToken` passes `algorithms: ['HS256']`, so a token presenting any other `alg` is
+rejected. Covered by `tests/unit/server/utils/jwt.test.ts` (incl. an HS512 token being
+rejected by the HS256-pinned verify).
+
 #### L-2 — SSE auth token passed via query string
 **Location:** `ghana-audit-service/server/middleware/adminAuth.ts:48,69-71`
 **Description:** For `QUERY_TOKEN_ROUTES` (`/api/admin/reports/optimize-stream`), the bearer
@@ -347,7 +352,7 @@ The following controls are implemented well and should be preserved:
 | 4 | Add allowlist validation to publication redirect | M-4 | Low |
 | 5 | ~~Add `npm audit` + CodeQL to CI, Trivy to deploy~~ **(done — M-5)**; enable prod approval gate (Required reviewers) | M-5 | Medium |
 | 6 | ~~Add per-account login lockout / backoff~~ **(done — M-6)** | M-6 | Medium |
-| 7 | Pin JWT `algorithms: ['HS256']` | L-1 | Low |
+| 7 | ~~Pin JWT `algorithms: ['HS256']`~~ **(done — L-1)** | L-1 | Low |
 | 8 | ~~Tighten CSP toward nonce/hash; drop `'unsafe-eval'`~~ **(done — M-1)**; still drop `data:` from `img-src` where possible | M-1, L-4 | Medium |
 | 9 | Schedule `@nuxtjs/i18n` major upgrade (deferred deps) | §5 | High |
 | 10 | Sanitize contact `message` on storage; minimize SSE query-token allowlist | L-3, L-2 | Low |

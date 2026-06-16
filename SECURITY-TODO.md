@@ -53,7 +53,6 @@ verification scope). Validate before/at production rollout.
   then hashes IPs unsalted (reversible). Add a boot-time check (Nitro plugin) that errors in
   production if the salt is unset/short. *(Good next quick win.)*
 ### Low
-- [ ] 🔴 **L-1 — Pin JWT `algorithms: ['HS256']`** in `server/utils/jwt.ts` sign/verify.
 - [ ] 🔴 **L-2 — Keep the SSE query-token allowlist minimal** (`adminAuth.ts`
   `QUERY_TOKEN_ROUTES`); consider a single-use short-TTL SSE ticket instead of the session JWT.
 - [ ] 🔴 **L-3 — Sanitize the contact `message` on storage** (`contact.post.ts`), so it's
@@ -96,4 +95,6 @@ verification scope). Validate before/at production rollout.
   migration `0001`). 10 fails/15m → exponential backoff (15m→…→24h cap), env-configurable.
   *Optional follow-up:* an admin "unlock account" action (clear the lockout columns) — not
   required since locks auto-expire and a successful login resets them.
+- [x] 🟢 **L-1 — Pin JWT `algorithms: ['HS256']`** in `server/utils/jwt.ts` sign + verify
+  (+ `jwt.test.ts` proving a non-HS256 token is rejected).
 - [x] 🟢 **Security assessment report** (`SECURITY-ASSESSMENT.md`). Commit `65f1ff0`.
