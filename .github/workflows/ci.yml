@@ -37,6 +37,15 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      # Dependency vulnerability scan (M-5). The full report is informational; the
+      # build only fails on Critical advisories. Known Highs are mostly build-time /
+      # transitive and tracked for the deferred @nuxtjs/i18n major upgrade.
+      - name: Dependency audit (report — non-blocking)
+        run: npm audit || true
+
+      - name: Dependency audit (fail on critical)
+        run: npm audit --audit-level=critical
+
       - name: Typecheck
         run: npm run typecheck
 

@@ -19,6 +19,14 @@ Status legend: 🔴 not started · 🟡 in progress · 🟢 done (kept for histo
   After setting it, redeploy (or re-apply secrets + restart the redis Deployment) so the new
   password takes effect. Ref: `k8s/README.md`, `SECURITY-ASSESSMENT.md` (M-2).
 
+- [ ] 🔴 **Enable the deploy approval gate (M-5).** In **Settings → Environments →
+  production → Required reviewers**, add reviewer(s). The `build-and-push` and `deploy` jobs
+  already run in the `production` environment, so this makes production deploys pause for
+  manual approval. No code change needed.
+- [ ] 🔴 **If the repo is private, enable GitHub Advanced Security (M-5)** so the new
+  `codeql.yml` workflow can run (CodeQL on private repos requires GHAS; on public repos it
+  works as-is).
+
 ---
 
 ## 2. Pre-production verification (residual risk on already-merged fixes)
@@ -44,9 +52,6 @@ verification scope). Validate before/at production rollout.
 - [ ] 🔴 **M-3 — Fail-fast on missing `ANALYTICS_IP_SALT`.** `fingerprint.ts` only warns,
   then hashes IPs unsalted (reversible). Add a boot-time check (Nitro plugin) that errors in
   production if the salt is unset/short. *(Good next quick win.)*
-- [ ] 🔴 **M-5 — Add security scanning + approval gate to CI/CD.** `npm audit` (or Snyk) and
-  CodeQL in `ci.yml`; Trivy image scan in `deploy.yml`; GitHub Environment manual-approval
-  gate on the `production` deploy.
 - [ ] 🔴 **M-6 — Per-account login lockout / backoff.** `login.post.ts` has per-IP rate
   limiting only; add account-scoped lockout (and/or CAPTCHA) to resist distributed brute force.
 
@@ -87,4 +92,7 @@ verification scope). Validate before/at production rollout.
   *(Manual `REDIS_PASSWORD` secret still required — see §1.)*
 - [x] 🟢 **M-4 — Allowlisted publication-download redirect** (`server/utils/downloadRedirect.ts`
   + unit test). Disallowed hosts now 404. *(M-3 skipped for now, still open in §3.)*
+- [x] 🟢 **M-5 — CI/CD security scanning.** npm audit (fail-on-critical) in `ci.yml`, Trivy
+  image scan in `deploy.yml`, new `codeql.yml`. *(Two manual follow-ups in §1: enable
+  Required reviewers; enable GHAS if the repo is private.)*
 - [x] 🟢 **Security assessment report** (`SECURITY-ASSESSMENT.md`). Commit `65f1ff0`.

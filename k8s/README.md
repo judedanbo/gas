@@ -69,6 +69,15 @@ cannot see will make `azure/login` fail with empty credentials.
 
 > `ACR_NAME` is **not** a secret — it is a workflow `env:` value in `deploy.yml`.
 
+### Deploy approval gate (recommended)
+
+The `build-and-push` and `deploy` jobs run in the `production` GitHub Environment. To require
+manual sign-off before a production deploy, add reviewer(s) under **Settings → Environments →
+production → Required reviewers**. With that enabled, a push to `main` builds/scans the image
+and then **pauses for approval** before applying to the cluster. CI security scanning runs
+regardless (npm audit + Trivy in the workflows, CodeQL in `codeql.yml`); CodeQL on a private
+repo additionally requires GitHub Advanced Security to be enabled.
+
 ### Azure authentication (OIDC federated)
 
 The workflow logs in with `azure/login` using **OIDC federated credentials**

@@ -72,7 +72,7 @@ inventory of the live environment.
 | M-2 | Redis runs without authentication; DB/Redis ports exposed in compose — **Remediated** | Medium | Infra | `k8s/redis/deployment.yaml`, `docker-compose.yml` |
 | M-3 | Analytics IP-salt fails open to unsalted (reversible) hashing | Medium | Privacy | `ghana-audit-service/server/utils/analytics/fingerprint.ts:19,25` |
 | M-4 | Open redirect via stored publication `fileUrl` — **Remediated** | Medium | Web | `ghana-audit-service/server/api/downloads/publications/[id].get.ts` |
-| M-5 | No SAST / dependency / image scanning or approval gate in CI/CD | Medium | CI/CD | `.github/workflows/ci.yml`, `deploy.yml` |
+| M-5 | No SAST / dependency / image scanning or approval gate in CI/CD — **Remediated** | Medium | CI/CD | `.github/workflows/ci.yml`, `deploy.yml`, `codeql.yml` |
 | M-6 | No account lockout on login (per-IP rate limit only) | Medium | Auth | `ghana-audit-service/server/api/admin/auth/login.post.ts:34` |
 | L-1 | JWT verification does not pin `algorithms` | Low | Auth | `ghana-audit-service/server/utils/jwt.ts:55` |
 | L-2 | SSE auth token passed via query string | Low | Auth | `ghana-audit-service/server/middleware/adminAuth.ts:48,69` |
@@ -182,6 +182,17 @@ any merge to `main` ships automatically.
 Trivy image scanning to `deploy.yml` before push; gate production deploys with a GitHub
 Environment protection rule (manual approval). Secret handling (OIDC, `id-token: write`,
 secrets-scoped env) is already done well.
+
+**Status (2026-06-16): Remediated (scanning) + documented manual step (approval gate).**
+`ci.yml` now runs `npm audit` (full report non-blocking; **fails on Critical** via
+`--audit-level=critical`). `deploy.yml` runs **Trivy** on the built frontend image before
+push (HIGH,CRITICAL report; **fails on Critical**, `ignore-unfixed`). A new `codeql.yml`
+runs **CodeQL** (`javascript-typescript`, `build-mode: none`) on push/PR + weekly, surfacing
+code-scanning alerts. Critical-only gating was chosen so CI stays green against the known
+build-time Highs (tracked under the deferred `@nuxtjs/i18n` upgrade). **Manual steps:**
+(1) enable *Required reviewers* on the `production` GitHub Environment to activate the deploy
+approval gate (the workflows already target that environment); (2) if the repo is private,
+enable GitHub Advanced Security so CodeQL can run.
 
 #### M-6 — No account lockout on login
 **Location:** `ghana-audit-service/server/api/admin/auth/login.post.ts:34-35`
@@ -323,7 +334,7 @@ The following controls are implemented well and should be preserved:
 | 2 | Run `npm audit fix` (nodemailer/ws/js-yaml/launch-editor); re-run quality gate | §5 | Low |
 | 3 | Set Redis `--requirepass`; bind compose DB/Redis ports to localhost | M-2 | Low |
 | 4 | Add allowlist validation to publication redirect | M-4 | Low |
-| 5 | Add `npm audit` + CodeQL to CI, Trivy to deploy, approval gate on prod | M-5 | Medium |
+| 5 | ~~Add `npm audit` + CodeQL to CI, Trivy to deploy~~ **(done — M-5)**; enable prod approval gate (Required reviewers) | M-5 | Medium |
 | 6 | Add per-account login lockout / backoff | M-6 | Medium |
 | 7 | Pin JWT `algorithms: ['HS256']` | L-1 | Low |
 | 8 | ~~Tighten CSP toward nonce/hash; drop `'unsafe-eval'`~~ **(done — M-1)**; still drop `data:` from `img-src` where possible | M-1, L-4 | Medium |

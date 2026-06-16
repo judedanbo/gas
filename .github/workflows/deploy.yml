@@ -42,7 +42,7 @@ jobs:
       - name: Login to ACR
         run: az acr login --name ${{ env.ACR_NAME }}
 
-      - name: Build and push frontend image
+      - name: Build frontend image
         run: |
           docker build \
             --target runner \
@@ -50,6 +50,26 @@ jobs:
             -t ${{ env.ACR_NAME }}.azurecr.io/gas-frontend:${{ env.IMAGE_TAG }} \
             -t ${{ env.ACR_NAME }}.azurecr.io/gas-frontend:latest \
             ./ghana-audit-service
+
+      # Scan the built frontend image before it is pushed (M-5). The report shows
+      # High+Critical; the gate fails the deploy only on (fixable) Critical findings.
+      - name: Scan frontend image (report — non-blocking)
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          image-ref: ${{ env.ACR_NAME }}.azurecr.io/gas-frontend:${{ env.IMAGE_TAG }}
+          format: table
+          severity: HIGH,CRITICAL
+          ignore-unfixed: true
+          exit-code: '0'
+
+      - name: Scan frontend image (fail on critical)
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          image-ref: ${{ env.ACR_NAME }}.azurecr.io/gas-frontend:${{ env.IMAGE_TAG }}
+          format: table
+          severity: CRITICAL
+          ignore-unfixed: true
+          exit-code: '1'
 
       - name: Build and push migrate image
         run: |
