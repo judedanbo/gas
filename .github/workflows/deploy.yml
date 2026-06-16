@@ -138,11 +138,16 @@ jobs:
           kubectl wait --for=condition=complete \
             job/gas-migrate-${JOB_SUFFIX} \
             -n gas \
-            --timeout=120s
+            --timeout=300s
 
       - name: Apply storage (PVC)
         run: |
-          kubectl apply -f k8s/storage/prod-pvc.yaml
+          # A PVC's spec (storageClassName, the legacy storage-class annotation,
+          # accessModes, volumeName) is immutable once Bound — re-applying a
+          # changed spec is rejected. Create it only when absent, then assert
+          # it's Bound. The PVC is provisioned once and lives across deploys.
+          kubectl get pvc gas-public-files-pvc -n gas >/dev/null 2>&1 \
+            || kubectl apply -f k8s/storage/prod-pvc.yaml
           kubectl wait --for=jsonpath='{.status.phase}'=Bound \
             pvc/gas-public-files-pvc -n gas --timeout=60s
 

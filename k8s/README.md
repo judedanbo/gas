@@ -33,8 +33,8 @@ helm install cert-manager jetstack/cert-manager \
 Create an ACR and attach it to the AKS cluster:
 
 ```bash
-az acr create --name gasacr --resource-group <RG> --sku Basic
-az aks update --name <CLUSTER> --resource-group <RG> --attach-acr gasacr
+az acr create --name regisry --resource-group <RG> --sku Basic
+az aks update --name <CLUSTER> --resource-group <RG> --attach-acr regisry
 ```
 
 ## GitHub Secrets
@@ -131,7 +131,7 @@ the `build-and-push` and `deploy` jobs run with `environment: production`.
    gh secret set AZURE_SUBSCRIPTION_ID --env $ENV --body "$(az account show --query id -o tsv)"
 
    # ACR / AKS
-   gh secret set ACR_NAME              --env $ENV --body "gasacr"
+   gh secret set ACR_NAME              --env $ENV --body "regisry"
    gh secret set AKS_CLUSTER_NAME      --env $ENV   # paste cluster name
    gh secret set AKS_RESOURCE_GROUP    --env $ENV   # paste resource group
 
@@ -193,13 +193,13 @@ production (`audit.gov.gh`) will be a separate deployment.
    `ADMIN_NAME` make the seed Job exit 1.
 
 3. **Public-files PVC storage class.** The frontend mounts `gas-public-files-pvc`
-   (`storage/prod-pvc.yaml`, `storageClassName: azureblob-nfs-premium`).
+   (`storage/prod-pvc.yaml`, `storageClassName: my-blobstorage`).
    `storageClassName` is immutable — if the PVC already exists with a different
    class, `kubectl apply` is rejected; delete and recreate it to switch.
 
 4. **Cluster has the assumed dependencies:** the `infosys-issuer` ClusterIssuer
    (referenced by the ingress, managed outside this repo), the `ingress-nginx`
-   controller + namespace, the `managed-csi` and `azureblob-nfs-premium` storage
+   controller + namespace, the `managed-csi` and `my-blobstorage` storage
    classes, and metrics-server (for the frontend HPA).
 
 ## Manual Deploy
@@ -321,7 +321,7 @@ k8s/
 mounted by the frontend Deployment (`claimName: gas-public-files-pvc`).
 
 The **active** deploy path uses `k8s/storage/prod-pvc.yaml` — a dynamically
-provisioned PVC (storageClassName `azureblob-nfs-premium`, 50Gi) that the cluster
+provisioned PVC (storageClassName `my-blobstorage`, 50Gi) that the cluster
 binds automatically; no manual share provisioning is required.
 
 The static Azure Files approach below (`k8s/storage/public-files.yaml`,
