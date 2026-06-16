@@ -1,20 +1,13 @@
-import { createRequire } from 'node:module'
+import heroicons from '@iconify-json/heroicons/icons.json'
+import simpleIcons from '@iconify-json/simple-icons/icons.json'
 
-// Use process.cwd() as the base for module resolution instead of
-// import.meta.url, which Nitro transforms into a virtual path
-// (/_entry.js) during prerendering — breaking createRequire.
-const _require = createRequire(process.cwd() + '/package.json')
-
-let _heroicons: unknown
-let _simpleIcons: unknown
-
+// Static imports (not createRequire) so Nitro inlines the collection JSON into
+// .output/server. The previous dynamic require was never bundled and threw at
+// runtime in the slim production image, which ships only .output (no
+// node_modules) — so /api/_nuxt_icon failed and any icon not in the client
+// bundle (e.g. admin/DB-sourced names) could not resolve. Static imports also
+// resolve correctly during prerender, the reason this custom bundle exists.
 export const collections: Record<string, () => unknown> = {
-  heroicons: () => {
-    _heroicons ??= _require('@iconify-json/heroicons/icons.json')
-    return _heroicons
-  },
-  'simple-icons': () => {
-    _simpleIcons ??= _require('@iconify-json/simple-icons/icons.json')
-    return _simpleIcons
-  },
+  heroicons: () => heroicons,
+  'simple-icons': () => simpleIcons
 }
