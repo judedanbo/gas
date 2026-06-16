@@ -78,12 +78,15 @@ export DB_USER=gas_user DB_PASSWORD=... JWT_SECRET=... NUXT_API_SECRET=... ANALY
 envsubst < k8s/config/secrets.yaml | kubectl apply -f -
 
 # 4. Apply infrastructure
-kubectl apply -f k8s/tls/cluster-issuer.yaml
+#    (TLS: the ingress uses the pre-existing `infosys-issuer` ClusterIssuer,
+#     managed outside this repo — nothing to apply here.)
 kubectl apply -f k8s/mysql/
 kubectl rollout status statefulset/mysql -n gas --timeout=120s
 kubectl apply -f k8s/redis/
 
 # 5. Run migration
+export ACR_REGISTRY=<ACR_NAME>   # e.g. regisry — must match where you pushed the image
+export IMAGE_TAG=<TAG>           # the tag you pushed, e.g. the commit SHA
 export JOB_SUFFIX=$(date +%s)
 envsubst < k8s/jobs/migrate-job.yaml | kubectl apply -f -
 kubectl wait --for=condition=complete job/gas-migrate-${JOB_SUFFIX} -n gas --timeout=120s
@@ -94,13 +97,15 @@ kubectl wait --for=condition=complete job/gas-migrate-${JOB_SUFFIX} -n gas --tim
 envsubst < k8s/jobs/seed-job.yaml | kubectl apply -f -
 kubectl wait --for=condition=complete job/gas-seed-job -n gas --timeout=300s
 
-# 6. Apply persistent storage
-kubectl apply -f k8s/storage/public-files.yaml
-kubectl wait --for=jsonpath='{.status.phase}'=Bound pvc/gas-public-pvc -n gas --timeout=60s
+# 6. Apply persistent storage (dynamically-provisioned blob PVC)
+kubectl apply -f k8s/storage/prod-pvc.yaml
+kubectl wait --for=jsonpath='{.status.phase}'=Bound pvc/gas-public-files-pvc -n gas --timeout=60s
 
-# 7. Deploy frontend (replace image tag)
-sed "s|gasacr.azurecr.io/gas-frontend:latest|gasacr.azurecr.io/gas-frontend:<TAG>|g" \
-  k8s/frontend/deployment.yaml | kubectl apply -f -
+# 7. Deploy frontend (pin image via envsubst — restricted so the seed-public
+#    initContainer's busybox script ($d/$f) is left untouched)
+export ACR_REGISTRY=<ACR_NAME>   # e.g. regisry
+export IMAGE_TAG=<TAG>           # the tag you pushed, e.g. the commit SHA
+envsubst '${ACR_REGISTRY} ${IMAGE_TAG}' < k8s/frontend/deployment.yaml | kubectl apply -f -
 kubectl apply -f k8s/frontend/service.yaml
 kubectl apply -f k8s/frontend/ingress.yaml
 kubectl apply -f k8s/frontend/hpa.yaml
@@ -162,19 +167,25 @@ k8s/
     migrate-job.yaml          # DB migration (runs before each deploy)
     seed-job.yaml             # One-time DB seed: admin user + content (manual)
     mysql-backup-cronjob.yaml # Daily mysqldump (02:00 UTC, 7-day retention)
-  tls/
-    cluster-issuer.yaml       # Let's Encrypt ClusterIssuer
   network/
     network-policies.yaml     # Default-deny + per-service allow rules
   storage/
-    public-files.yaml         # Static PV/PVC for Azure Files (gas-public share)
+    prod-pvc.yaml             # Active: dynamic ReadWriteMany PVC (gas-public-files-pvc)
+    public-files.yaml         # Legacy: static PV/PVC for Azure Files (gas-public share)
 ```
 
 ## Persistent storage for public files
 
-`public/{img,images,uploads,pdf}` are backed by a single static Azure File
-share (`gas-public`) via `k8s/storage/public-files.yaml`. Provision it before
-the first deploy:
+`public/{img,images,uploads,pdf}` are backed by a single ReadWriteMany volume
+mounted by the frontend Deployment (`claimName: gas-public-files-pvc`).
+
+The **active** deploy path uses `k8s/storage/prod-pvc.yaml` — a dynamically
+provisioned PVC (storageClassName `azureblob-nfs-premium`, 50Gi) that the cluster
+binds automatically; no manual share provisioning is required.
+
+The static Azure Files approach below (`k8s/storage/public-files.yaml`,
+`gas-public-pvc`) is the **legacy** alternative, retained for reference. It
+requires provisioning the share before the first deploy:
 
 ```bash
 # 1. Storage account (Standard, LRS) — reuse an existing one if you have it.

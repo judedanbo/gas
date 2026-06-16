@@ -31,7 +31,7 @@ spec:
           type: RuntimeDefault
       initContainers:
         - name: seed-public
-          image: regisry.azurecr.io/gas-frontend:latest
+          image: ${ACR_REGISTRY}.azurecr.io/gas-frontend:${IMAGE_TAG}
           command:
             - sh
             - -c
@@ -63,7 +63,7 @@ spec:
                 - ALL
       containers:
         - name: frontend
-          image: regisry.azurecr.io/gas-frontend:latest
+          image: ${ACR_REGISTRY}.azurecr.io/gas-frontend:${IMAGE_TAG}
           ports:
             - containerPort: 3000
               name: http

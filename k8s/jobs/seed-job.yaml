@@ -22,7 +22,8 @@
 #      Without them server/database/seed.ts exits 1.
 #
 # Usage:
-#   1. Run it (substitute the image registry the same way deploy.yml does):
+#   1. Run it (export the same image vars deploy.yml uses, then envsubst):
+#        export ACR_REGISTRY=<ACR_NAME> IMAGE_TAG=<TAG>
 #        envsubst < k8s/jobs/seed-job.yaml | kubectl apply -f -
 #   2. Watch:
 #        kubectl logs -n gas job/gas-seed-job -f
@@ -60,9 +61,10 @@ spec:
         - name: seed
           # Same migrator image as gas-migrate-job (must include seed.ts, the
           # seeds/ directory, and schema/ — see the Dockerfile migrator stage).
-          # ACR_REGISTRY is substituted from the ACR_NAME secret by envsubst in
-          # the same way the deploy workflow runs the migration Job.
-          image: regisry.azurecr.io/gas-migrate-test
+          # ACR_REGISTRY and IMAGE_TAG are substituted by envsubst (from the
+          # workflow `env` block), the same way the deploy workflow runs the
+          # migration Job — so this always matches what build-and-push pushed.
+          image: ${ACR_REGISTRY}.azurecr.io/gas-migrate:${IMAGE_TAG}
           imagePullPolicy: Always
           # Override the image's default migrate command with the full seed chain.
           command: ["npm", "run", "db:seed:all"]

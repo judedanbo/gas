@@ -11,10 +11,7 @@ concurrency:
 
 env:
   ACR_NAME: regisry
-  AKS_CLUSTER: infosys
-  RESOURCE_GROUP: infosys
   IMAGE_TAG: ${{ github.sha }}
-  SHORT_SHA: ${{ github.sha }}
 
 jobs:
   ci:
@@ -49,7 +46,7 @@ jobs:
         run: |
           docker build \
             --target runner \
-            --build-arg NUXT_PUBLIC_SITE_URL=https://audit.gov.gh \
+            --build-arg NUXT_PUBLIC_SITE_URL=https://test.audit.gov.gh \
             -t ${{ env.ACR_NAME }}.azurecr.io/gas-frontend:${{ env.IMAGE_TAG }} \
             -t ${{ env.ACR_NAME }}.azurecr.io/gas-frontend:latest \
             ./ghana-audit-service
@@ -114,11 +111,13 @@ jobs:
           # empty -> app stays on disk fallback. See k8s/README.md.
           AZURE_STORAGE_CONNECTION_STRING: ${{ secrets.AZURE_STORAGE_CONNECTION_STRING }}
           AZURE_BLOB_CONTAINER: ${{ secrets.AZURE_BLOB_CONTAINER }}
+          # Admin bootstrap — consumed by the manual seed Job (k8s/jobs/seed-job.yaml).
+          # If these GitHub secrets are unset they render empty and seeding exits 1.
+          ADMIN_EMAIL: ${{ secrets.ADMIN_EMAIL }}
+          ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD }}
+          ADMIN_NAME: ${{ secrets.ADMIN_NAME }}
         run: |
           envsubst < k8s/config/secrets.yaml | kubectl apply -f -
-
-      - name: Apply TLS ClusterIssuer
-        run: kubectl apply -f k8s/tls/cluster-issuer.yaml
 
       - name: Apply MySQL
         run: |
@@ -131,27 +130,27 @@ jobs:
           kubectl rollout status deployment/redis -n gas --timeout=60s
 
       - name: Run migration Job
-        env:
-          JOB_SUFFIX: ${{ github.sha }}
         run: |
           export JOB_SUFFIX=$(echo ${{ github.sha }} | cut -c1-7)
           export ACR_REGISTRY=${{ env.ACR_NAME }}
+          export IMAGE_TAG=${{ env.IMAGE_TAG }}
           envsubst < k8s/jobs/migrate-job.yaml | kubectl apply -f -
           kubectl wait --for=condition=complete \
             job/gas-migrate-${JOB_SUFFIX} \
             -n gas \
             --timeout=120s
 
-      - name: Apply storage (PV/PVC)
+      - name: Apply storage (PVC)
         run: |
-          kubectl apply -f k8s/storage/public-files.yaml
+          kubectl apply -f k8s/storage/prod-pvc.yaml
           kubectl wait --for=jsonpath='{.status.phase}'=Bound \
-            pvc/gas-public-pvc -n gas --timeout=60s
+            pvc/gas-public-files-pvc -n gas --timeout=60s
 
       - name: Apply frontend
         run: |
-          sed "s|gasacr.azurecr.io/gas-frontend:latest|${{ env.ACR_NAME }}.azurecr.io/gas-frontend:${{ env.IMAGE_TAG }}|g" \
-            k8s/frontend/deployment.yaml | kubectl apply -f -
+          export ACR_REGISTRY=${{ env.ACR_NAME }}
+          export IMAGE_TAG=${{ env.IMAGE_TAG }}
+          envsubst '${ACR_REGISTRY} ${IMAGE_TAG}' < k8s/frontend/deployment.yaml | kubectl apply -f -
           kubectl apply -f k8s/frontend/service.yaml
           kubectl apply -f k8s/frontend/ingress.yaml
           kubectl apply -f k8s/frontend/hpa.yaml

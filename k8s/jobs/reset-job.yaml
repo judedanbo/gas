@@ -13,8 +13,10 @@
 # `server/database/reset.ts` was added to the Dockerfile migrator stage.
 #
 # Usage:
-#   1. Create it (suspended — nothing runs yet):
-#        kubectl apply -f k8s/jobs/reset-job.yaml
+#   1. Create it (suspended — nothing runs yet). Export the same image vars
+#      deploy.yml uses, then envsubst (the image is templated):
+#        export ACR_REGISTRY=<ACR_NAME> IMAGE_TAG=<TAG>
+#        envsubst < k8s/jobs/reset-job.yaml | kubectl apply -f -
 #   2. Fire it:
 #        kubectl patch job gas-reset-job -n gas --type=merge \
 #          -p '{"spec":{"suspend":false}}'
@@ -22,7 +24,7 @@
 #        kubectl logs -n gas job/gas-reset-job -f
 #   4. Re-run later (Jobs are immutable — delete first):
 #        kubectl delete job gas-reset-job -n gas
-#        kubectl apply -f k8s/jobs/reset-job.yaml   # then patch to fire again
+#        envsubst < k8s/jobs/reset-job.yaml | kubectl apply -f -   # then patch to fire again
 # =============================================================================
 apiVersion: batch/v1
 kind: Job
@@ -55,7 +57,9 @@ spec:
       containers:
         - name: reset
           # Same migrator image as gas-migrate-job (must include reset.ts).
-          image: regisry.azurecr.io/gas-migrate-test
+          # ACR_REGISTRY and IMAGE_TAG are substituted by envsubst (see Usage) —
+          # so this always matches what build-and-push pushed.
+          image: ${ACR_REGISTRY}.azurecr.io/gas-migrate:${IMAGE_TAG}
           imagePullPolicy: Always
           # Override the image's default migrate command with the reset script.
           command: ["npx", "tsx", "server/database/reset.ts"]
