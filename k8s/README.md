@@ -39,27 +39,124 @@ az aks update --name <CLUSTER> --resource-group <RG> --attach-acr gasacr
 
 ## GitHub Secrets
 
-Configure these in the GitHub repository settings under Settings > Secrets and variables > Actions:
+Configure these as **environment** secrets on the `production` environment
+(Settings > Environments > production > Secrets), **not** repository-level
+secrets. Both the `build-and-push` and `deploy` jobs declare
+`environment: production`, so an environment-scoped secret that the build job
+cannot see will make `azure/login` fail with empty credentials.
 
-| Secret | Description |
-|--------|-------------|
-| `AZURE_CREDENTIALS` | Service principal JSON (`az ad sp create-for-rbac --sdk-auth`) |
-| `ACR_NAME` | ACR name (e.g., `gasacr`) |
-| `AKS_CLUSTER_NAME` | AKS cluster name |
-| `AKS_RESOURCE_GROUP` | Azure resource group |
-| `DB_USER` | MySQL user (e.g., `gas_user`) |
-| `DB_PASSWORD` | MySQL user password |
-| `MYSQL_ROOT_PASSWORD` | MySQL root password |
-| `JWT_SECRET` | JWT signing secret (generate with `openssl rand -hex 32`) |
-| `NUXT_API_SECRET` | Nuxt API secret (generate with `openssl rand -hex 32`) |
-| `ANALYTICS_IP_SALT` | Analytics IP hashing salt (generate with `openssl rand -hex 32`) |
-| `ADMIN_EMAIL` | Initial admin login email — consumed by the seed Job (see below) |
-| `ADMIN_PASSWORD` | Initial admin login password — consumed by the seed Job |
-| `ADMIN_NAME` | Initial admin display name (optional; defaults to `Administrator`) |
-| `AZURE_STORAGE_ACCOUNT_NAME` | Azure Storage account name backing the gas-public file share |
-| `AZURE_STORAGE_ACCOUNT_KEY` | Azure Storage account access key for the gas-public file share |
-| `AZURE_STORAGE_CONNECTION_STRING` | Connection string for the Blob backend that stores report PDFs (see [Report PDFs](#report-pdfs--azure-blob-storage)). May reuse the gas-public storage account. |
-| `AZURE_BLOB_CONTAINER` | Blob container name for report PDFs (e.g. `reports`) |
+| Secret                            | Description                                                                                                             |
+| --------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| `AZURE_CLIENT_ID`                 | App registration Application (client) ID — used for OIDC login                                                          |
+| `AZURE_TENANT_ID`                 | Microsoft Entra Directory (tenant) ID                                                                                   |
+| `AZURE_SUBSCRIPTION_ID`           | Azure subscription ID (`az account show --query id -o tsv`)                                                             |
+| `AKS_CLUSTER_NAME`                | AKS cluster name                                                                                                        |
+| `AKS_RESOURCE_GROUP`              | Azure resource group                                                                                                    |
+| `DB_USER`                         | MySQL user (e.g., `gas_user`)                                                                                           |
+| `DB_PASSWORD`                     | MySQL user password                                                                                                     |
+| `MYSQL_ROOT_PASSWORD`             | MySQL root password                                                                                                     |
+| `JWT_SECRET`                      | JWT signing secret (generate with `openssl rand -hex 32`)                                                               |
+| `NUXT_API_SECRET`                 | Nuxt API secret (generate with `openssl rand -hex 32`)                                                                  |
+| `ANALYTICS_IP_SALT`               | Analytics IP hashing salt (generate with `openssl rand -hex 32`)                                                        |
+| `AZURE_STORAGE_ACCOUNT_NAME`      | Azure Storage account name backing the gas-public file share                                                            |
+| `AZURE_STORAGE_ACCOUNT_KEY`       | Azure Storage account access key for the gas-public file share                                                          |
+| `ADMIN_EMAIL`                     | Initial admin login email — consumed by the seed Job                                                                    |
+| `ADMIN_PASSWORD`                  | Initial admin login password — consumed by the seed Job                                                                 |
+| `ADMIN_NAME`                      | Initial admin display name (optional; defaults to `Administrator`)                                                      |
+| `AZURE_STORAGE_CONNECTION_STRING` | Optional — Blob backend for report PDFs (see [Report PDFs](#report-pdfs--azure-blob-storage)); unset = on-disk fallback |
+| `AZURE_BLOB_CONTAINER`            | Optional — Blob container for report PDFs (e.g. `reports`)                                                              |
+
+> `ACR_NAME` is **not** a secret — it is a workflow `env:` value in `deploy.yml`.
+
+### Azure authentication (OIDC federated)
+
+The workflow logs in with `azure/login` using **OIDC federated credentials**
+(no long-lived secret). The app registration referenced by `AZURE_CLIENT_ID`
+needs a federated credential authorizing this repo's `production` environment,
+plus RBAC to push images and deploy:
+
+```bash
+# Federated credential — lets GitHub Actions exchange its OIDC token for an
+# Azure token when running in the `production` environment.
+az ad app federated-credential create --id <AZURE_CLIENT_ID> --parameters '{
+  "name": "gh-gas-production",
+  "issuer": "https://token.actions.githubusercontent.com",
+  "subject": "repo:judedanbo/gas:environment:production",
+  "audiences": ["api://AzureADTokenExchange"]
+}'
+
+# RBAC for the service principal behind the app registration:
+SP_ID=$(az ad sp show --id <AZURE_CLIENT_ID> --query id -o tsv)
+az role assignment create --assignee-object-id "$SP_ID" \
+  --assignee-principal-type ServicePrincipal \
+  --role AcrPush --scope <ACR_RESOURCE_ID>            # push images
+az role assignment create --assignee-object-id "$SP_ID" \
+  --assignee-principal-type ServicePrincipal \
+  --role "Azure Kubernetes Service Cluster User Role" --scope <AKS_RESOURCE_ID>
+```
+
+The deploy job also needs Kubernetes RBAC inside the cluster to apply manifests
+(e.g. bind the identity to a suitable ClusterRole), or use a cluster-admin
+credential via `az aks get-credentials --admin` in a trusted runner.
+
+### Setting the secrets (step by step)
+
+All secrets above must live on the **`production`** environment, because both
+the `build-and-push` and `deploy` jobs run with `environment: production`.
+
+1. **Create the `production` environment** (skip if it already exists):
+   - UI: repo **Settings → Environments → New environment**, name it `production`.
+   - or CLI: `gh api -X PUT repos/judedanbo/gas/environments/production`
+
+2. **Gather the values:**
+   - `AZURE_CLIENT_ID` — the OIDC app registration's Application (client) ID.
+   - `AZURE_TENANT_ID` — `az account show --query tenantId -o tsv`.
+   - `AZURE_SUBSCRIPTION_ID` — `az account show --query id -o tsv`.
+   - `ACR_NAME`, `AKS_CLUSTER_NAME`, `AKS_RESOURCE_GROUP` — your Azure resource names.
+   - `DB_USER`, `DB_PASSWORD`, `MYSQL_ROOT_PASSWORD` — chosen MySQL credentials.
+   - `JWT_SECRET`, `NUXT_API_SECRET`, `ANALYTICS_IP_SALT` — generate each with `openssl rand -hex 32`.
+   - `AZURE_STORAGE_ACCOUNT_NAME` — your storage account name (see [Persistent storage](#persistent-storage-for-public-files)).
+   - `AZURE_STORAGE_ACCOUNT_KEY` — `az storage account keys list --account-name <acct> --query '[0].value' -o tsv`.
+
+3. **Set each secret** on the `production` environment. Via the UI:
+   **Settings → Environments → production → Add secret** (one per row in the table above).
+   Or via the `gh` CLI (omitting `--body` makes `gh` prompt, keeping the value out of shell history — preferred for sensitive values):
+
+   ```bash
+   ENV=production
+
+   # Azure auth (OIDC)
+   gh secret set AZURE_CLIENT_ID       --env $ENV   # paste the app (client) ID
+   gh secret set AZURE_TENANT_ID       --env $ENV --body "$(az account show --query tenantId -o tsv)"
+   gh secret set AZURE_SUBSCRIPTION_ID --env $ENV --body "$(az account show --query id -o tsv)"
+
+   # ACR / AKS
+   gh secret set ACR_NAME              --env $ENV --body "gasacr"
+   gh secret set AKS_CLUSTER_NAME      --env $ENV   # paste cluster name
+   gh secret set AKS_RESOURCE_GROUP    --env $ENV   # paste resource group
+
+   # Database
+   gh secret set DB_USER               --env $ENV --body "gas_user"
+   gh secret set DB_PASSWORD           --env $ENV   # paste DB password
+   gh secret set MYSQL_ROOT_PASSWORD   --env $ENV   # paste root password
+
+   # App secrets (generate fresh)
+   gh secret set JWT_SECRET            --env $ENV --body "$(openssl rand -hex 32)"
+   gh secret set NUXT_API_SECRET       --env $ENV --body "$(openssl rand -hex 32)"
+   gh secret set ANALYTICS_IP_SALT     --env $ENV --body "$(openssl rand -hex 32)"
+
+   # Azure Files (persistent storage)
+   gh secret set AZURE_STORAGE_ACCOUNT_NAME --env $ENV   # paste storage account name
+   gh secret set AZURE_STORAGE_ACCOUNT_KEY  --env $ENV --body "$(az storage account keys list --account-name <acct> --query '[0].value' -o tsv)"
+   ```
+
+4. **Verify** all required secrets are present (or run `k8s/check-deploy-secrets.sh`):
+
+   ```bash
+   gh secret list --env production
+   ```
+
+5. Don't forget the [federated credential](#azure-authentication-oidc-federated) — the secrets alone are not enough for OIDC login.
 
 ## Pre-Deploy Checklist
 
