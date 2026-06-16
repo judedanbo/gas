@@ -28,7 +28,7 @@ WORKDIR /app
 COPY . .
 
 # Set build-time environment variables
-ARG NUXT_PUBLIC_SITE_URL=https://audit.gov.gh
+ARG NUXT_PUBLIC_SITE_URL=https://test.audit.gov.gh
 ENV NUXT_PUBLIC_SITE_URL=${NUXT_PUBLIC_SITE_URL}
 
 # install npm dependencies
@@ -51,6 +51,17 @@ COPY --from=deps /app/node_modules ./node_modules
 COPY package.json ./
 COPY server/database/migrations ./server/database/migrations
 COPY server/database/migrate.ts ./server/database/migrate.ts
+# migrate.ts imports baseline.ts (squash-baseline reconciliation) — both required.
+COPY server/database/baseline.ts ./server/database/baseline.ts
+# reset.ts powers the (manual, suspended) k8s/jobs/reset-job.yaml. It is NOT the
+# default command and is heavily guarded; see that manifest.
+COPY server/database/reset.ts ./server/database/reset.ts
+# seed.ts + seeds/ power the (manual) k8s/jobs/seed-job.yaml (npm run db:seed:all).
+# The seed scripts import server/database/schema/index and read seeds/data/*.json
+# fixtures, so all three paths must be present. Not the default command.
+COPY server/database/seed.ts ./server/database/seed.ts
+COPY server/database/seeds ./server/database/seeds
+COPY server/database/schema ./server/database/schema
 
 # DB_HOST, DB_PORT, DB_USER, DB_PASSWORD, DB_NAME come from the Job's envFrom.
 CMD ["npm", "run", "db:apply"]
@@ -67,6 +78,12 @@ ENV NODE_ENV=production
 ENV HOST=0.0.0.0
 ENV PORT=3000
 
+# Runtime tools used SYNCHRONOUSLY in the request path:
+#   chromium + font libs  -> analytics PDF export (/api/admin/analytics/report.pdf)
+#   poppler-utils         -> thumbnail generation on report upload (pdftoppm)
+# The PDF *optimization* toolchain (ghostscript, qpdf, tesseract-ocr*) is used
+# ONLY by the detached background job in pdfOptimizer.ts and has been moved to
+# the separate `migrator`/worker image — keeping it out of the web runner.
 RUN apk add --no-cache \
         chromium \
         nss \
@@ -76,11 +93,7 @@ RUN apk add --no-cache \
         ttf-freefont \
         ttf-opensans \
         fontconfig \
-        poppler-utils \
-        tesseract-ocr \
-        tesseract-ocr-data-eng \
-        ghostscript \
-        qpdf && \
+        poppler-utils && \
     fc-cache -f
 ENV PUPPETEER_SKIP_DOWNLOAD=true
 ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser

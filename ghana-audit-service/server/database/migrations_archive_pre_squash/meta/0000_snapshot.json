@@ -1,7 +1,7 @@
 {
   "version": "5",
   "dialect": "mysql",
-  "id": "44b3bd2c-4cfa-4d04-ba57-a09b167ced01",
+  "id": "8d1a3871-c969-4d3b-bb15-152db9acb2d7",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "tables": {
     "audit_logs": {
@@ -23,7 +23,7 @@
         },
         "action": {
           "name": "action",
-          "type": "enum('create','update','delete','restore','login','logout','export')",
+          "type": "enum('create','update','delete','restore','login','logout')",
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false
@@ -69,7 +69,7 @@
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false,
-          "default": "(CURRENT_TIMESTAMP)"
+          "default": "CURRENT_TIMESTAMP"
         }
       },
       "indexes": {
@@ -161,13 +161,6 @@
           "autoincrement": false,
           "default": "'viewer'"
         },
-        "modules": {
-          "name": "modules",
-          "type": "json",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
         "is_active": {
           "name": "is_active",
           "type": "boolean",
@@ -189,7 +182,7 @@
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false,
-          "default": "(CURRENT_TIMESTAMP)"
+          "default": "CURRENT_TIMESTAMP"
         },
         "updated_at": {
           "name": "updated_at",
@@ -237,124 +230,6 @@
           "name": "users_email_unique",
           "columns": [
             "email"
-          ]
-        }
-      },
-      "checkConstraint": {}
-    },
-    "admin_sessions": {
-      "name": "admin_sessions",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "int",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": true
-        },
-        "session_id": {
-          "name": "session_id",
-          "type": "varchar(64)",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "user_id": {
-          "name": "user_id",
-          "type": "int",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "datetime",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": "(CURRENT_TIMESTAMP)"
-        },
-        "last_activity_at": {
-          "name": "last_activity_at",
-          "type": "datetime",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": "(CURRENT_TIMESTAMP)"
-        },
-        "absolute_expires_at": {
-          "name": "absolute_expires_at",
-          "type": "datetime",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "revoked_at": {
-          "name": "revoked_at",
-          "type": "datetime",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "ip_address": {
-          "name": "ip_address",
-          "type": "varchar(45)",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "user_agent": {
-          "name": "user_agent",
-          "type": "varchar(500)",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        }
-      },
-      "indexes": {
-        "idx_admin_sessions_user": {
-          "name": "idx_admin_sessions_user",
-          "columns": [
-            "user_id"
-          ],
-          "isUnique": false
-        },
-        "idx_admin_sessions_absolute_expires": {
-          "name": "idx_admin_sessions_absolute_expires",
-          "columns": [
-            "absolute_expires_at"
-          ],
-          "isUnique": false
-        }
-      },
-      "foreignKeys": {
-        "admin_sessions_user_id_users_id_fk": {
-          "name": "admin_sessions_user_id_users_id_fk",
-          "tableFrom": "admin_sessions",
-          "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {
-        "admin_sessions_id": {
-          "name": "admin_sessions_id",
-          "columns": [
-            "id"
-          ]
-        }
-      },
-      "uniqueConstraints": {
-        "admin_sessions_session_id_unique": {
-          "name": "admin_sessions_session_id_unique",
-          "columns": [
-            "session_id"
           ]
         }
       },
@@ -461,7 +336,7 @@
         },
         "category": {
           "name": "category",
-          "type": "enum('financial','compliance','it','performance','technical','follow-up','special')",
+          "type": "enum('financial','compliance','it','performance','technical','follow-up')",
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false
@@ -469,6 +344,13 @@
         "published_at": {
           "name": "published_at",
           "type": "date",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "year": {
+          "name": "year",
+          "type": "year",
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false
@@ -508,7 +390,7 @@
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false,
-          "default": "(CURRENT_TIMESTAMP)"
+          "default": "CURRENT_TIMESTAMP"
         },
         "updated_at": {
           "name": "updated_at",
@@ -552,6 +434,13 @@
           "name": "idx_audit_reports_category",
           "columns": [
             "category"
+          ],
+          "isUnique": false
+        },
+        "idx_audit_reports_year": {
+          "name": "idx_audit_reports_year",
+          "columns": [
+            "year"
           ],
           "isUnique": false
         },
@@ -743,13 +632,6 @@
           "notNull": false,
           "autoincrement": false
         },
-        "file_size": {
-          "name": "file_size",
-          "type": "varchar(50)",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
         "thumbnail": {
           "name": "thumbnail",
           "type": "varchar(500)",
@@ -771,7 +653,7 @@
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false,
-          "default": "(CURRENT_TIMESTAMP)"
+          "default": "CURRENT_TIMESTAMP"
         },
         "updated_at": {
           "name": "updated_at",
@@ -879,97 +761,6 @@
       },
       "checkConstraint": {}
     },
-    "news_article_images": {
-      "name": "news_article_images",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "int",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": true
-        },
-        "news_article_id": {
-          "name": "news_article_id",
-          "type": "int",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "url": {
-          "name": "url",
-          "type": "varchar(500)",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "alt": {
-          "name": "alt",
-          "type": "varchar(255)",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": "''"
-        },
-        "caption": {
-          "name": "caption",
-          "type": "varchar(500)",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "sort_order": {
-          "name": "sort_order",
-          "type": "int",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": 0
-        }
-      },
-      "indexes": {
-        "idx_article_images_article": {
-          "name": "idx_article_images_article",
-          "columns": [
-            "news_article_id"
-          ],
-          "isUnique": false
-        },
-        "idx_article_images_sort": {
-          "name": "idx_article_images_sort",
-          "columns": [
-            "news_article_id",
-            "sort_order"
-          ],
-          "isUnique": false
-        }
-      },
-      "foreignKeys": {
-        "news_article_images_news_article_id_news_articles_id_fk": {
-          "name": "news_article_images_news_article_id_news_articles_id_fk",
-          "tableFrom": "news_article_images",
-          "tableTo": "news_articles",
-          "columnsFrom": [
-            "news_article_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {
-        "news_article_images_id": {
-          "name": "news_article_images_id",
-          "columns": [
-            "id"
-          ]
-        }
-      },
-      "uniqueConstraints": {},
-      "checkConstraint": {}
-    },
     "news_article_tags": {
       "name": "news_article_tags",
       "columns": {
@@ -1018,8 +809,8 @@
         }
       },
       "compositePrimaryKeys": {
-        "news_article_tags_news_article_id_tag_id": {
-          "name": "news_article_tags_news_article_id_tag_id",
+        "news_article_tags_news_article_id_tag_id_pk": {
+          "name": "news_article_tags_news_article_id_tag_id_pk",
           "columns": [
             "news_article_id",
             "tag_id"
@@ -1177,7 +968,7 @@
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false,
-          "default": "(CURRENT_TIMESTAMP)"
+          "default": "CURRENT_TIMESTAMP"
         },
         "updated_at": {
           "name": "updated_at",
@@ -1314,96 +1105,6 @@
           ]
         }
       },
-      "checkConstraint": {}
-    },
-    "event_images": {
-      "name": "event_images",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "int",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": true
-        },
-        "event_id": {
-          "name": "event_id",
-          "type": "int",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "url": {
-          "name": "url",
-          "type": "varchar(500)",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "alt": {
-          "name": "alt",
-          "type": "varchar(255)",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "caption": {
-          "name": "caption",
-          "type": "varchar(500)",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "sort_order": {
-          "name": "sort_order",
-          "type": "int",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": 0
-        }
-      },
-      "indexes": {
-        "idx_event_images_event": {
-          "name": "idx_event_images_event",
-          "columns": [
-            "event_id"
-          ],
-          "isUnique": false
-        },
-        "idx_event_images_sort": {
-          "name": "idx_event_images_sort",
-          "columns": [
-            "event_id",
-            "sort_order"
-          ],
-          "isUnique": false
-        }
-      },
-      "foreignKeys": {
-        "event_images_event_id_events_id_fk": {
-          "name": "event_images_event_id_events_id_fk",
-          "tableFrom": "event_images",
-          "tableTo": "events",
-          "columnsFrom": [
-            "event_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {
-        "event_images_id": {
-          "name": "event_images_id",
-          "columns": [
-            "id"
-          ]
-        }
-      },
-      "uniqueConstraints": {},
       "checkConstraint": {}
     },
     "event_translations": {
@@ -1562,7 +1263,7 @@
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false,
-          "default": "(CURRENT_TIMESTAMP)"
+          "default": "CURRENT_TIMESTAMP"
         },
         "updated_at": {
           "name": "updated_at",
@@ -1686,8 +1387,8 @@
         }
       },
       "foreignKeys": {
-        "dept_func_trans_function_id_fk": {
-          "name": "dept_func_trans_function_id_fk",
+        "department_function_translations_function_id_department_functions_id_fk": {
+          "name": "department_function_translations_function_id_department_functions_id_fk",
           "tableFrom": "department_function_translations",
           "tableTo": "department_functions",
           "columnsFrom": [
@@ -1884,7 +1585,7 @@
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false,
-          "default": "(CURRENT_TIMESTAMP)"
+          "default": "CURRENT_TIMESTAMP"
         },
         "updated_at": {
           "name": "updated_at",
@@ -1930,405 +1631,6 @@
       },
       "checkConstraint": {}
     },
-    "management_team": {
-      "name": "management_team",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "int",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": true
-        },
-        "slug": {
-          "name": "slug",
-          "type": "varchar(255)",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "role": {
-          "name": "role",
-          "type": "enum('auditor-general','deputy-auditor-general','regional-auditor','district-auditor','sector-head','branch-head')",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "office_id": {
-          "name": "office_id",
-          "type": "int",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "department_id": {
-          "name": "department_id",
-          "type": "int",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "icon": {
-          "name": "icon",
-          "type": "varchar(100)",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "photo": {
-          "name": "photo",
-          "type": "varchar(500)",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "email": {
-          "name": "email",
-          "type": "varchar(255)",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "phone": {
-          "name": "phone",
-          "type": "varchar(50)",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "display_order": {
-          "name": "display_order",
-          "type": "int",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": 0
-        },
-        "is_active": {
-          "name": "is_active",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": true
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "datetime",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": "(CURRENT_TIMESTAMP)"
-        },
-        "updated_at": {
-          "name": "updated_at",
-          "type": "datetime",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": "CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP"
-        },
-        "deleted_at": {
-          "name": "deleted_at",
-          "type": "datetime",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        }
-      },
-      "indexes": {
-        "idx_management_team_slug": {
-          "name": "idx_management_team_slug",
-          "columns": [
-            "slug"
-          ],
-          "isUnique": false
-        },
-        "idx_management_team_role": {
-          "name": "idx_management_team_role",
-          "columns": [
-            "role"
-          ],
-          "isUnique": false
-        },
-        "idx_management_team_active": {
-          "name": "idx_management_team_active",
-          "columns": [
-            "is_active"
-          ],
-          "isUnique": false
-        },
-        "idx_management_team_office": {
-          "name": "idx_management_team_office",
-          "columns": [
-            "office_id"
-          ],
-          "isUnique": false
-        },
-        "idx_management_team_department": {
-          "name": "idx_management_team_department",
-          "columns": [
-            "department_id"
-          ],
-          "isUnique": false
-        }
-      },
-      "foreignKeys": {
-        "management_team_office_id_offices_id_fk": {
-          "name": "management_team_office_id_offices_id_fk",
-          "tableFrom": "management_team",
-          "tableTo": "offices",
-          "columnsFrom": [
-            "office_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "set null",
-          "onUpdate": "no action"
-        },
-        "management_team_department_id_departments_id_fk": {
-          "name": "management_team_department_id_departments_id_fk",
-          "tableFrom": "management_team",
-          "tableTo": "departments",
-          "columnsFrom": [
-            "department_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "set null",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {
-        "management_team_id": {
-          "name": "management_team_id",
-          "columns": [
-            "id"
-          ]
-        }
-      },
-      "uniqueConstraints": {
-        "management_team_slug_unique": {
-          "name": "management_team_slug_unique",
-          "columns": [
-            "slug"
-          ]
-        }
-      },
-      "checkConstraint": {}
-    },
-    "management_team_responsibilities": {
-      "name": "management_team_responsibilities",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "int",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": true
-        },
-        "management_team_id": {
-          "name": "management_team_id",
-          "type": "int",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "display_order": {
-          "name": "display_order",
-          "type": "int",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": 0
-        }
-      },
-      "indexes": {},
-      "foreignKeys": {
-        "mgmt_team_resp_team_id_fk": {
-          "name": "mgmt_team_resp_team_id_fk",
-          "tableFrom": "management_team_responsibilities",
-          "tableTo": "management_team",
-          "columnsFrom": [
-            "management_team_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {
-        "management_team_responsibilities_id": {
-          "name": "management_team_responsibilities_id",
-          "columns": [
-            "id"
-          ]
-        }
-      },
-      "uniqueConstraints": {},
-      "checkConstraint": {}
-    },
-    "management_team_responsibility_translations": {
-      "name": "management_team_responsibility_translations",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "int",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": true
-        },
-        "responsibility_id": {
-          "name": "responsibility_id",
-          "type": "int",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "locale": {
-          "name": "locale",
-          "type": "enum('en','ak')",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "description": {
-          "name": "description",
-          "type": "varchar(500)",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        }
-      },
-      "indexes": {
-        "idx_responsibility_locale": {
-          "name": "idx_responsibility_locale",
-          "columns": [
-            "responsibility_id",
-            "locale"
-          ],
-          "isUnique": true
-        }
-      },
-      "foreignKeys": {
-        "mgmt_resp_trans_resp_id_fk": {
-          "name": "mgmt_resp_trans_resp_id_fk",
-          "tableFrom": "management_team_responsibility_translations",
-          "tableTo": "management_team_responsibilities",
-          "columnsFrom": [
-            "responsibility_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {
-        "management_team_responsibility_translations_id": {
-          "name": "management_team_responsibility_translations_id",
-          "columns": [
-            "id"
-          ]
-        }
-      },
-      "uniqueConstraints": {},
-      "checkConstraint": {}
-    },
-    "management_team_translations": {
-      "name": "management_team_translations",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "int",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": true
-        },
-        "management_team_id": {
-          "name": "management_team_id",
-          "type": "int",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "locale": {
-          "name": "locale",
-          "type": "enum('en','ak')",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "name": {
-          "name": "name",
-          "type": "varchar(255)",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "title": {
-          "name": "title",
-          "type": "varchar(255)",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "bio": {
-          "name": "bio",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        }
-      },
-      "indexes": {
-        "idx_management_team_locale": {
-          "name": "idx_management_team_locale",
-          "columns": [
-            "management_team_id",
-            "locale"
-          ],
-          "isUnique": true
-        },
-        "idx_management_team_translations_locale": {
-          "name": "idx_management_team_translations_locale",
-          "columns": [
-            "locale"
-          ],
-          "isUnique": false
-        }
-      },
-      "foreignKeys": {
-        "mgmt_team_trans_team_id_fk": {
-          "name": "mgmt_team_trans_team_id_fk",
-          "tableFrom": "management_team_translations",
-          "tableTo": "management_team",
-          "columnsFrom": [
-            "management_team_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {
-        "management_team_translations_id": {
-          "name": "management_team_translations_id",
-          "columns": [
-            "id"
-          ]
-        }
-      },
-      "uniqueConstraints": {},
-      "checkConstraint": {}
-    },
     "past_ag_achievement_translations": {
       "name": "past_ag_achievement_translations",
       "columns": {
@@ -2372,8 +1674,8 @@
         }
       },
       "foreignKeys": {
-        "past_ag_achiev_trans_achiev_id_fk": {
-          "name": "past_ag_achiev_trans_achiev_id_fk",
+        "past_ag_achievement_translations_achievement_id_past_ag_achievements_id_fk": {
+          "name": "past_ag_achievement_translations_achievement_id_past_ag_achievements_id_fk",
           "tableFrom": "past_ag_achievement_translations",
           "tableTo": "past_ag_achievements",
           "columnsFrom": [
@@ -2577,7 +1879,7 @@
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false,
-          "default": "(CURRENT_TIMESTAMP)"
+          "default": "CURRENT_TIMESTAMP"
         },
         "updated_at": {
           "name": "updated_at",
@@ -2749,7 +2051,7 @@
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false,
-          "default": "(CURRENT_TIMESTAMP)"
+          "default": "CURRENT_TIMESTAMP"
         },
         "updated_at": {
           "name": "updated_at",
@@ -2868,7 +2170,7 @@
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false,
-          "default": "(CURRENT_TIMESTAMP)"
+          "default": "CURRENT_TIMESTAMP"
         },
         "updated_at": {
           "name": "updated_at",
@@ -3012,8 +2314,8 @@
         }
       },
       "foreignKeys": {
-        "vac_req_trans_req_id_fk": {
-          "name": "vac_req_trans_req_id_fk",
+        "vacancy_requirement_translations_requirement_id_vacancy_requirements_id_fk": {
+          "name": "vacancy_requirement_translations_requirement_id_vacancy_requirements_id_fk",
           "tableFrom": "vacancy_requirement_translations",
           "tableTo": "vacancy_requirements",
           "columnsFrom": [
@@ -3327,7 +2629,7 @@
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false,
-          "default": "(CURRENT_TIMESTAMP)"
+          "default": "CURRENT_TIMESTAMP"
         },
         "updated_at": {
           "name": "updated_at",
@@ -3428,8 +2730,8 @@
       },
       "checkConstraint": {}
     },
-    "office_translations": {
-      "name": "office_translations",
+    "regional_office_translations": {
+      "name": "regional_office_translations",
       "columns": {
         "id": {
           "name": "id",
@@ -3476,8 +2778,8 @@
           ],
           "isUnique": true
         },
-        "idx_office_translations_locale": {
-          "name": "idx_office_translations_locale",
+        "idx_regional_office_translations_locale": {
+          "name": "idx_regional_office_translations_locale",
           "columns": [
             "locale"
           ],
@@ -3485,10 +2787,10 @@
         }
       },
       "foreignKeys": {
-        "office_translations_office_id_offices_id_fk": {
-          "name": "office_translations_office_id_offices_id_fk",
-          "tableFrom": "office_translations",
-          "tableTo": "offices",
+        "regional_office_translations_office_id_regional_offices_id_fk": {
+          "name": "regional_office_translations_office_id_regional_offices_id_fk",
+          "tableFrom": "regional_office_translations",
+          "tableTo": "regional_offices",
           "columnsFrom": [
             "office_id"
           ],
@@ -3500,8 +2802,8 @@
         }
       },
       "compositePrimaryKeys": {
-        "office_translations_id": {
-          "name": "office_translations_id",
+        "regional_office_translations_id": {
+          "name": "regional_office_translations_id",
           "columns": [
             "id"
           ]
@@ -3510,77 +2812,8 @@
       "uniqueConstraints": {},
       "checkConstraint": {}
     },
-    "office_types": {
-      "name": "office_types",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "int",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": true
-        },
-        "slug": {
-          "name": "slug",
-          "type": "varchar(50)",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "name": {
-          "name": "name",
-          "type": "varchar(100)",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "display_order": {
-          "name": "display_order",
-          "type": "int",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": 0
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "datetime",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": "(CURRENT_TIMESTAMP)"
-        },
-        "updated_at": {
-          "name": "updated_at",
-          "type": "datetime",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": "CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP"
-        }
-      },
-      "indexes": {},
-      "foreignKeys": {},
-      "compositePrimaryKeys": {
-        "office_types_id": {
-          "name": "office_types_id",
-          "columns": [
-            "id"
-          ]
-        }
-      },
-      "uniqueConstraints": {
-        "office_types_slug_unique": {
-          "name": "office_types_slug_unique",
-          "columns": [
-            "slug"
-          ]
-        }
-      },
-      "checkConstraint": {}
-    },
-    "offices": {
-      "name": "offices",
+    "regional_offices": {
+      "name": "regional_offices",
       "columns": {
         "id": {
           "name": "id",
@@ -3594,20 +2827,6 @@
           "type": "varchar(255)",
           "primaryKey": false,
           "notNull": true,
-          "autoincrement": false
-        },
-        "type_id": {
-          "name": "type_id",
-          "type": "int",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "parent_id": {
-          "name": "parent_id",
-          "type": "int",
-          "primaryKey": false,
-          "notNull": false,
           "autoincrement": false
         },
         "region": {
@@ -3659,7 +2878,7 @@
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false,
-          "default": "(CURRENT_TIMESTAMP)"
+          "default": "CURRENT_TIMESTAMP"
         },
         "updated_at": {
           "name": "updated_at",
@@ -3678,275 +2897,33 @@
         }
       },
       "indexes": {
-        "idx_offices_slug": {
-          "name": "idx_offices_slug",
+        "idx_regional_offices_slug": {
+          "name": "idx_regional_offices_slug",
           "columns": [
             "slug"
           ],
           "isUnique": false
         },
-        "idx_offices_region": {
-          "name": "idx_offices_region",
+        "idx_regional_offices_region": {
+          "name": "idx_regional_offices_region",
           "columns": [
             "region"
           ],
           "isUnique": false
-        },
-        "idx_offices_type_id": {
-          "name": "idx_offices_type_id",
-          "columns": [
-            "type_id"
-          ],
-          "isUnique": false
-        },
-        "idx_offices_parent_id": {
-          "name": "idx_offices_parent_id",
-          "columns": [
-            "parent_id"
-          ],
-          "isUnique": false
         }
       },
-      "foreignKeys": {
-        "offices_type_id_office_types_id_fk": {
-          "name": "offices_type_id_office_types_id_fk",
-          "tableFrom": "offices",
-          "tableTo": "office_types",
-          "columnsFrom": [
-            "type_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        },
-        "offices_parent_id_offices_id_fk": {
-          "name": "offices_parent_id_offices_id_fk",
-          "tableFrom": "offices",
-          "tableTo": "offices",
-          "columnsFrom": [
-            "parent_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "set null",
-          "onUpdate": "no action"
-        }
-      },
+      "foreignKeys": {},
       "compositePrimaryKeys": {
-        "offices_id": {
-          "name": "offices_id",
+        "regional_offices_id": {
+          "name": "regional_offices_id",
           "columns": [
             "id"
           ]
         }
       },
       "uniqueConstraints": {
-        "offices_slug_unique": {
-          "name": "offices_slug_unique",
-          "columns": [
-            "slug"
-          ]
-        }
-      },
-      "checkConstraint": {}
-    },
-    "gallery_album_translations": {
-      "name": "gallery_album_translations",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "int",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": true
-        },
-        "album_id": {
-          "name": "album_id",
-          "type": "int",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "locale": {
-          "name": "locale",
-          "type": "enum('en','ak')",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "title": {
-          "name": "title",
-          "type": "varchar(500)",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "description": {
-          "name": "description",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        }
-      },
-      "indexes": {
-        "idx_album_locale": {
-          "name": "idx_album_locale",
-          "columns": [
-            "album_id",
-            "locale"
-          ],
-          "isUnique": true
-        },
-        "idx_album_translations_locale": {
-          "name": "idx_album_translations_locale",
-          "columns": [
-            "locale"
-          ],
-          "isUnique": false
-        }
-      },
-      "foreignKeys": {
-        "gallery_album_translations_album_id_gallery_albums_id_fk": {
-          "name": "gallery_album_translations_album_id_gallery_albums_id_fk",
-          "tableFrom": "gallery_album_translations",
-          "tableTo": "gallery_albums",
-          "columnsFrom": [
-            "album_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {
-        "gallery_album_translations_id": {
-          "name": "gallery_album_translations_id",
-          "columns": [
-            "id"
-          ]
-        }
-      },
-      "uniqueConstraints": {},
-      "checkConstraint": {}
-    },
-    "gallery_albums": {
-      "name": "gallery_albums",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "int",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": true
-        },
-        "slug": {
-          "name": "slug",
-          "type": "varchar(255)",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "cover_image_id": {
-          "name": "cover_image_id",
-          "type": "int",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "published_at": {
-          "name": "published_at",
-          "type": "datetime",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "is_published": {
-          "name": "is_published",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": false
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "datetime",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": "(CURRENT_TIMESTAMP)"
-        },
-        "updated_at": {
-          "name": "updated_at",
-          "type": "datetime",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": "CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP"
-        },
-        "created_by": {
-          "name": "created_by",
-          "type": "int",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "deleted_at": {
-          "name": "deleted_at",
-          "type": "datetime",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        }
-      },
-      "indexes": {
-        "idx_albums_published": {
-          "name": "idx_albums_published",
-          "columns": [
-            "published_at"
-          ],
-          "isUnique": false
-        },
-        "idx_albums_is_published": {
-          "name": "idx_albums_is_published",
-          "columns": [
-            "is_published"
-          ],
-          "isUnique": false
-        }
-      },
-      "foreignKeys": {
-        "gallery_albums_created_by_users_id_fk": {
-          "name": "gallery_albums_created_by_users_id_fk",
-          "tableFrom": "gallery_albums",
-          "tableTo": "users",
-          "columnsFrom": [
-            "created_by"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "set null",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {
-        "gallery_albums_id": {
-          "name": "gallery_albums_id",
-          "columns": [
-            "id"
-          ]
-        }
-      },
-      "uniqueConstraints": {
-        "gallery_albums_slug_unique": {
-          "name": "gallery_albums_slug_unique",
+        "regional_offices_slug_unique": {
+          "name": "regional_offices_slug_unique",
           "columns": [
             "slug"
           ]
@@ -4060,20 +3037,13 @@
           "notNull": false,
           "autoincrement": false
         },
-        "album_id": {
-          "name": "album_id",
-          "type": "int",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
         "uploaded_at": {
           "name": "uploaded_at",
           "type": "datetime",
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false,
-          "default": "(CURRENT_TIMESTAMP)"
+          "default": "CURRENT_TIMESTAMP"
         },
         "created_by": {
           "name": "created_by",
@@ -4098,13 +3068,6 @@
           ],
           "isUnique": false
         },
-        "idx_gallery_album": {
-          "name": "idx_gallery_album",
-          "columns": [
-            "album_id"
-          ],
-          "isUnique": false
-        },
         "idx_gallery_uploaded": {
           "name": "idx_gallery_uploaded",
           "columns": [
@@ -4114,19 +3077,6 @@
         }
       },
       "foreignKeys": {
-        "gallery_images_album_id_gallery_albums_id_fk": {
-          "name": "gallery_images_album_id_gallery_albums_id_fk",
-          "tableFrom": "gallery_images",
-          "tableTo": "gallery_albums",
-          "columnsFrom": [
-            "album_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        },
         "gallery_images_created_by_users_id_fk": {
           "name": "gallery_images_created_by_users_id_fk",
           "tableFrom": "gallery_images",
@@ -4286,7 +3236,7 @@
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false,
-          "default": "(CURRENT_TIMESTAMP)"
+          "default": "CURRENT_TIMESTAMP"
         },
         "updated_at": {
           "name": "updated_at",
@@ -4345,909 +3295,6 @@
       "compositePrimaryKeys": {
         "videos_id": {
           "name": "videos_id",
-          "columns": [
-            "id"
-          ]
-        }
-      },
-      "uniqueConstraints": {},
-      "checkConstraint": {}
-    },
-    "abuse_incidents": {
-      "name": "abuse_incidents",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "bigint unsigned",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": true
-        },
-        "ts": {
-          "name": "ts",
-          "type": "datetime(3)",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": "CURRENT_TIMESTAMP(3)"
-        },
-        "kind": {
-          "name": "kind",
-          "type": "varchar(32)",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "severity": {
-          "name": "severity",
-          "type": "varchar(16)",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": "'info'"
-        },
-        "ip_hash": {
-          "name": "ip_hash",
-          "type": "char(64)",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "ua_hash": {
-          "name": "ua_hash",
-          "type": "char(64)",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "route_pattern": {
-          "name": "route_pattern",
-          "type": "varchar(256)",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "route_path": {
-          "name": "route_path",
-          "type": "varchar(512)",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "details": {
-          "name": "details",
-          "type": "json",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        }
-      },
-      "indexes": {
-        "idx_inc_ts": {
-          "name": "idx_inc_ts",
-          "columns": [
-            "ts"
-          ],
-          "isUnique": false
-        },
-        "idx_inc_kind_ts": {
-          "name": "idx_inc_kind_ts",
-          "columns": [
-            "kind",
-            "ts"
-          ],
-          "isUnique": false
-        },
-        "idx_inc_iphash_ts": {
-          "name": "idx_inc_iphash_ts",
-          "columns": [
-            "ip_hash",
-            "ts"
-          ],
-          "isUnique": false
-        },
-        "idx_inc_severity_ts": {
-          "name": "idx_inc_severity_ts",
-          "columns": [
-            "severity",
-            "ts"
-          ],
-          "isUnique": false
-        }
-      },
-      "foreignKeys": {},
-      "compositePrimaryKeys": {
-        "abuse_incidents_id": {
-          "name": "abuse_incidents_id",
-          "columns": [
-            "id"
-          ]
-        }
-      },
-      "uniqueConstraints": {},
-      "checkConstraint": {}
-    },
-    "bot_signatures": {
-      "name": "bot_signatures",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "bigint unsigned",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": true
-        },
-        "ip_hash": {
-          "name": "ip_hash",
-          "type": "char(64)",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "ua_hash": {
-          "name": "ua_hash",
-          "type": "char(64)",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "ua_family": {
-          "name": "ua_family",
-          "type": "varchar(32)",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": "'unknown'"
-        },
-        "ua_sample": {
-          "name": "ua_sample",
-          "type": "varchar(512)",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "first_seen": {
-          "name": "first_seen",
-          "type": "datetime",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "last_seen": {
-          "name": "last_seen",
-          "type": "datetime",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "total_requests": {
-          "name": "total_requests",
-          "type": "int",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": 0
-        },
-        "distinct_routes_24h": {
-          "name": "distinct_routes_24h",
-          "type": "int",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": 0
-        },
-        "rate_limit_hits_24h": {
-          "name": "rate_limit_hits_24h",
-          "type": "int",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": 0
-        },
-        "failed_logins_24h": {
-          "name": "failed_logins_24h",
-          "type": "int",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": 0
-        },
-        "score": {
-          "name": "score",
-          "type": "int",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": 0
-        },
-        "classification": {
-          "name": "classification",
-          "type": "varchar(16)",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": "'clean'"
-        },
-        "notes": {
-          "name": "notes",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "decided_by": {
-          "name": "decided_by",
-          "type": "int",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "decided_at": {
-          "name": "decided_at",
-          "type": "datetime",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "country": {
-          "name": "country",
-          "type": "char(2)",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "asn": {
-          "name": "asn",
-          "type": "int",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        }
-      },
-      "indexes": {
-        "uq_iphash_uahash": {
-          "name": "uq_iphash_uahash",
-          "columns": [
-            "ip_hash",
-            "ua_hash"
-          ],
-          "isUnique": true
-        },
-        "idx_bot_class_score": {
-          "name": "idx_bot_class_score",
-          "columns": [
-            "classification",
-            "score"
-          ],
-          "isUnique": false
-        },
-        "idx_bot_lastseen": {
-          "name": "idx_bot_lastseen",
-          "columns": [
-            "last_seen"
-          ],
-          "isUnique": false
-        }
-      },
-      "foreignKeys": {
-        "bot_signatures_decided_by_users_id_fk": {
-          "name": "bot_signatures_decided_by_users_id_fk",
-          "tableFrom": "bot_signatures",
-          "tableTo": "users",
-          "columnsFrom": [
-            "decided_by"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "set null",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {
-        "bot_signatures_id": {
-          "name": "bot_signatures_id",
-          "columns": [
-            "id"
-          ]
-        }
-      },
-      "uniqueConstraints": {},
-      "checkConstraint": {}
-    },
-    "download_events": {
-      "name": "download_events",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "bigint unsigned",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": true
-        },
-        "ts": {
-          "name": "ts",
-          "type": "datetime(3)",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": "CURRENT_TIMESTAMP(3)"
-        },
-        "kind": {
-          "name": "kind",
-          "type": "varchar(16)",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "target_id": {
-          "name": "target_id",
-          "type": "int",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "slug": {
-          "name": "slug",
-          "type": "varchar(256)",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "duration_ms": {
-          "name": "duration_ms",
-          "type": "int",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "bytes_out": {
-          "name": "bytes_out",
-          "type": "int",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": 0
-        },
-        "is_partial": {
-          "name": "is_partial",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": false
-        },
-        "ip_hash": {
-          "name": "ip_hash",
-          "type": "char(64)",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "ua_hash": {
-          "name": "ua_hash",
-          "type": "char(64)",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "ua_family": {
-          "name": "ua_family",
-          "type": "varchar(32)",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": "'unknown'"
-        },
-        "country": {
-          "name": "country",
-          "type": "char(2)",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "asn": {
-          "name": "asn",
-          "type": "int",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "is_bot": {
-          "name": "is_bot",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        }
-      },
-      "indexes": {
-        "idx_dl_ts": {
-          "name": "idx_dl_ts",
-          "columns": [
-            "ts"
-          ],
-          "isUnique": false
-        },
-        "idx_dl_kind_target": {
-          "name": "idx_dl_kind_target",
-          "columns": [
-            "kind",
-            "target_id"
-          ],
-          "isUnique": false
-        },
-        "idx_dl_iphash_ts": {
-          "name": "idx_dl_iphash_ts",
-          "columns": [
-            "ip_hash",
-            "ts"
-          ],
-          "isUnique": false
-        }
-      },
-      "foreignKeys": {},
-      "compositePrimaryKeys": {
-        "download_events_id": {
-          "name": "download_events_id",
-          "columns": [
-            "id"
-          ]
-        }
-      },
-      "uniqueConstraints": {},
-      "checkConstraint": {}
-    },
-    "request_events": {
-      "name": "request_events",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "bigint unsigned",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": true
-        },
-        "ts": {
-          "name": "ts",
-          "type": "datetime(3)",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": "CURRENT_TIMESTAMP(3)"
-        },
-        "method": {
-          "name": "method",
-          "type": "varchar(8)",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "route_pattern": {
-          "name": "route_pattern",
-          "type": "varchar(256)",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "route_path": {
-          "name": "route_path",
-          "type": "varchar(512)",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "status": {
-          "name": "status",
-          "type": "smallint",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "duration_ms": {
-          "name": "duration_ms",
-          "type": "int",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "bytes_out": {
-          "name": "bytes_out",
-          "type": "int",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": 0
-        },
-        "cache_hit": {
-          "name": "cache_hit",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": false
-        },
-        "ip_hash": {
-          "name": "ip_hash",
-          "type": "char(64)",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "ua_hash": {
-          "name": "ua_hash",
-          "type": "char(64)",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "ua_family": {
-          "name": "ua_family",
-          "type": "varchar(32)",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": "'unknown'"
-        },
-        "country": {
-          "name": "country",
-          "type": "char(2)",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "asn": {
-          "name": "asn",
-          "type": "int",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "referrer_host": {
-          "name": "referrer_host",
-          "type": "varchar(128)",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "is_bot": {
-          "name": "is_bot",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "role": {
-          "name": "role",
-          "type": "varchar(16)",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "has_accept_language": {
-          "name": "has_accept_language",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "has_accept_encoding": {
-          "name": "has_accept_encoding",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "http_version": {
-          "name": "http_version",
-          "type": "varchar(8)",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        }
-      },
-      "indexes": {
-        "idx_req_ts": {
-          "name": "idx_req_ts",
-          "columns": [
-            "ts"
-          ],
-          "isUnique": false
-        },
-        "idx_req_pattern_ts": {
-          "name": "idx_req_pattern_ts",
-          "columns": [
-            "route_pattern",
-            "ts"
-          ],
-          "isUnique": false
-        },
-        "idx_req_iphash_ts": {
-          "name": "idx_req_iphash_ts",
-          "columns": [
-            "ip_hash",
-            "ts"
-          ],
-          "isUnique": false
-        },
-        "idx_req_uahash": {
-          "name": "idx_req_uahash",
-          "columns": [
-            "ua_hash"
-          ],
-          "isUnique": false
-        },
-        "idx_req_status_ts": {
-          "name": "idx_req_status_ts",
-          "columns": [
-            "status",
-            "ts"
-          ],
-          "isUnique": false
-        }
-      },
-      "foreignKeys": {},
-      "compositePrimaryKeys": {
-        "request_events_id": {
-          "name": "request_events_id",
-          "columns": [
-            "id"
-          ]
-        }
-      },
-      "uniqueConstraints": {},
-      "checkConstraint": {}
-    },
-    "route_stats_hourly": {
-      "name": "route_stats_hourly",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "bigint unsigned",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": true
-        },
-        "hour": {
-          "name": "hour",
-          "type": "datetime",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "route_pattern": {
-          "name": "route_pattern",
-          "type": "varchar(256)",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "visits": {
-          "name": "visits",
-          "type": "int",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": 0
-        },
-        "unique_ips": {
-          "name": "unique_ips",
-          "type": "int",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": 0
-        },
-        "bot_visits": {
-          "name": "bot_visits",
-          "type": "int",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": 0
-        },
-        "cache_hits": {
-          "name": "cache_hits",
-          "type": "int",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": 0
-        },
-        "bytes_out": {
-          "name": "bytes_out",
-          "type": "bigint",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": 0
-        },
-        "p50_ms": {
-          "name": "p50_ms",
-          "type": "int",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": 0
-        },
-        "p95_ms": {
-          "name": "p95_ms",
-          "type": "int",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": 0
-        },
-        "p99_ms": {
-          "name": "p99_ms",
-          "type": "int",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": 0
-        },
-        "status_2xx": {
-          "name": "status_2xx",
-          "type": "int",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": 0
-        },
-        "status_3xx": {
-          "name": "status_3xx",
-          "type": "int",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": 0
-        },
-        "status_4xx": {
-          "name": "status_4xx",
-          "type": "int",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": 0
-        },
-        "status_5xx": {
-          "name": "status_5xx",
-          "type": "int",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": 0
-        }
-      },
-      "indexes": {
-        "uq_hour_pattern": {
-          "name": "uq_hour_pattern",
-          "columns": [
-            "hour",
-            "route_pattern"
-          ],
-          "isUnique": true
-        },
-        "idx_stats_hour": {
-          "name": "idx_stats_hour",
-          "columns": [
-            "hour"
-          ],
-          "isUnique": false
-        },
-        "idx_stats_pattern_hour": {
-          "name": "idx_stats_pattern_hour",
-          "columns": [
-            "route_pattern",
-            "hour"
-          ],
-          "isUnique": false
-        }
-      },
-      "foreignKeys": {},
-      "compositePrimaryKeys": {
-        "route_stats_hourly_id": {
-          "name": "route_stats_hourly_id",
-          "columns": [
-            "id"
-          ]
-        }
-      },
-      "uniqueConstraints": {},
-      "checkConstraint": {}
-    },
-    "search_queries": {
-      "name": "search_queries",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "bigint unsigned",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": true
-        },
-        "ts": {
-          "name": "ts",
-          "type": "datetime(3)",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": "CURRENT_TIMESTAMP(3)"
-        },
-        "query_text": {
-          "name": "query_text",
-          "type": "varchar(256)",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "query_hash": {
-          "name": "query_hash",
-          "type": "char(64)",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "locale": {
-          "name": "locale",
-          "type": "char(8)",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "result_count": {
-          "name": "result_count",
-          "type": "int",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": 0
-        },
-        "ip_hash": {
-          "name": "ip_hash",
-          "type": "char(64)",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "ua_family": {
-          "name": "ua_family",
-          "type": "varchar(32)",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": "'unknown'"
-        }
-      },
-      "indexes": {
-        "idx_sq_ts": {
-          "name": "idx_sq_ts",
-          "columns": [
-            "ts"
-          ],
-          "isUnique": false
-        },
-        "idx_sq_hash_ts": {
-          "name": "idx_sq_hash_ts",
-          "columns": [
-            "query_hash",
-            "ts"
-          ],
-          "isUnique": false
-        },
-        "idx_sq_zero_ts": {
-          "name": "idx_sq_zero_ts",
-          "columns": [
-            "result_count",
-            "ts"
-          ],
-          "isUnique": false
-        }
-      },
-      "foreignKeys": {},
-      "compositePrimaryKeys": {
-        "search_queries_id": {
-          "name": "search_queries_id",
           "columns": [
             "id"
           ]
@@ -5514,7 +3561,7 @@
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false,
-          "default": "(CURRENT_TIMESTAMP)"
+          "default": "CURRENT_TIMESTAMP"
         }
       },
       "indexes": {

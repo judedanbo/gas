@@ -1,0 +1,87 @@
+# =============================================================================
+# DATABASE SEED JOB (one-time bootstrap)
+# =============================================================================
+# Populates a freshly-migrated database with the admin user plus all content
+# seeds (departments, offices, sectors, management team, reports, publications,
+# news, events, gallery, videos) by running `npm run db:seed:all`.
+#
+# Every seed script is self-guarding: it checks for existing rows and SKIPS
+# unless run with --force (which this Job never passes). Re-running against an
+# already-seeded database is therefore a safe no-op, not a duplication.
+#
+# It is intentionally NOT applied by the deploy workflow (.github/workflows/
+# deploy.yml) — seeding is a one-time bootstrap, so re-running it on every deploy
+# would just re-skip everything. Run it by hand after the migration Job succeeds.
+#
+# Prerequisites:
+#   1. The migrator image must have been rebuilt AFTER seed.ts, server/database/
+#      seeds/, and server/database/schema/ were added to the Dockerfile migrator
+#      stage (otherwise the seed scripts are not in the image).
+#   2. ADMIN_EMAIL and ADMIN_PASSWORD must be present in the gas-secrets Secret
+#      (templated from the matching GitHub Actions repo secrets via envsubst).
+#      Without them server/database/seed.ts exits 1.
+#
+# Usage:
+#   1. Run it (export the same image vars deploy.yml uses, then envsubst):
+#        export ACR_REGISTRY=<ACR_NAME> IMAGE_TAG=<TAG>
+#        envsubst < k8s/jobs/seed-job.yaml | kubectl apply -f -
+#   2. Watch:
+#        kubectl logs -n gas job/gas-seed-job -f
+#   3. Re-run later (Jobs are immutable — delete first):
+#        kubectl delete job gas-seed-job -n gas
+#        envsubst < k8s/jobs/seed-job.yaml | kubectl apply -f -
+# =============================================================================
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: gas-seed-job
+  namespace: gas
+  labels:
+    app.kubernetes.io/name: gas-seed
+    app.kubernetes.io/part-of: ghana-audit-service
+spec:
+  # Seeds are idempotent (skip existing rows), so a retry just re-skips earlier
+  # steps and resumes — safe to allow a couple of attempts.
+  backoffLimit: 2
+  ttlSecondsAfterFinished: 600
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: gas-seed
+        app.kubernetes.io/part-of: ghana-audit-service
+    spec:
+      restartPolicy: Never
+      securityContext:
+        runAsUser: 1000
+        runAsGroup: 1000
+        runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: seed
+          # Same migrator image as gas-migrate-job (must include seed.ts, the
+          # seeds/ directory, and schema/ — see the Dockerfile migrator stage).
+          # ACR_REGISTRY and IMAGE_TAG are substituted by envsubst (from the
+          # workflow `env` block), the same way the deploy workflow runs the
+          # migration Job — so this always matches what build-and-push pushed.
+          image: ${ACR_REGISTRY}.azurecr.io/gas-migrate:${IMAGE_TAG}
+          imagePullPolicy: Always
+          # Override the image's default migrate command with the full seed chain.
+          command: ["npm", "run", "db:seed:all"]
+          envFrom:
+            - configMapRef:
+                name: gas-config
+            - secretRef:
+                name: gas-secrets
+          resources:
+            requests:
+              cpu: 50m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL

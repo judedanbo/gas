@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: gas-public-files-pvc
+  namespace: gas
+  labels:
+    app.kubernetes.io/name: gas-public
+    app.kubernetes.io/part-of: ghana-audit-service
+spec:
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 50Gi
+  storageClassName: azureblob-nfs-premium

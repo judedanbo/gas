@@ -81,6 +81,7 @@ Tests run with `happy-dom` and `@nuxt/test-utils`; layout under `tests/unit/`, `
   - `utils/` — JWT, password hashing, CSRF, file upload, audit logging, validation, plus `transform*.ts` DTO shapers (one per domain). **API handlers should return transformed objects, not raw DB rows.**
   - `utils/analytics/` — analytics subsystem: Redis-backed buffered writes, fingerprinting, fuzz-pattern detection, abuse scoring, GeoIP enrichment (optional MaxMind), download tracking.
   - `utils/redis.ts` — singleton Redis client; returns `null` when `REDIS_URL` is unset so callers degrade gracefully.
+  - `utils/blobStorage.ts` — singleton Azure Blob client (env-gated like `redis.ts`). Report PDF **uploads** (`fileUpload.ts` `report` config, `backend: 'blob'`) write here, and `/api/downloads/{reports,publications}/[id]` stream from Blob via `tryBlobSource()`, **falling back to on-disk `public/pdf` per-file** when Blob is unconfigured or the object is missing. `fileUrl` stays `/pdf/reports/...` either way — the storage backend is swappable behind the download indirection. `blobKeyFromFileUrl()` is the traversal-safe key derivation. Migrate existing files with `npm run pdf:migrate-blob` (idempotent).
   - `middleware/00-analytics.ts` — captures per-request telemetry (runs before `adminAuth.ts` and `rateLimit.ts` due to `00-` prefix).
   - `plugins/analyticsBuffer.ts` — Nitro plugin that periodically flushes the analytics buffer to MySQL.
   - `plugins/` — Nitro server plugins.
@@ -132,6 +133,7 @@ Required for the server to function:
 
 Optional:
 - `REDIS_URL` — enables shared rate limiting and analytics buffering. Without it, both degrade to in-process fallbacks.
+- `AZURE_STORAGE_CONNECTION_STRING` + `AZURE_BLOB_CONTAINER` — store report/publication PDFs in private Blob instead of the container image. Both unset → on-disk `public/pdf` fallback (legacy/local). Both set → uploads + downloads use Blob.
 - `ANALYTICS_IP_SALT` — salt for hashing IPs in analytics (raw IPs are never stored).
 - `ANALYTICS_RETENTION_DAYS` — days to keep raw `request_events` (default 30).
 - `ANALYTICS_GEOIP_DB_PATH`, `ANALYTICS_ASN_DB_PATH` — paths to MaxMind GeoLite2 mmdb files for geo enrichment.
@@ -147,6 +149,7 @@ Husky + lint-staged: `*.{js,ts,vue}` → `eslint --fix` + `prettier --write`; `*
 - **Admin pages are client-only rendered** (`ssr: false` in routeRules). Auth state lives in localStorage via `useAdminAuth().init()` (a `.client.ts` plugin) — SSR would always render the unauthenticated state causing hydration mismatches.
 - **`vi.mock()` is hoisted above all declarations**: Factory functions must use `function` declarations (hoisted) not `const` (temporal dead zone). Imports after `vi.mock` are fine — Vitest hoists the mock above them.
 - **Nitro virtual modules break in Vitest**: Imports from `nitropack/runtime` fail outside the Nitro server context. Tests must `vi.mock('nitropack/runtime', ...)` before importing source that uses them.
+- **Nitro `compressPublicAssets` triples PDFs**: it gzip+brotli-compresses every `application/pdf` in `public/` (Nitro's hardcoded compressible-MIME list) for ~0% gain, since PDFs are already compressed. `scripts/strip-pdf-precompression.mjs` (wired as `postbuild`/`postgenerate`) deletes the `.pdf.gz`/`.pdf.br` siblings from `.output/public`. This is why the Docker image was 8GB.
 
 ## Conventions worth remembering
 

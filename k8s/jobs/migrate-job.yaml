@@ -24,10 +24,11 @@ spec:
           type: RuntimeDefault
       containers:
         - name: migrate
-          # ACR_REGISTRY is substituted from the ACR_NAME secret by envsubst in
-          # the deploy workflow's "Run migration Job" step — single source of
-          # truth, so it always matches where build-and-push pushed the image.
-          image: ${ACR_REGISTRY}.azurecr.io/gas-migrate:latest
+          # ACR_REGISTRY and IMAGE_TAG are substituted by envsubst in the deploy
+          # workflow's "Run migration Job" step (from the workflow `env` block) —
+          # single source of truth, so this always matches what build-and-push
+          # pushed. For manual deploys, export both first (see k8s/README.md).
+          image: ${ACR_REGISTRY}.azurecr.io/gas-migrate:${IMAGE_TAG}
           imagePullPolicy: Always
           envFrom:
             - configMapRef:

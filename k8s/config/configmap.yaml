@@ -9,7 +9,7 @@ data:
   DB_HOST: "mysql.gas.svc.cluster.local"
   DB_PORT: "3306"
   DB_NAME: "ghana_audit_service"
-  NUXT_PUBLIC_SITE_URL: "https://audit.gov.gh"
+  NUXT_PUBLIC_SITE_URL: "https://test.audit.gov.gh"
   NUXT_PUBLIC_SITE_NAME: "Ghana Audit Service"
   NUXT_PUBLIC_CONTACT_EMAIL: "info@audit.gov.gh"
   NUXT_PUBLIC_CONTACT_PHONE: "+233 (302) 664929"

@@ -39,6 +39,21 @@ docs/
 .env.*
 !.env.example
 
+# Secrets & credentials (defensive — none are needed at build time).
+# `COPY . .` in the builder stage would otherwise bake any of these into an
+# image layer. Secrets reach containers at runtime via envFrom / mounts.
+.npmrc
+.netrc
+*.pem
+*.key
+*.crt
+*.p12
+*.pfx
+id_rsa*
+*_rsa
+secrets.yaml
+**/secrets/
+
 # Logs
 logs
 *.log
@@ -57,3 +72,6 @@ docker-compose*.yml
 .eslintcache
 .prettiercache
 *.local
+
+# Public runtime PDFs (served from Azure Blob / PVC, not baked into the image)
+public/pdf/
