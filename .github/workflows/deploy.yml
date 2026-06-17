@@ -54,7 +54,7 @@ jobs:
       # Scan the built frontend image before it is pushed (M-5). The report shows
       # High+Critical; the gate fails the deploy only on (fixable) Critical findings.
       - name: Scan frontend image (report — non-blocking)
-        uses: aquasecurity/trivy-action@0.28.0
+        uses: aquasecurity/trivy-action@v0.36.0
         with:
           image-ref: ${{ env.ACR_NAME }}.azurecr.io/gas-frontend:${{ env.IMAGE_TAG }}
           format: table
@@ -63,7 +63,7 @@ jobs:
           exit-code: '0'
 
       - name: Scan frontend image (fail on critical)
-        uses: aquasecurity/trivy-action@0.28.0
+        uses: aquasecurity/trivy-action@v0.36.0
         with:
           image-ref: ${{ env.ACR_NAME }}.azurecr.io/gas-frontend:${{ env.IMAGE_TAG }}
           format: table
