@@ -18,6 +18,7 @@ function recordFailedLogin(event: Parameters<typeof setHeader>[0], reason: strin
     kind: 'failed_login',
     severity: 'info',
     ipHash: stash?.ipHash ?? null,
+    ip: stash?.ip ?? null,
     uaHash: stash?.uaHash ?? null,
     routePattern: '/api/admin/auth/login',
     routePath: '/api/admin/auth/login',

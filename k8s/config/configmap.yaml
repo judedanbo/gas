@@ -18,7 +18,8 @@ data:
   SESSION_IDLE_TIMEOUT: "30m"
   SESSION_ABSOLUTE_TIMEOUT: "8h"
   SESSION_WARNING_BEFORE: "2m"
-  ANALYTICS_RETENTION_DAYS: "30"
+  # 90 days: raw request_events now include the raw client IP (abuse attribution + geo).
+  ANALYTICS_RETENTION_DAYS: "90"
   # Trusted reverse-proxy sources. The frontend only honours X-Forwarded-For /
   # X-Real-IP when the connecting peer falls within this list (exact IPs or
   # CIDR ranges, comma-separated). In-cluster the peer is the ingress-nginx

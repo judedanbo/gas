@@ -40,6 +40,29 @@ export function hashIp(ip: string): string {
   return createHash('sha256').update(`${ip}|${getIpSalt()}`).digest('hex')
 }
 
+/**
+ * Route prefixes whose RAW client IP must never be persisted, to honour the
+ * CitizensEye anonymous-reporting promise ("Your IP address is anonymized in
+ * our records" — pages/citizenseye/privacy.vue). For these routes the analytics
+ * pipeline stores `ip = null`; the salted `ipHash` is still stored so abuse
+ * scoring, dedup, and unique-visitor counts keep working (a salted hash is a
+ * pseudonymous identifier, consistent with the "anonymized" promise).
+ */
+export const ANONYMIZED_IP_ROUTE_PREFIXES = ['/citizenseye']
+
+/**
+ * True when a normalised route pattern is IP-anonymised. Handles the locale
+ * prefix: `normaliseRoutePattern` emits `/[locale]/citizenseye` for `/ak/...`.
+ */
+export function isIpAnonymizedRoute(routePattern: string): boolean {
+  const p = routePattern.startsWith('/[locale]/')
+    ? routePattern.slice('/[locale]'.length)
+    : routePattern
+  return ANONYMIZED_IP_ROUTE_PREFIXES.some(
+    (prefix) => p === prefix || p.startsWith(`${prefix}/`)
+  )
+}
+
 export function hashUa(ua: string): string {
   return createHash('sha256').update(ua).digest('hex')
 }

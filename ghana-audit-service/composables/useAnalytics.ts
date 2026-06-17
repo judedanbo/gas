@@ -83,6 +83,7 @@ export interface AnalyticsRouteDetail {
   }>
   topIps: Array<{
     ipHash: string
+    ip: string | null
     uaFamily: string
     country: string | null
     asn: number | null
@@ -100,6 +101,7 @@ export type Classification = 'clean' | 'crawler' | 'suspicious' | 'abusive' | 's
 export interface BotSignature {
   id: number
   ipHash: string
+  ip: string | null
   uaHash: string
   uaFamily: string
   uaSample: string | null
@@ -129,6 +131,7 @@ export interface AbuseIncident {
   kind: string
   severity: 'info' | 'warning' | 'critical'
   ipHash: string | null
+  ip: string | null
   uaHash: string | null
   routePattern: string | null
   routePath: string | null
@@ -168,6 +171,7 @@ export interface IncidentsQuery {
   severity?: 'info' | 'warning' | 'critical'
   window?: IncidentWindow
   ipHash?: string
+  ip?: string
   page?: number
   perPage?: number
 }
@@ -229,6 +233,7 @@ export interface FuzzAttemptsResponse {
   windowHours: number
   items: Array<{
     ipHash: string
+    ip: string | null
     uaHash: string
     uaFamily: string
     country: string | null
@@ -263,6 +268,13 @@ export interface CapacityResponse {
     evictedKeys: number | null
     keyCount: number | null
   }
+}
+
+export interface GeoResponse {
+  windowHours: number
+  totals: { visits: number; geoResolved: number; uniqueIps: number }
+  countries: Array<{ country: string | null; visits: number; uniqueIps: number }>
+  asns: Array<{ asn: number | null; visits: number; uniqueIps: number }>
 }
 
 export function useAnalytics() {
@@ -315,6 +327,10 @@ export function useAnalytics() {
     return api.get<FuzzAttemptsResponse>('analytics/fuzz-attempts', { window })
   }
 
+  function fetchGeo(window: AnalyticsWindow = '7d'): Promise<GeoResponse> {
+    return api.get<GeoResponse>('analytics/geo', { window })
+  }
+
   /**
    * Download the unified analytics report as a PDF. Hits the
    * server-side Puppeteer endpoint, receives a blob, and triggers a
@@ -362,6 +378,7 @@ export function useAnalytics() {
     fetchInsights,
     fetchFormSubmissions,
     fetchFuzzAttempts,
+    fetchGeo,
     downloadReportPdf
   }
 }

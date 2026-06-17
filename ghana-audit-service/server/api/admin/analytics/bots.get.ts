@@ -42,7 +42,11 @@ export default defineEventHandler(async (event) => {
   if (typeof query.q === 'string' && query.q) {
     const term = `%${query.q.slice(0, 64)}%`
     conds.push(
-      or(like(schema.botSignatures.ipHash, term), like(schema.botSignatures.uaHash, term))!
+      or(
+        like(schema.botSignatures.ip, term),
+        like(schema.botSignatures.ipHash, term),
+        like(schema.botSignatures.uaHash, term)
+      )!
     )
   }
 
@@ -57,6 +61,7 @@ export default defineEventHandler(async (event) => {
     .select({
       id: schema.botSignatures.id,
       ipHash: schema.botSignatures.ipHash,
+      ip: schema.botSignatures.ip,
       uaHash: schema.botSignatures.uaHash,
       uaFamily: schema.botSignatures.uaFamily,
       uaSample: schema.botSignatures.uaSample,

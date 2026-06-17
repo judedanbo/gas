@@ -7,7 +7,8 @@ import {
   hashUa,
   classifyUa,
   normaliseRoutePattern,
-  parseReferrerHost
+  parseReferrerHost,
+  isIpAnonymizedRoute
 } from '../utils/analytics/fingerprint'
 import { pushAnalyticsEvent } from '../utils/analytics/buffer'
 import { isProbingPath } from '../utils/analytics/probingPaths'
@@ -36,6 +37,7 @@ import {
 declare module 'h3' {
   interface H3EventContext {
     analytics?: {
+      ip: string | null
       ipHash: string
       uaHash: string
       uaFamily: string
@@ -76,9 +78,14 @@ export default defineEventHandler((event) => {
   const routePattern = normaliseRoutePattern(rawPath)
   const routePath = rawPath.slice(0, 512)
 
+  // Raw IP for abuse attribution + geolocation — except on IP-anonymised routes
+  // (CitizensEye), where we persist null and rely on ipHash only. country/asn are
+  // still resolved above from the live IP (coarse, aggregate; not the IP itself).
+  const storedIp = isIpAnonymizedRoute(routePattern) ? null : ip
+
   // Stash on context so downstream handlers (download endpoints, future
   // detector hooks) can reuse the hashes + geo without recomputing.
-  event.context.analytics = { ipHash, uaHash, uaFamily, country, asn }
+  event.context.analytics = { ip: storedIp, ipHash, uaHash, uaFamily, country, asn }
 
   // Probing-path detection — fires the moment we see the request, not when
   // the response closes, so we don't lose the signal if the connection is
@@ -89,6 +96,7 @@ export default defineEventHandler((event) => {
     recordIncident({
       kind: 'probing_path',
       severity: 'warning',
+      ip: storedIp,
       ipHash,
       uaHash,
       routePattern,
@@ -118,6 +126,7 @@ export default defineEventHandler((event) => {
         {
           kind: 'fuzz_attempt',
           severity: highestSeverity(fuzzMatches),
+          ip: storedIp,
           ipHash,
           uaHash,
           routePattern,
@@ -153,6 +162,7 @@ export default defineEventHandler((event) => {
         // event.context.cacheHit is set by defineAnalyticsCachedHandler;
         // unwrapped routes leave it undefined → recorded as false.
         cacheHit: event.context.cacheHit === true,
+        ip: storedIp,
         ipHash,
         uaHash,
         uaFamily,

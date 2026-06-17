@@ -68,6 +68,12 @@
           :collapsed="collapsed"
         />
         <SidebarLink
+          to="/admin/analytics/geo"
+          icon="globe-alt"
+          label="Geo"
+          :collapsed="collapsed"
+        />
+        <SidebarLink
           to="/admin/analytics/report"
           icon="document-text"
           label="PDF Report"

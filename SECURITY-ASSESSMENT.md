@@ -70,7 +70,7 @@ inventory of the live environment.
 |----|---------|----------|------|----------|
 | M-1 | CSP allows `'unsafe-inline'` and `'unsafe-eval'` in `script-src` — **Remediated** | Medium | Web/Headers | `ghana-audit-service/nuxt.config.ts` |
 | M-2 | Redis runs without authentication; DB/Redis ports exposed in compose — **Remediated** | Medium | Infra | `k8s/redis/deployment.yaml`, `docker-compose.yml` |
-| M-3 | Analytics IP-salt fails open to unsalted (reversible) hashing | Medium | Privacy | `ghana-audit-service/server/utils/analytics/fingerprint.ts:19,25` |
+| M-3 | Analytics IP-salt fails open to unsalted (reversible) hashing — **Mitigated (boot warning hardened)** | Medium | Privacy | `ghana-audit-service/server/utils/analytics/fingerprint.ts:19,25`, `server/plugins/validateConfig.ts` |
 | M-4 | Open redirect via stored publication `fileUrl` — **Remediated** | Medium | Web | `ghana-audit-service/server/api/downloads/publications/[id].get.ts` |
 | M-5 | No SAST / dependency / image scanning or approval gate in CI/CD — **Remediated** | Medium | CI/CD | `.github/workflows/ci.yml`, `deploy.yml`, `codeql.yml` |
 | M-6 | No account lockout on login (per-IP rate limit only) — **Remediated** | Medium | Auth | `ghana-audit-service/server/api/admin/auth/login.post.ts` |
@@ -151,6 +151,33 @@ then computes `sha256(ip|salt)` with an empty salt.
 never recoverable, with potential data-protection implications for a government service.
 **Recommendation:** Fail-fast at server boot in production if `ANALYTICS_IP_SALT` is unset
 or shorter than ~32 bytes (a Nitro startup plugin), rather than warning and continuing.
+
+**Status (2026-06-17): Mitigated — boot warning hardened (fail-open behavior retained by
+choice).** `server/plugins/validateConfig.ts` now emits a dedicated, security-specific
+production startup warning when `ANALYTICS_IP_SALT` is **unset, shorter than 32 chars, or a
+placeholder**. This closes a real gap: the previous shared `weakSecrets` check used a 16-char
+threshold and — because `looksLikePlaceholderSecret()` returns false for unset/empty by design
+— produced **no warning at all** for a completely unset salt, which is the most common
+fail-open state. *Residual (accepted):* per chosen scope the server does **not** hard-fail and
+`hashIp()` (`fingerprint.ts`) still proceeds with an empty salt, so a deployment that ignores
+the warning will continue to store reversible `sha256(ip)` hashes. Fully closing M-3 would
+require the fail-fast (throw at boot) or fail-closed (`hashIp` refuses unsalted output in prod)
+option. Verified via typecheck, lint, and test:run (667 passing).
+
+**Update (2026-06-17): Privacy posture deliberately changed by the service owner.** The
+analytics pipeline now stores the **raw client IP** (column `ip` on `request_events`,
+`download_events`, `bot_signatures`, `abuse_incidents`, `search_queries`) for **abuse
+attribution** and **visit geolocation** — i.e. the "raw IPs never recoverable" guarantee no
+longer holds, by design. This supersedes the hash-only privacy stance that motivated M-3. The
+salted `ipHash` is **retained** as the internal join/dedup key, so `ANALYTICS_IP_SALT` still
+matters for that key (the boot warning above still applies). Controls around the new raw-IP
+data: (1) admin + `analytics`-module gating on all dashboards/APIs that expose it
+(`adminAuth.ts`, `modules.ts`); (2) 90-day retention via `ANALYTICS_RETENTION_DAYS` (the daily
+`retention-raw.ts` purge); (3) a **whistleblower carve-out** — raw IPs are never stored for the
+`/citizenseye` route prefix (`isIpAnonymizedRoute`, `fingerprint.ts`), honouring the anonymity
+promise in `pages/citizenseye/privacy.vue`; (4) the public `privacy-policy.vue` updated to
+disclose IP collection, purpose, and retention. A DPIA / data-protection sign-off outside this
+repo is advisable for a government service.
 
 #### M-4 — Open redirect via stored publication `fileUrl`
 **Location:** `ghana-audit-service/server/api/downloads/publications/[id].get.ts:72`
@@ -271,8 +298,20 @@ output-escaping consumers (Vue interpolation, the email `escapeHtml`) don't doub
 Covered by `tests/unit/server/utils/sanitizeText.test.ts`.
 
 #### L-4 — Config-dependent hardening notes — **Remediated**
-- **CSP `img-src data:`** — removed; `img-src` is now `'self' https:` (no data-URI images,
-  which were unused in source/build). `nuxt.config.ts` `security.headers.contentSecurityPolicy`.
+- **CSP `img-src data:`** — **correction (2026-06-17):** an earlier change removed `data:` from
+  `img-src` on the assumption that data-URI images were unused. That was wrong — `@nuxt/icon`
+  (`provider: 'server'`) serves every site icon as a `data:image/svg+xml` URI, so the stricter
+  policy blocked ~40 icons site-wide (verified via a production build + Playwright: CSP
+  violations + missing icons in the rendered page). `data:` has been restored to `img-src`
+  (`'self' https: data:`). The security delta is negligible — `data:` in `img-src` is not a
+  script-execution vector, and XSS protection lives in the nonce-based `script-src`. A stricter
+  alternative (switching `@nuxt/icon` to inline-SVG rendering) was considered and deferred as
+  more invasive. `nuxt.config.ts` `security.headers.contentSecurityPolicy`.
+  **Regression-tested (2026-06-17):** `tests/e2e/csp.spec.ts` asserts the served CSP keeps
+  `img-src data:` and a nonce-only `script-src` (no `'unsafe-inline'`/`'unsafe-eval'` — also
+  guards M-1), and that key pages render with zero CSP violations. A scoped `e2e-csp` job in
+  `.github/workflows/ci.yml` runs this guard on every PR (chromium + MySQL service), so a future
+  `img-src` regression now fails CI instead of shipping silently.
 - **Rate-limiter single-instance fallback** — `server/plugins/validateConfig.ts` now logs a
   production startup **warning** when `REDIS_URL` is unset (rate limits would be per-process,
   not shared across replicas). Redis stays optional-with-fallback by design (no hard-fail);
@@ -377,7 +416,7 @@ The following controls are implemented well and should be preserved:
 
 | Priority | Action | Finding | Effort |
 |----------|--------|---------|--------|
-| 1 | Fail-fast on missing/short `ANALYTICS_IP_SALT` in production | M-3 | Low |
+| 1 | ~~Warn on missing/short `ANALYTICS_IP_SALT` at boot~~ **(done — M-3, warning hardened)**; fail-fast/fail-closed still optional to fully close | M-3 | Low |
 | 2 | ~~Run `npm audit fix` (nodemailer/ws/js-yaml/launch-editor)~~ **(done)** | §5 | Low |
 | 3 | Set Redis `--requirepass`; bind compose DB/Redis ports to localhost | M-2 | Low |
 | 4 | Add allowlist validation to publication redirect | M-4 | Low |

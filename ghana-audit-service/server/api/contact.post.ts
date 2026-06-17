@@ -34,12 +34,14 @@ export default defineEventHandler(async (event) => {
       // dedup key collapses to 'none' and the detector can't aggregate
       // the incident against any signature.
       const ipHash = stash?.ipHash ?? hashIp(getClientIP(event))
+      const ip = stash ? stash.ip : getClientIP(event)
       const uaHash = stash?.uaHash ?? null
       recordIncidentDeduped(
         {
           kind: 'fuzz_attempt',
           severity: highestSeverity(fuzzMatches),
           ipHash,
+          ip,
           uaHash,
           routePattern: '/api/contact',
           routePath: '/api/contact',

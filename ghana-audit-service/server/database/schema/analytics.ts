@@ -39,6 +39,12 @@ export const requestEvents = mysqlTable(
     bytesOut: int('bytes_out').notNull().default(0),
     cacheHit: boolean('cache_hit').notNull().default(false),
     ipHash: char('ip_hash', { length: 64 }).notNull(),
+    // Raw client IP for abuse attribution + geolocation. Nullable: NULL on rows
+    // captured before this column existed, and intentionally NULL for the
+    // /citizenseye route prefix (honours the anonymity promise in
+    // pages/citizenseye/privacy.vue). ip_hash is always set and remains the
+    // internal join/dedup key. IPv6 fits in 45 chars.
+    ip: varchar('ip', { length: 45 }),
     uaHash: char('ua_hash', { length: 64 }).notNull(),
     uaFamily: varchar('ua_family', { length: 32 }).notNull().default('unknown'),
     country: char('country', { length: 2 }),
@@ -58,6 +64,7 @@ export const requestEvents = mysqlTable(
     index('idx_req_ts').on(table.ts),
     index('idx_req_pattern_ts').on(table.routePattern, table.ts),
     index('idx_req_iphash_ts').on(table.ipHash, table.ts),
+    index('idx_req_ip_ts').on(table.ip, table.ts),
     index('idx_req_uahash').on(table.uaHash),
     index('idx_req_status_ts').on(table.status, table.ts)
   ]
@@ -82,6 +89,7 @@ export const downloadEvents = mysqlTable(
     bytesOut: int('bytes_out').notNull().default(0),
     isPartial: boolean('is_partial').notNull().default(false),
     ipHash: char('ip_hash', { length: 64 }).notNull(),
+    ip: varchar('ip', { length: 45 }), // raw client IP (see request_events.ip note)
     uaHash: char('ua_hash', { length: 64 }).notNull(),
     uaFamily: varchar('ua_family', { length: 32 }).notNull().default('unknown'),
     country: char('country', { length: 2 }),
@@ -91,7 +99,8 @@ export const downloadEvents = mysqlTable(
   (table) => [
     index('idx_dl_ts').on(table.ts),
     index('idx_dl_kind_target').on(table.kind, table.targetId),
-    index('idx_dl_iphash_ts').on(table.ipHash, table.ts)
+    index('idx_dl_iphash_ts').on(table.ipHash, table.ts),
+    index('idx_dl_ip_ts').on(table.ip, table.ts)
   ]
 )
 
@@ -139,6 +148,9 @@ export const botSignatures = mysqlTable(
   {
     id: bigint('id', { mode: 'number', unsigned: true }).primaryKey().autoincrement(),
     ipHash: char('ip_hash', { length: 64 }).notNull(),
+    // Representative raw IP for the signature (latest seen via ANY_VALUE in the
+    // detector). The (ip_hash, ua_hash) unique key below is unchanged.
+    ip: varchar('ip', { length: 45 }),
     uaHash: char('ua_hash', { length: 64 }).notNull(),
     uaFamily: varchar('ua_family', { length: 32 }).notNull().default('unknown'),
     uaSample: varchar('ua_sample', { length: 512 }),
@@ -159,7 +171,8 @@ export const botSignatures = mysqlTable(
   (table) => [
     uniqueIndex('uq_iphash_uahash').on(table.ipHash, table.uaHash),
     index('idx_bot_class_score').on(table.classification, table.score),
-    index('idx_bot_lastseen').on(table.lastSeen)
+    index('idx_bot_lastseen').on(table.lastSeen),
+    index('idx_bot_ip').on(table.ip)
   ]
 )
 
@@ -181,6 +194,7 @@ export const abuseIncidents = mysqlTable(
     kind: varchar('kind', { length: 32 }).notNull(),
     severity: varchar('severity', { length: 16 }).notNull().default('info'),
     ipHash: char('ip_hash', { length: 64 }),
+    ip: varchar('ip', { length: 45 }), // raw client IP (see request_events.ip note)
     uaHash: char('ua_hash', { length: 64 }),
     routePattern: varchar('route_pattern', { length: 256 }),
     routePath: varchar('route_path', { length: 512 }),
@@ -190,6 +204,7 @@ export const abuseIncidents = mysqlTable(
     index('idx_inc_ts').on(table.ts),
     index('idx_inc_kind_ts').on(table.kind, table.ts),
     index('idx_inc_iphash_ts').on(table.ipHash, table.ts),
+    index('idx_inc_ip_ts').on(table.ip, table.ts),
     index('idx_inc_severity_ts').on(table.severity, table.ts)
   ]
 )
@@ -217,6 +232,7 @@ export const searchQueries = mysqlTable(
     locale: char('locale', { length: 8 }),
     resultCount: int('result_count').notNull().default(0),
     ipHash: char('ip_hash', { length: 64 }),
+    ip: varchar('ip', { length: 45 }), // raw client IP (see request_events.ip note)
     uaFamily: varchar('ua_family', { length: 32 }).notNull().default('unknown')
   },
   (table) => [
