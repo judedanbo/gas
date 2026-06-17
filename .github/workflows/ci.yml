@@ -57,3 +57,75 @@ jobs:
 
       - name: Build
         run: npm run build
+
+  # CSP regression guard (SECURITY-ASSESSMENT.md L-4 + M-1). Runs only tests/e2e/csp.spec.ts
+  # on chromium against a live dev server, asserting the CSP header keeps `img-src data:`
+  # (so @nuxt/icon icons aren't blocked) and a nonce-only `script-src`, with zero CSP
+  # violations on render. Scoped to one spec + one browser to keep CI fast; the full,
+  # seed-dependent e2e route suite is intentionally not enabled here.
+  e2e-csp:
+    name: E2E CSP guard
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    defaults:
+      run:
+        working-directory: ghana-audit-service
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: root_password
+          MYSQL_DATABASE: ghana_audit_service
+          MYSQL_USER: gas_user
+          MYSQL_PASSWORD: gas_password
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -uroot -proot_password"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
+    env:
+      # The dev server (Playwright webServer) and the migration runner read these directly.
+      DB_HOST: 127.0.0.1
+      DB_PORT: '3306'
+      DB_USER: gas_user
+      DB_PASSWORD: gas_password
+      DB_NAME: ghana_audit_service
+      NUXT_PUBLIC_SITE_URL: http://127.0.0.1:3000
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+          cache-dependency-path: ghana-audit-service/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      # Migrate only (no seed) — the guard targets the always-present header/footer icons and
+      # static page chrome, which render without seeded content. An empty-but-migrated schema
+      # lets the dev server boot cleanly (queries return empty instead of erroring).
+      - name: Apply database migrations
+        run: npm run db:apply
+
+      - name: Install Playwright (chromium)
+        run: npx playwright install --with-deps chromium
+
+      - name: Run CSP regression guard
+        run: npm run test:e2e -- csp.spec.ts --project=chromium
+
+      - name: Upload Playwright report on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report-csp
+          path: ghana-audit-service/playwright-report/
+          retention-days: 7

@@ -19,8 +19,7 @@ export default defineNitroPlugin(() => {
     const weakSecrets = (
       [
         ['JWT_SECRET', process.env.JWT_SECRET, 32],
-        ['NUXT_API_SECRET', config.apiSecret as string | undefined, 16],
-        ['ANALYTICS_IP_SALT', process.env.ANALYTICS_IP_SALT, 16]
+        ['NUXT_API_SECRET', config.apiSecret as string | undefined, 16]
       ] as const
     )
       .filter(([, value, minLength]) => looksLikePlaceholderSecret(value, minLength))
@@ -30,6 +29,21 @@ export default defineNitroPlugin(() => {
       console.warn(
         `[Security] Insecure placeholder/short secret(s): ${weakSecrets.join(', ')}. ` +
           'Replace with strong random values (openssl rand -hex 32) before production use.'
+      )
+    }
+
+    // Analytics IP salt (M-3). Stored IP hashes are sha256(ip|salt); without a
+    // strong salt they are trivially reversible (the IPv4 space is enumerable),
+    // which defeats the guarantee that raw IPs are never recoverable. Unlike the
+    // secrets above, an *unset* salt is the most common and most dangerous state,
+    // so it must be checked explicitly — looksLikePlaceholderSecret() returns
+    // false for unset/empty by design. Warn loudly at boot; require >=32 chars.
+    const ipSalt = process.env.ANALYTICS_IP_SALT
+    if (!ipSalt || looksLikePlaceholderSecret(ipSalt, 32)) {
+      console.warn(
+        '[Security] ANALYTICS_IP_SALT is missing, too short (<32 chars), or a placeholder. ' +
+          'Stored IP hashes are reversible without a strong salt — generate one with ' +
+          '`openssl rand -hex 32` and set ANALYTICS_IP_SALT before production use.'
       )
     }
 
