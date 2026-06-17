@@ -440,8 +440,20 @@ const moduleKeysEnum = z.enum([
   'communications'
 ])
 
+// Admin accounts may only be created for official Ghana Audit Service
+// addresses. Enforced at the field level so it survives `.partial()`/`.omit()`
+// in the update schema below.
+export const ORG_EMAIL_DOMAIN = 'audit.gov.gh'
+const orgEmailSchema = z
+  .string()
+  .email()
+  .max(255)
+  .refine((email) => email.toLowerCase().endsWith(`@${ORG_EMAIL_DOMAIN}`), {
+    message: `Email must be an @${ORG_EMAIL_DOMAIN} address`
+  })
+
 export const userSchema = z.object({
-  email: z.string().email().max(255),
+  email: orgEmailSchema,
   password: z.string().min(8).optional(),
   name: z.string().min(1).max(255),
   role: z.enum(['admin', 'editor', 'viewer']).default('viewer'),

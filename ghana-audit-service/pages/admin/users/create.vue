@@ -108,6 +108,7 @@
             label="Email Address"
             type="email"
             required
+            placeholder="name@audit.gov.gh"
             :error="errors.email"
             @update:model-value="clearFieldError('email')"
           />
@@ -229,9 +230,19 @@
     communications: 'Communications (Newsletter, Contact Forms)'
   }
 
+  const ORG_EMAIL_DOMAIN = 'audit.gov.gh'
+  const orgEmailRule = (value: unknown): true | string => {
+    const str = (value as string) || ''
+    if (!str) return true // Let required handle empty
+    return (
+      str.toLowerCase().endsWith(`@${ORG_EMAIL_DOMAIN}`) ||
+      `Email must be an @${ORG_EMAIL_DOMAIN} address`
+    )
+  }
+
   const validationRules = {
     name: [rules.required],
-    email: [rules.required, rules.email],
+    email: [rules.required, rules.email, orgEmailRule],
     role: [rules.required]
   }
 
