@@ -10,7 +10,9 @@ export default defineNitroPlugin(() => {
   if (process.env.NODE_ENV === 'production') {
     // Check for API secret
     if (!config.apiSecret) {
-      console.warn('[Security] API secret is not configured. Set NUXT_API_SECRET environment variable.')
+      console.warn(
+        '[Security] API secret is not configured. Set NUXT_API_SECRET environment variable.'
+      )
     }
 
     // Flag secrets left at their insecure example/placeholder values (or too
@@ -54,22 +56,28 @@ export default defineNitroPlugin(() => {
 
     // Check for trusted proxies (important for rate limiting)
     if (!process.env.TRUSTED_PROXIES) {
-      console.warn('[Security] No trusted proxies configured. Rate limiting may not work correctly behind a reverse proxy.')
+      console.warn(
+        '[Security] No trusted proxies configured. Rate limiting may not work correctly behind a reverse proxy.'
+      )
     }
 
     // Redis backs shared rate limiting and analytics counters. Without it both
     // degrade to per-process fallbacks, so rate limits are NOT shared across
     // instances — a multi-replica deployment effectively multiplies the quota.
     if (!process.env.REDIS_URL) {
-      console.warn('[Security] REDIS_URL is not set. Rate limiting and analytics use per-process fallbacks; set REDIS_URL for a correct multi-instance production deployment.')
+      console.warn(
+        '[Security] REDIS_URL is not set. Rate limiting and analytics use per-process fallbacks; set REDIS_URL for a correct multi-instance production deployment.'
+      )
     }
 
     // SMTP backs transactional email (admin invitations + contact-form
     // notifications via server/utils/email.ts). getTransporter() returns null
-    // unless host/user/pass are all set, in which case sends silently no-op.
+    // unless host/user/pass AND from are all set, in which case sends no-op.
     // Surface that at boot so a misconfigured deployment is visible in the logs.
-    if (!config.smtpHost || !config.smtpUser || !config.smtpPass) {
-      console.warn('[Config] SMTP is not fully configured (NUXT_SMTP_HOST/USER/PASS). Invitation and contact-form emails will be skipped until all three are set.')
+    if (!config.smtpHost || !config.smtpUser || !config.smtpPass || !config.smtpFrom) {
+      console.warn(
+        '[Config] SMTP is not fully configured (NUXT_SMTP_HOST/USER/PASS/FROM). Invitation and contact-form emails will be skipped until all are set. NUXT_SMTP_FROM must be an address the SMTP account is authorized to send as.'
+      )
     }
   }
 
