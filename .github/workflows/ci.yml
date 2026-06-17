@@ -112,15 +112,23 @@ jobs:
 
       # Migrate only (no seed) — the guard targets the always-present header/footer icons and
       # static page chrome, which render without seeded content. An empty-but-migrated schema
-      # lets the dev server boot cleanly (queries return empty instead of erroring).
+      # lets the server boot cleanly (queries return empty instead of erroring).
       - name: Apply database migrations
         run: npm run db:apply
+
+      # Build once and serve the production output. The prod server responds
+      # immediately (no on-demand dev compilation), so Playwright's webServer
+      # readiness probe is reliable — the dev server flakes that probe in CI.
+      - name: Build
+        run: npm run build
 
       - name: Install Playwright (chromium)
         run: npx playwright install --with-deps chromium
 
       - name: Run CSP regression guard
         run: npm run test:e2e -- csp.spec.ts --project=chromium
+        env:
+          PLAYWRIGHT_WEB_SERVER: NODE_ENV=production node .output/server/index.mjs
 
       - name: Upload Playwright report on failure
         if: failure()
