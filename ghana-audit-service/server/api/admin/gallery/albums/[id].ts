@@ -13,6 +13,7 @@ import {
   createValidationError
 } from '../../../../utils/validation'
 import { transformGalleryAlbum } from '../../../../utils/transformGallery'
+import { safeError } from '../../../../utils/errors'
 
 export default defineEventHandler(async (event) => {
   const method = event.method
@@ -250,7 +251,7 @@ async function handleUpdate(event: H3Event, id: number) {
     return transformGalleryAlbum(updated, translationsMap, previewUrls, Number(imageCount))
   } catch (error) {
     await connection.rollback()
-    throw error
+    throw safeError('admin:gallery-albums', error)
   } finally {
     connection.release()
   }

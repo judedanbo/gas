@@ -10,6 +10,8 @@ import {
 } from '../utils/analytics/fuzzPatterns'
 import { recordIncidentDeduped } from '../utils/analytics/recordIncidentDeduped'
 import { hashIp } from '../utils/analytics/fingerprint'
+import { internalError } from '../utils/errors'
+import { logInfo } from '../utils/logger'
 
 export default defineEventHandler(async (event) => {
   // Validate CSRF token
@@ -104,15 +106,19 @@ export default defineEventHandler(async (event) => {
   if (existing) {
     // If previously unsubscribed, resubscribe them
     if (existing.unsubscribedAt) {
-      await db
-        .update(schema.newsletterSubscribers)
-        .set({
-          unsubscribedAt: null,
-          subscribedAt: new Date()
-        })
-        .where(eq(schema.newsletterSubscribers.email, email))
+      try {
+        await db
+          .update(schema.newsletterSubscribers)
+          .set({
+            unsubscribedAt: null,
+            subscribedAt: new Date()
+          })
+          .where(eq(schema.newsletterSubscribers.email, email))
+      } catch (err) {
+        throw internalError('newsletter', err, 'Failed to subscribe')
+      }
 
-      console.log(`[Newsletter] Re-subscription: ${email}`)
+      logInfo('newsletter', 'Re-subscription received')
 
       return {
         success: true,
@@ -131,15 +137,19 @@ export default defineEventHandler(async (event) => {
   const userAgent = getHeader(event, 'user-agent') || null
 
   // Add new subscriber to database
-  await db.insert(schema.newsletterSubscribers).values({
-    email,
-    subscribedAt: new Date(),
-    confirmed: false,
-    ipAddress,
-    userAgent
-  })
+  try {
+    await db.insert(schema.newsletterSubscribers).values({
+      email,
+      subscribedAt: new Date(),
+      confirmed: false,
+      ipAddress,
+      userAgent
+    })
+  } catch (err) {
+    throw internalError('newsletter', err, 'Failed to subscribe')
+  }
 
-  console.log(`[Newsletter] New subscription: ${email}`)
+  logInfo('newsletter', 'New subscription received')
 
   return {
     success: true,

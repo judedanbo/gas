@@ -12,6 +12,7 @@ import { drizzle } from 'drizzle-orm/mysql2'
 import { sql } from 'drizzle-orm'
 import mysql from 'mysql2/promise'
 import * as schema from '../schema/index'
+import { logError } from '../../utils/logger'
 
 const force = process.argv.includes('--force')
 
@@ -23,7 +24,13 @@ const dbConfig = {
   database: process.env.DB_NAME || 'ghana_audit_service'
 }
 
-type OfficeTypeSlug = 'head-office' | 'regional-office' | 'district-office' | 'sector' | 'branch' | 'unit'
+type OfficeTypeSlug =
+  | 'head-office'
+  | 'regional-office'
+  | 'district-office'
+  | 'sector'
+  | 'branch'
+  | 'unit'
 
 const officeTypesSeed: { slug: OfficeTypeSlug; name: string; displayOrder: number }[] = [
   { slug: 'head-office', name: 'Head Office', displayOrder: 0 },
@@ -58,7 +65,8 @@ const offices: OfficeData[] = [
     displayOrder: 0,
     translation: {
       name: 'Head Office',
-      address: "Ministries Block 'O', 1 Old Race Course Drive, P.O. Box M96, Ministries Accra, GA-110-8787"
+      address:
+        "Ministries Block 'O', 1 Old Race Course Drive, P.O. Box M96, Ministries Accra, GA-110-8787"
     }
   },
 
@@ -532,7 +540,10 @@ const offices: OfficeData[] = [
     phone: '0208239044',
     email: 'info@audit.gov.gh',
     displayOrder: 1,
-    translation: { name: 'Greater Accra Regional Office', address: 'P.O. Box 556, Tema, Greater Accra Region' }
+    translation: {
+      name: 'Greater Accra Regional Office',
+      address: 'P.O. Box 556, Tema, Greater Accra Region'
+    }
   },
   {
     slug: 'greater-accra-tema',
@@ -971,7 +982,10 @@ const offices: OfficeData[] = [
     phone: '0244 725 192',
     email: 'info@audit.gov.gh',
     displayOrder: 1,
-    translation: { name: 'Western North Regional Office', address: 'Sefwi Wiawso, Western North Region' }
+    translation: {
+      name: 'Western North Regional Office',
+      address: 'Sefwi Wiawso, Western North Region'
+    }
   },
   {
     slug: 'western-north-enchi',
@@ -1214,7 +1228,7 @@ async function seed() {
     console.log(`Successfully seeded ${inserted} offices with English translations.`)
     console.log('Akan translations can be added later via the admin panel.')
   } catch (error) {
-    console.error('Seed failed:', error)
+    logError('seed:offices', error)
     process.exit(1)
   } finally {
     await pool.end()

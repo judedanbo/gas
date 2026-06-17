@@ -10,6 +10,7 @@ import {
 } from '../../../utils/adminHelpers'
 import { logAuditAction, sanitizeForAudit } from '../../../utils/auditLogger'
 import { tenderSchema, validateBody, createValidationError } from '../../../utils/validation'
+import { safeError } from '../../../utils/errors'
 
 export default defineEventHandler(async (event) => {
   const method = event.method
@@ -174,7 +175,7 @@ async function handleCreate(event: H3Event) {
     return { ...tender, translations: translationsMap }
   } catch (error) {
     await connection.rollback()
-    throw error
+    throw safeError('admin:tenders', error)
   } finally {
     connection.release()
   }

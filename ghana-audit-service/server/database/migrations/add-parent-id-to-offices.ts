@@ -6,6 +6,7 @@
 
 import 'dotenv/config'
 import mysql from 'mysql2/promise'
+import { logError, logInfo } from '../../utils/logger'
 
 const dbConfig = {
   host: process.env.DB_HOST || 'localhost',
@@ -16,7 +17,10 @@ const dbConfig = {
 }
 
 async function migrate() {
-  console.log(`Connecting to ${dbConfig.host}:${dbConfig.port}/${dbConfig.database}...`)
+  logInfo(
+    'add-parent-id',
+    `Connecting to ${dbConfig.host}:${dbConfig.port}/${dbConfig.database}...`
+  )
   const connection = await mysql.createConnection(dbConfig)
 
   try {
@@ -28,15 +32,11 @@ async function migrate() {
 
     if (cols.length === 0) {
       console.log('Adding parent_id column to offices...')
-      await connection.execute(
-        `ALTER TABLE offices ADD COLUMN parent_id INT NULL AFTER type_id`
-      )
+      await connection.execute(`ALTER TABLE offices ADD COLUMN parent_id INT NULL AFTER type_id`)
       await connection.execute(
         `ALTER TABLE offices ADD CONSTRAINT fk_offices_parent FOREIGN KEY (parent_id) REFERENCES offices(id) ON DELETE SET NULL`
       )
-      await connection.execute(
-        `CREATE INDEX idx_offices_parent_id ON offices(parent_id)`
-      )
+      await connection.execute(`CREATE INDEX idx_offices_parent_id ON offices(parent_id)`)
       console.log('Added parent_id column with FK and index.')
     } else {
       console.log('parent_id column already exists, skipping.')
@@ -104,7 +104,7 @@ async function migrate() {
 
     console.log('Migration complete.')
   } catch (error) {
-    console.error('Migration failed:', error)
+    logError('add-parent-id', error)
     process.exit(1)
   } finally {
     await connection.end()

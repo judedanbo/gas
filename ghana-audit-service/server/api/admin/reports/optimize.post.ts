@@ -11,6 +11,7 @@ import {
 } from '../../../utils/pdfOptimizer'
 import { createJob, pushEvent, updateJob } from '../../../utils/pdfOptimizationJobs'
 import { signSseTicket } from '../../../utils/sseTicket'
+import { logError } from '../../../utils/logger'
 
 const ALLOWED_PRESETS: CompressionPreset[] = ['screen', 'ebook', 'printer']
 
@@ -85,7 +86,7 @@ async function runOptimization(
           .set({ fileSize: String(result.optimizedSize) })
           .where(eq(schema.auditReports.id, reportId))
       } catch (dbErr) {
-        console.error('[pdfOptimizer] failed to update fileSize:', dbErr)
+        logError('pdfOptimizer', dbErr)
       }
     }
 
@@ -104,12 +105,11 @@ async function runOptimization(
       }
     })
   } catch (err) {
-    const message =
-      err instanceof PdfOptimizerError
-        ? `${err.code}: ${err.message}`
-        : err instanceof Error
-          ? err.message
-          : 'Unknown optimization error'
+    // Log the full error server-side, but only surface a safe summary to the
+    // admin client. PdfOptimizerError.code is a fixed enum (no internals); the
+    // free-form message can contain file paths, so it is not sent to the client.
+    logError('pdfOptimizer', err)
+    const message = err instanceof PdfOptimizerError ? err.code : 'Optimization failed'
 
     // The file is left untouched on any error path (the optimizer only
     // renames into place after the optimized variant is fully written and

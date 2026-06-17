@@ -6,6 +6,7 @@ import { logAuditAction, createChangesObject, sanitizeForAudit } from '../../../
 import { auditReportSchema, validateBody, createValidationError } from '../../../utils/validation'
 import { resolvePublicAsset } from '../../../utils/publicFiles'
 import { generateThumbnailFromPdf } from '../../../utils/generateThumbnail'
+import { safeError } from '../../../utils/errors'
 
 export default defineEventHandler(async (event) => {
   const method = event.method
@@ -212,11 +213,17 @@ async function handleUpdate(event: H3Event, id: number) {
     const before = sanitizeForAudit({
       ...existingReport,
       translations: Object.fromEntries(
-        Object.entries(existingTranslationsMap).map(([k, v]) => [k, { title: v.title, summary: v.summary }])
+        Object.entries(existingTranslationsMap).map(([k, v]) => [
+          k,
+          { title: v.title, summary: v.summary }
+        ])
       )
     })
     const after = sanitizeForAudit({ ...updatedReport, translations: translationsMap })
-    const changes = createChangesObject(before as Record<string, unknown>, after as Record<string, unknown>)
+    const changes = createChangesObject(
+      before as Record<string, unknown>,
+      after as Record<string, unknown>
+    )
 
     await logAuditAction(event, 'update', 'audit_report', id, changes)
 
@@ -226,7 +233,7 @@ async function handleUpdate(event: H3Event, id: number) {
     }
   } catch (error) {
     await connection.rollback()
-    throw error
+    throw safeError('admin:reports', error)
   } finally {
     connection.release()
   }

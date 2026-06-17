@@ -13,6 +13,7 @@ import { stat } from 'node:fs/promises'
 import { existsSync } from 'node:fs'
 import { resolve } from 'node:path'
 import * as schema from '../schema/index'
+import { logError } from '../../utils/logger'
 
 const dbConfig = {
   host: process.env.DB_HOST || 'localhost',
@@ -80,11 +81,13 @@ async function run() {
         fileSize: schema.auditReports.fileSize
       })
       .from(schema.auditReports)
-      .where(or(
-        isNull(schema.auditReports.fileSize),
-        eq(schema.auditReports.fileSize, ''),
-        eq(schema.auditReports.fileSize, '0')
-      ))
+      .where(
+        or(
+          isNull(schema.auditReports.fileSize),
+          eq(schema.auditReports.fileSize, ''),
+          eq(schema.auditReports.fileSize, '0')
+        )
+      )
 
     console.log(`Found ${reports.length} reports with missing file sizes\n`)
 
@@ -132,7 +135,7 @@ async function run() {
 
     console.log(`\nDone: ${updated} updated, ${skipped} skipped`)
   } catch (error) {
-    console.error('Error populating file sizes:', error)
+    logError('seed:file-sizes', error)
     throw error
   } finally {
     await pool.end()
@@ -140,6 +143,6 @@ async function run() {
 }
 
 run().catch((error) => {
-  console.error('Failed:', error)
+  logError('seed:file-sizes', error)
   process.exit(1)
 })

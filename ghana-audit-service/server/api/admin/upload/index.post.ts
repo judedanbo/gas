@@ -1,6 +1,7 @@
 import { requirePermission } from '../../../utils/adminHelpers'
 import { handleFileUpload, getAllowedTypes, getMaxFileSize } from '../../../utils/fileUpload'
 import { logAuditAction } from '../../../utils/auditLogger'
+import { internalError } from '../../../utils/errors'
 
 export default defineEventHandler(async (event) => {
   requirePermission(event, 'create')
@@ -41,17 +42,14 @@ export default defineEventHandler(async (event) => {
       ...result
     }
   } catch (error: unknown) {
-    // Re-throw if it's already an H3Error
-    const err = error as { statusCode?: number; message?: string }
+    // Re-throw client-facing H3 errors as-is (e.g. validation 4xx).
+    const err = error as { statusCode?: number }
     if (err.statusCode) {
       throw error
     }
 
-    throw createError({
-      statusCode: 500,
-      statusMessage: 'Upload failed',
-      message: err.message || 'Unknown error'
-    })
+    // Unexpected failure: log the real cause, return a generic 500 to the client.
+    throw internalError('upload', error, 'Upload failed')
   }
 })
 

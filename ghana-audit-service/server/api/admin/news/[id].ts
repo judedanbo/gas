@@ -4,6 +4,7 @@ import { getDatabase, schema } from '../../../database'
 import { requirePermission, getCurrentUser, isAdmin } from '../../../utils/adminHelpers'
 import { logAuditAction, createChangesObject, sanitizeForAudit } from '../../../utils/auditLogger'
 import { newsArticleSchema, validateBody, createValidationError } from '../../../utils/validation'
+import { safeError } from '../../../utils/errors'
 
 export default defineEventHandler(async (event) => {
   const method = event.method
@@ -34,7 +35,11 @@ async function handleGet(event: H3Event, id: number) {
     .limit(1)
 
   if (!article) {
-    throw createError({ statusCode: 404, statusMessage: 'Not Found', message: 'News article not found' })
+    throw createError({
+      statusCode: 404,
+      statusMessage: 'Not Found',
+      message: 'News article not found'
+    })
   }
 
   const translations = await db
@@ -73,7 +78,11 @@ async function handleUpdate(event: H3Event, id: number) {
     .limit(1)
 
   if (!existing) {
-    throw createError({ statusCode: 404, statusMessage: 'Not Found', message: 'News article not found' })
+    throw createError({
+      statusCode: 404,
+      statusMessage: 'Not Found',
+      message: 'News article not found'
+    })
   }
 
   const existingTranslations = await db
@@ -92,7 +101,10 @@ async function handleUpdate(event: H3Event, id: number) {
       acc[t.locale] = { id: t.id, title: t.title, excerpt: t.excerpt, content: t.content }
       return acc
     },
-    {} as Record<string, { id: number; title: string; excerpt: string | null; content: string | null }>
+    {} as Record<
+      string,
+      { id: number; title: string; excerpt: string | null; content: string | null }
+    >
   )
 
   const input = validateBody(newsArticleSchema, body)
@@ -151,14 +163,21 @@ async function handleUpdate(event: H3Event, id: number) {
 
     if (input.tagIds && input.tagIds.length > 0) {
       for (const tagId of input.tagIds) {
-        await connection.execute(`INSERT INTO news_article_tags (news_article_id, tag_id) VALUES (?, ?)`, [id, tagId])
+        await connection.execute(
+          `INSERT INTO news_article_tags (news_article_id, tag_id) VALUES (?, ?)`,
+          [id, tagId]
+        )
       }
     }
 
     await connection.commit()
 
     // Fetch updated article
-    const [updated] = await db.select().from(schema.newsArticles).where(eq(schema.newsArticles.id, id)).limit(1)
+    const [updated] = await db
+      .select()
+      .from(schema.newsArticles)
+      .where(eq(schema.newsArticles.id, id))
+      .limit(1)
 
     const translations = await db
       .select()
@@ -179,15 +198,22 @@ async function handleUpdate(event: H3Event, id: number) {
       {} as Record<string, { title: string; excerpt: string | null; content: string | null }>
     )
 
-    const before = sanitizeForAudit({ ...existing, translations: existingTransMap, tags: existingTags })
+    const before = sanitizeForAudit({
+      ...existing,
+      translations: existingTransMap,
+      tags: existingTags
+    })
     const after = sanitizeForAudit({ ...updated, translations: translationsMap, tags })
-    const changes = createChangesObject(before as Record<string, unknown>, after as Record<string, unknown>)
+    const changes = createChangesObject(
+      before as Record<string, unknown>,
+      after as Record<string, unknown>
+    )
     await logAuditAction(event, 'update', 'news_article', id, changes)
 
     return { ...updated, translations: translationsMap, tags }
   } catch (error) {
     await connection.rollback()
-    throw error
+    throw safeError('admin:news', error)
   } finally {
     connection.release()
   }
@@ -204,10 +230,17 @@ async function handleDelete(event: H3Event, id: number) {
     .limit(1)
 
   if (!existing) {
-    throw createError({ statusCode: 404, statusMessage: 'Not Found', message: 'News article not found' })
+    throw createError({
+      statusCode: 404,
+      statusMessage: 'Not Found',
+      message: 'News article not found'
+    })
   }
 
-  await db.update(schema.newsArticles).set({ deletedAt: new Date() }).where(eq(schema.newsArticles.id, id))
+  await db
+    .update(schema.newsArticles)
+    .set({ deletedAt: new Date() })
+    .where(eq(schema.newsArticles.id, id))
 
   await logAuditAction(event, 'delete', 'news_article', id, {
     before: sanitizeForAudit(existing as Record<string, unknown>)

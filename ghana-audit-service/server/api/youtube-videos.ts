@@ -1,4 +1,5 @@
 import type { Video } from '~/types'
+import { logError } from '../utils/logger'
 
 const CHANNEL_ID = 'UCe019PXmQjX6QY9dTm2zPyg'
 const FEED_URL = `https://www.youtube.com/feeds/videos.xml?channel_id=${CHANNEL_ID}`
@@ -39,7 +40,7 @@ export default defineEventHandler(async (): Promise<Video[]> => {
       }
     })
   } catch (error) {
-    console.error('Failed to fetch YouTube feed:', error)
+    logError('youtube-videos', error)
     return []
   }
 })

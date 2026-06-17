@@ -1,6 +1,7 @@
 import { drizzle } from 'drizzle-orm/mysql2'
 import { migrate } from 'drizzle-orm/mysql2/migrator'
 import mysql from 'mysql2/promise'
+import { logError, logInfo } from '../utils/logger'
 
 // DEV-ONLY: drops the configured database, recreates it, and re-runs migrations.
 // Destructive and irreversible. Guarded so it cannot touch production or a
@@ -52,7 +53,7 @@ async function run() {
     process.exit(1)
   }
 
-  console.log(`[reset] Dropping and recreating ${host}:${port}/${database} as ${user}`)
+  logInfo('reset', `Dropping and recreating ${host}:${port}/${database} as ${user}`)
 
   // Connect WITHOUT selecting a database so we can drop/recreate it.
   const admin = await mysql.createConnection({ host, port, user, password })
@@ -84,6 +85,6 @@ async function run() {
 }
 
 run().catch((err) => {
-  console.error('[reset] Failed:', err)
+  logError('reset', err)
   process.exit(1)
 })

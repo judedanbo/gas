@@ -7,6 +7,7 @@ import {
   validateBody,
   createValidationError
 } from '../../../utils/validation'
+import { safeError } from '../../../utils/errors'
 
 export default defineEventHandler(async (event) => {
   requirePermission(event, 'create')
@@ -57,7 +58,7 @@ export default defineEventHandler(async (event) => {
     await connection.commit()
   } catch (error) {
     await connection.rollback()
-    throw error
+    throw safeError('admin:gallery', error)
   } finally {
     connection.release()
   }
