@@ -25,6 +25,14 @@ export const users = mysqlTable(
     // implicitly have every module; an explicit list for editor/viewer.
     modules: json('modules').$type<string[]>(),
     isActive: boolean('is_active').notNull().default(true),
+    // Account lifecycle status. New users start 'pending' until they accept
+    // their emailed invitation, which flips them to 'active'. 'inactive' is a
+    // soft disable. Login and the admin gate require 'active'.
+    status: mysqlEnum('status', ['pending', 'active', 'inactive']).notNull().default('active'),
+    // Single-use invitation token (hashed not needed — opaque random hex) and
+    // its expiry. Cleared once the invitation is accepted.
+    invitationToken: varchar('invitation_token', { length: 64 }),
+    invitationTokenExpiresAt: datetime('invitation_token_expires_at'),
     lastLoginAt: datetime('last_login_at'),
     // Per-account login lockout (defends against distributed brute force; the
     // per-IP rate limiter is separate). See server/utils/loginLockout.ts.

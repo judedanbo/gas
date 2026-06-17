@@ -32,6 +32,7 @@ async function handleGet(event: H3Event, id: number) {
       role: schema.users.role,
       modules: schema.users.modules,
       isActive: schema.users.isActive,
+      status: schema.users.status,
       lastLoginAt: schema.users.lastLoginAt,
       createdAt: schema.users.createdAt,
       updatedAt: schema.users.updatedAt,
@@ -115,6 +116,7 @@ async function handleUpdate(event: H3Event, id: number) {
       role: schema.users.role,
       modules: schema.users.modules,
       isActive: schema.users.isActive,
+      status: schema.users.status,
       lastLoginAt: schema.users.lastLoginAt,
       createdAt: schema.users.createdAt,
       updatedAt: schema.users.updatedAt

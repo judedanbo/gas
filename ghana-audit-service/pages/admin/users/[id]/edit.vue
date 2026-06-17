@@ -197,7 +197,9 @@
     useAdminCrud<AdminUser>('users')
   const { errors, validate, setErrors, clearFieldError, rules } = useFormValidation()
 
-  const form = reactive<UserInput>({
+  // Edit always works with a concrete password string + active flag (unlike
+  // the invite-based create flow), so narrow the optional UserInput fields.
+  const form = reactive<UserInput & { password: string; isActive: boolean }>({
     name: '',
     email: '',
     password: '',
@@ -219,9 +221,19 @@
     communications: 'Communications (Newsletter, Contact Forms)'
   }
 
+  const ORG_EMAIL_DOMAIN = 'audit.gov.gh'
+  const orgEmailRule = (value: unknown): true | string => {
+    const str = (value as string) || ''
+    if (!str) return true // Let required handle empty
+    return (
+      str.toLowerCase().endsWith(`@${ORG_EMAIL_DOMAIN}`) ||
+      `Email must be an @${ORG_EMAIL_DOMAIN} address`
+    )
+  }
+
   const validationRules = {
     name: [rules.required],
-    email: [rules.required, rules.email],
+    email: [rules.required, rules.email, orgEmailRule],
     role: [rules.required]
   }
 

@@ -40,7 +40,11 @@ const PUBLIC_ADMIN_ROUTES = [
   // PDF-token exchange authenticates via a single-use signed token in the
   // body, minted server-side by the report.pdf endpoint after the admin's
   // Bearer JWT was already validated.
-  '/api/admin/auth/exchange-pdf-token'
+  '/api/admin/auth/exchange-pdf-token',
+  // Invitation acceptance: the invitee is not yet authenticated and proves
+  // identity via the single-use invitation token in the request.
+  '/api/admin/auth/invitation',
+  '/api/admin/auth/accept-invitation'
 ]
 
 // SSE endpoints — EventSource cannot set custom headers, so for these routes
@@ -57,8 +61,12 @@ export default defineEventHandler(async (event) => {
     return
   }
 
+  // Compare against the pathname only — some public routes (e.g. invitation
+  // validation) carry query strings that `event.path` would include.
+  const pathname = path.split('?')[0]
+
   // Skip authentication for public admin routes
-  if (PUBLIC_ADMIN_ROUTES.includes(path)) {
+  if (PUBLIC_ADMIN_ROUTES.includes(pathname)) {
     return
   }
 
@@ -107,6 +115,7 @@ export default defineEventHandler(async (event) => {
       role: schema.users.role,
       modules: schema.users.modules,
       isActive: schema.users.isActive,
+      status: schema.users.status,
       deletedAt: schema.users.deletedAt
     })
     .from(schema.users)
@@ -114,6 +123,7 @@ export default defineEventHandler(async (event) => {
       and(
         eq(schema.users.id, credentialUserId),
         eq(schema.users.isActive, true),
+        eq(schema.users.status, 'active'),
         isNull(schema.users.deletedAt)
       )
     )

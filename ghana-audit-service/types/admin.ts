@@ -23,6 +23,8 @@ export const ALL_MODULES: ModuleKey[] = [
   'communications'
 ]
 
+export type UserStatus = 'pending' | 'active' | 'inactive'
+
 export interface AdminUser {
   id: number
   email: string
@@ -30,6 +32,7 @@ export interface AdminUser {
   role: 'admin' | 'editor' | 'viewer'
   modules: ModuleKey[]
   isActive: boolean
+  status: UserStatus
   lastLoginAt: string | null
   createdAt: string
   updatedAt: string
@@ -649,10 +652,19 @@ export interface TagInput {
 export interface UserInput {
   email: string
   name: string
-  password?: string
   role: 'admin' | 'editor' | 'viewer'
   modules?: ModuleKey[]
-  isActive: boolean
+  // Used by the edit flow only: admins can reset a password and toggle the
+  // active state. New users are invited (no admin-set password) and start
+  // pending, so the create flow leaves these unset.
+  password?: string
+  isActive?: boolean
+}
+
+/** Response from creating a user — includes the one-time generated password. */
+export interface CreateUserResponse extends AdminUser {
+  generatedPassword: string
+  emailSent: boolean
 }
 
 export interface ManagementTeamMemberInput {
