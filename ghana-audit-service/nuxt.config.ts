@@ -7,7 +7,13 @@ const isDev = process.env.NODE_ENV !== 'production'
 
 export default defineNuxtConfig({
   compatibilityDate: '2025-07-15',
-  devtools: { enabled: true },
+  // DevTools only in dev — it ships debugging surface area otherwise.
+  devtools: { enabled: isDev },
+
+  // Don't emit source maps to the browser in production (would expose readable
+  // source). Server maps are also disabled to keep source out of the image;
+  // set `server: true` if you want line-accurate server stack traces in logs.
+  sourcemap: { client: false, server: false },
 
   // Enable TypeScript
   typescript: {

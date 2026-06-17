@@ -11,6 +11,7 @@ import { drizzle } from 'drizzle-orm/mysql2'
 import { sql } from 'drizzle-orm'
 import mysql from 'mysql2/promise'
 import * as schema from '../schema/index'
+import { logError } from '../../utils/logger'
 
 const force = process.argv.includes('--force')
 
@@ -138,7 +139,7 @@ async function seed() {
     console.log(`\nSeed completed successfully!`)
     console.log(`  - ${departmentsData.length} departments created`)
   } catch (error) {
-    console.error('Error seeding data:', error)
+    logError('seed:departments', error)
     throw error
   } finally {
     await pool.end()
@@ -147,6 +148,6 @@ async function seed() {
 }
 
 seed().catch((error) => {
-  console.error('Seed failed:', error)
+  logError('seed:departments', error)
   process.exit(1)
 })

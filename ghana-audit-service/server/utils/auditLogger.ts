@@ -1,6 +1,7 @@
 import type { H3Event } from 'h3'
 import { getDatabase, schema } from '../database'
 import { getClientIP } from './rateLimiter'
+import { logError } from './logger'
 
 export type AuditAction = 'create' | 'update' | 'delete' | 'restore' | 'login' | 'logout' | 'export'
 
@@ -37,7 +38,7 @@ export async function logAuditAction(
     })
   } catch (error) {
     // Log error but don't throw - audit logging should not break the main operation
-    console.error('[AuditLogger] Failed to log action:', error)
+    logError('AuditLogger', error)
   }
 }
 

@@ -2,6 +2,7 @@ import { drizzle } from 'drizzle-orm/mysql2'
 import { migrate } from 'drizzle-orm/mysql2/migrator'
 import mysql from 'mysql2/promise'
 import { baselineIfNeeded, MIGRATIONS_FOLDER } from './baseline'
+import { logError, logInfo } from '../utils/logger'
 
 async function run() {
   const host = process.env.DB_HOST
@@ -15,7 +16,8 @@ async function run() {
     process.exit(1)
   }
 
-  console.log(`[migrate] Connecting to ${host}:${port}/${database} as ${user}`)
+  // Dev-only: host/db/user are sensitive infrastructure detail in prod logs.
+  logInfo('migrate', `Connecting to ${host}:${port}/${database} as ${user}`)
 
   const connection = await mysql.createConnection({
     host,
@@ -47,6 +49,6 @@ async function run() {
 }
 
 run().catch((err) => {
-  console.error('[migrate] Failed:', err)
+  logError('migrate', err)
   process.exit(1)
 })

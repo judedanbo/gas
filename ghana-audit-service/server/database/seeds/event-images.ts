@@ -6,6 +6,7 @@ import * as schema from '../schema'
 import { readFileSync } from 'node:fs'
 import { join, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { logError } from '../../utils/logger'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 
@@ -79,4 +80,4 @@ async function seed() {
   }
 }
 
-seed().catch(console.error)
+seed().catch((err) => logError('seed:event-images', err))

@@ -8,6 +8,7 @@ import {
 } from '../../../utils/adminHelpers'
 import { logAuditAction, sanitizeForAudit } from '../../../utils/auditLogger'
 import { officeSchema, validateBody, createValidationError } from '../../../utils/validation'
+import { safeError } from '../../../utils/errors'
 
 export default defineEventHandler(async (event) => {
   const method = event.method
@@ -68,9 +69,7 @@ async function handleList(event: H3Event) {
       ? await db
           .select()
           .from(schema.officeTranslations)
-          .where(
-            sql`${schema.officeTranslations.officeId} IN (${sql.join(officeIds, sql`, `)})`
-          )
+          .where(sql`${schema.officeTranslations.officeId} IN (${sql.join(officeIds, sql`, `)})`)
       : []
 
   const typeIds = [...new Set(offices.map((o) => o.typeId))]
@@ -183,7 +182,7 @@ async function handleCreate(event: H3Event) {
     return { ...office, translations: translationsMap }
   } catch (error) {
     await connection.rollback()
-    throw error
+    throw safeError('admin:offices', error)
   } finally {
     connection.release()
   }

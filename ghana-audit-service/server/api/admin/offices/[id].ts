@@ -4,6 +4,7 @@ import { getDatabase, schema } from '../../../database'
 import { requirePermission, isAdmin } from '../../../utils/adminHelpers'
 import { logAuditAction, createChangesObject, sanitizeForAudit } from '../../../utils/auditLogger'
 import { officeSchema, validateBody, createValidationError } from '../../../utils/validation'
+import { safeError } from '../../../utils/errors'
 
 export default defineEventHandler(async (event) => {
   const method = event.method
@@ -162,7 +163,7 @@ async function handleUpdate(event: H3Event, id: number) {
     return { ...updated, translations: translationsMap }
   } catch (error) {
     await connection.rollback()
-    throw error
+    throw safeError('admin:offices', error)
   } finally {
     connection.release()
   }
@@ -181,10 +182,7 @@ async function handleDelete(event: H3Event, id: number) {
   if (!existing)
     throw createError({ statusCode: 404, statusMessage: 'Not Found', message: 'Office not found' })
 
-  await db
-    .update(schema.offices)
-    .set({ deletedAt: new Date() })
-    .where(eq(schema.offices.id, id))
+  await db.update(schema.offices).set({ deletedAt: new Date() }).where(eq(schema.offices.id, id))
 
   await logAuditAction(event, 'delete', 'office', id, {
     before: sanitizeForAudit(existing as Record<string, unknown>)

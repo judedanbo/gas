@@ -11,6 +11,7 @@ import mysql from 'mysql2/promise'
 import { eq } from 'drizzle-orm'
 import bcrypt from 'bcrypt'
 import * as schema from './schema/index'
+import { logError, logInfo } from '../utils/logger'
 
 const SALT_ROUNDS = 12
 
@@ -37,7 +38,10 @@ async function seed() {
     database: process.env.DB_NAME || 'ghana_audit_service'
   }
 
-  console.log(`Connecting to database at ${dbConfig.host}:${dbConfig.port}/${dbConfig.database}...`)
+  logInfo(
+    'seed',
+    `Connecting to database at ${dbConfig.host}:${dbConfig.port}/${dbConfig.database}...`
+  )
 
   // Create connection
   const connection = await mysql.createConnection(dbConfig)
@@ -90,7 +94,7 @@ async function seed() {
 
     console.log('\nSeed completed successfully!')
   } catch (error) {
-    console.error('Seed failed:', error)
+    logError('seed', error)
     process.exit(1)
   } finally {
     await connection.end()

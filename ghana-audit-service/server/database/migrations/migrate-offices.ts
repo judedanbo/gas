@@ -6,6 +6,7 @@
 
 import 'dotenv/config'
 import mysql from 'mysql2/promise'
+import { logError, logInfo } from '../../utils/logger'
 
 const dbConfig = {
   host: process.env.DB_HOST || 'localhost',
@@ -16,7 +17,10 @@ const dbConfig = {
 }
 
 async function migrate() {
-  console.log(`Connecting to ${dbConfig.host}:${dbConfig.port}/${dbConfig.database}...`)
+  logInfo(
+    'migrate-offices',
+    `Connecting to ${dbConfig.host}:${dbConfig.port}/${dbConfig.database}...`
+  )
   const connection = await mysql.createConnection(dbConfig)
 
   try {
@@ -51,7 +55,9 @@ async function migrate() {
       )
 
       if (cols.length === 0) {
-        await connection.execute(`ALTER TABLE regional_offices ADD COLUMN type_id int NOT NULL DEFAULT 1 AFTER slug`)
+        await connection.execute(
+          `ALTER TABLE regional_offices ADD COLUMN type_id int NOT NULL DEFAULT 1 AFTER slug`
+        )
       }
 
       await connection.execute(`RENAME TABLE regional_offices TO offices`)
@@ -61,21 +67,31 @@ async function migrate() {
       try {
         await connection.execute(`ALTER TABLE offices DROP INDEX idx_regional_offices_slug`)
         await connection.execute(`ALTER TABLE offices ADD INDEX idx_offices_slug (slug)`)
-      } catch { /* index may not exist */ }
+      } catch {
+        /* index may not exist */
+      }
 
       try {
         await connection.execute(`ALTER TABLE offices DROP INDEX idx_regional_offices_region`)
         await connection.execute(`ALTER TABLE offices ADD INDEX idx_offices_region (region)`)
-      } catch { /* index may not exist */ }
+      } catch {
+        /* index may not exist */
+      }
 
       // Add type_id index and FK
       try {
         await connection.execute(`ALTER TABLE offices ADD INDEX idx_offices_type_id (type_id)`)
-      } catch { /* index may already exist */ }
+      } catch {
+        /* index may already exist */
+      }
 
       try {
-        await connection.execute(`ALTER TABLE offices ADD CONSTRAINT offices_type_id_office_types_id_fk FOREIGN KEY (type_id) REFERENCES office_types(id)`)
-      } catch { /* FK may already exist */ }
+        await connection.execute(
+          `ALTER TABLE offices ADD CONSTRAINT offices_type_id_office_types_id_fk FOREIGN KEY (type_id) REFERENCES office_types(id)`
+        )
+      } catch {
+        /* FK may already exist */
+      }
     }
 
     // 3. Rename regional_office_translations → office_translations
@@ -90,15 +106,27 @@ async function migrate() {
 
       // Update FK reference
       try {
-        await connection.execute(`ALTER TABLE office_translations DROP FOREIGN KEY regional_office_translations_office_id_regional_offices_id_fk`)
-        await connection.execute(`ALTER TABLE office_translations ADD CONSTRAINT office_translations_office_id_offices_id_fk FOREIGN KEY (office_id) REFERENCES offices(id) ON DELETE CASCADE`)
-      } catch { /* FK name may differ */ }
+        await connection.execute(
+          `ALTER TABLE office_translations DROP FOREIGN KEY regional_office_translations_office_id_regional_offices_id_fk`
+        )
+        await connection.execute(
+          `ALTER TABLE office_translations ADD CONSTRAINT office_translations_office_id_offices_id_fk FOREIGN KEY (office_id) REFERENCES offices(id) ON DELETE CASCADE`
+        )
+      } catch {
+        /* FK name may differ */
+      }
 
       // Update locale index name
       try {
-        await connection.execute(`ALTER TABLE office_translations DROP INDEX idx_regional_office_translations_locale`)
-        await connection.execute(`ALTER TABLE office_translations ADD INDEX idx_office_translations_locale (locale)`)
-      } catch { /* index may not exist */ }
+        await connection.execute(
+          `ALTER TABLE office_translations DROP INDEX idx_regional_office_translations_locale`
+        )
+        await connection.execute(
+          `ALTER TABLE office_translations ADD INDEX idx_office_translations_locale (locale)`
+        )
+      } catch {
+        /* index may not exist */
+      }
     }
 
     // 4. Rename management_team.regional_office_id → office_id
@@ -112,27 +140,45 @@ async function migrate() {
 
       // Drop old FK and index first
       try {
-        await connection.execute(`ALTER TABLE management_team DROP FOREIGN KEY management_team_regional_office_id_regional_offices_id_fk`)
-      } catch { /* FK name may differ */ }
+        await connection.execute(
+          `ALTER TABLE management_team DROP FOREIGN KEY management_team_regional_office_id_regional_offices_id_fk`
+        )
+      } catch {
+        /* FK name may differ */
+      }
 
       try {
-        await connection.execute(`ALTER TABLE management_team DROP INDEX idx_management_team_regional_office`)
-      } catch { /* index may not exist */ }
+        await connection.execute(
+          `ALTER TABLE management_team DROP INDEX idx_management_team_regional_office`
+        )
+      } catch {
+        /* index may not exist */
+      }
 
-      await connection.execute(`ALTER TABLE management_team CHANGE COLUMN regional_office_id office_id int NULL`)
+      await connection.execute(
+        `ALTER TABLE management_team CHANGE COLUMN regional_office_id office_id int NULL`
+      )
 
       try {
-        await connection.execute(`ALTER TABLE management_team ADD INDEX idx_management_team_office (office_id)`)
-      } catch { /* index may already exist */ }
+        await connection.execute(
+          `ALTER TABLE management_team ADD INDEX idx_management_team_office (office_id)`
+        )
+      } catch {
+        /* index may already exist */
+      }
 
       try {
-        await connection.execute(`ALTER TABLE management_team ADD CONSTRAINT management_team_office_id_offices_id_fk FOREIGN KEY (office_id) REFERENCES offices(id) ON DELETE SET NULL`)
-      } catch { /* FK may already exist */ }
+        await connection.execute(
+          `ALTER TABLE management_team ADD CONSTRAINT management_team_office_id_offices_id_fk FOREIGN KEY (office_id) REFERENCES offices(id) ON DELETE SET NULL`
+        )
+      } catch {
+        /* FK may already exist */
+      }
     }
 
     console.log('Migration completed successfully!')
   } catch (error) {
-    console.error('Migration failed:', error)
+    logError('migrate-offices', error)
     process.exit(1)
   } finally {
     await connection.end()

@@ -11,6 +11,8 @@ import {
 } from '../utils/analytics/fuzzPatterns'
 import { recordIncidentDeduped } from '../utils/analytics/recordIncidentDeduped'
 import { hashIp } from '../utils/analytics/fingerprint'
+import { internalError } from '../utils/errors'
+import { logError, logInfo } from '../utils/logger'
 
 export default defineEventHandler(async (event) => {
   // Validate CSRF token
@@ -148,18 +150,23 @@ export default defineEventHandler(async (event) => {
   const ipAddress = getClientIP(event)
 
   // Insert contact submission into database
-  await db.insert(schema.contactSubmissions).values({
-    name: sanitizedName,
-    email: sanitizedEmail,
-    phone: sanitizedPhone,
-    subject: sanitizedSubject,
-    message: sanitizedMessage,
-    submittedAt: new Date(),
-    ipAddress,
-    status: 'pending'
-  })
+  try {
+    await db.insert(schema.contactSubmissions).values({
+      name: sanitizedName,
+      email: sanitizedEmail,
+      phone: sanitizedPhone,
+      subject: sanitizedSubject,
+      message: sanitizedMessage,
+      submittedAt: new Date(),
+      ipAddress,
+      status: 'pending'
+    })
+  } catch (err) {
+    throw internalError('contact', err, 'Failed to submit your message')
+  }
 
-  console.log(`[Contact] New submission from: ${sanitizedEmail} - Subject: ${sanitizedSubject}`)
+  // No PII in production logs — keep a non-identifying breadcrumb in dev only.
+  logInfo('contact', 'New submission received')
 
   // Send notification email to info@audit.gov.gh (non-blocking — don't fail the request if email fails)
   sendContactNotification({
@@ -169,7 +176,7 @@ export default defineEventHandler(async (event) => {
     subject: sanitizedSubject,
     message: sanitizedMessage
   }).catch((err) => {
-    console.error('[Contact] Failed to send notification email:', err)
+    logError('contact', err)
   })
 
   return {
