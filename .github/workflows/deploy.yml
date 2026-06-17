@@ -140,6 +140,14 @@ jobs:
           ADMIN_EMAIL: ${{ secrets.ADMIN_EMAIL }}
           ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD }}
           ADMIN_NAME: ${{ secrets.ADMIN_NAME }}
+          # SMTP for invitation + contact emails (server/utils/email.ts). If unset,
+          # envsubst renders empty -> getTransporter() returns null -> email is
+          # skipped (graceful, but no mail is sent). See k8s/config/secrets.yaml.
+          NUXT_SMTP_HOST: ${{ secrets.NUXT_SMTP_HOST }}
+          NUXT_SMTP_PORT: ${{ secrets.NUXT_SMTP_PORT }}
+          NUXT_SMTP_USER: ${{ secrets.NUXT_SMTP_USER }}
+          NUXT_SMTP_PASS: ${{ secrets.NUXT_SMTP_PASS }}
+          NUXT_SMTP_FROM: ${{ secrets.NUXT_SMTP_FROM }}
         run: |
           envsubst < k8s/config/secrets.yaml | kubectl apply -f -
 

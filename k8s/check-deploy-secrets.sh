@@ -25,9 +25,13 @@ WORKFLOW=".github/workflows/deploy.yml"
 #   ADMIN_*                                -> only consumed by the manual seed Job
 #   REDIS_PASSWORD                         -> Redis runs without auth (recommended
 #                                             to set it; see k8s/README.md)
+#   NUXT_SMTP_*                            -> email (invitations/contact) is skipped
+#                                             when unset; set all of HOST/USER/PASS
+#                                             to enable. See server/utils/email.ts.
 OPTIONAL="AZURE_STORAGE_ACCOUNT_NAME AZURE_STORAGE_ACCOUNT_KEY \
 AZURE_STORAGE_CONNECTION_STRING AZURE_BLOB_CONTAINER \
-ADMIN_EMAIL ADMIN_PASSWORD ADMIN_NAME REDIS_PASSWORD"
+ADMIN_EMAIL ADMIN_PASSWORD ADMIN_NAME REDIS_PASSWORD \
+NUXT_SMTP_HOST NUXT_SMTP_PORT NUXT_SMTP_USER NUXT_SMTP_PASS NUXT_SMTP_FROM"
 
 if [ ! -f "$WORKFLOW" ]; then
   echo "error: $WORKFLOW not found (run from anywhere inside the repo)" >&2

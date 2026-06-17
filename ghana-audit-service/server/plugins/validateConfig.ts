@@ -63,6 +63,14 @@ export default defineNitroPlugin(() => {
     if (!process.env.REDIS_URL) {
       console.warn('[Security] REDIS_URL is not set. Rate limiting and analytics use per-process fallbacks; set REDIS_URL for a correct multi-instance production deployment.')
     }
+
+    // SMTP backs transactional email (admin invitations + contact-form
+    // notifications via server/utils/email.ts). getTransporter() returns null
+    // unless host/user/pass are all set, in which case sends silently no-op.
+    // Surface that at boot so a misconfigured deployment is visible in the logs.
+    if (!config.smtpHost || !config.smtpUser || !config.smtpPass) {
+      console.warn('[Config] SMTP is not fully configured (NUXT_SMTP_HOST/USER/PASS). Invitation and contact-form emails will be skipped until all three are set.')
+    }
   }
 
   // Log successful startup in development

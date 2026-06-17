@@ -30,6 +30,14 @@ services:
       - NUXT_PUBLIC_SITE_NAME=${NUXT_PUBLIC_SITE_NAME:-Ghana Audit Service}
       - NUXT_PUBLIC_CONTACT_EMAIL=${NUXT_PUBLIC_CONTACT_EMAIL:-info@audit.gov.gh}
       - NUXT_PUBLIC_CONTACT_PHONE=${NUXT_PUBLIC_CONTACT_PHONE:-+233 (302) 664929}
+      # Email / SMTP (invitation + contact-form notifications). Leave unset to
+      # disable email — server/utils/email.ts skips sending when host/user/pass
+      # are empty. Use port 465 for implicit TLS or 587 for STARTTLS.
+      - NUXT_SMTP_HOST=${NUXT_SMTP_HOST:-}
+      - NUXT_SMTP_PORT=${NUXT_SMTP_PORT:-587}
+      - NUXT_SMTP_USER=${NUXT_SMTP_USER:-}
+      - NUXT_SMTP_PASS=${NUXT_SMTP_PASS:-}
+      - NUXT_SMTP_FROM=${NUXT_SMTP_FROM:-noreply@audit.gov.gh}
       - NUXT_API_SECRET=${NUXT_API_SECRET:-change-me-in-production}
       # JWT
       - JWT_SECRET=${JWT_SECRET:-change-this-jwt-secret}
