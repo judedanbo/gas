@@ -53,6 +53,10 @@ COPY server/database/migrations ./server/database/migrations
 COPY server/database/migrate.ts ./server/database/migrate.ts
 # migrate.ts imports baseline.ts (squash-baseline reconciliation) — both required.
 COPY server/database/baseline.ts ./server/database/baseline.ts
+# migrate.ts, reset.ts, seed.ts and the seeds/ scripts all import the shared
+# sanitized logger (server/utils/logger.ts). It is dependency-free, so this is
+# the only server/utils file the migrator image needs.
+COPY server/utils/logger.ts ./server/utils/logger.ts
 # reset.ts powers the (manual, suspended) k8s/jobs/reset-job.yaml. It is NOT the
 # default command and is heavily guarded; see that manifest.
 COPY server/database/reset.ts ./server/database/reset.ts
