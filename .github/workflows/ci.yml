@@ -119,8 +119,17 @@ jobs:
       # Build once and serve the production output. The prod server responds
       # immediately (no on-demand dev compilation), so Playwright's webServer
       # readiness probe is reliable — the dev server flakes that probe in CI.
+      #
+      # Point the DB at an unreachable port FOR THE BUILD ONLY: prerender opens a
+      # MySQL pool whose live connection would keep the Node event loop alive,
+      # so `npm run build` never exits and the job hits its timeout. With the DB
+      # unreachable, prerender fails fast and degrades gracefully (same as the
+      # DB-less Quality Gate build) and the process exits cleanly. The test step
+      # below still gets the real DB via the job-level env.
       - name: Build
         run: npm run build
+        env:
+          DB_PORT: '1'
 
       - name: Install Playwright (chromium)
         run: npx playwright install --with-deps chromium
