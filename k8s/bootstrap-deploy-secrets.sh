@@ -78,6 +78,14 @@ set_secret AZURE_STORAGE_ACCOUNT_NAME "${AZURE_STORAGE_ACCOUNT_NAME:-}"
 set_secret AZURE_STORAGE_ACCOUNT_KEY "${AZURE_STORAGE_ACCOUNT_KEY:-}"
 set_secret AZURE_STORAGE_CONNECTION_STRING "${AZURE_STORAGE_CONNECTION_STRING:-}"
 set_secret AZURE_BLOB_CONTAINER "${AZURE_BLOB_CONTAINER:-}"
+# SMTP for invitation + contact emails (server/utils/email.ts). Set all of
+# HOST/USER/PASS to enable; PORT defaults to 587 and FROM to noreply@audit.gov.gh
+# in the app if omitted. Use port 465 for implicit TLS, 587 for STARTTLS.
+set_secret NUXT_SMTP_HOST "${NUXT_SMTP_HOST:-}"
+set_secret NUXT_SMTP_PORT "${NUXT_SMTP_PORT:-}"
+set_secret NUXT_SMTP_USER "${NUXT_SMTP_USER:-}"
+set_secret NUXT_SMTP_PASS "${NUXT_SMTP_PASS:-}"
+set_secret NUXT_SMTP_FROM "${NUXT_SMTP_FROM:-}"
 
 echo
 echo "Done. Generated DB/root passwords are now only in GitHub + (after deploy) the"
