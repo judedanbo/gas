@@ -1,6 +1,8 @@
+import type { H3Event } from 'h3'
 import { eq, and, isNull } from 'drizzle-orm'
 import { z } from 'zod'
 import { getDatabase, schema } from '../../../database'
+import { safeError } from '../../../utils/errors'
 import { verifyPassword } from '../../../utils/password'
 import { signToken } from '../../../utils/jwt'
 import { resolveUserModules } from '../../../utils/modules'
@@ -38,6 +40,17 @@ const LOGIN_RATE_LIMIT = {
 }
 
 export default defineEventHandler(async (event) => {
+  try {
+    return await handleLogin(event)
+  } catch (error) {
+    // Intentional 4xx (validation/auth/lockout) pass through untouched; any
+    // unexpected failure (e.g. a DB error) becomes a generic, logged 500 so no
+    // technical detail reaches the login form or the console.
+    throw safeError('admin:login', error)
+  }
+})
+
+async function handleLogin(event: H3Event) {
   const clientIP = getClientIP(event)
 
   // Check rate limit for login attempts
@@ -112,7 +125,10 @@ export default defineEventHandler(async (event) => {
   // Account lockout: if the account is locked, reject before verifying the
   // password (a correct password must not bypass an active lock).
   if (isAccountLocked(user)) {
-    const retryAfterSeconds = Math.max(1, Math.ceil((user.lockedUntil!.getTime() - Date.now()) / 1000))
+    const retryAfterSeconds = Math.max(
+      1,
+      Math.ceil((user.lockedUntil!.getTime() - Date.now()) / 1000)
+    )
     setHeader(event, 'Retry-After', retryAfterSeconds)
     await db.insert(schema.auditLogs).values({
       userId: user.id,
@@ -238,4 +254,4 @@ export default defineEventHandler(async (event) => {
     expiresAt: timing.expiresAt,
     session: timing
   }
-})
+}

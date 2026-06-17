@@ -4,6 +4,7 @@ import { getDatabase, schema } from '../../../database'
 import { requirePermission, isAdmin } from '../../../utils/adminHelpers'
 import { logAuditAction, createChangesObject, sanitizeForAudit } from '../../../utils/auditLogger'
 import { galleryImageSchema, validateBody } from '../../../utils/validation'
+import { safeError } from '../../../utils/errors'
 
 export default defineEventHandler(async (event) => {
   const method = event.method
@@ -150,7 +151,7 @@ async function handleUpdate(event: H3Event, id: number) {
     return { ...updated, translations: translationsMap }
   } catch (error) {
     await connection.rollback()
-    throw error
+    throw safeError('admin:gallery', error)
   } finally {
     connection.release()
   }

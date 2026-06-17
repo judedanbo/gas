@@ -6,6 +6,7 @@ import * as schema from '../schema/index'
 import { readFileSync } from 'node:fs'
 import { join, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { logError } from '../../utils/logger'
 
 const force = process.argv.includes('--force')
 
@@ -118,7 +119,7 @@ async function seed() {
     console.log(`  - ${galleryData.length} albums created`)
     console.log(`  - ${totalImages} images created`)
   } catch (error) {
-    console.error('Error seeding gallery:', error)
+    logError('seed:gallery', error)
     throw error
   } finally {
     await pool.end()
@@ -127,6 +128,6 @@ async function seed() {
 }
 
 seed().catch((error) => {
-  console.error('Seed failed:', error)
+  logError('seed:gallery', error)
   process.exit(1)
 })

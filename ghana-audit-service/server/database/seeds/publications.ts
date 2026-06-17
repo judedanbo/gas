@@ -13,6 +13,7 @@ import * as schema from '../schema/index'
 import { readFileSync } from 'node:fs'
 import { join, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { logError } from '../../utils/logger'
 
 const force = process.argv.includes('--force')
 
@@ -101,7 +102,7 @@ async function seed() {
     console.log(`  - ${bulletinCount} bulletins created`)
     console.log(`  - ${pubData.length} total publications`)
   } catch (error) {
-    console.error('Error seeding publications:', error)
+    logError('seed:publications', error)
     throw error
   } finally {
     await pool.end()
@@ -110,6 +111,6 @@ async function seed() {
 }
 
 seed().catch((error) => {
-  console.error('Seed failed:', error)
+  logError('seed:publications', error)
   process.exit(1)
 })

@@ -8,6 +8,7 @@ import {
 } from '../../../utils/adminHelpers'
 import { logAuditAction, sanitizeForAudit } from '../../../utils/auditLogger'
 import { teamMemberSchema, validateBody } from '../../../utils/validation'
+import { safeError } from '../../../utils/errors'
 
 export default defineEventHandler(async (event) => {
   const method = event.method
@@ -132,7 +133,7 @@ async function handleCreate(event: H3Event) {
     return { ...member, translations: translationsMap }
   } catch (error) {
     await connection.rollback()
-    throw error
+    throw safeError('admin:team-members', error)
   } finally {
     connection.release()
   }

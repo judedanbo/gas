@@ -4,6 +4,7 @@ import { getDatabase, schema } from '../../../database'
 import { requirePermission, getCurrentUser, isAdmin } from '../../../utils/adminHelpers'
 import { logAuditAction, createChangesObject, sanitizeForAudit } from '../../../utils/auditLogger'
 import { publicationSchema, validateBody, createValidationError } from '../../../utils/validation'
+import { safeError } from '../../../utils/errors'
 
 export default defineEventHandler(async (event) => {
   const method = event.method
@@ -34,7 +35,11 @@ async function handleGet(event: H3Event, id: number) {
     .limit(1)
 
   if (!publication) {
-    throw createError({ statusCode: 404, statusMessage: 'Not Found', message: 'Publication not found' })
+    throw createError({
+      statusCode: 404,
+      statusMessage: 'Not Found',
+      message: 'Publication not found'
+    })
   }
 
   const translations = await db
@@ -67,7 +72,11 @@ async function handleUpdate(event: H3Event, id: number) {
     .limit(1)
 
   if (!existing) {
-    throw createError({ statusCode: 404, statusMessage: 'Not Found', message: 'Publication not found' })
+    throw createError({
+      statusCode: 404,
+      statusMessage: 'Not Found',
+      message: 'Publication not found'
+    })
   }
 
   const existingTranslations = await db
@@ -80,7 +89,10 @@ async function handleUpdate(event: H3Event, id: number) {
       acc[t.locale] = { id: t.id, title: t.title, excerpt: t.excerpt, content: t.content }
       return acc
     },
-    {} as Record<string, { id: number; title: string; excerpt: string | null; content: string | null }>
+    {} as Record<
+      string,
+      { id: number; title: string; excerpt: string | null; content: string | null }
+    >
   )
 
   const input = validateBody(publicationSchema, body)
@@ -137,7 +149,11 @@ async function handleUpdate(event: H3Event, id: number) {
 
     await connection.commit()
 
-    const [updated] = await db.select().from(schema.publications).where(eq(schema.publications.id, id)).limit(1)
+    const [updated] = await db
+      .select()
+      .from(schema.publications)
+      .where(eq(schema.publications.id, id))
+      .limit(1)
 
     const translations = await db
       .select()
@@ -154,13 +170,16 @@ async function handleUpdate(event: H3Event, id: number) {
 
     const before = sanitizeForAudit({ ...existing, translations: existingTransMap })
     const after = sanitizeForAudit({ ...updated, translations: translationsMap })
-    const changes = createChangesObject(before as Record<string, unknown>, after as Record<string, unknown>)
+    const changes = createChangesObject(
+      before as Record<string, unknown>,
+      after as Record<string, unknown>
+    )
     await logAuditAction(event, 'update', 'publication', id, changes)
 
     return { ...updated, translations: translationsMap }
   } catch (error) {
     await connection.rollback()
-    throw error
+    throw safeError('admin:publications', error)
   } finally {
     connection.release()
   }
@@ -177,10 +196,17 @@ async function handleDelete(event: H3Event, id: number) {
     .limit(1)
 
   if (!existing) {
-    throw createError({ statusCode: 404, statusMessage: 'Not Found', message: 'Publication not found' })
+    throw createError({
+      statusCode: 404,
+      statusMessage: 'Not Found',
+      message: 'Publication not found'
+    })
   }
 
-  await db.update(schema.publications).set({ deletedAt: new Date() }).where(eq(schema.publications.id, id))
+  await db
+    .update(schema.publications)
+    .set({ deletedAt: new Date() })
+    .where(eq(schema.publications.id, id))
 
   await logAuditAction(event, 'delete', 'publication', id, {
     before: sanitizeForAudit(existing as Record<string, unknown>)

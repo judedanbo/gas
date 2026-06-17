@@ -11,6 +11,7 @@ import { drizzle } from 'drizzle-orm/mysql2'
 import { eq, sql } from 'drizzle-orm'
 import mysql from 'mysql2/promise'
 import * as schema from '../schema/index'
+import { logError } from '../../utils/logger'
 
 const force = process.argv.includes('--force')
 
@@ -125,7 +126,8 @@ In October 2025, he authored and launched a book on public sector auditing pract
     translations: {
       en: {
         name: 'Roberta Assiamah-Appiah',
-        title: 'Deputy Auditor-General, Educational Institutions and District Assemblies - Southern Zone',
+        title:
+          'Deputy Auditor-General, Educational Institutions and District Assemblies - Southern Zone',
         bio: `## Career Background
 Ms. Roberta Assiamah-Appiah joined the Audit Service in 1991. She was appointed Acting Deputy Auditor-General in 2010 and received confirmation as substantive DAG in 2012. Prior to her current role, she served as DAG for Finance and Administration Department.
 
@@ -206,7 +208,8 @@ She enjoys reading and solving puzzles.`
     translations: {
       en: {
         name: 'George Swanzy Winful',
-        title: 'Deputy Auditor-General, Educational Institutions and District Assemblies - Northern Zone',
+        title:
+          'Deputy Auditor-General, Educational Institutions and District Assemblies - Northern Zone',
         bio: `## Career Background
 Mr. George Swanzy Winful is a seasoned auditor and finance professional with more than 34 years of service in Ghana's public sector and international audit practice.
 
@@ -248,7 +251,9 @@ async function seed() {
         console.log('Skipping seed to avoid duplicates. Use --force to clear and reseed.')
         return
       }
-      console.log(`Clearing ${existingMembers.length} existing management team members (--force)...`)
+      console.log(
+        `Clearing ${existingMembers.length} existing management team members (--force)...`
+      )
       await db.execute(sql`DELETE FROM ${schema.managementTeamResponsibilityTranslations}`)
       await db.execute(sql`DELETE FROM ${schema.managementTeamResponsibilities}`)
       await db.execute(sql`DELETE FROM ${schema.managementTeamTranslations}`)
@@ -326,7 +331,7 @@ async function seed() {
     console.log(`  - 1 Auditor-General`)
     console.log(`  - ${dagCount} Deputy Auditors-General`)
   } catch (error) {
-    console.error('Error seeding data:', error)
+    logError('seed:management-team', error)
     throw error
   } finally {
     await pool.end()
@@ -335,6 +340,6 @@ async function seed() {
 }
 
 seed().catch((error) => {
-  console.error('Seed failed:', error)
+  logError('seed:management-team', error)
   process.exit(1)
 })

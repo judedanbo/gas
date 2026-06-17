@@ -2,6 +2,7 @@ import type { MySql2Database } from 'drizzle-orm/mysql2'
 import { drizzle } from 'drizzle-orm/mysql2'
 import mysql from 'mysql2/promise'
 import * as schema from './schema/index'
+import { logInfo } from '../utils/logger'
 
 // Database configuration from environment variables
 const dbConfig = {
@@ -37,8 +38,10 @@ export function getDatabase() {
     // Create Drizzle ORM instance
     db = drizzle(pool, { schema, mode: 'default' })
 
-    console.log(
-      `[Database] Connected to MySQL database at ${dbConfig.host}:${dbConfig.port}/${dbConfig.database}`
+    // Dev-only: connection target is sensitive infrastructure detail in prod.
+    logInfo(
+      'Database',
+      `Connected to MySQL at ${dbConfig.host}:${dbConfig.port}/${dbConfig.database}`
     )
   }
 
@@ -65,7 +68,7 @@ export async function closeDatabase() {
     await pool.end()
     pool = null
     db = null
-    console.log('[Database] Connection pool closed')
+    logInfo('Database', 'Connection pool closed')
   }
 }
 

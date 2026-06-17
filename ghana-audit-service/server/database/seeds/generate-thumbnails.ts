@@ -14,6 +14,7 @@ import { existsSync } from 'node:fs'
 import { resolve } from 'node:path'
 import * as schema from '../schema/index'
 import { generateThumbnailFromPdf } from '../../utils/generateThumbnail'
+import { logError } from '../../utils/logger'
 
 const dbConfig = {
   host: process.env.DB_HOST || 'localhost',
@@ -105,7 +106,7 @@ async function run() {
 
     console.log(`\nDone: ${generated} generated, ${skipped} skipped, ${failed} failed`)
   } catch (error) {
-    console.error('Error generating thumbnails:', error)
+    logError('seed:thumbnails', error)
     throw error
   } finally {
     await pool.end()
@@ -113,6 +114,6 @@ async function run() {
 }
 
 run().catch((error) => {
-  console.error('Thumbnail generation failed:', error)
+  logError('seed:thumbnails', error)
   process.exit(1)
 })

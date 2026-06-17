@@ -13,6 +13,7 @@ import {
   validateBody,
   createValidationError
 } from '../../../utils/validation'
+import { safeError } from '../../../utils/errors'
 
 export default defineEventHandler(async (event) => {
   const method = event.method
@@ -204,7 +205,7 @@ async function handleCreate(event: H3Event) {
     return { ...member, translations: translationsMap }
   } catch (error) {
     await connection.rollback()
-    throw error
+    throw safeError('admin:management-team', error)
   } finally {
     connection.release()
   }

@@ -13,6 +13,7 @@ import * as schema from '../schema/index'
 import { readFileSync } from 'node:fs'
 import { join, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { logError } from '../../utils/logger'
 
 const force = process.argv.includes('--force')
 
@@ -24,7 +25,14 @@ const dbConfig = {
   database: process.env.DB_NAME || 'ghana_audit_service'
 }
 
-type ReportCategory = 'financial' | 'compliance' | 'it' | 'performance' | 'technical' | 'follow-up' | 'special'
+type ReportCategory =
+  | 'financial'
+  | 'compliance'
+  | 'it'
+  | 'performance'
+  | 'technical'
+  | 'follow-up'
+  | 'special'
 
 interface SeedReportItem {
   slug: string
@@ -100,7 +108,7 @@ async function seed() {
     console.log(`\nSeed completed successfully!`)
     console.log(`  - ${count} audit reports created`)
   } catch (error) {
-    console.error('Error seeding reports:', error)
+    logError('seed:reports', error)
     throw error
   } finally {
     await pool.end()
@@ -109,6 +117,6 @@ async function seed() {
 }
 
 seed().catch((error) => {
-  console.error('Seed failed:', error)
+  logError('seed:reports', error)
   process.exit(1)
 })
