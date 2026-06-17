@@ -65,6 +65,108 @@ export async function sendContactNotification(params: ContactEmailParams): Promi
   })
 }
 
+interface InvitationEmailParams {
+  email: string
+  name: string
+  password: string
+  acceptUrl: string
+}
+
+/**
+ * Send an invitation email to a newly created admin user. The email carries
+ * the auto-generated initial password and a link to accept the invitation.
+ *
+ * Returns `true` if the email was dispatched, `false` if SMTP is not
+ * configured (so callers can surface the credentials another way).
+ */
+export async function sendInvitationEmail(params: InvitationEmailParams): Promise<boolean> {
+  const mailer = getTransporter()
+  if (!mailer) {
+    console.warn('[Email] SMTP not configured — skipping user invitation email')
+    return false
+  }
+
+  const config = useRuntimeConfig()
+  const fromAddress = String(config.smtpFrom || 'noreply@audit.gov.gh')
+
+  await mailer.sendMail({
+    from: `"Ghana Audit Service" <${fromAddress}>`,
+    to: params.email,
+    subject: 'You have been invited to the Ghana Audit Service Admin Portal',
+    text: buildInvitationPlainText(params),
+    html: buildInvitationHtml(params)
+  })
+
+  return true
+}
+
+function buildInvitationPlainText(params: InvitationEmailParams): string {
+  return [
+    `Hello ${params.name},`,
+    '',
+    'An account has been created for you on the Ghana Audit Service Admin Portal.',
+    '',
+    'To activate your account, accept the invitation using the link below:',
+    params.acceptUrl,
+    '',
+    'Your temporary sign-in details are:',
+    `Email: ${params.email}`,
+    `Initial password: ${params.password}`,
+    '',
+    'After accepting the invitation, sign in with the initial password above.',
+    'You will be able to change your password at any time.',
+    '',
+    'If you were not expecting this invitation, please ignore this email.',
+    '',
+    '---',
+    'Ghana Audit Service'
+  ].join('\n')
+}
+
+function buildInvitationHtml(params: InvitationEmailParams): string {
+  return `
+<div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;">
+  <div style="background:#006B3F;padding:20px;text-align:center;">
+    <h1 style="color:#FCD116;margin:0;font-size:20px;">Ghana Audit Service</h1>
+    <p style="color:#fff;margin:4px 0 0;font-size:14px;">Admin Portal Invitation</p>
+  </div>
+  <div style="padding:24px;border:1px solid #e5e7eb;border-top:none;">
+    <p style="margin-top:0;">Hello ${escapeHtml(params.name)},</p>
+    <p>An account has been created for you on the Ghana Audit Service Admin Portal.
+       To activate your account, accept the invitation below.</p>
+    <p style="text-align:center;margin:28px 0;">
+      <a href="${escapeHtml(params.acceptUrl)}"
+         style="display:inline-block;background:#006B3F;color:#fff;text-decoration:none;
+                padding:12px 28px;border-radius:8px;font-weight:600;">
+        Accept Invitation
+      </a>
+    </p>
+    <p style="font-size:14px;color:#555;">Your temporary sign-in details:</p>
+    <table style="width:100%;border-collapse:collapse;margin-bottom:20px;">
+      <tr style="border-bottom:1px solid #e5e7eb;">
+        <td style="padding:8px 12px;font-weight:600;color:#555;">Email</td>
+        <td style="padding:8px 12px;">${escapeHtml(params.email)}</td>
+      </tr>
+      <tr style="border-bottom:1px solid #e5e7eb;">
+        <td style="padding:8px 12px;font-weight:600;color:#555;">Initial password</td>
+        <td style="padding:8px 12px;font-family:monospace;font-size:15px;">${escapeHtml(params.password)}</td>
+      </tr>
+    </table>
+    <p style="font-size:14px;color:#555;">
+      After accepting the invitation, sign in with the initial password above.
+      You can change your password at any time once signed in.
+    </p>
+    <p style="font-size:13px;color:#9ca3af;word-break:break-all;">
+      If the button does not work, copy and paste this link into your browser:<br>
+      ${escapeHtml(params.acceptUrl)}
+    </p>
+    <p style="margin-top:24px;font-size:12px;color:#9ca3af;">
+      If you were not expecting this invitation, please ignore this email.
+    </p>
+  </div>
+</div>`
+}
+
 function buildPlainText(params: ContactEmailParams, subjectLabel: string): string {
   const lines = [
     'New Contact Form Submission',

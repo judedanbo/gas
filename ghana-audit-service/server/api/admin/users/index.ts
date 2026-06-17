@@ -6,7 +6,7 @@ import { requireAdmin, parsePagination, buildPaginationMeta } from '../../../uti
 import { resolveUserModules } from '../../../utils/modules'
 import { logAuditAction, sanitizeForAudit } from '../../../utils/auditLogger'
 import { userSchema, validateBody, createValidationError } from '../../../utils/validation'
-import { hashPassword } from '../../../utils/password'
+import { prepareInvitation, dispatchInvitationEmail } from '../../../utils/invitations'
 
 export default defineEventHandler(async (event) => {
   const method = event.method
@@ -31,6 +31,12 @@ async function handleList(event: H3Event) {
   }
   if (query.isActive === 'true') conditions.push(eq(schema.users.isActive, true))
   else if (query.isActive === 'false') conditions.push(eq(schema.users.isActive, false))
+  if (
+    typeof query.status === 'string' &&
+    ['pending', 'active', 'inactive'].includes(query.status)
+  ) {
+    conditions.push(eq(schema.users.status, query.status as 'pending' | 'active' | 'inactive'))
+  }
 
   const whereClause = conditions.length > 0 ? and(...conditions) : undefined
 
@@ -47,6 +53,7 @@ async function handleList(event: H3Event) {
       role: schema.users.role,
       modules: schema.users.modules,
       isActive: schema.users.isActive,
+      status: schema.users.status,
       lastLoginAt: schema.users.lastLoginAt,
       createdAt: schema.users.createdAt,
       updatedAt: schema.users.updatedAt,
@@ -70,10 +77,6 @@ async function handleCreate(event: H3Event) {
   const input = validateBody(userSchema, body)
   const db = getDatabase()
 
-  if (!input.password) {
-    throw createValidationError({ password: 'Password is required' })
-  }
-
   // Check for duplicate email
   const [existing] = await db
     .select({ id: schema.users.id })
@@ -85,16 +88,22 @@ async function handleCreate(event: H3Event) {
     throw createValidationError({ email: 'Email already exists' })
   }
 
-  const passwordHash = await hashPassword(input.password)
+  // The administrator no longer supplies a password. The system generates a
+  // safe initial password and an invitation token; the user starts as
+  // 'pending' until they accept the emailed invitation.
+  const invitation = await prepareInvitation()
 
   const [result] = await db.insert(schema.users).values({
     email: input.email.toLowerCase(),
-    passwordHash,
+    passwordHash: invitation.passwordHash,
     name: input.name,
     role: input.role,
     // Admins implicitly have all modules — store NULL, never a list.
     modules: input.role === 'admin' ? null : (input.modules ?? []),
-    isActive: input.isActive
+    isActive: true,
+    status: 'pending',
+    invitationToken: invitation.token,
+    invitationTokenExpiresAt: invitation.expiresAt
   })
 
   const [user] = await db
@@ -105,6 +114,7 @@ async function handleCreate(event: H3Event) {
       role: schema.users.role,
       modules: schema.users.modules,
       isActive: schema.users.isActive,
+      status: schema.users.status,
       createdAt: schema.users.createdAt
     })
     .from(schema.users)
@@ -113,9 +123,19 @@ async function handleCreate(event: H3Event) {
 
   const created = { ...user, modules: resolveUserModules(user.role, user.modules) }
 
+  // Send the invitation email carrying the initial password + accept link.
+  const emailSent = await dispatchInvitationEmail({
+    email: user.email,
+    name: user.name,
+    password: invitation.password,
+    token: invitation.token
+  })
+
   await logAuditAction(event, 'create', 'user', result.insertId, {
     after: sanitizeForAudit(created as Record<string, unknown>)
   })
 
-  return created
+  // Surface the generated password once so the admin can pass it along if the
+  // invitation email could not be sent. Never persisted in the clear.
+  return { ...created, generatedPassword: invitation.password, emailSent }
 }

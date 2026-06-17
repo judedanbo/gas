@@ -456,6 +456,13 @@ export const userUpdateSchema = userSchema
     password: z.string().min(8).optional()
   })
 
+// Accepting an invitation: a valid token, plus an optional new password the
+// user may choose instead of keeping their emailed initial password.
+export const acceptInvitationSchema = z.object({
+  token: z.string().min(1, 'Invitation token is required'),
+  password: z.string().min(8, 'Password must be at least 8 characters').optional()
+})
+
 // Contact Submissions
 export const contactSubmissionUpdateSchema = z.object({
   status: z.enum(['pending', 'read', 'responded', 'archived'])

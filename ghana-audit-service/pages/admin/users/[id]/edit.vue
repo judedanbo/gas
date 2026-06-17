@@ -197,7 +197,9 @@
     useAdminCrud<AdminUser>('users')
   const { errors, validate, setErrors, clearFieldError, rules } = useFormValidation()
 
-  const form = reactive<UserInput>({
+  // Edit always works with a concrete password string + active flag (unlike
+  // the invite-based create flow), so narrow the optional UserInput fields.
+  const form = reactive<UserInput & { password: string; isActive: boolean }>({
     name: '',
     email: '',
     password: '',

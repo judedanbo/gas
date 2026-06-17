@@ -130,6 +130,31 @@ export default defineEventHandler(async (event) => {
     })
   }
 
+  // A user with a valid password but a non-active account has not yet accepted
+  // their invitation (or has been disabled). Only reveal this once the
+  // password has been verified, to avoid leaking account state.
+  if (user.status !== 'active') {
+    await db.insert(schema.auditLogs).values({
+      userId: user.id,
+      action: 'login',
+      entityType: 'user',
+      entityId: user.id,
+      changes: { email, success: false, reason: `status_${user.status}` },
+      ipAddress: clientIP,
+      userAgent: getHeader(event, 'user-agent') || null
+    })
+    recordFailedLogin(event, `status_${user.status}`)
+
+    throw createError({
+      statusCode: 403,
+      statusMessage: 'Forbidden',
+      message:
+        user.status === 'pending'
+          ? 'Please accept your invitation before signing in. Check your email for the invitation link.'
+          : 'Your account is not active. Please contact an administrator.'
+    })
+  }
+
   // Create a server-side session and pin the JWT lifetime to the
   // absolute session cap so the token and session expire together.
   const { absoluteTimeoutMs } = getSessionConfig()

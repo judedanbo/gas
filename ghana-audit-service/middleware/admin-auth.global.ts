@@ -6,6 +6,12 @@ export default defineNuxtRouteMiddleware((to) => {
     return
   }
 
+  // The invitation acceptance page is reached by not-yet-active users who have
+  // no session — let it through unauthenticated.
+  if (to.path === '/admin/accept-invitation') {
+    return
+  }
+
   const { isAuthenticated, token, isSessionExpired, hasModule } = useAdminAuth()
 
   // Redirect logged-in users away from login page

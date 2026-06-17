@@ -16,11 +16,77 @@
       </NuxtLink>
       <div>
         <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Add User</h1>
-        <p class="text-gray-600 dark:text-gray-400 mt-1">Create a new admin user</p>
+        <p class="text-gray-600 dark:text-gray-400 mt-1">Invite a new admin user</p>
       </div>
     </div>
 
-    <form class="max-w-2xl" @submit.prevent="handleSubmit">
+    <!-- Success: invitation sent -->
+    <div v-if="created" class="max-w-2xl">
+      <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+        <div class="flex items-center gap-3 mb-4">
+          <div
+            class="w-10 h-10 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center text-green-600"
+          >
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M5 13l4 4L19 7"
+              />
+            </svg>
+          </div>
+          <div>
+            <h2 class="text-lg font-semibold text-gray-900 dark:text-white">User created</h2>
+            <p class="text-sm text-gray-500">{{ created.name }} — {{ created.email }}</p>
+          </div>
+        </div>
+
+        <div
+          v-if="created.emailSent"
+          class="mb-4 p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg text-sm text-green-700 dark:text-green-400"
+        >
+          An invitation email with an acceptance link and the initial password has been sent to
+          <strong>{{ created.email }}</strong
+          >. The account stays <strong>pending</strong> until they accept it.
+        </div>
+        <div
+          v-else
+          class="mb-4 p-4 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg text-sm text-amber-700 dark:text-amber-400"
+        >
+          The invitation email could not be sent (email is not configured). Share the initial
+          password below with the user securely. They still need to accept their invitation before
+          signing in.
+        </div>
+
+        <div class="p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+          <p class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            Initial password (shown once)
+          </p>
+          <div class="flex items-center gap-3">
+            <code
+              class="flex-1 px-3 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded font-mono text-lg tracking-wide text-gray-900 dark:text-white"
+            >
+              {{ created.generatedPassword }}
+            </code>
+            <button type="button" class="btn btn-ghost" @click="copyPassword">
+              {{ copied ? 'Copied!' : 'Copy' }}
+            </button>
+          </div>
+          <p class="text-xs text-gray-500 mt-2">
+            For security this password will not be shown again.
+          </p>
+        </div>
+
+        <div class="flex items-center justify-end gap-4 mt-6">
+          <button type="button" class="btn btn-ghost" @click="resetForm">Add another</button>
+          <NuxtLink to="/admin/users" class="btn btn-primary">Done</NuxtLink>
+        </div>
+      </div>
+    </div>
+
+    <!-- Create form -->
+    <form v-else class="max-w-2xl" @submit.prevent="handleSubmit">
       <div
         v-if="error"
         class="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-red-700 dark:text-red-400"
@@ -47,23 +113,12 @@
           />
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <AdminFormAdminInput
-            v-model="form.password"
-            label="Password"
-            type="password"
-            required
-            minlength="8"
-            :error="errors.password"
-            @update:model-value="clearFieldError('password')"
-          />
-          <AdminFormAdminInput
-            v-model="confirmPassword"
-            label="Confirm Password"
-            type="password"
-            required
-            :error="passwordMismatch ? 'Passwords do not match' : ''"
-          />
+        <div
+          class="p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg text-sm text-blue-700 dark:text-blue-300"
+        >
+          The system generates a secure initial password and emails the user an invitation link. The
+          account remains <strong>pending</strong> until the user accepts the invitation, after
+          which they can sign in and change their password.
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -74,13 +129,6 @@
             required
             :error="errors.role"
           />
-          <div class="flex items-end pb-1">
-            <AdminFormAdminSwitch
-              v-model="form.isActive"
-              label="Active"
-              description="User can log in and access the dashboard"
-            />
-          </div>
         </div>
 
         <fieldset
@@ -135,12 +183,8 @@
 
       <div class="flex items-center justify-end gap-4 mt-6">
         <NuxtLink to="/admin/users" class="btn btn-ghost">Cancel</NuxtLink>
-        <button
-          type="submit"
-          class="btn btn-primary"
-          :disabled="saving || form.password !== confirmPassword"
-        >
-          {{ saving ? 'Creating...' : 'Create User' }}
+        <button type="submit" class="btn btn-primary" :disabled="saving">
+          {{ saving ? 'Creating...' : 'Create & Send Invitation' }}
         </button>
       </div>
     </form>
@@ -148,7 +192,7 @@
 </template>
 
 <script setup lang="ts">
-  import type { AdminUser, ModuleKey, UserInput } from '~/types/admin'
+  import type { AdminUser, CreateUserResponse, ModuleKey, UserInput } from '~/types/admin'
   import { ALL_MODULES } from '~/types/admin'
   definePageMeta({ layout: 'admin' })
 
@@ -166,12 +210,12 @@
   const form = reactive<UserInput>({
     name: '',
     email: '',
-    password: '',
     role: 'editor',
-    modules: [],
-    isActive: true
+    modules: []
   })
-  const confirmPassword = ref('')
+
+  const created = ref<CreateUserResponse | null>(null)
+  const copied = ref(false)
 
   const isAdminRole = computed(() => form.role === 'admin')
 
@@ -188,7 +232,6 @@
   const validationRules = {
     name: [rules.required],
     email: [rules.required, rules.email],
-    password: [rules.required, rules.minLength(8)],
     role: [rules.required]
   }
 
@@ -198,19 +241,34 @@
     { value: 'viewer', label: 'Viewer' }
   ]
 
-  const passwordMismatch = computed(
-    () => form.password && confirmPassword.value && form.password !== confirmPassword.value
-  )
-
   async function handleSubmit() {
     if (!validate(form, validationRules)) return
-    if (passwordMismatch.value) return
 
-    const result = await create(form)
+    const result = (await create(form as Partial<AdminUser>)) as CreateUserResponse | null
     if (result) {
-      router.push('/admin/users')
+      created.value = result
     } else if (fieldErrors.value) {
       setErrors(fieldErrors.value)
     }
+  }
+
+  async function copyPassword() {
+    if (!created.value) return
+    try {
+      await navigator.clipboard.writeText(created.value.generatedPassword)
+      copied.value = true
+      setTimeout(() => (copied.value = false), 2000)
+    } catch {
+      // Clipboard may be unavailable; the password is still visible on screen.
+    }
+  }
+
+  function resetForm() {
+    created.value = null
+    copied.value = false
+    form.name = ''
+    form.email = ''
+    form.role = 'editor'
+    form.modules = []
   }
 </script>

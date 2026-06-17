@@ -22,6 +22,39 @@
       </NuxtLink>
     </div>
 
+    <div
+      v-if="resendResult"
+      class="mb-4 p-4 rounded-lg border"
+      :class="
+        resendResult.emailSent
+          ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800 text-green-700 dark:text-green-400'
+          : 'bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800 text-amber-700 dark:text-amber-400'
+      "
+      role="status"
+    >
+      <div class="flex items-start justify-between gap-4">
+        <div class="text-sm">
+          <p v-if="resendResult.emailSent">
+            A new invitation email was sent to <strong>{{ resendResult.name }}</strong
+            >.
+          </p>
+          <p v-else>
+            Email is not configured. Share the new initial password for
+            <strong>{{ resendResult.name }}</strong> securely:
+            <code class="ml-1 font-mono">{{ resendResult.password }}</code>
+          </p>
+        </div>
+        <button
+          type="button"
+          class="text-current/70 hover:text-current"
+          aria-label="Dismiss"
+          @click="resendResult = null"
+        >
+          ✕
+        </button>
+      </div>
+    </div>
+
     <AdminUiAdminSearchFilter
       v-model:search="filters.search"
       search-placeholder="Search users..."
@@ -35,10 +68,11 @@
           <option value="editor">Editor</option>
           <option value="viewer">Viewer</option>
         </select>
-        <select v-model="filters.isActive" class="form-input text-sm">
+        <select v-model="filters.status" class="form-input text-sm">
           <option value="">All Status</option>
-          <option value="true">Active</option>
-          <option value="false">Inactive</option>
+          <option value="pending">Pending</option>
+          <option value="active">Active</option>
+          <option value="inactive">Inactive</option>
         </select>
       </template>
     </AdminUiAdminSearchFilter>
@@ -86,10 +120,8 @@
           <span v-else class="text-xs text-gray-400 italic">None</span>
         </div>
       </template>
-      <template #cell-isActive="{ value }">
-        <span :class="value ? 'badge badge-success' : 'badge badge-secondary'">{{
-          value ? 'Active' : 'Inactive'
-        }}</span>
+      <template #cell-status="{ row }">
+        <span class="badge" :class="statusBadge(row).class">{{ statusBadge(row).label }}</span>
       </template>
       <template #cell-lastLoginAt="{ value }">
         <span class="text-sm text-gray-500">{{
@@ -101,6 +133,23 @@
           v-if="hasPermission('manage_users') && row.id !== currentUser?.id"
           class="flex items-center justify-end gap-2"
         >
+          <button
+            v-if="row.status === 'pending'"
+            type="button"
+            title="Resend invitation"
+            class="p-2 text-gray-500 hover:text-primary rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-50"
+            :disabled="resendingId === row.id"
+            @click.stop="resendInvite(row)"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+              />
+            </svg>
+          </button>
           <NuxtLink
             :to="`/admin/users/${row.id}/edit`"
             class="p-2 text-gray-500 hover:text-primary rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
@@ -153,22 +202,57 @@
 
   const { user: currentUser, hasPermission } = useAdminAuth()
   const { items, loading, deleting, meta, fetchAll, remove } = useAdminCrud<AdminUser>('users')
+  const api = useAdminApi()
 
-  const filters = reactive({ search: '', role: '', isActive: '' })
-  const hasActiveFilters = computed(() => !!filters.search || !!filters.role || !!filters.isActive)
+  const filters = reactive({ search: '', role: '', status: '' })
+  const hasActiveFilters = computed(() => !!filters.search || !!filters.role || !!filters.status)
   function clearFilters() {
     filters.search = ''
     filters.role = ''
-    filters.isActive = ''
+    filters.status = ''
   }
 
   const columns = [
     { key: 'name', label: 'User', sortable: true },
     { key: 'role', label: 'Role', width: '100px' },
     { key: 'modules', label: 'Modules' },
-    { key: 'isActive', label: 'Status', width: '100px' },
+    { key: 'status', label: 'Status', width: '110px' },
     { key: 'lastLoginAt', label: 'Last Login', width: '140px' }
   ]
+
+  const resendingId = ref<number | null>(null)
+  const resendResult = ref<{ name: string; password: string; emailSent: boolean } | null>(null)
+
+  function statusBadge(row: AdminUser): { label: string; class: string } {
+    if (row.status === 'pending') return { label: 'Pending', class: 'badge-accent' }
+    if (!row.isActive || row.status === 'inactive')
+      return { label: 'Inactive', class: 'badge-secondary' }
+    return { label: 'Active', class: 'badge-success' }
+  }
+
+  async function resendInvite(row: AdminUser) {
+    resendingId.value = row.id
+    resendResult.value = null
+    try {
+      const res = await api.post<{ emailSent: boolean; generatedPassword: string }>(
+        `users/${row.id}/resend-invitation`
+      )
+      resendResult.value = {
+        name: row.name,
+        password: res.generatedPassword,
+        emailSent: res.emailSent
+      }
+    } catch (e: unknown) {
+      const err = e as { data?: { message?: string }; message?: string }
+      resendResult.value = {
+        name: row.name,
+        password: err.data?.message || err.message || 'Failed to resend invitation',
+        emailSent: false
+      }
+    } finally {
+      resendingId.value = null
+    }
+  }
 
   const moduleLabels: Record<ModuleKey, string> = {
     reports: 'Audit Reports',
@@ -249,7 +333,7 @@
     }
     if (filters.search) params.search = filters.search
     if (filters.role) params.role = filters.role
-    if (filters.isActive) params.isActive = filters.isActive
+    if (filters.status) params.status = filters.status
     fetchAll(params)
   }
 
