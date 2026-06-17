@@ -5,6 +5,7 @@ import {
   classifyUa,
   normaliseRoutePattern,
   parseReferrerHost,
+  isIpAnonymizedRoute,
   __resetIpSaltForTests
 } from '../../../../server/utils/analytics/fingerprint'
 
@@ -167,6 +168,26 @@ describe('analytics/fingerprint', () => {
       const result = parseReferrerHost(`https://${longHost}/`)
       expect(result).not.toBeNull()
       expect(result!.length).toBeLessThanOrEqual(128)
+    })
+  })
+
+  describe('isIpAnonymizedRoute (CitizensEye carve-out)', () => {
+    it('matches the /citizenseye prefix and its sub-paths', () => {
+      expect(isIpAnonymizedRoute('/citizenseye')).toBe(true)
+      expect(isIpAnonymizedRoute('/citizenseye/privacy')).toBe(true)
+    })
+
+    it('matches the locale-prefixed form emitted by normaliseRoutePattern', () => {
+      expect(isIpAnonymizedRoute(normaliseRoutePattern('/ak/citizenseye'))).toBe(true)
+      expect(isIpAnonymizedRoute('/[locale]/citizenseye/privacy')).toBe(true)
+    })
+
+    it('does not match unrelated routes (raw IP must be stored)', () => {
+      expect(isIpAnonymizedRoute('/')).toBe(false)
+      expect(isIpAnonymizedRoute('/contact')).toBe(false)
+      expect(isIpAnonymizedRoute('/api/reports/[id]')).toBe(false)
+      // No false-positive on a route that merely starts with the same letters.
+      expect(isIpAnonymizedRoute('/citizenseye-news')).toBe(false)
     })
   })
 })

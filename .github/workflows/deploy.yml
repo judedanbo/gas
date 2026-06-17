@@ -42,7 +42,7 @@ jobs:
       - name: Login to ACR
         run: az acr login --name ${{ env.ACR_NAME }}
 
-      - name: Build and push frontend image
+      - name: Build frontend image
         run: |
           docker build \
             --target runner \
@@ -50,6 +50,26 @@ jobs:
             -t ${{ env.ACR_NAME }}.azurecr.io/gas-frontend:${{ env.IMAGE_TAG }} \
             -t ${{ env.ACR_NAME }}.azurecr.io/gas-frontend:latest \
             ./ghana-audit-service
+
+      # Scan the built frontend image before it is pushed (M-5). The report shows
+      # High+Critical; the gate fails the deploy only on (fixable) Critical findings.
+      - name: Scan frontend image (report — non-blocking)
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          image-ref: ${{ env.ACR_NAME }}.azurecr.io/gas-frontend:${{ env.IMAGE_TAG }}
+          format: table
+          severity: HIGH,CRITICAL
+          ignore-unfixed: true
+          exit-code: '0'
+
+      - name: Scan frontend image (fail on critical)
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          image-ref: ${{ env.ACR_NAME }}.azurecr.io/gas-frontend:${{ env.IMAGE_TAG }}
+          format: table
+          severity: CRITICAL
+          ignore-unfixed: true
+          exit-code: '1'
 
       - name: Build and push migrate image
         run: |
@@ -104,6 +124,10 @@ jobs:
           JWT_SECRET: ${{ secrets.JWT_SECRET }}
           NUXT_API_SECRET: ${{ secrets.NUXT_API_SECRET }}
           ANALYTICS_IP_SALT: ${{ secrets.ANALYTICS_IP_SALT }}
+          # Redis auth (server/utils/redis.ts via REDIS_URL). If unset, envsubst
+          # renders an empty password and Redis starts without auth — set this
+          # secret in the production environment to enable Redis authentication.
+          REDIS_PASSWORD: ${{ secrets.REDIS_PASSWORD }}
           MYSQL_ROOT_PASSWORD: ${{ secrets.MYSQL_ROOT_PASSWORD }}
           AZURE_STORAGE_ACCOUNT_NAME: ${{ secrets.AZURE_STORAGE_ACCOUNT_NAME }}
           AZURE_STORAGE_ACCOUNT_KEY: ${{ secrets.AZURE_STORAGE_ACCOUNT_KEY }}
@@ -126,6 +150,10 @@ jobs:
 
       - name: Apply Redis
         run: |
+          # Provision the Redis TLS cert first; the redis pod (and frontend)
+          # mount the redis-tls secret cert-manager creates from this.
+          kubectl apply -f k8s/redis/tls.yaml
+          kubectl wait --for=condition=Ready certificate/redis-server-tls -n gas --timeout=120s
           kubectl apply -f k8s/redis/
           kubectl rollout status deployment/redis -n gas --timeout=60s
 

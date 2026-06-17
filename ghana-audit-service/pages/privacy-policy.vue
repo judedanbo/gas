@@ -52,6 +52,12 @@
             <li>Referring website</li>
             <li>Pages viewed and time spent on pages</li>
           </ul>
+          <p>
+            We retain your IP address for up to 90 days to secure the website, detect and
+            investigate abuse, and understand aggregate visitor geography (such as the country a
+            visit originates from). Access to this information is restricted to authorised
+            administrators.
+          </p>
 
           <h2>3. Use of Information</h2>
           <p>We use the information we collect to:</p>

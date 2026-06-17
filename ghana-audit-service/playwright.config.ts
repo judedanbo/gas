@@ -41,9 +41,12 @@ export default defineConfig({
       use: { ...devices['Pixel 5'] }
     }
   ],
-  // Run your local dev server before starting the tests
+  // Run a server before starting the tests. Defaults to the dev server for
+  // local runs; CI overrides PLAYWRIGHT_WEB_SERVER to point at a production
+  // build (`node .output/server/index.mjs`), which responds immediately and
+  // avoids slow on-demand dev compilation that flakes the readiness probe.
   webServer: {
-    command: 'npm run dev',
+    command: process.env.PLAYWRIGHT_WEB_SERVER || 'npm run dev',
     url: 'http://127.0.0.1:3000',
     reuseExistingServer: !process.env.CI,
     timeout: 180 * 1000,

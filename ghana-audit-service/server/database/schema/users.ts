@@ -34,6 +34,12 @@ export const users = mysqlTable(
     invitationToken: varchar('invitation_token', { length: 64 }),
     invitationTokenExpiresAt: datetime('invitation_token_expires_at'),
     lastLoginAt: datetime('last_login_at'),
+    // Per-account login lockout (defends against distributed brute force; the
+    // per-IP rate limiter is separate). See server/utils/loginLockout.ts.
+    failedLoginAttempts: int('failed_login_attempts').notNull().default(0),
+    lockoutCount: int('lockout_count').notNull().default(0),
+    lockedUntil: datetime('locked_until'),
+    lastFailedLoginAt: datetime('last_failed_login_at'),
     createdAt: datetime('created_at')
       .notNull()
       .default(sql`(CURRENT_TIMESTAMP)`),

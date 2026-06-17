@@ -13,6 +13,9 @@ services:
     ports:
       - "3300:3000"
     environment:
+      # NOTE: the `:-` fallbacks below are INSECURE local-dev defaults. Provide a
+      # populated .env (see .env.example) for any non-local use — secrets left at
+      # these values are flagged at startup by server/plugins/validateConfig.ts.
       - NODE_ENV=production
       - HOST=0.0.0.0
       - PORT=3000
@@ -80,7 +83,8 @@ services:
     container_name: gas-mysql
     restart: unless-stopped
     ports:
-      - "3306:3306"
+      # Bound to loopback so the database is not reachable from the host network.
+      - "127.0.0.1:3306:3306"
     environment:
       - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD:-root_password}
       - MYSQL_DATABASE=${DB_NAME:-ghana_audit_service}
@@ -120,7 +124,8 @@ services:
     container_name: gas-redis
     restart: unless-stopped
     ports:
-      - "6479:6379"
+      # Bound to loopback so Redis is not reachable from the host network.
+      - "127.0.0.1:6479:6379"
     volumes:
       - redis-data:/data
     networks:

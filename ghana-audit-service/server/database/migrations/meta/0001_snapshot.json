@@ -1,7 +1,7 @@
 {
   "version": "5",
   "dialect": "mysql",
-  "id": "921592c4-2cd2-4b31-ac54-1c311925747e",
+  "id": "8b0e2948-027e-43c3-939a-f7e790d02397",
   "prevId": "44b3bd2c-4cfa-4d04-ba57-a09b167ced01",
   "tables": {
     "audit_logs": {
@@ -176,30 +176,38 @@
           "autoincrement": false,
           "default": true
         },
-        "status": {
-          "name": "status",
-          "type": "enum('pending','active','inactive')",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": "'active'"
-        },
-        "invitation_token": {
-          "name": "invitation_token",
-          "type": "varchar(64)",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "invitation_token_expires_at": {
-          "name": "invitation_token_expires_at",
+        "last_login_at": {
+          "name": "last_login_at",
           "type": "datetime",
           "primaryKey": false,
           "notNull": false,
           "autoincrement": false
         },
-        "last_login_at": {
-          "name": "last_login_at",
+        "failed_login_attempts": {
+          "name": "failed_login_attempts",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": 0
+        },
+        "lockout_count": {
+          "name": "lockout_count",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": 0
+        },
+        "locked_until": {
+          "name": "locked_until",
+          "type": "datetime",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "last_failed_login_at": {
+          "name": "last_failed_login_at",
           "type": "datetime",
           "primaryKey": false,
           "notNull": false,

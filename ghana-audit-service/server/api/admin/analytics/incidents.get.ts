@@ -53,6 +53,9 @@ export default defineEventHandler(async (event) => {
   if (typeof query.ipHash === 'string' && query.ipHash) {
     conds.push(eq(schema.abuseIncidents.ipHash, query.ipHash.slice(0, 64)))
   }
+  if (typeof query.ip === 'string' && query.ip) {
+    conds.push(eq(schema.abuseIncidents.ip, query.ip.slice(0, 45)))
+  }
 
   const where = and(...conds)
 
@@ -68,6 +71,7 @@ export default defineEventHandler(async (event) => {
       kind: schema.abuseIncidents.kind,
       severity: schema.abuseIncidents.severity,
       ipHash: schema.abuseIncidents.ipHash,
+      ip: schema.abuseIncidents.ip,
       uaHash: schema.abuseIncidents.uaHash,
       routePattern: schema.abuseIncidents.routePattern,
       routePath: schema.abuseIncidents.routePath,

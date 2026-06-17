@@ -24,6 +24,7 @@ const WINDOW_HOURS: Record<string, number> = {
 const QUERY = `
   SELECT
     ai.ip_hash,
+    MAX(ai.ip) AS ip,
     ai.ua_hash,
     bs.ua_family,
     bs.country,
@@ -55,6 +56,7 @@ const QUERY = `
 
 interface QueryRow {
   ip_hash: string
+  ip: string | null
   ua_hash: string
   ua_family: string | null
   country: string | null
@@ -82,6 +84,7 @@ export default defineEventHandler(async (event) => {
     windowHours: hours,
     items: rows.map((r) => ({
       ipHash: r.ip_hash,
+      ip: r.ip ?? null,
       uaHash: r.ua_hash,
       uaFamily: r.ua_family ?? 'unknown',
       country: r.country ?? null,

@@ -6,6 +6,7 @@ import { getDatabase, schema } from '../../../database'
 import { resolvePublicAsset } from '../../../utils/publicFiles'
 import { tryBlobSource } from '../../../utils/blobStorage'
 import { recordDownload } from '../../../utils/analytics/recordDownload'
+import { getRedirectAllowedHosts, isRedirectAllowed } from '../../../utils/downloadRedirect'
 
 export default defineEventHandler(async (event) => {
   const id = getRouterParam(event, 'id')
@@ -68,7 +69,10 @@ export default defineEventHandler(async (event) => {
 
   const filePath = resolvePublicAsset(publication.fileUrl)
   if (!filePath) {
-    if (/^https?:\/\//.test(publication.fileUrl)) {
+    // Only redirect to an allowlisted host — fileUrl is admin-controlled, so an
+    // unrestricted redirect would be an open redirect (see SECURITY-ASSESSMENT M-4).
+    const allowedHosts = getRedirectAllowedHosts(useRuntimeConfig(event).public.siteUrl)
+    if (isRedirectAllowed(publication.fileUrl, allowedHosts)) {
       return sendRedirect(event, publication.fileUrl, 302)
     }
     throw createError({ statusCode: 404, statusMessage: 'Publication file not available' })

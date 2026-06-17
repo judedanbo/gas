@@ -29,6 +29,10 @@ export function recordDownload(
   // back to recomputing if this handler somehow runs without it (e.g. a
   // future call site that bypasses the middleware skip-list).
   const ipHash = stash?.ipHash ?? hashIp(getClientIP(event))
+  // When the capture middleware ran, honour whatever it stored (which already
+  // applies the /citizenseye carve-out — possibly null). Only recompute the raw
+  // IP on the fallback path where no stash exists (downloads are never anonymised).
+  const ip = stash ? stash.ip : getClientIP(event)
   const uaHash = stash?.uaHash ?? hashUa(ua)
   const uaFamily = stash?.uaFamily ?? classifyUa(ua).family
   const fallbackGeo = stash ? null : getGeoIp(getClientIP(event))
@@ -56,6 +60,7 @@ export function recordDownload(
           bytesOut,
           isPartial,
           ipHash,
+          ip,
           uaHash,
           uaFamily,
           country,
