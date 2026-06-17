@@ -28,6 +28,7 @@ interface AggregateRow {
   fuzz_hits: number
   failed_logins: number
   downloads: number
+  ip: string | null
   country: string | null
   asn: number | null
   any_missing_accept_language: number
@@ -49,6 +50,9 @@ const AGGREGATE_SQL = `
     COUNT(DISTINCT re.route_pattern) AS distinct_routes,
     MIN(re.ts) AS first_seen,
     MAX(re.ts) AS last_seen,
+    -- Representative raw IP for the signature (NULL on /citizenseye rows; MAX
+    -- picks one cheaply, consistent with country/ua_family below).
+    MAX(re.ip) AS ip,
     -- Geo is mostly stable per IP; pick a representative cheaply.
     MAX(re.country) AS country,
     MAX(re.asn) AS asn,
@@ -105,11 +109,13 @@ const UPSERT_SQL = `
     ip_hash, ua_hash, ua_family, ua_sample,
     first_seen, last_seen,
     total_requests, distinct_routes_24h, rate_limit_hits_24h,
-    failed_logins_24h, score, classification, country, asn
+    failed_logins_24h, score, classification, ip, country, asn
   )
-  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   ON DUPLICATE KEY UPDATE
     ua_family = VALUES(ua_family),
+    -- Preserve a previously-resolved raw IP if the latest window is anonymised/null.
+    ip = COALESCE(VALUES(ip), ip),
     last_seen = GREATEST(last_seen, VALUES(last_seen)),
     first_seen = LEAST(first_seen, VALUES(first_seen)),
     total_requests = VALUES(total_requests),
@@ -188,6 +194,7 @@ export default defineTask({
         snapshot.failedLogins24h,
         result.score,
         result.classification,
+        row.ip,
         row.country,
         snapshot.asn
       ])

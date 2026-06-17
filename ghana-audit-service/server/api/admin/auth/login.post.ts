@@ -8,6 +8,7 @@ import { createSession } from '../../../utils/sessions'
 import { getSessionConfig } from '../../../utils/duration'
 import { checkRateLimit, createRateLimitKey, getClientIP } from '../../../utils/rateLimiter'
 import { recordIncident } from '../../../utils/analytics/recordIncident'
+import { isAccountLocked, nextFailureState, lockoutResetState } from '../../../utils/loginLockout'
 
 function recordFailedLogin(event: Parameters<typeof setHeader>[0], reason: string) {
   // Stash is populated by the capture middleware (00-analytics.ts). Fall
@@ -17,6 +18,7 @@ function recordFailedLogin(event: Parameters<typeof setHeader>[0], reason: strin
     kind: 'failed_login',
     severity: 'info',
     ipHash: stash?.ipHash ?? null,
+    ip: stash?.ip ?? null,
     uaHash: stash?.uaHash ?? null,
     routePattern: '/api/admin/auth/login',
     routePath: '/api/admin/auth/login',
@@ -107,21 +109,54 @@ export default defineEventHandler(async (event) => {
     })
   }
 
+  // Account lockout: if the account is locked, reject before verifying the
+  // password (a correct password must not bypass an active lock).
+  if (isAccountLocked(user)) {
+    const retryAfterSeconds = Math.max(1, Math.ceil((user.lockedUntil!.getTime() - Date.now()) / 1000))
+    setHeader(event, 'Retry-After', retryAfterSeconds)
+    await db.insert(schema.auditLogs).values({
+      userId: user.id,
+      action: 'login',
+      entityType: 'user',
+      entityId: user.id,
+      changes: { email, success: false, reason: 'account_locked' },
+      ipAddress: clientIP,
+      userAgent: getHeader(event, 'user-agent') || null
+    })
+    recordFailedLogin(event, 'account_locked')
+
+    throw createError({
+      statusCode: 429,
+      statusMessage: 'Too Many Requests',
+      message: 'Account temporarily locked due to too many failed attempts. Please try again later.'
+    })
+  }
+
   // Verify password
   const isValidPassword = await verifyPassword(password, user.passwordHash)
 
   if (!isValidPassword) {
+    // Record the failure against the account (drives lockout + backoff).
+    const failure = nextFailureState(user)
+    await db.update(schema.users).set(failure).where(eq(schema.users.id, user.id))
+
     // Log failed login attempt
     await db.insert(schema.auditLogs).values({
       userId: user.id,
       action: 'login',
       entityType: 'user',
       entityId: user.id,
-      changes: { email, success: false, reason: 'invalid_password' },
+      changes: {
+        email,
+        success: false,
+        reason: 'invalid_password',
+        failedAttempts: failure.failedLoginAttempts,
+        locked: failure.lockedUntil !== null
+      },
       ipAddress: clientIP,
       userAgent: getHeader(event, 'user-agent') || null
     })
-    recordFailedLogin(event, 'invalid_password')
+    recordFailedLogin(event, failure.lockedUntil !== null ? 'account_locked' : 'invalid_password')
 
     throw createError({
       statusCode: 401,
@@ -149,8 +184,11 @@ export default defineEventHandler(async (event) => {
     Math.floor(absoluteTimeoutMs / 1000)
   )
 
-  // Update last login timestamp
-  await db.update(schema.users).set({ lastLoginAt: new Date() }).where(eq(schema.users.id, user.id))
+  // Update last login timestamp and clear any lockout state.
+  await db
+    .update(schema.users)
+    .set({ lastLoginAt: new Date(), ...lockoutResetState() })
+    .where(eq(schema.users.id, user.id))
 
   // Log successful login
   await db.insert(schema.auditLogs).values({

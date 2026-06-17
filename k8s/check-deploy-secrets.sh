@@ -23,9 +23,11 @@ WORKFLOW=".github/workflows/deploy.yml"
 # Intentionally optional — the app degrades gracefully if these are unset:
 #   AZURE_STORAGE_* / AZURE_BLOB_CONTAINER -> PDF Blob backend falls back to disk
 #   ADMIN_*                                -> only consumed by the manual seed Job
+#   REDIS_PASSWORD                         -> Redis runs without auth (recommended
+#                                             to set it; see k8s/README.md)
 OPTIONAL="AZURE_STORAGE_ACCOUNT_NAME AZURE_STORAGE_ACCOUNT_KEY \
 AZURE_STORAGE_CONNECTION_STRING AZURE_BLOB_CONTAINER \
-ADMIN_EMAIL ADMIN_PASSWORD ADMIN_NAME"
+ADMIN_EMAIL ADMIN_PASSWORD ADMIN_NAME REDIS_PASSWORD"
 
 if [ ! -f "$WORKFLOW" ]; then
   echo "error: $WORKFLOW not found (run from anywhere inside the repo)" >&2

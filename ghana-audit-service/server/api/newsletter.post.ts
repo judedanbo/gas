@@ -27,12 +27,14 @@ export default defineEventHandler(async (event) => {
     if (fuzzMatches.length > 0) {
       const stash = event.context.analytics
       const ipHash = stash?.ipHash ?? hashIp(getClientIP(event))
+      const ip = stash ? stash.ip : getClientIP(event)
       const uaHash = stash?.uaHash ?? null
       recordIncidentDeduped(
         {
           kind: 'fuzz_attempt',
           severity: highestSeverity(fuzzMatches),
           ipHash,
+          ip,
           uaHash,
           routePattern: '/api/newsletter',
           routePath: '/api/newsletter',

@@ -25,6 +25,7 @@ function recordRateLimitHit(
     kind,
     severity: 'info',
     ipHash: stash?.ipHash ?? null,
+    ip: stash?.ip ?? null,
     uaHash: stash?.uaHash ?? null,
     routePattern: normaliseRoutePattern(rawPath),
     routePath: rawPath.slice(0, 512),

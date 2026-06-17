@@ -37,6 +37,7 @@ export function recordSearch(event: H3Event, input: RecordSearchInput): void {
   // Defensive: tests can construct events without `context`.
   const stash = event.context?.analytics
   const ipHash = stash?.ipHash ?? null
+  const ip = stash?.ip ?? null
   const uaFamily = stash?.uaFamily ?? 'unknown'
   const locale = input.locale ? input.locale.slice(0, 8) : null
 
@@ -49,6 +50,7 @@ export function recordSearch(event: H3Event, input: RecordSearchInput): void {
         locale,
         resultCount: Math.max(0, input.resultCount | 0),
         ipHash,
+        ip,
         uaFamily
       })
     } catch (err) {

@@ -58,6 +58,7 @@ cannot see will make `azure/login` fail with empty credentials.
 | `JWT_SECRET`                      | JWT signing secret (generate with `openssl rand -hex 32`)                                                               |
 | `NUXT_API_SECRET`                 | Nuxt API secret (generate with `openssl rand -hex 32`)                                                                  |
 | `ANALYTICS_IP_SALT`               | Analytics IP hashing salt (generate with `openssl rand -hex 32`)                                                        |
+| `REDIS_PASSWORD`                  | Redis `--requirepass` password (generate with `openssl rand -hex 32`). Unset ⇒ Redis runs **without** auth             |
 | `AZURE_STORAGE_ACCOUNT_NAME`      | Azure Storage account name backing the gas-public file share                                                            |
 | `AZURE_STORAGE_ACCOUNT_KEY`       | Azure Storage account access key for the gas-public file share                                                          |
 | `ADMIN_EMAIL`                     | Initial admin login email — consumed by the seed Job                                                                    |
@@ -67,6 +68,31 @@ cannot see will make `azure/login` fail with empty credentials.
 | `AZURE_BLOB_CONTAINER`            | Optional — Blob container for report PDFs (e.g. `reports`)                                                              |
 
 > `ACR_NAME` is **not** a secret — it is a workflow `env:` value in `deploy.yml`.
+
+### Deploy approval gate (recommended)
+
+The `build-and-push` and `deploy` jobs run in the `production` GitHub Environment. To require
+manual sign-off before a production deploy, add reviewer(s) under **Settings → Environments →
+production → Required reviewers**. With that enabled, a push to `main` builds/scans the image
+and then **pauses for approval** before applying to the cluster. CI security scanning runs
+regardless (npm audit + Trivy in the workflows, CodeQL in `codeql.yml`); CodeQL on a private
+repo additionally requires GitHub Advanced Security to be enabled.
+
+### Redis TLS
+
+Redis is encrypted in-cluster (in addition to `--requirepass` auth). `k8s/redis/tls.yaml`
+defines cert-manager resources — a self-signed CA chain (`gas-selfsigned` → `redis-ca` →
+`gas-ca-issuer`) that issues the `redis-server-tls` Certificate into the **`redis-tls`** secret
+(server keypair + CA). The Redis pod serves TLS-only on 6379 from that secret; the frontend
+connects via `rediss://` (in `gas-secrets` `REDIS_URL`) and verifies the server against the CA
+mounted from `redis-tls` (`REDIS_CA_FILE=/tls/redis-ca.crt`).
+
+`deploy.yml` applies `tls.yaml` and waits for the certificate **before** rolling out Redis. The
+frontend's CA mount is `optional`, the client never throws on a missing CA, and any TLS/connect
+failure degrades to the in-process rate-limit fallback — so a misconfigured cert does **not**
+take the site down (only shared rate-limit state degrades to per-instance). To keep encryption
+but bypass a bad cert chain as a stopgap, set `REDIS_TLS_REJECT_UNAUTHORIZED=false`. Requires
+cert-manager (Prerequisite 2). Local docker-compose stays plain `redis://`.
 
 ### Azure authentication (OIDC federated)
 
@@ -144,6 +170,7 @@ the `build-and-push` and `deploy` jobs run with `environment: production`.
    gh secret set JWT_SECRET            --env $ENV --body "$(openssl rand -hex 32)"
    gh secret set NUXT_API_SECRET       --env $ENV --body "$(openssl rand -hex 32)"
    gh secret set ANALYTICS_IP_SALT     --env $ENV --body "$(openssl rand -hex 32)"
+   gh secret set REDIS_PASSWORD        --env $ENV --body "$(openssl rand -hex 32)"
 
    # Azure Files (persistent storage)
    gh secret set AZURE_STORAGE_ACCOUNT_NAME --env $ENV   # paste storage account name
@@ -215,7 +242,7 @@ kubectl apply -f k8s/namespace.yaml
 kubectl apply -f k8s/config/configmap.yaml
 
 # 3. Apply secrets (set env vars first)
-export DB_USER=gas_user DB_PASSWORD=... JWT_SECRET=... NUXT_API_SECRET=... ANALYTICS_IP_SALT=... MYSQL_ROOT_PASSWORD=... AZURE_STORAGE_ACCOUNT_NAME=... AZURE_STORAGE_ACCOUNT_KEY=...
+export DB_USER=gas_user DB_PASSWORD=... JWT_SECRET=... NUXT_API_SECRET=... ANALYTICS_IP_SALT=... REDIS_PASSWORD=... MYSQL_ROOT_PASSWORD=... AZURE_STORAGE_ACCOUNT_NAME=... AZURE_STORAGE_ACCOUNT_KEY=...
 envsubst < k8s/config/secrets.yaml | kubectl apply -f -
 
 # 4. Apply infrastructure

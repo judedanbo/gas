@@ -1,5 +1,6 @@
 import validator from 'validator'
 import { validateCSRF, createCSRFError } from '../utils/csrf'
+import { stripHtmlToText } from '../utils/sanitizeText'
 import { getDatabase, schema } from '../database'
 import { getClientIP } from '../utils/rateLimiter'
 import { sendContactNotification } from '../utils/email'
@@ -33,12 +34,14 @@ export default defineEventHandler(async (event) => {
       // dedup key collapses to 'none' and the detector can't aggregate
       // the incident against any signature.
       const ipHash = stash?.ipHash ?? hashIp(getClientIP(event))
+      const ip = stash ? stash.ip : getClientIP(event)
       const uaHash = stash?.uaHash ?? null
       recordIncidentDeduped(
         {
           kind: 'fuzz_attempt',
           severity: highestSeverity(fuzzMatches),
           ipHash,
+          ip,
           uaHash,
           routePattern: '/api/contact',
           routePath: '/api/contact',
@@ -127,8 +130,10 @@ export default defineEventHandler(async (event) => {
   )
   const sanitizedPhone = phone ? validator.escape(phone) : null
   const sanitizedSubject = validator.escape(subject)
-  // Don't escape message content to preserve formatting, but it will be escaped on display
-  const sanitizedMessage = message
+  // Strip any HTML to safe plain text at storage so the message is safe under
+  // any render path (not just consumers that escape on output). Returns literal
+  // text (no entity-encoding), so it doesn't double-escape where it's displayed.
+  const sanitizedMessage = stripHtmlToText(message)
 
   // Get database connection
   const db = getDatabase()

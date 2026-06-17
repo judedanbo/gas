@@ -106,8 +106,11 @@
                 >
                   {{ b.score }}
                 </td>
-                <td class="px-2 py-2 font-mono text-[11px] text-gray-700 dark:text-gray-200">
-                  {{ b.ipHash.slice(0, 10) }}…
+                <td
+                  class="px-2 py-2 font-mono text-[11px] text-gray-700 dark:text-gray-200"
+                  :title="b.ip ? 'Raw client IP' : 'Anonymised (hash shown)'"
+                >
+                  {{ b.ip || `${b.ipHash.slice(0, 10)}…` }}
                 </td>
                 <td class="px-2 py-2 text-gray-700 dark:text-gray-200">
                   {{ b.country || '—' }}
@@ -238,10 +241,11 @@
                   </span>
                 </div>
                 <div
-                  v-if="i.ipHash"
+                  v-if="i.ip || i.ipHash"
                   class="mt-1 font-mono text-[11px] text-gray-500 dark:text-gray-400"
+                  :title="i.ip ? 'Raw client IP' : 'Anonymised (hash shown)'"
                 >
-                  ip:{{ i.ipHash.slice(0, 10) }}…
+                  ip:{{ i.ip || `${i.ipHash?.slice(0, 10)}…` }}
                 </div>
               </div>
             </div>
@@ -336,8 +340,11 @@
               >
                 {{ f.count }}
               </td>
-              <td class="px-2 py-2 font-mono text-[11px] text-gray-700 dark:text-gray-200">
-                {{ f.ipHash.slice(0, 10) }}…
+              <td
+                class="px-2 py-2 font-mono text-[11px] text-gray-700 dark:text-gray-200"
+                :title="f.ip ? 'Raw client IP' : 'Anonymised (hash shown)'"
+              >
+                {{ f.ip || `${f.ipHash.slice(0, 10)}…` }}
               </td>
               <td class="px-2 py-2 text-gray-700 dark:text-gray-200">
                 {{ f.country || '—' }}

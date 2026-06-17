@@ -26,6 +26,12 @@ export const users = mysqlTable(
     modules: json('modules').$type<string[]>(),
     isActive: boolean('is_active').notNull().default(true),
     lastLoginAt: datetime('last_login_at'),
+    // Per-account login lockout (defends against distributed brute force; the
+    // per-IP rate limiter is separate). See server/utils/loginLockout.ts.
+    failedLoginAttempts: int('failed_login_attempts').notNull().default(0),
+    lockoutCount: int('lockout_count').notNull().default(0),
+    lockedUntil: datetime('locked_until'),
+    lastFailedLoginAt: datetime('last_failed_login_at'),
     createdAt: datetime('created_at')
       .notNull()
       .default(sql`(CURRENT_TIMESTAMP)`),

@@ -73,6 +73,7 @@ export default defineEventHandler(async (event) => {
   const topIps = await db
     .select({
       ipHash: schema.requestEvents.ipHash,
+      ip: sql<string | null>`MAX(ip)`,
       uaFamily: schema.requestEvents.uaFamily,
       country: sql<string | null>`MAX(country)`,
       asn: sql<number | null>`MAX(asn)`,
@@ -116,6 +117,7 @@ export default defineEventHandler(async (event) => {
     })),
     topIps: topIps.map((r) => ({
       ipHash: r.ipHash,
+      ip: r.ip ?? null,
       uaFamily: r.uaFamily,
       country: r.country ?? null,
       asn: r.asn != null ? Number(r.asn) : null,

@@ -139,11 +139,10 @@ export function useReportOptimization() {
     status.value = 'queued'
 
     const api = useAdminApi()
-    const { token } = useAdminAuth()
 
-    let response: { jobId: string }
+    let response: { jobId: string; sseTicket?: string }
     try {
-      response = await api.post<{ jobId: string }>('reports/optimize', {
+      response = await api.post<{ jobId: string; sseTicket?: string }>('reports/optimize', {
         fileUrl: opts.fileUrl,
         preset: opts.preset ?? 'ebook',
         reportId: opts.reportId ?? undefined,
@@ -159,10 +158,11 @@ export function useReportOptimization() {
     jobId.value = response.jobId
     status.value = 'running'
 
-    // EventSource cannot set custom headers, so we attach the JWT as a query
-    // param. The admin middleware accepts ?token= for the SSE route only.
+    // EventSource cannot set custom headers, so we attach a short-lived,
+    // aud-scoped SSE ticket (minted by the optimize endpoint) as a query param.
+    // The admin middleware accepts ?ticket= for the SSE route only.
     const url = `/api/admin/reports/optimize-stream?jobId=${encodeURIComponent(response.jobId)}${
-      token.value ? `&token=${encodeURIComponent(token.value)}` : ''
+      response.sseTicket ? `&ticket=${encodeURIComponent(response.sseTicket)}` : ''
     }`
 
     eventSource = new EventSource(url, { withCredentials: true })

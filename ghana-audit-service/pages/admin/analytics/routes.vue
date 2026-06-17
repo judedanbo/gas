@@ -281,8 +281,11 @@
                 </thead>
                 <tbody>
                   <tr v-for="ip in detail.topIps" :key="ip.ipHash">
-                    <td class="font-mono text-[11px] text-gray-700 dark:text-gray-200">
-                      {{ ip.ipHash.slice(0, 8) }}…
+                    <td
+                      class="font-mono text-[11px] text-gray-700 dark:text-gray-200"
+                      :title="ip.ip ? 'Raw client IP' : 'Anonymised (hash shown)'"
+                    >
+                      {{ ip.ip || `${ip.ipHash.slice(0, 8)}…` }}
                     </td>
                     <td class="text-gray-700 dark:text-gray-200">{{ ip.country || '—' }}</td>
                     <td class="text-right tabular-nums text-gray-700 dark:text-gray-200">

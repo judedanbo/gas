@@ -42,7 +42,7 @@ export function signToken(
   const secret = getJWTSecret()
   const expiresIn = (expiresInSeconds ?? getExpiresIn()) as SignOptions['expiresIn']
 
-  return jwt.sign(payload as object, secret, { expiresIn })
+  return jwt.sign(payload as object, secret, { expiresIn, algorithm: 'HS256' })
 }
 
 /**
@@ -52,7 +52,9 @@ export function signToken(
 export function verifyToken(token: string): JWTPayload | null {
   try {
     const secret = getJWTSecret()
-    const decoded = jwt.verify(token, secret) as JWTPayload
+    // Pin the accepted algorithm so a token with a different `alg` header
+    // (e.g. an algorithm-confusion attempt) is rejected.
+    const decoded = jwt.verify(token, secret, { algorithms: ['HS256'] }) as JWTPayload
     return decoded
   } catch {
     return null

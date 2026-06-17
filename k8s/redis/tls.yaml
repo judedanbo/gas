@@ -1,0 +1,71 @@
+# Redis TLS certificates (cert-manager).
+#
+# A self-signed CA chain: a stable internal CA signs a short-lived leaf cert for
+# the in-cluster `redis` Service. The leaf's secret (redis-tls) carries the
+# server keypair AND ca.crt (the CA), so the frontend can verify the server
+# while the CA — and therefore the mounted ca.crt — stays stable across leaf
+# renewals. All namespaced to `gas`; no public/ACME issuer needed.
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: gas-selfsigned
+  namespace: gas
+  labels:
+    app.kubernetes.io/part-of: ghana-audit-service
+spec:
+  selfSigned: {}
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: redis-ca
+  namespace: gas
+  labels:
+    app.kubernetes.io/part-of: ghana-audit-service
+spec:
+  isCA: true
+  commonName: gas-redis-ca
+  secretName: redis-ca
+  duration: 43800h # 5 years
+  renewBefore: 720h # 30 days
+  privateKey:
+    algorithm: ECDSA
+    size: 256
+  issuerRef:
+    name: gas-selfsigned
+    kind: Issuer
+---
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: gas-ca-issuer
+  namespace: gas
+  labels:
+    app.kubernetes.io/part-of: ghana-audit-service
+spec:
+  ca:
+    secretName: redis-ca
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: redis-server-tls
+  namespace: gas
+  labels:
+    app.kubernetes.io/name: redis
+    app.kubernetes.io/part-of: ghana-audit-service
+spec:
+  secretName: redis-tls
+  duration: 2160h # 90 days
+  renewBefore: 360h # 15 days
+  privateKey:
+    algorithm: ECDSA
+    size: 256
+  dnsNames:
+    - redis
+    - redis.gas
+    - redis.gas.svc
+    - redis.gas.svc.cluster.local
+  issuerRef:
+    name: gas-ca-issuer
+    kind: Issuer
