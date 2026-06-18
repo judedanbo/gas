@@ -85,7 +85,7 @@ export default defineEventHandler(async (event) => {
       credentialUserId = payload.userId
       credentialSid = payload.sid
     }
-  } else if (SSE_TICKET_ROUTES.includes(path)) {
+  } else if (SSE_TICKET_ROUTES.includes(pathname)) {
     const ticket = getQuery(event).ticket
     if (typeof ticket === 'string' && ticket) {
       const verified = verifySseTicket(ticket)

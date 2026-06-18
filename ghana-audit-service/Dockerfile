@@ -82,12 +82,15 @@ ENV NODE_ENV=production
 ENV HOST=0.0.0.0
 ENV PORT=3000
 
-# Runtime tools used SYNCHRONOUSLY in the request path:
+# Runtime tools used in the request path / background jobs:
 #   chromium + font libs  -> analytics PDF export (/api/admin/analytics/report.pdf)
-#   poppler-utils         -> thumbnail generation on report upload (pdftoppm)
-# The PDF *optimization* toolchain (ghostscript, qpdf, tesseract-ocr*) is used
-# ONLY by the detached background job in pdfOptimizer.ts and has been moved to
-# the separate `migrator`/worker image — keeping it out of the web runner.
+#   poppler-utils         -> thumbnail generation (pdftoppm) + report optimization
+#                            (pdfinfo/pdftotext/pdffonts/pdfimages)
+#   ghostscript, qpdf,    -> report PDF optimization pipeline (server/utils/pdfOptimizer.ts).
+#   tesseract-ocr            The optimize job is launched detached from the request but runs
+#                            IN-PROCESS in this runner (server/api/admin/reports/optimize.post.ts),
+#                            so the full toolchain must be present here or optimization fails
+#                            with MISSING_BINARY. tesseract-ocr-data-eng supplies the OCR language.
 RUN apk add --no-cache \
         chromium \
         nss \
@@ -97,7 +100,11 @@ RUN apk add --no-cache \
         ttf-freefont \
         ttf-opensans \
         fontconfig \
-        poppler-utils && \
+        poppler-utils \
+        ghostscript \
+        qpdf \
+        tesseract-ocr \
+        tesseract-ocr-data-eng && \
     fc-cache -f
 ENV PUPPETEER_SKIP_DOWNLOAD=true
 ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser
