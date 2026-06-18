@@ -1,11 +1,5 @@
 <template>
-  <AdminFormGroup
-    :id="id"
-    :label="label"
-    :required="required"
-    :error="error"
-    :help-text="helpText"
-  >
+  <AdminFormGroup :id="id" :label="label" :required="required" :error="error" :help-text="helpText">
     <div
       :class="[
         'border rounded-lg overflow-hidden transition-colors',
@@ -27,12 +21,7 @@
           :class="toolbarButtonClass(editor?.isActive('bold'))"
           @click="editor?.chain().focus().toggleBold().run()"
         >
-          <svg
-            class="w-4 h-4"
-            viewBox="0 0 24 24"
-            fill="currentColor"
-            aria-hidden="true"
-          >
+          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
             <path
               d="M15.6 10.79c.97-.67 1.65-1.77 1.65-2.79 0-2.26-1.75-4-4-4H7v14h7.04c2.09 0 3.71-1.7 3.71-3.79 0-1.52-.86-2.82-2.15-3.42zM10 6.5h3c.83 0 1.5.67 1.5 1.5s-.67 1.5-1.5 1.5h-3v-3zm3.5 9H10v-3h3.5c.83 0 1.5.67 1.5 1.5s-.67 1.5-1.5 1.5z"
             />
@@ -46,20 +35,12 @@
           :class="toolbarButtonClass(editor?.isActive('italic'))"
           @click="editor?.chain().focus().toggleItalic().run()"
         >
-          <svg
-            class="w-4 h-4"
-            viewBox="0 0 24 24"
-            fill="currentColor"
-            aria-hidden="true"
-          >
+          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
             <path d="M10 4v3h2.21l-3.42 8H6v3h8v-3h-2.21l3.42-8H18V4z" />
           </svg>
         </button>
 
-        <div
-          class="w-px h-5 bg-gray-300 dark:bg-gray-600 mx-0.5"
-          role="separator"
-        />
+        <div class="w-px h-5 bg-gray-300 dark:bg-gray-600 mx-0.5" role="separator" />
 
         <button
           type="button"
@@ -68,12 +49,7 @@
           :class="toolbarButtonClass(editor?.isActive('bulletList'))"
           @click="editor?.chain().focus().toggleBulletList().run()"
         >
-          <svg
-            class="w-4 h-4"
-            viewBox="0 0 24 24"
-            fill="currentColor"
-            aria-hidden="true"
-          >
+          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
             <path
               d="M4 10.5c-.83 0-1.5.67-1.5 1.5s.67 1.5 1.5 1.5 1.5-.67 1.5-1.5-.67-1.5-1.5-1.5zm0-6c-.83 0-1.5.67-1.5 1.5S3.17 7.5 4 7.5 5.5 6.83 5.5 6 4.83 4.5 4 4.5zm0 12c-.83 0-1.5.68-1.5 1.5s.68 1.5 1.5 1.5 1.5-.68 1.5-1.5-.67-1.5-1.5-1.5zM7 19h14v-2H7v2zm0-6h14v-2H7v2zm0-8v2h14V5H7z"
             />
@@ -87,22 +63,14 @@
           :class="toolbarButtonClass(editor?.isActive('orderedList'))"
           @click="editor?.chain().focus().toggleOrderedList().run()"
         >
-          <svg
-            class="w-4 h-4"
-            viewBox="0 0 24 24"
-            fill="currentColor"
-            aria-hidden="true"
-          >
+          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
             <path
               d="M2 17h2v.5H3v1h1v.5H2v1h3v-4H2v1zm1-9h1V4H2v1h1v3zm-1 3h1.8L2 13.1v.9h3v-1H3.2L5 10.9V10H2v1zm5-6v2h14V5H7zm0 14h14v-2H7v2zm0-6h14v-2H7v2z"
             />
           </svg>
         </button>
 
-        <div
-          class="w-px h-5 bg-gray-300 dark:bg-gray-600 mx-0.5"
-          role="separator"
-        />
+        <div class="w-px h-5 bg-gray-300 dark:bg-gray-600 mx-0.5" role="separator" />
 
         <!-- Link button -->
         <div class="relative">
@@ -113,12 +81,7 @@
             :class="toolbarButtonClass(editor?.isActive('link'))"
             @click="toggleLinkInput"
           >
-            <svg
-              class="w-4 h-4"
-              viewBox="0 0 24 24"
-              fill="currentColor"
-              aria-hidden="true"
-            >
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
               <path
                 d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"
               />
@@ -157,10 +120,7 @@
           </div>
         </div>
 
-        <div
-          class="w-px h-5 bg-gray-300 dark:bg-gray-600 mx-0.5"
-          role="separator"
-        />
+        <div class="w-px h-5 bg-gray-300 dark:bg-gray-600 mx-0.5" role="separator" />
 
         <button
           type="button"
@@ -169,12 +129,7 @@
           :class="toolbarButtonClass(false)"
           @click="editor?.chain().focus().clearNodes().unsetAllMarks().run()"
         >
-          <svg
-            class="w-4 h-4"
-            viewBox="0 0 24 24"
-            fill="currentColor"
-            aria-hidden="true"
-          >
+          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
             <path
               d="M3.27 5L2 6.27l6.97 6.97L6.5 19h3l1.57-3.66L16.73 21 18 19.73 3.27 5zM6 5v.18L8.82 8h2.4l-.72 1.68 2.1 2.1L14.21 8H20V5H6z"
             />
@@ -185,10 +140,7 @@
       <!-- Editor content -->
       <EditorContent
         :editor="editor"
-        :class="[
-          'richtext-editor',
-          disabled ? 'opacity-50 cursor-not-allowed' : ''
-        ]"
+        :class="['richtext-editor', disabled ? 'opacity-50 cursor-not-allowed' : '']"
       />
     </div>
   </AdminFormGroup>
@@ -240,7 +192,10 @@
         codeBlock: false,
         blockquote: false,
         horizontalRule: false,
-        code: false
+        code: false,
+        // StarterKit v3 bundles a link extension; disable it so the explicitly
+        // configured Link below is the only one registered (avoids a duplicate).
+        link: false
       }),
       Link.configure({
         openOnClick: false,
@@ -290,8 +245,7 @@
   })
 
   function toolbarButtonClass(isActive: boolean | undefined): string {
-    const base =
-      'p-1.5 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed'
+    const base = 'p-1.5 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed'
     if (isActive) {
       return `${base} bg-gray-200 dark:bg-gray-600 text-gray-900 dark:text-white`
     }
@@ -318,12 +272,7 @@
     if (!editor.value) return
 
     if (linkUrl.value) {
-      editor.value
-        .chain()
-        .focus()
-        .extendMarkRange('link')
-        .setLink({ href: linkUrl.value })
-        .run()
+      editor.value.chain().focus().extendMarkRange('link').setLink({ href: linkUrl.value }).run()
     }
 
     closeLinkInput()

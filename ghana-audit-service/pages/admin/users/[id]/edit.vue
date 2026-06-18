@@ -142,7 +142,9 @@
           </fieldset>
 
           <div class="p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
-            <h3 class="font-medium text-gray-900 dark:text-white mb-2">Role Permissions</h3>
+            <h3 class="text-base font-semibold text-gray-900 dark:text-white mb-2">
+              Role Permissions
+            </h3>
             <ul class="text-sm text-gray-600 dark:text-gray-400 space-y-1">
               <li v-if="form.role === 'admin'">
                 <span class="font-medium text-primary">Admin:</span> Full access - create, edit,
