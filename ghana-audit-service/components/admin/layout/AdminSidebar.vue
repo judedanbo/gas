@@ -2,8 +2,9 @@
   <aside
     :class="[
       'fixed top-0 left-0 z-50 h-screen bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 transition-all duration-300',
-      collapsed ? 'w-16' : 'w-64',
-      'hidden lg:block'
+      isCollapsed ? 'w-16' : 'w-64',
+      mobileOpen ? 'translate-x-0' : '-translate-x-full',
+      'lg:translate-x-0'
     ]"
   >
     <!-- Logo -->
@@ -15,16 +16,16 @@
           <span class="text-white font-bold text-sm">GAS</span>
         </div>
         <span
-          v-if="!collapsed"
+          v-if="!isCollapsed"
           class="font-semibold text-gray-900 dark:text-white whitespace-nowrap"
         >
           Admin Panel
         </span>
       </NuxtLink>
       <button
-        v-if="!collapsed"
+        v-if="!isCollapsed"
         type="button"
-        class="p-1.5 rounded-lg text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700"
+        class="hidden lg:block p-1.5 rounded-lg text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700"
         @click="$emit('toggle')"
       >
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -41,43 +42,43 @@
     <!-- Navigation -->
     <nav class="p-3 space-y-1 overflow-y-auto h-[calc(100vh-4rem)]">
       <!-- Dashboard -->
-      <SidebarLink to="/admin" icon="home" label="Dashboard" :collapsed="collapsed" />
+      <SidebarLink to="/admin" icon="home" label="Dashboard" :collapsed="isCollapsed" />
       <template v-if="hasModule('analytics')">
         <SidebarLink
           to="/admin/analytics"
           icon="chart-bar"
           label="Analytics"
-          :collapsed="collapsed"
+          :collapsed="isCollapsed"
         />
         <SidebarLink
           to="/admin/analytics/abuse"
           icon="shield-exclamation"
           label="Abuse"
-          :collapsed="collapsed"
+          :collapsed="isCollapsed"
         />
         <SidebarLink
           to="/admin/analytics/capacity"
           icon="server"
           label="Capacity"
-          :collapsed="collapsed"
+          :collapsed="isCollapsed"
         />
         <SidebarLink
           to="/admin/analytics/insights"
           icon="light-bulb"
           label="Insights"
-          :collapsed="collapsed"
+          :collapsed="isCollapsed"
         />
         <SidebarLink
           to="/admin/analytics/geo"
           icon="globe-alt"
           label="Geo"
-          :collapsed="collapsed"
+          :collapsed="isCollapsed"
         />
         <SidebarLink
           to="/admin/analytics/report"
           icon="document-text"
           label="PDF Report"
-          :collapsed="collapsed"
+          :collapsed="isCollapsed"
         />
       </template>
 
@@ -85,96 +86,110 @@
       <SidebarSection
         v-if="hasModule('reports') || hasModule('content')"
         title="Content"
-        :collapsed="collapsed"
+        :collapsed="isCollapsed"
       >
         <SidebarLink
           v-if="hasModule('reports')"
           to="/admin/reports"
           icon="document-report"
           label="A-G Reports"
-          :collapsed="collapsed"
+          :collapsed="isCollapsed"
         />
         <template v-if="hasModule('content')">
           <SidebarLink
             to="/admin/publications"
             icon="document-text"
             label="Publications"
-            :collapsed="collapsed"
+            :collapsed="isCollapsed"
           />
-          <SidebarLink to="/admin/news" icon="newspaper" label="News" :collapsed="collapsed" />
-          <SidebarLink to="/admin/events" icon="calendar" label="Events" :collapsed="collapsed" />
+          <SidebarLink to="/admin/news" icon="newspaper" label="News" :collapsed="isCollapsed" />
+          <SidebarLink to="/admin/events" icon="calendar" label="Events" :collapsed="isCollapsed" />
         </template>
       </SidebarSection>
 
       <!-- Careers Section -->
-      <SidebarSection v-if="hasModule('careers')" title="Careers" :collapsed="collapsed">
+      <SidebarSection v-if="hasModule('careers')" title="Careers" :collapsed="isCollapsed">
         <SidebarLink
           to="/admin/vacancies"
           icon="briefcase"
           label="Vacancies"
-          :collapsed="collapsed"
+          :collapsed="isCollapsed"
         />
         <SidebarLink
           to="/admin/tenders"
           icon="document-duplicate"
           label="Tenders"
-          :collapsed="collapsed"
+          :collapsed="isCollapsed"
         />
       </SidebarSection>
 
       <!-- Organization Section -->
-      <SidebarSection v-if="hasModule('organization')" title="Organization" :collapsed="collapsed">
+      <SidebarSection
+        v-if="hasModule('organization')"
+        title="Organization"
+        :collapsed="isCollapsed"
+      >
         <SidebarLink
           to="/admin/management-team"
           icon="user-circle"
           label="Management Team"
-          :collapsed="collapsed"
+          :collapsed="isCollapsed"
         />
         <SidebarLink
           to="/admin/departments"
           icon="office-building"
           label="Departments"
-          :collapsed="collapsed"
+          :collapsed="isCollapsed"
         />
         <SidebarLink
           to="/admin/team-members"
           icon="users"
           label="Team Members"
-          :collapsed="collapsed"
+          :collapsed="isCollapsed"
         />
         <SidebarLink
           to="/admin/offices"
           icon="location-marker"
           label="Offices"
-          :collapsed="collapsed"
+          :collapsed="isCollapsed"
         />
       </SidebarSection>
 
       <!-- Media Section -->
-      <SidebarSection v-if="hasModule('media')" title="Media" :collapsed="collapsed">
-        <SidebarLink to="/admin/gallery" icon="photograph" label="Gallery" :collapsed="collapsed" />
-        <SidebarLink to="/admin/videos" icon="video-camera" label="Videos" :collapsed="collapsed" />
+      <SidebarSection v-if="hasModule('media')" title="Media" :collapsed="isCollapsed">
+        <SidebarLink
+          to="/admin/gallery"
+          icon="photograph"
+          label="Gallery"
+          :collapsed="isCollapsed"
+        />
+        <SidebarLink
+          to="/admin/videos"
+          icon="video-camera"
+          label="Videos"
+          :collapsed="isCollapsed"
+        />
       </SidebarSection>
 
       <!-- Settings Section -->
       <SidebarSection
         v-if="hasModule('content') || hasPermission('manage_users')"
         title="Settings"
-        :collapsed="collapsed"
+        :collapsed="isCollapsed"
       >
         <SidebarLink
           v-if="hasModule('content')"
           to="/admin/tags"
           icon="tag"
           label="Tags"
-          :collapsed="collapsed"
+          :collapsed="isCollapsed"
         />
         <SidebarLink
           v-if="hasPermission('manage_users')"
           to="/admin/users"
           icon="user-group"
           label="Users"
-          :collapsed="collapsed"
+          :collapsed="isCollapsed"
         />
       </SidebarSection>
 
@@ -182,37 +197,37 @@
       <SidebarSection
         v-if="hasModule('analytics') || hasModule('communications')"
         title="Activity"
-        :collapsed="collapsed"
+        :collapsed="isCollapsed"
       >
         <SidebarLink
           v-if="hasModule('analytics')"
           to="/admin/audit-logs"
           icon="clipboard-list"
           label="Audit Logs"
-          :collapsed="collapsed"
+          :collapsed="isCollapsed"
         />
         <template v-if="hasModule('communications')">
           <SidebarLink
             to="/admin/newsletter"
             icon="mail"
             label="Newsletter"
-            :collapsed="collapsed"
+            :collapsed="isCollapsed"
           />
           <SidebarLink
             to="/admin/contact-submissions"
             icon="chat-alt-2"
             label="Contact Forms"
-            :collapsed="collapsed"
+            :collapsed="isCollapsed"
           />
         </template>
       </SidebarSection>
     </nav>
 
-    <!-- Expand Button (collapsed state) -->
+    <!-- Expand Button (collapsed state, desktop only) -->
     <button
-      v-if="collapsed"
+      v-if="isCollapsed"
       type="button"
-      class="absolute bottom-4 left-1/2 -translate-x-1/2 p-2 rounded-lg text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700"
+      class="hidden lg:block absolute bottom-4 left-1/2 -translate-x-1/2 p-2 rounded-lg text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700"
       @click="$emit('toggle')"
     >
       <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -230,12 +245,18 @@
 <script setup lang="ts">
   interface Props {
     collapsed: boolean
+    mobileOpen?: boolean
   }
 
-  defineProps<Props>()
-  defineEmits<{
+  const props = defineProps<Props>()
+  const emit = defineEmits<{
     toggle: []
+    close: []
   }>()
+
+  // On mobile the drawer is always shown expanded (with labels); the collapsed
+  // icon-only state only applies to the desktop sidebar.
+  const isCollapsed = computed(() => props.collapsed && !props.mobileOpen)
 
   const { hasPermission, hasModule } = useAdminAuth()
 
@@ -270,7 +291,8 @@
                 : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700',
               props.collapsed ? 'justify-center' : ''
             ],
-            title: props.collapsed ? props.label : undefined
+            title: props.collapsed ? props.label : undefined,
+            onClick: () => emit('close')
           },
           () => [h(SidebarIcon, { name: props.icon }), !props.collapsed && h('span', props.label)]
         )

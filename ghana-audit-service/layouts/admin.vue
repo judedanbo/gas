@@ -3,13 +3,18 @@
     <!-- Sidebar -->
     <AdminLayoutAdminSidebar
       :collapsed="sidebarCollapsed"
+      :mobile-open="mobileMenuOpen"
       @toggle="sidebarCollapsed = !sidebarCollapsed"
+      @close="mobileMenuOpen = false"
     />
 
     <!-- Main Content Area -->
     <div :class="['transition-all duration-300', sidebarCollapsed ? 'lg:ml-16' : 'lg:ml-64']">
       <!-- Header -->
-      <AdminLayoutAdminHeader @toggle-sidebar="sidebarCollapsed = !sidebarCollapsed" />
+      <AdminLayoutAdminHeader
+        :mobile-open="mobileMenuOpen"
+        @toggle-sidebar="mobileMenuOpen = !mobileMenuOpen"
+      />
 
       <!-- Page Content -->
       <main class="p-4 lg:p-6">
@@ -37,6 +42,15 @@
 <script setup lang="ts">
   const sidebarCollapsed = ref(false)
   const mobileMenuOpen = ref(false)
+
+  // Close the mobile drawer whenever the route changes (mirrors the public header)
+  const route = useRoute()
+  watch(
+    () => route.path,
+    () => {
+      mobileMenuOpen.value = false
+    }
+  )
 
   // Persist sidebar state
   if (import.meta.client) {
