@@ -147,12 +147,12 @@ async function handleUpdate(event: H3Event, id: number) {
         if (existingTrans) {
           await connection.execute(
             `UPDATE news_article_translations SET title = ?, excerpt = ?, content = ? WHERE id = ?`,
-            [trans.title, trans.excerpt || null, trans.content || null, existingTrans.id]
+            [trans.title, trans.excerpt ?? '', trans.content ?? '', existingTrans.id]
           )
         } else {
           await connection.execute(
             `INSERT INTO news_article_translations (news_article_id, locale, title, excerpt, content) VALUES (?, ?, ?, ?, ?)`,
-            [id, locale, trans.title, trans.excerpt || null, trans.content || null]
+            [id, locale, trans.title, trans.excerpt ?? '', trans.content ?? '']
           )
         }
       }

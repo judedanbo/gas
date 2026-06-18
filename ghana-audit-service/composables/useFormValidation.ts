@@ -15,6 +15,16 @@ export function useFormValidation() {
       return true
     },
 
+    // Like `required`, but for rich-text/HTML values. TipTap emits markup such
+    // as "<p></p>" for an empty editor, which a plain emptiness check misses.
+    requiredHtml: (value: unknown): true | string => {
+      const text = String(value ?? '')
+        .replace(/<[^>]*>/g, '')
+        .replace(/&nbsp;/g, '')
+        .trim()
+      return text.length > 0 || 'This field is required'
+    },
+
     email: (value: unknown): true | string => {
       const str = value as string
       if (!str) return true // Let required handle empty

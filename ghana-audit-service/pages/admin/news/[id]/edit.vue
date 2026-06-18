@@ -186,13 +186,15 @@
 
   const validationRules = {
     'translations.en.title': [rules.required],
+    'translations.en.excerpt': [rules.required],
+    'translations.en.content': [rules.requiredHtml],
     slug: [rules.required]
   }
 
   const translationFields = [
     { key: 'title', label: 'Title', type: 'input' as const, required: true },
-    { key: 'excerpt', label: 'Excerpt', type: 'textarea' as const, rows: 3 },
-    { key: 'content', label: 'Content', type: 'richtext' as const }
+    { key: 'excerpt', label: 'Excerpt', type: 'textarea' as const, rows: 3, required: true },
+    { key: 'content', label: 'Content', type: 'richtext' as const, required: true }
   ]
 
   const translationErrors = computed(() => {

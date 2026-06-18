@@ -142,8 +142,8 @@ export const newsArticleSchema = z.object({
   tagIds: z.array(z.number()).optional().default([]),
   translations: translationsSchema({
     title: z.string().min(1).max(500),
-    excerpt: z.string().optional().nullable(),
-    content: z.string().optional().nullable()
+    excerpt: z.string().min(1),
+    content: z.string().min(1)
   })
 })
 
