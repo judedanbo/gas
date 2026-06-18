@@ -646,9 +646,10 @@
     slugSuggestion.value = null
 
     try {
-      const response = await $fetch<{ available: boolean; suggestion?: string }>(
-        '/api/admin/reports/check-slug',
-        { query: { slug, excludeId: id } }
+      const { get } = useAdminApi()
+      const response = await get<{ available: boolean; suggestion?: string }>(
+        'reports/check-slug',
+        { slug, excludeId: id }
       )
       isSlugAvailable.value = response.available
       slugSuggestion.value = response.suggestion || null

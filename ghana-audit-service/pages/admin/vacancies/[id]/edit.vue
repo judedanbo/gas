@@ -86,11 +86,19 @@
                         <input
                           v-model="req.translations.en.description"
                           type="text"
-                          :class="['form-input w-full', errors[`requirements.${index}.translations.en.description`] ? 'border-red-500' : '']"
+                          :class="[
+                            'form-input w-full',
+                            errors[`requirements.${index}.translations.en.description`]
+                              ? 'border-red-500'
+                              : ''
+                          ]"
                           placeholder="Enter requirement..."
                           required
                         />
-                        <p v-if="errors[`requirements.${index}.translations.en.description`]" class="mt-1 text-sm text-red-600 dark:text-red-400">
+                        <p
+                          v-if="errors[`requirements.${index}.translations.en.description`]"
+                          class="mt-1 text-sm text-red-600 dark:text-red-400"
+                        >
                           {{ errors[`requirements.${index}.translations.en.description`] }}
                         </p>
                       </div>
@@ -393,9 +401,10 @@
     slugSuggestion.value = null
 
     try {
-      const response = await $fetch<{ available: boolean; suggestion?: string }>(
-        '/api/admin/vacancies/check-slug',
-        { query: { slug, excludeId: id } }
+      const { get } = useAdminApi()
+      const response = await get<{ available: boolean; suggestion?: string }>(
+        'vacancies/check-slug',
+        { slug, excludeId: id }
       )
       isSlugAvailable.value = response.available
       slugSuggestion.value = response.suggestion || null

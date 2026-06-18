@@ -203,8 +203,8 @@
 
   const parentTypeMap: Record<string, string> = {
     'district-office': 'regional-office',
-    'branch': 'sector',
-    'unit': 'branch'
+    branch: 'sector',
+    unit: 'branch'
   }
 
   const selectedTypeSlug = computed(() => {
@@ -217,8 +217,8 @@
   const parentHelpText = computed(() => {
     const labels: Record<string, string> = {
       'regional-office': 'Select the parent regional office',
-      'sector': 'Select the parent sector',
-      'branch': 'Select the parent branch'
+      sector: 'Select the parent sector',
+      branch: 'Select the parent branch'
     }
     return labels[parentTypeSlug.value] || 'Select the parent office'
   })
@@ -322,9 +322,10 @@
     slugSuggestion.value = null
 
     try {
-      const response = await $fetch<{ available: boolean; suggestion?: string }>(
-        '/api/admin/offices/check-slug',
-        { query: { slug } }
+      const { get } = useAdminApi()
+      const response = await get<{ available: boolean; suggestion?: string }>(
+        'offices/check-slug',
+        { slug }
       )
       isSlugAvailable.value = response.available
       slugSuggestion.value = response.suggestion || null
@@ -366,7 +367,8 @@
   onMounted(async () => {
     try {
       const types = await getList<{ id: number; slug: string; name: string }>('offices/types')
-      officeTypesData.value = (types as unknown as { id: number; slug: string; name: string }[]) || []
+      officeTypesData.value =
+        (types as unknown as { id: number; slug: string; name: string }[]) || []
 
       const parentSlugs = Object.values(parentTypeMap)
       const allParentOffices: AdminOffice[] = []

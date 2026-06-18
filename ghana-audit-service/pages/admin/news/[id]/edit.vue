@@ -223,10 +223,11 @@
     slugSuggestion.value = null
 
     try {
-      const response = await $fetch<{ available: boolean; suggestion?: string }>(
-        '/api/admin/news/check-slug',
-        { query: { slug, excludeId: id } }
-      )
+      const { get } = useAdminApi()
+      const response = await get<{ available: boolean; suggestion?: string }>('news/check-slug', {
+        slug,
+        excludeId: id
+      })
       isSlugAvailable.value = response.available
       slugSuggestion.value = response.suggestion || null
     } catch {
