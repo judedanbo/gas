@@ -139,6 +139,7 @@
                 <span class="text-xs text-gray-400">{{ formatDate(tag.createdAt) }}</span>
                 <button
                   type="button"
+                  aria-label="Delete tag"
                   class="p-2 text-gray-500 hover:text-red-600 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600"
                   @click="confirmDelete(tag)"
                 >
@@ -234,10 +235,10 @@
     slugSuggestion.value = null
 
     try {
-      const response = await $fetch<{ available: boolean; suggestion?: string }>(
-        '/api/admin/tags/check-slug',
-        { query: { slug } }
-      )
+      const { get } = useAdminApi()
+      const response = await get<{ available: boolean; suggestion?: string }>('tags/check-slug', {
+        slug
+      })
       isSlugAvailable.value = response.available
       slugSuggestion.value = response.suggestion || null
     } catch {

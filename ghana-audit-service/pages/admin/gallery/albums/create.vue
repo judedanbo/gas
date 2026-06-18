@@ -3,6 +3,7 @@
     <div class="mb-6 flex items-center gap-4">
       <NuxtLink
         to="/admin/gallery"
+        aria-label="Back to Gallery"
         class="rounded-lg p-2 text-gray-500 hover:bg-gray-100 hover:text-gray-700 dark:hover:bg-gray-700 dark:hover:text-gray-300"
       >
         <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -192,9 +193,10 @@
     slugSuggestion.value = null
 
     try {
-      const response = await $fetch<{ available: boolean; suggestion?: string }>(
-        '/api/admin/gallery/albums/check-slug',
-        { query: { slug } }
+      const { get } = useAdminApi()
+      const response = await get<{ available: boolean; suggestion?: string }>(
+        'gallery/albums/check-slug',
+        { slug }
       )
       isSlugAvailable.value = response.available
       slugSuggestion.value = response.suggestion || null

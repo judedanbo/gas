@@ -61,6 +61,7 @@ const BIN = {
 // Ghostscript on a 100 MB book is the longest-tail call.
 const TIMEOUT = {
   pdfinfo: 30_000,
+  qpdfInfo: 60_000,
   qpdfSplit: 5 * 60_000,
   qpdfMerge: 5 * 60_000,
   pdftotext: 60_000,
@@ -137,7 +138,6 @@ export class PdfOptimizerError extends Error {
 
 interface PdfInfo {
   pageCount: number
-  hasBookmarks: boolean
 }
 
 // Map our public preset names to Ghostscript /PDFSETTINGS and DPI choices.
@@ -184,9 +184,10 @@ export async function optimizeReportPdf(
   try {
     // 1. Inspect ---------------------------------------------------------
     const info = await readPdfInfo(pdfPath)
-    emit({ phase: 'inspect', pageCount: info.pageCount, hasBookmarks: info.hasBookmarks })
+    const hasBookmarks = await hasOutlines(pdfPath)
+    emit({ phase: 'inspect', pageCount: info.pageCount, hasBookmarks })
 
-    if (info.hasBookmarks && !opts.allowDropBookmarks) {
+    if (hasBookmarks && !opts.allowDropBookmarks) {
       throw new PdfOptimizerError(
         'HAS_BOOKMARKS',
         'Source PDF has bookmarks; optimization would drop them. Pass allowDropBookmarks=true to proceed.'
@@ -214,8 +215,9 @@ export async function optimizeReportPdf(
     }
 
     // Cover (page 1) is always preserved untouched. The pipeline only acts
-    // on pages 2..N.
-    let nativePages = 0
+    // on pages 2..N — but the cover still counts as a (native) kept page so the
+    // native + scanned tally equals the total page count rather than N-1.
+    let nativePages = 1
     let scannedPages = 0
 
     // 3. Classify + 4. OCR scanned pages --------------------------------
@@ -350,12 +352,36 @@ async function readPdfInfo(path: string): Promise<PdfInfo> {
     throw new PdfOptimizerError('INSPECT_FAILED', 'Could not read page count from pdfinfo')
   }
 
-  // pdfinfo emits a "Bookmarks: yes" line only when an outline is present.
-  // Some builds use "Outline:" instead; check both.
-  const bookmarks = matchKey(stdout, 'Bookmarks') || matchKey(stdout, 'Outline')
-  const hasBookmarks = bookmarks?.toLowerCase().startsWith('yes') ?? false
+  return { pageCount }
+}
 
-  return { pageCount, hasBookmarks }
+// Detect whether the PDF carries an outline (bookmarks). poppler `pdfinfo`
+// does not reliably emit a "Bookmarks:" line, so we ask qpdf — already a
+// pipeline dependency — for the document's top-level `outlines` array.
+// A qpdf failure other than a missing binary degrades to "no bookmarks": the
+// split step surfaces genuine qpdf problems, and we'd rather optimize than
+// block on an outline-read quirk.
+async function hasOutlines(path: string): Promise<boolean> {
+  let stdout: string
+  try {
+    ;({ stdout } = await execFileAsync(BIN.qpdf, ['--json=2', '--json-key=outlines', path], {
+      timeout: TIMEOUT.qpdfInfo
+    }))
+  } catch (err) {
+    if (isMissingBinaryError(err, BIN.qpdf)) {
+      throw new PdfOptimizerError(
+        'MISSING_BINARY',
+        `Required tool not found: ${BIN.qpdf}. Install it (apk add poppler-utils tesseract-ocr ghostscript qpdf).`
+      )
+    }
+    return false
+  }
+  try {
+    const parsed = JSON.parse(stdout) as { outlines?: unknown[] }
+    return Array.isArray(parsed.outlines) && parsed.outlines.length > 0
+  } catch {
+    return false
+  }
 }
 
 async function splitByPage(input: string, outDir: string): Promise<void> {

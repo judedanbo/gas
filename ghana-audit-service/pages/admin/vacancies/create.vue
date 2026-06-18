@@ -3,6 +3,7 @@
     <div class="flex items-center gap-4 mb-6">
       <NuxtLink
         to="/admin/vacancies"
+        aria-label="Go back"
         class="p-2 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
       >
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -75,11 +76,19 @@
                       <input
                         v-model="req.translations.en.description"
                         type="text"
-                        :class="['form-input w-full', errors[`requirements.${index}.translations.en.description`] ? 'border-red-500' : '']"
+                        :class="[
+                          'form-input w-full',
+                          errors[`requirements.${index}.translations.en.description`]
+                            ? 'border-red-500'
+                            : ''
+                        ]"
                         placeholder="Enter requirement..."
                         required
                       />
-                      <p v-if="errors[`requirements.${index}.translations.en.description`]" class="mt-1 text-sm text-red-600 dark:text-red-400">
+                      <p
+                        v-if="errors[`requirements.${index}.translations.en.description`]"
+                        class="mt-1 text-sm text-red-600 dark:text-red-400"
+                      >
                         {{ errors[`requirements.${index}.translations.en.description`] }}
                       </p>
                     </div>
@@ -385,9 +394,10 @@
     slugSuggestion.value = null
 
     try {
-      const response = await $fetch<{ available: boolean; suggestion?: string }>(
-        '/api/admin/vacancies/check-slug',
-        { query: { slug } }
+      const { get } = useAdminApi()
+      const response = await get<{ available: boolean; suggestion?: string }>(
+        'vacancies/check-slug',
+        { slug }
       )
       isSlugAvailable.value = response.available
       slugSuggestion.value = response.suggestion || null

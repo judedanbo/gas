@@ -91,6 +91,19 @@ async function runOptimization(
     }
 
     updateJob(jobId, { status: 'success', result })
+    // Emit a terminal 'done' event so SSE subscribers that connected while the
+    // job was still running are notified of completion. (Without this, only the
+    // error path pushed a terminal event, so successful optimizations left the
+    // stream — and the admin UI — hanging at "Optimizing…".)
+    pushEvent(jobId, {
+      phase: 'done',
+      originalSize: result.originalSize,
+      optimizedSize: result.optimizedSize,
+      savedBytes: result.savedBytes,
+      skippedCompression: result.skippedCompression,
+      nativePages: result.nativePages,
+      scannedPages: result.scannedPages
+    })
 
     void logAuditAction(event, 'update', 'report_optimization', reportId, {
       after: {

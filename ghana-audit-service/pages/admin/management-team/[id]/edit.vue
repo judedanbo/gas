@@ -13,6 +13,7 @@
       <div class="flex items-center gap-4 mb-6">
         <NuxtLink
           to="/admin/management-team"
+          aria-label="Go back"
           class="p-2 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
         >
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -629,13 +630,15 @@
   onMounted(async () => {
     // Fetch offices by type and departments for dropdowns
     try {
-      const [regOffices, dstOffices, sectorOffices, branchOffices, departments] = await Promise.all([
-        getList<AdminOffice>('offices', { typeSlug: 'regional-office' }),
-        getList<AdminOffice>('offices', { typeSlug: 'district-office' }),
-        getList<AdminOffice>('offices', { typeSlug: 'sector' }),
-        getList<AdminOffice>('offices', { typeSlug: 'branch' }),
-        getList<AdminDepartment>('departments')
-      ])
+      const [regOffices, dstOffices, sectorOffices, branchOffices, departments] = await Promise.all(
+        [
+          getList<AdminOffice>('offices', { typeSlug: 'regional-office' }),
+          getList<AdminOffice>('offices', { typeSlug: 'district-office' }),
+          getList<AdminOffice>('offices', { typeSlug: 'sector' }),
+          getList<AdminOffice>('offices', { typeSlug: 'branch' }),
+          getList<AdminDepartment>('departments')
+        ]
+      )
       regionalOffices.value = regOffices.data || []
       districtOffices.value = dstOffices.data || []
       sectors.value = sectorOffices.data || []

@@ -55,14 +55,22 @@ function makeInputPdf(size = 1024): string {
   return file
 }
 
-function pdfinfoResult(pages: number, bookmarks = false): string {
+function pdfinfoResult(pages: number): string {
   return [
     'Creator:        test',
     'Producer:       test',
     `Pages:          ${pages}`,
-    `Bookmarks:      ${bookmarks ? 'yes' : 'no'}`,
     'Page size:      612 x 792 pts'
   ].join('\n')
+}
+
+// qpdf --json=2 --json-key=outlines output. A non-empty `outlines` array means
+// the document has bookmarks.
+function qpdfOutlines(count = 0): string {
+  return JSON.stringify({
+    version: 2,
+    outlines: Array.from({ length: count }, (_, i) => ({ title: `Item ${i + 1}` }))
+  })
 }
 
 function writeSplitPages(outDir: string, pages: number) {
@@ -81,7 +89,11 @@ describe('optimizeReportPdf', () => {
 
   it('rejects with HAS_BOOKMARKS when the source PDF has bookmarks (default)', async () => {
     const input = makeInputPdf()
-    programExec([() => ({ stdout: pdfinfoResult(3, true), stderr: '' })])
+    programExec([
+      () => ({ stdout: pdfinfoResult(3), stderr: '' }),
+      // qpdf outlines → 2 bookmarks present
+      () => ({ stdout: qpdfOutlines(2), stderr: '' })
+    ])
     await expect(optimizeReportPdf(input)).rejects.toMatchObject({
       code: 'HAS_BOOKMARKS'
     })
@@ -91,7 +103,7 @@ describe('optimizeReportPdf', () => {
     const input = makeInputPdf()
     programExec([
       () => ({ stdout: pdfinfoResult(2), stderr: '' }),
-      // qpdf split → ENOENT
+      // qpdf outlines (first qpdf call) → ENOENT
       () => {
         const err = Object.assign(new Error('spawn qpdf ENOENT'), {
           code: 'ENOENT',
@@ -111,32 +123,34 @@ describe('optimizeReportPdf', () => {
     programExec([
       // 1. pdfinfo (2 pages)
       () => ({ stdout: pdfinfoResult(2), stderr: '' }),
-      // 2. qpdf split -> emulate by writing both pages
+      // 2. qpdf outlines → none
+      () => ({ stdout: qpdfOutlines(0), stderr: '' }),
+      // 3. qpdf split -> emulate by writing both pages
       (_bin, args) => {
         const outPattern = args[args.length - 1]
         const outDir = outPattern.replace(/[\\/]page-%d\.pdf$/, '')
         writeSplitPages(outDir, 2)
         return { stdout: '', stderr: '' }
       },
-      // 3. classify page 2: pdftotext returns plenty of text → native
+      // 4. classify page 2: pdftotext returns plenty of text → native
       () => ({
         stdout: 'Lorem ipsum dolor sit amet consectetur adipiscing elit.',
         stderr: ''
       }),
-      // 4. qpdf concat -> emulate writing combined.pdf
+      // 5. qpdf concat -> emulate writing combined.pdf
       (_b, args) => {
         const out = args[args.length - 1]
         writeFileSync(out, Buffer.alloc(1500, 0x21))
         return { stdout: '', stderr: '' }
       },
-      // 5. gs -> write a smaller optimized.pdf
+      // 6. gs -> write a smaller optimized.pdf
       (_b, args) => {
         const outArg = args.find((a) => a.startsWith('-sOutputFile='))!
         const out = outArg.replace('-sOutputFile=', '')
         writeFileSync(out, Buffer.alloc(800, 0x21))
         return { stdout: '', stderr: '' }
       },
-      // 6. pdfinfo sanity check on optimized.pdf
+      // 7. pdfinfo sanity check on optimized.pdf
       () => ({ stdout: pdfinfoResult(2), stderr: '' })
     ])
 
@@ -147,7 +161,8 @@ describe('optimizeReportPdf', () => {
 
     expect(result.pageCount).toBe(2)
     expect(result.scannedPages).toBe(0)
-    expect(result.nativePages).toBe(1) // body pages only
+    expect(result.nativePages).toBe(2) // cover + 1 body page
+    expect(result.nativePages + result.scannedPages).toBe(result.pageCount)
     expect(result.optimizedSize).toBeLessThan(result.originalSize)
     expect(result.skippedCompression).toBe(false)
     expect(events).toContain('classify:native')
@@ -159,6 +174,7 @@ describe('optimizeReportPdf', () => {
 
     programExec([
       () => ({ stdout: pdfinfoResult(2), stderr: '' }),
+      () => ({ stdout: qpdfOutlines(0), stderr: '' }),
       (_b, args) => {
         const outDir = args[args.length - 1].replace(/[\\/]page-%d\.pdf$/, '')
         writeSplitPages(outDir, 2)
@@ -209,7 +225,8 @@ describe('optimizeReportPdf', () => {
     const result = await optimizeReportPdf(input)
 
     expect(result.scannedPages).toBe(1)
-    expect(result.nativePages).toBe(0)
+    expect(result.nativePages).toBe(1) // cover page (preserved) counts as native
+    expect(result.nativePages + result.scannedPages).toBe(result.pageCount)
     expect(result.optimizedSize).toBeLessThan(result.originalSize)
   })
 
@@ -218,6 +235,7 @@ describe('optimizeReportPdf', () => {
 
     programExec([
       () => ({ stdout: pdfinfoResult(2), stderr: '' }),
+      () => ({ stdout: qpdfOutlines(0), stderr: '' }),
       (_b, args) => {
         const outDir = args[args.length - 1].replace(/[\\/]page-%d\.pdf$/, '')
         writeSplitPages(outDir, 2)
@@ -253,6 +271,7 @@ describe('optimizeReportPdf', () => {
     const input = makeInputPdf(2048)
     programExec([
       () => ({ stdout: pdfinfoResult(3), stderr: '' }),
+      () => ({ stdout: qpdfOutlines(0), stderr: '' }),
       (_b, args) => {
         const outDir = args[args.length - 1].replace(/[\\/]page-%d\.pdf$/, '')
         writeSplitPages(outDir, 3)
@@ -282,7 +301,9 @@ describe('optimizeReportPdf', () => {
     const input = makeInputPdf(1024)
 
     programExec([
-      () => ({ stdout: pdfinfoResult(2, true), stderr: '' }),
+      () => ({ stdout: pdfinfoResult(2), stderr: '' }),
+      // qpdf outlines → bookmarks present, but allowDropBookmarks overrides
+      () => ({ stdout: qpdfOutlines(2), stderr: '' }),
       (_b, args) => {
         const outDir = args[args.length - 1].replace(/[\\/]page-%d\.pdf$/, '')
         writeSplitPages(outDir, 2)

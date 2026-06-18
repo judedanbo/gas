@@ -61,7 +61,9 @@
         <div class="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">
           Geo-resolved
         </div>
-        <div class="mt-1 text-2xl font-bold text-gray-900 dark:text-white">{{ geoResolvedPct }}</div>
+        <div class="mt-1 text-2xl font-bold text-gray-900 dark:text-white">
+          {{ geoResolvedPct }}
+        </div>
         <div class="text-xs text-gray-500 dark:text-gray-400">
           of visits had a country (else MMDB not mounted)
         </div>
@@ -110,7 +112,7 @@
                 {{ formatNumber(c.uniqueIps) }}
               </td>
             </tr>
-            <tr v-if="!loading && !(data?.countries?.length)">
+            <tr v-if="!loading && !data?.countries?.length">
               <td colspan="3" class="px-3 py-6 text-center text-gray-400">No data in window</td>
             </tr>
           </tbody>
@@ -144,7 +146,7 @@
                 {{ formatNumber(a.uniqueIps) }}
               </td>
             </tr>
-            <tr v-if="!loading && !(data?.asns?.length)">
+            <tr v-if="!loading && !data?.asns?.length">
               <td colspan="3" class="px-3 py-6 text-center text-gray-400">No ASN data in window</td>
             </tr>
           </tbody>
@@ -213,7 +215,7 @@
       grid: { left: 8, right: 16, top: 16, bottom: 48, containLabel: true },
       xAxis: {
         type: 'category',
-        data: top.map((c) => c.country || '??'),
+        data: top.map((c) => countryLabel(c.country)),
         axisLabel: { rotate: 45, fontSize: 10 }
       },
       yAxis: { type: 'value' },

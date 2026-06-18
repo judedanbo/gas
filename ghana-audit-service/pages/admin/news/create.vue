@@ -3,6 +3,7 @@
     <div class="flex items-center gap-4 mb-6">
       <NuxtLink
         to="/admin/news"
+        aria-label="Go back"
         class="p-2 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
       >
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -169,13 +170,15 @@
 
   const validationRules = {
     'translations.en.title': [rules.required],
+    'translations.en.excerpt': [rules.required],
+    'translations.en.content': [rules.requiredHtml],
     slug: [rules.required]
   }
 
   const translationFields = [
     { key: 'title', label: 'Title', type: 'input' as const, required: true },
-    { key: 'excerpt', label: 'Excerpt', type: 'textarea' as const, rows: 3 },
-    { key: 'content', label: 'Content', type: 'richtext' as const }
+    { key: 'excerpt', label: 'Excerpt', type: 'textarea' as const, rows: 3, required: true },
+    { key: 'content', label: 'Content', type: 'richtext' as const, required: true }
   ]
 
   const translationErrors = computed(() => {
@@ -213,10 +216,10 @@
     slugSuggestion.value = null
 
     try {
-      const response = await $fetch<{ available: boolean; suggestion?: string }>(
-        '/api/admin/news/check-slug',
-        { query: { slug } }
-      )
+      const { get } = useAdminApi()
+      const response = await get<{ available: boolean; suggestion?: string }>('news/check-slug', {
+        slug
+      })
       isSlugAvailable.value = response.available
       slugSuggestion.value = response.suggestion || null
     } catch {

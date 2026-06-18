@@ -9,10 +9,12 @@ const HEARTBEAT_MS = 15_000
 export default defineEventHandler(async (event) => {
   requirePermission(event, 'update')
 
-  const jobId = getQuery(event).jobId
-  if (typeof jobId !== 'string' || !jobId) {
+  const jobIdRaw = getQuery(event).jobId
+  if (typeof jobIdRaw !== 'string' || !jobIdRaw) {
     throw createError({ statusCode: 400, statusMessage: 'jobId is required' })
   }
+  // Narrowed string captured in a const so the nested closures below keep the type.
+  const jobId: string = jobIdRaw
 
   const job = getJob(jobId)
   if (!job) {
@@ -34,10 +36,6 @@ export default defineEventHandler(async (event) => {
     res.write(`data: ${JSON.stringify(data)}\n\n`)
   }
 
-  function sendBuffered(state: JobState): void {
-    for (const e of state.events) send('progress', e)
-  }
-
   function isTerminal(state: JobState): boolean {
     return state.status === 'success' || state.status === 'error'
   }
@@ -47,23 +45,14 @@ export default defineEventHandler(async (event) => {
     else if (state.status === 'error') send('error', { message: state.error ?? 'unknown error' })
   }
 
-  // Replay any progress events the producer has already buffered so a reconnect
-  // does not miss anything.
-  sendBuffered(job)
-
-  if (isTerminal(job)) {
-    sendTerminal(job)
-    res.end()
-    return
-  }
-
+  let closed = false
   const heartbeat = setInterval(() => {
     res.write(`: ping ${Date.now()}\n\n`)
   }, HEARTBEAT_MS)
   heartbeat.unref?.()
 
-  let closed = false
-  const close = () => {
+  let unsubscribe = (): void => {}
+  const close = (): void => {
     if (closed) return
     closed = true
     clearInterval(heartbeat)
@@ -71,19 +60,42 @@ export default defineEventHandler(async (event) => {
     res.end()
   }
 
-  const unsubscribe = subscribe(jobId, (e: ProgressEvent) => {
-    if (closed) return
-    send('progress', e)
-    if (e.phase === 'done') {
-      // Look up the freshest state to capture status (success vs error) and
-      // the full OptimizeResult.
-      const fresh = getJob(jobId)
-      if (fresh && isTerminal(fresh)) {
-        sendTerminal(fresh)
-        close()
-      }
+  // Flush any buffered progress events not yet sent, tracked by a cursor so the
+  // initial replay and live delivery never duplicate or skip an event.
+  let cursor = 0
+  function flush(): void {
+    const state = getJob(jobId)
+    if (!state) return
+    while (cursor < state.events.length) {
+      send('progress', state.events[cursor])
+      cursor++
     }
+  }
+
+  // If the job has finished, deliver its terminal event and close.
+  function flushTerminal(): boolean {
+    const fresh = getJob(jobId)
+    if (fresh && isTerminal(fresh)) {
+      sendTerminal(fresh)
+      close()
+      return true
+    }
+    return false
+  }
+
+  // Subscribe BEFORE the initial replay so an event emitted during replay (the
+  // producer can finish a fast job in that window) is not lost. flush() dedupes
+  // via the cursor, so receiving an event we already replayed is harmless.
+  unsubscribe = subscribe(jobId, (_e: ProgressEvent) => {
+    if (closed) return
+    flush()
+    flushTerminal()
   })
+
+  // Replay buffered events, then check whether the job already completed
+  // (covers jobs that finished before — or during — this connection setup).
+  flush()
+  if (flushTerminal()) return
 
   event.node.req.on('close', close)
   event.node.req.on('aborted', close)

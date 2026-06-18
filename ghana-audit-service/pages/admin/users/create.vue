@@ -3,6 +3,7 @@
     <div class="flex items-center gap-4 mb-6">
       <NuxtLink
         to="/admin/users"
+        aria-label="Go back"
         class="p-2 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
       >
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -165,7 +166,9 @@
         </fieldset>
 
         <div class="p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
-          <h3 class="font-medium text-gray-900 dark:text-white mb-2">Role Permissions</h3>
+          <h3 class="text-base font-semibold text-gray-900 dark:text-white mb-2">
+            Role Permissions
+          </h3>
           <ul class="text-sm text-gray-600 dark:text-gray-400 space-y-1">
             <li v-if="form.role === 'admin'">
               <span class="font-medium text-primary">Admin:</span> Full access - create, edit,

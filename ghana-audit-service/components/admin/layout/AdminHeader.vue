@@ -9,6 +9,8 @@
         <button
           type="button"
           class="lg:hidden p-2 rounded-lg text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700"
+          :aria-label="mobileOpen ? 'Close navigation menu' : 'Open navigation menu'"
+          :aria-expanded="mobileOpen"
           @click="$emit('toggle-sidebar')"
         >
           <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -80,6 +82,9 @@
         <div ref="userMenuRef" class="relative">
           <button
             type="button"
+            aria-label="Account menu"
+            aria-haspopup="menu"
+            :aria-expanded="userMenuOpen"
             class="flex items-center gap-2 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
             @click="userMenuOpen = !userMenuOpen"
           >
@@ -149,6 +154,10 @@
 </template>
 
 <script setup lang="ts">
+  defineProps<{
+    mobileOpen?: boolean
+  }>()
+
   defineEmits<{
     'toggle-sidebar': []
   }>()

@@ -166,7 +166,7 @@ async function handleCreate(event: H3Event) {
         await connection.execute(
           `INSERT INTO news_article_translations (news_article_id, locale, title, excerpt, content)
            VALUES (?, ?, ?, ?, ?)`,
-          [articleId, locale, trans.title, trans.excerpt || null, trans.content || null]
+          [articleId, locale, trans.title, trans.excerpt ?? '', trans.content ?? '']
         )
       }
     }
