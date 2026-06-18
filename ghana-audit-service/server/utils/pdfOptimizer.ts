@@ -215,8 +215,9 @@ export async function optimizeReportPdf(
     }
 
     // Cover (page 1) is always preserved untouched. The pipeline only acts
-    // on pages 2..N.
-    let nativePages = 0
+    // on pages 2..N — but the cover still counts as a (native) kept page so the
+    // native + scanned tally equals the total page count rather than N-1.
+    let nativePages = 1
     let scannedPages = 0
 
     // 3. Classify + 4. OCR scanned pages --------------------------------

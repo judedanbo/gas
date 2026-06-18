@@ -14,7 +14,7 @@ The pipeline itself is **solid** (correct compression, preset behaviour, skip-wh
 | 1 | **P1** | SSE stream 401s → no optimization feedback at all | **Fixed** |
 | 2 | **P1** | Successful jobs never send a terminal event → modal hangs at "Optimizing…" forever | **Fixed** |
 | 3 | P2 | Bookmark-protection guard never fired (poppler `pdfinfo` emits no "Bookmarks:" line) → bookmarked PDFs were optimized and lost their outline silently; the "Optimize anyway (drops bookmarks)" UX was dead | **Fixed** (now detects outlines via `qpdf --json`) |
-| 4 | P3 | "X native · Y scanned" tally under-counts (showed 4 on a 5-page PDF — a page that is neither clearly native nor scanned is uncounted) | **Open (documented)** |
+| 4 | P3 | "X native · Y scanned" tally under-counts (showed 4 on a 5-page PDF — the preserved cover page was never counted) | **Fixed** (cover counted as native) |
 
 ## Bugs found & fixed
 
@@ -50,7 +50,7 @@ The optimize job runs **in-process** in the web runner, but the runtime image in
 ## Findings
 
 - **P2-3 Bookmark guard non-functional — FIXED.** `pdfOptimizer` derived `hasBookmarks` from a `pdfinfo` "Bookmarks:"/"Outline" line, but poppler `pdfinfo` (24.x here; Alpine build similar) does not emit one even when an outline exists (confirmed: `qpdf --json` shows `/Outlines` on the same file while `pdfinfo` shows no bookmark line). The `HAS_BOOKMARKS` error never triggered, so bookmarked PDFs were optimized and lost their outline with no warning, and the "Optimize anyway (drops bookmarks)" retry was unreachable. **Fix:** detect the document outline via `qpdf --json=2 --json-key=outlines` (qpdf is already a pipeline dependency); a non-empty `outlines` array ⇒ bookmarks. Verified against the real pipeline: a bookmarked PDF now throws `HAS_BOOKMARKS` by default and optimizes only with `allowDropBookmarks:true`. Unit test updated to mock the qpdf outlines call.
-- **P3-4 Page tally under-counts (open).** `nativePages + scannedPages` was 4 for a 5-page PDF across every run — a page that is neither clearly native (text/fonts) nor clearly scanned (image-only) is left uncounted in the classify tally. Cosmetic (the merge sanity-check still enforces the true page count); the "X native · Y scanned" line can read low.
+- **P3-4 Page tally under-counts — FIXED.** `nativePages + scannedPages` was 4 for a 5-page PDF across every run: the classify loop starts at page 2 because the cover (page 1) is always preserved untouched, and the cover was never added to the tally. **Fix:** count the preserved cover as a native (kept) page, so `nativePages + scannedPages === pageCount`. Verified on the real 5-page bulletin (now native=5, sum=5); unit tests updated and assert the sum equals the page count.
 
 ## Verification commands
 - Pipeline (real binaries): ran `optimizeReportPdf()` directly on each fixture/preset — see Scenario results.

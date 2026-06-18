@@ -161,7 +161,8 @@ describe('optimizeReportPdf', () => {
 
     expect(result.pageCount).toBe(2)
     expect(result.scannedPages).toBe(0)
-    expect(result.nativePages).toBe(1) // body pages only
+    expect(result.nativePages).toBe(2) // cover + 1 body page
+    expect(result.nativePages + result.scannedPages).toBe(result.pageCount)
     expect(result.optimizedSize).toBeLessThan(result.originalSize)
     expect(result.skippedCompression).toBe(false)
     expect(events).toContain('classify:native')
@@ -224,7 +225,8 @@ describe('optimizeReportPdf', () => {
     const result = await optimizeReportPdf(input)
 
     expect(result.scannedPages).toBe(1)
-    expect(result.nativePages).toBe(0)
+    expect(result.nativePages).toBe(1) // cover page (preserved) counts as native
+    expect(result.nativePages + result.scannedPages).toBe(result.pageCount)
     expect(result.optimizedSize).toBeLessThan(result.originalSize)
   })
 
