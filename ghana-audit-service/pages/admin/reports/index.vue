@@ -34,6 +34,7 @@
                 : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
             "
             title="Table view"
+            aria-label="Table view"
             @click="viewMode = 'table'"
           >
             <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -54,6 +55,7 @@
                 : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
             "
             title="Grid view"
+            aria-label="Grid view"
             @click="viewMode = 'grid'"
           >
             <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -206,6 +208,7 @@
         <div class="flex items-center justify-end gap-2">
           <NuxtLink
             :to="`/admin/reports/${row.id}/edit`"
+            aria-label="Edit"
             class="p-2 text-gray-500 hover:text-primary rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
             title="Edit"
           >
@@ -220,6 +223,7 @@
           </NuxtLink>
           <button
             type="button"
+            aria-label="Delete"
             class="p-2 text-gray-500 hover:text-red-600 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
             title="Delete"
             @click.stop="confirmDelete(row)"
@@ -273,7 +277,10 @@
             :selected="isSelected(report)"
             :edit-url="`/admin/reports/${report.id}/edit`"
             :badge-label="report.category?.replaceAll('-', ' ') || null"
-            :badge-class="categoryStyles[report.category] || 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300'"
+            :badge-class="
+              categoryStyles[report.category] ||
+              'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300'
+            "
             :metadata="formatReportMeta(report)"
             :is-published="report.isPublished"
             @click="handleRowClick(report)"

@@ -82,6 +82,9 @@
         <div ref="userMenuRef" class="relative">
           <button
             type="button"
+            aria-label="Account menu"
+            aria-haspopup="menu"
+            :aria-expanded="userMenuOpen"
             class="flex items-center gap-2 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
             @click="userMenuOpen = !userMenuOpen"
           >

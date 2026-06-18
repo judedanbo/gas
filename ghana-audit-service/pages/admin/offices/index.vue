@@ -63,6 +63,7 @@
         <div class="flex items-center justify-end gap-2">
           <NuxtLink
             :to="`/admin/offices/${row.id}/edit`"
+            aria-label="Edit"
             class="p-2 text-gray-500 hover:text-primary rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
           >
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -76,6 +77,7 @@
           </NuxtLink>
           <button
             type="button"
+            aria-label="Delete"
             class="p-2 text-gray-500 hover:text-red-600 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
             @click.stop="confirmDelete(row)"
           >
@@ -114,8 +116,7 @@
   import type { AdminOffice } from '~/types/admin'
   definePageMeta({ layout: 'admin' })
 
-  const { items, loading, deleting, meta, fetchAll, remove } =
-    useAdminCrud<AdminOffice>('offices')
+  const { items, loading, deleting, meta, fetchAll, remove } = useAdminCrud<AdminOffice>('offices')
 
   const filters = reactive({ search: '' })
   const hasActiveFilters = computed(() => !!filters.search)

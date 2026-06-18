@@ -4,6 +4,7 @@
       <div class="flex items-center gap-4">
         <NuxtLink
           to="/admin/gallery"
+          aria-label="Back to Gallery"
           class="rounded-lg p-2 text-gray-500 hover:bg-gray-100 hover:text-gray-700 dark:hover:bg-gray-700 dark:hover:text-gray-300"
         >
           <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -132,6 +133,7 @@
               <button
                 type="button"
                 title="View"
+                aria-label="View image"
                 class="rounded-lg bg-white/20 p-2 text-white hover:bg-white/30"
                 @click="viewingImage = image"
               >
@@ -154,6 +156,7 @@
                 v-if="!isUnassigned && album && album.coverImageId !== image.id"
                 type="button"
                 title="Set as cover"
+                aria-label="Set as album cover"
                 class="rounded-lg bg-white/20 p-2 text-white hover:bg-white/30"
                 :disabled="settingCoverId === image.id"
                 @click="setAsCover(image)"
@@ -170,6 +173,7 @@
               <button
                 type="button"
                 title="Move to album"
+                aria-label="Move to album"
                 class="rounded-lg bg-white/20 p-2 text-white hover:bg-white/30"
                 @click="openMove(image)"
               >
@@ -185,6 +189,7 @@
               <button
                 type="button"
                 title="Delete"
+                aria-label="Delete image"
                 class="rounded-lg bg-red-500/80 p-2 text-white hover:bg-red-600"
                 @click="confirmDeleteImage(image)"
               >
