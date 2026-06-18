@@ -13,7 +13,7 @@ The pipeline itself is **solid** (correct compression, preset behaviour, skip-wh
 |---|---|---|---|
 | 1 | **P1** | SSE stream 401s → no optimization feedback at all | **Fixed** |
 | 2 | **P1** | Successful jobs never send a terminal event → modal hangs at "Optimizing…" forever | **Fixed** |
-| 3 | P2 | Bookmark-protection guard never fires (poppler `pdfinfo` emits no "Bookmarks:" line) → bookmarked PDFs are optimized and lose their outline silently; the "Optimize anyway (drops bookmarks)" UX is dead | **Open (documented)** |
+| 3 | P2 | Bookmark-protection guard never fired (poppler `pdfinfo` emits no "Bookmarks:" line) → bookmarked PDFs were optimized and lost their outline silently; the "Optimize anyway (drops bookmarks)" UX was dead | **Fixed** (now detects outlines via `qpdf --json`) |
 | 4 | P3 | "X native · Y scanned" tally under-counts (showed 4 on a 5-page PDF — a page that is neither clearly native nor scanned is uncounted) | **Open (documented)** |
 
 ## Bugs found & fixed
@@ -47,10 +47,10 @@ The optimize job runs **in-process** in the web runner, but the runtime image in
 | **I** Error/edge paths | ✅ optimize & generate-thumbnail: 400 "Invalid file path" (incl. traversal `/etc/passwd`), 422 "PDF file not found", 400 "fileUrl is required" |
 | **J** Unit suite | ✅ 18/18 (`pdfOptimizer.test.ts`, `optimize.test.ts`, `generate-thumbnail.test.ts`) |
 
-## Open findings (not fixed)
+## Findings
 
-- **P2-3 Bookmark guard non-functional.** `pdfOptimizer.inspectPdf` derives `hasBookmarks` from a `pdfinfo` "Bookmarks:"/"Outline" line, but poppler `pdfinfo` (24.x here; Alpine build similar) does not emit one even when an outline exists (confirmed: `qpdf --json` shows `/Outlines` on the same file while `pdfinfo` shows no bookmark line). Result: the `HAS_BOOKMARKS` error never triggers, so bookmarked report PDFs are optimized and **lose their outline with no warning**, and the "Optimize anyway (drops bookmarks)" retry button is unreachable. Recommended fix: detect outlines via a reliable source (e.g. `qpdf --json` `outlines`, which is already a dependency) instead of `pdfinfo`.
-- **P3-4 Page tally under-counts.** `nativePages + scannedPages` was 4 for a 5-page PDF across every run — a page that is neither clearly native (text/fonts) nor clearly scanned (image-only) is left uncounted in the classify tally. Cosmetic (the merge sanity-check still enforces the true page count); the "X native · Y scanned" line can read low.
+- **P2-3 Bookmark guard non-functional — FIXED.** `pdfOptimizer` derived `hasBookmarks` from a `pdfinfo` "Bookmarks:"/"Outline" line, but poppler `pdfinfo` (24.x here; Alpine build similar) does not emit one even when an outline exists (confirmed: `qpdf --json` shows `/Outlines` on the same file while `pdfinfo` shows no bookmark line). The `HAS_BOOKMARKS` error never triggered, so bookmarked PDFs were optimized and lost their outline with no warning, and the "Optimize anyway (drops bookmarks)" retry was unreachable. **Fix:** detect the document outline via `qpdf --json=2 --json-key=outlines` (qpdf is already a pipeline dependency); a non-empty `outlines` array ⇒ bookmarks. Verified against the real pipeline: a bookmarked PDF now throws `HAS_BOOKMARKS` by default and optimizes only with `allowDropBookmarks:true`. Unit test updated to mock the qpdf outlines call.
+- **P3-4 Page tally under-counts (open).** `nativePages + scannedPages` was 4 for a 5-page PDF across every run — a page that is neither clearly native (text/fonts) nor clearly scanned (image-only) is left uncounted in the classify tally. Cosmetic (the merge sanity-check still enforces the true page count); the "X native · Y scanned" line can read low.
 
 ## Verification commands
 - Pipeline (real binaries): ran `optimizeReportPdf()` directly on each fixture/preset — see Scenario results.
