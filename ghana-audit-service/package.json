@@ -22,6 +22,8 @@
     "db:apply": "tsx server/database/migrate.ts",
     "db:studio": "drizzle-kit studio",
     "db:seed": "npx tsx --env-file=.env server/database/seed.ts",
+    "db:seed:all": "npx tsx server/database/seeds/all.ts",
+    "db:reset": "npx tsx server/database/seeds/reset.ts",
     "db:seed:departments": "npx tsx server/database/seeds/departments.ts",
     "db:seed:management-team": "npx tsx server/database/seeds/management-team.ts",
     "db:seed:news": "npx tsx server/database/seeds/news.ts",
