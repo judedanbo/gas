@@ -11,7 +11,13 @@ function getTransporter(): Transporter | null {
   const host = String(config.smtpHost || '')
   const user = String(config.smtpUser || '')
   const pass = String(config.smtpPass || '')
-  if (!host || !user || !pass) {
+  // `from` is part of "is email usable": with most providers (e.g. M365) the
+  // From must be an address the authenticated mailbox is allowed to send as,
+  // and there is no safe default — a wrong guess is rejected at submission
+  // (554 SendAsDenied) and surfaces as a 500. So treat a missing From the same
+  // as missing credentials: skip sending rather than send with a bad sender.
+  const from = String(config.smtpFrom || '')
+  if (!host || !user || !pass || !from) {
     return null
   }
 
@@ -51,8 +57,9 @@ export async function sendContactNotification(params: ContactEmailParams): Promi
     return
   }
 
+  // getTransporter() already guaranteed smtpFrom is set (it gates on it).
   const config = useRuntimeConfig()
-  const fromAddress = String(config.smtpFrom || 'noreply@audit.gov.gh')
+  const fromAddress = String(config.smtpFrom)
   const subjectLabel = subjectLabels[params.subject] || params.subject
 
   await mailer.sendMail({
@@ -86,8 +93,9 @@ export async function sendInvitationEmail(params: InvitationEmailParams): Promis
     return false
   }
 
+  // getTransporter() already guaranteed smtpFrom is set (it gates on it).
   const config = useRuntimeConfig()
-  const fromAddress = String(config.smtpFrom || 'noreply@audit.gov.gh')
+  const fromAddress = String(config.smtpFrom)
 
   await mailer.sendMail({
     from: `"Ghana Audit Service" <${fromAddress}>`,

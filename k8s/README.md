@@ -37,6 +37,20 @@ az acr create --name regisry --resource-group <RG> --sku Basic
 az aks update --name <CLUSTER> --resource-group <RG> --attach-acr regisry
 ```
 
+### 4. Reloader (optional — config auto-reload)
+
+The frontend Deployment carries the `reloader.stakater.com/auto: "true"`
+annotation so that a change to `gas-config` or `gas-secrets` automatically
+rolls the pods. Without the [Reloader](https://github.com/stakater/Reloader)
+controller installed, the annotation is a harmless no-op and you must
+`kubectl rollout restart deployment/gas-frontend -n gas` by hand after a
+config-only change (e.g. updating `NUXT_SMTP_FROM`). To enable auto-reload:
+
+```bash
+helm repo add stakater https://stakater.github.io/stakater-charts
+helm install reloader stakater/reloader --namespace kube-system
+```
+
 ## GitHub Secrets
 
 Configure these as **environment** secrets on the `production` environment

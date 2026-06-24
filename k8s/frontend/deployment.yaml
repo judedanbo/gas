@@ -6,6 +6,13 @@ metadata:
   labels:
     app.kubernetes.io/name: gas-frontend
     app.kubernetes.io/part-of: ghana-audit-service
+  annotations:
+    # Auto-restart this Deployment when gas-config / gas-secrets change. Without
+    # this, a config-only change (e.g. NUXT_SMTP_FROM) re-renders the Secret but
+    # leaves the pod template byte-identical, so pods keep stale env until a
+    # manual `kubectl rollout restart`. Requires the Reloader controller to be
+    # installed in the cluster (see k8s/README.md); a no-op otherwise.
+    reloader.stakater.com/auto: "true"
 spec:
   replicas: 1
   selector:

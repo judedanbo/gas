@@ -266,7 +266,10 @@ export default defineNuxtConfig({
     smtpPort: '587',
     smtpUser: '',
     smtpPass: '',
-    smtpFrom: 'noreply@audit.gov.gh',
+    // No default sender: an unconfigured From has no safe value (providers like
+    // M365 reject a From the auth mailbox can't send as). Set NUXT_SMTP_FROM to
+    // an authorized address; until then email is skipped (see server/utils/email.ts).
+    smtpFrom: '',
     // Public keys (exposed to client)
     public: {
       siteUrl: 'https://audit.gov.gh',
