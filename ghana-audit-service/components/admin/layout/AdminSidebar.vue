@@ -143,6 +143,12 @@
           :collapsed="isCollapsed"
         />
         <SidebarLink
+          to="/admin/board-members"
+          icon="user-group"
+          label="Board Members"
+          :collapsed="isCollapsed"
+        />
+        <SidebarLink
           to="/admin/departments"
           icon="office-building"
           label="Departments"

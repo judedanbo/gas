@@ -353,6 +353,20 @@ export const managementTeamSchema = z
     }
   )
 
+// Board Members (English only — flat name/title/bio, no translations)
+export const boardMemberSchema = z.object({
+  slug: slugSchema,
+  role: z.enum(['chairperson', 'member']),
+  name: z.string().min(1).max(255),
+  title: z.string().max(255).optional().nullable(),
+  bio: z.string().optional().nullable(),
+  photo: z.string().max(500).optional().nullable(),
+  email: z.string().email().max(255).optional().nullable().or(z.literal('')),
+  phone: z.string().max(50).optional().nullable(),
+  displayOrder: z.number().default(0),
+  isActive: z.boolean().default(true)
+})
+
 // Offices
 export const officeSchema = z.object({
   slug: slugSchema,
@@ -491,6 +505,7 @@ export type DepartmentInput = z.infer<typeof departmentSchema>
 export type TeamMemberInput = z.infer<typeof teamMemberSchema>
 export type PastAGInput = z.infer<typeof pastAGSchema>
 export type ManagementTeamInput = z.infer<typeof managementTeamSchema>
+export type BoardMemberInput = z.infer<typeof boardMemberSchema>
 export type OfficeInput = z.infer<typeof officeSchema>
 export type GalleryImageInput = z.infer<typeof galleryImageSchema>
 export type GalleryAlbumInput = z.infer<typeof galleryAlbumSchema>

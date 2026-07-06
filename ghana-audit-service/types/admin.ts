@@ -690,3 +690,35 @@ export interface ManagementTeamMemberInput {
     }>
   }>
 }
+
+export type BoardRole = 'chairperson' | 'member'
+
+export interface AdminBoardMember {
+  id: number
+  slug: string
+  role: BoardRole
+  name: string
+  title: string | null
+  bio: string | null
+  photo: string | null
+  email: string | null
+  phone: string | null
+  displayOrder: number
+  isActive: boolean
+  createdAt: string
+  updatedAt: string
+  deletedAt: string | null
+}
+
+export interface BoardMemberInput {
+  slug: string
+  role: BoardRole
+  name: string
+  title?: string | null
+  bio?: string | null
+  photo?: string | null
+  email?: string | null
+  phone?: string | null
+  displayOrder: number
+  isActive: boolean
+}
