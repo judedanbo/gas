@@ -144,7 +144,13 @@ export interface PastAuditorGeneral {
 export interface ManagementTeamMember {
   id: string
   slug: string
-  role: 'auditor-general' | 'deputy-auditor-general' | 'regional-auditor' | 'district-auditor' | 'sector-head' | 'branch-head'
+  role:
+    | 'auditor-general'
+    | 'deputy-auditor-general'
+    | 'regional-auditor'
+    | 'district-auditor'
+    | 'sector-head'
+    | 'branch-head'
   name: string
   title?: string
   bio?: string
@@ -159,6 +165,20 @@ export interface ManagementTeamMember {
   officeName?: string
   departmentId?: number
   departmentName?: string
+}
+
+export interface BoardMember {
+  id: string
+  slug: string
+  role: 'chairperson' | 'member'
+  name: string
+  title?: string
+  bio?: string
+  photo?: string
+  email?: string
+  phone?: string
+  order: number
+  isActive: boolean
 }
 
 // ============================================

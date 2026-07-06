@@ -337,6 +337,8 @@ export default defineNuxtConfig({
       '/contact': { isr: 3600 },
       '/about/management-team': { isr: 3600 },
       '/about/management-team/**': { isr: 3600 },
+      '/about/board-members': { isr: 3600 },
+      '/about/board-members/**': { isr: 3600 },
       // Akan locale variants (i18n prefix_except_default) — mirror the TTLs above.
       '/ak': { isr: 600 },
       '/ak/reports': { isr: 600 },
@@ -350,6 +352,8 @@ export default defineNuxtConfig({
       '/ak/contact': { isr: 3600 },
       '/ak/about/management-team': { isr: 3600 },
       '/ak/about/management-team/**': { isr: 3600 },
+      '/ak/about/board-members': { isr: 3600 },
+      '/ak/about/board-members/**': { isr: 3600 },
 
       // Exclude image optimization and download routes from prerendering —
       // the crawler discovers every srcset breakpoint, adding 90+ routes at
@@ -378,6 +382,8 @@ export default defineNuxtConfig({
       '/api/gallery/**': { cache: isDev ? false : { maxAge: 600, staleMaxAge: 1200 } },
       '/api/offices/**': { cache: isDev ? false : { maxAge: 3600, staleMaxAge: 7200 } },
       '/api/management-team/**': { cache: isDev ? false : { maxAge: 3600, staleMaxAge: 7200 } },
+      '/api/board-members': { cache: isDev ? false : { maxAge: 3600, staleMaxAge: 7200 } },
+      '/api/board-members/**': { cache: isDev ? false : { maxAge: 3600, staleMaxAge: 7200 } },
 
       // Admin routes - hidden from SEO, cached only in production
       '/admin/**': {

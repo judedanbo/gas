@@ -215,6 +215,11 @@
           icon: 'heroicons:user-group'
         },
         {
+          labelKey: 'nav.boardMembers',
+          href: '/about/board-members',
+          icon: 'heroicons:users'
+        },
+        {
           labelKey: 'nav.departmentalProfile',
           href: '/about/departmental-profile',
           icon: 'heroicons:building-office'

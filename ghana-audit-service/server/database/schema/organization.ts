@@ -307,6 +307,38 @@ export const managementTeamResponsibilityTranslations = mysqlTable(
   ]
 )
 
+/**
+ * Board members table - Members of the governing board (English only, no translations)
+ */
+export const boardMembers = mysqlTable(
+  'board_members',
+  {
+    id: int('id').primaryKey().autoincrement(),
+    slug: varchar('slug', { length: 255 }).notNull().unique(),
+    role: mysqlEnum('role', ['chairperson', 'member']).notNull(),
+    name: varchar('name', { length: 255 }).notNull(),
+    title: varchar('title', { length: 255 }),
+    bio: text('bio'),
+    photo: varchar('photo', { length: 500 }),
+    email: varchar('email', { length: 255 }),
+    phone: varchar('phone', { length: 50 }),
+    displayOrder: int('display_order').notNull().default(0),
+    isActive: boolean('is_active').notNull().default(true),
+    createdAt: datetime('created_at')
+      .notNull()
+      .default(sql`(CURRENT_TIMESTAMP)`),
+    updatedAt: datetime('updated_at')
+      .notNull()
+      .default(sql`CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP`),
+    deletedAt: datetime('deleted_at')
+  },
+  (table) => [
+    index('idx_board_members_slug').on(table.slug),
+    index('idx_board_members_role').on(table.role),
+    index('idx_board_members_active').on(table.isActive)
+  ]
+)
+
 // Type exports
 export type Department = typeof departments.$inferSelect
 export type NewDepartment = typeof departments.$inferInsert
@@ -330,3 +362,5 @@ export type ManagementTeamTranslation = typeof managementTeamTranslations.$infer
 export type NewManagementTeamTranslation = typeof managementTeamTranslations.$inferInsert
 export type ManagementTeamResponsibility = typeof managementTeamResponsibilities.$inferSelect
 export type NewManagementTeamResponsibility = typeof managementTeamResponsibilities.$inferInsert
+export type BoardMember = typeof boardMembers.$inferSelect
+export type NewBoardMember = typeof boardMembers.$inferInsert

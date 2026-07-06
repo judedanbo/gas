@@ -32,6 +32,7 @@ export const PATH_MODULE_MAP: Record<string, ModuleKey> = {
   vacancies: 'careers',
   tenders: 'careers',
   'management-team': 'organization',
+  'board-members': 'organization',
   departments: 'organization',
   'team-members': 'organization',
   offices: 'organization',
