@@ -70,7 +70,16 @@
       "staff": "Staff Members",
       "regions": "Regions",
       "districts": "Districts"
+    },
+    "liveBanner": {
+      "label": "We're live",
+      "watchNow": "Watch now"
     }
+  },
+  "videos": {
+    "liveBadge": "LIVE",
+    "liveNowA11y": "This event is live now",
+    "streamingNow": "Streaming now"
   },
   "slideshow": {
     "ariaLabel": "Featured content slideshow",

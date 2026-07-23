@@ -148,6 +148,10 @@ jobs:
           NUXT_SMTP_USER: ${{ secrets.NUXT_SMTP_USER }}
           NUXT_SMTP_PASS: ${{ secrets.NUXT_SMTP_PASS }}
           NUXT_SMTP_FROM: ${{ secrets.NUXT_SMTP_FROM }}
+          # YouTube Data API v3 key for live-broadcast detection. If unset,
+          # envsubst renders empty -> /api/live-events falls back to the
+          # keyless channel /live probe. See k8s/config/secrets.yaml.
+          YOUTUBE_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}
         run: |
           envsubst < k8s/config/secrets.yaml | kubectl apply -f -
 

@@ -32,16 +32,18 @@
             v-if="allVideos.length === 0"
             class="text-center py-16 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700"
           >
-            <Icon name="heroicons:video-camera" class="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-4" aria-hidden="true" />
+            <Icon
+              name="heroicons:video-camera"
+              class="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-4"
+              aria-hidden="true"
+            />
             <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">
               No videos available yet
             </h3>
             <p class="text-gray-600 dark:text-gray-400 max-w-md mx-auto mb-6">
               Video content, documentaries, and event recordings will appear here. Check back soon.
             </p>
-            <NuxtLink to="/media" class="btn-outline btn-sm">
-              Back to Media Centre
-            </NuxtLink>
+            <NuxtLink to="/media" class="btn-outline btn-sm"> Back to Media Centre </NuxtLink>
           </div>
 
           <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -71,7 +73,9 @@
           class="btn-primary inline-flex items-center gap-2"
         >
           <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-            <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z" />
+            <path
+              d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"
+            />
           </svg>
           Visit YouTube Channel
         </a>
@@ -126,20 +130,20 @@
 
 <script setup lang="ts">
   import type { Video } from '~/types'
+  import { applyLiveStatus, extractVideoId } from '~/utils/liveVideos'
 
   useSeoMeta({
     title: 'Videos | Ghana Audit Service',
     description: 'Video content, documentaries, and recordings from the Ghana Audit Service.'
   })
 
-  const allVideos = ref<Video[]>([])
+  const { liveEvents } = useLiveEvents()
+
+  const baseVideos = ref<Video[]>([])
   const loading = ref(true)
   const selectedVideo = ref<Video | null>(null)
 
-  function extractVideoId(url: string): string {
-    const match = url.match(/(?:embed\/|watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/)
-    return match ? match[1] : url
-  }
+  const allVideos = computed(() => applyLiveStatus(baseVideos.value, liveEvents.value))
 
   onMounted(async () => {
     try {
@@ -155,11 +159,28 @@
       const merged = [...seeded, ...uniqueYoutube]
       merged.sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime())
 
-      allVideos.value = merged
+      baseVideos.value = merged
     } catch {
       // fetch failed — page shows empty state
     } finally {
       loading.value = false
+    }
+  })
+
+  // ?play={videoId} deep link (e.g. from the home page live banner): open the
+  // player once the matching video shows up — it may arrive late as a
+  // synthetic live card, hence the watcher instead of a one-shot lookup.
+  const route = useRoute()
+  const deepLinkHandled = ref(false)
+
+  watch(allVideos, (videos) => {
+    if (deepLinkHandled.value) return
+    const play = route.query.play
+    if (typeof play !== 'string' || !play) return
+    const match = videos.find((v) => extractVideoId(v.url) === play)
+    if (match) {
+      deepLinkHandled.value = true
+      openVideoPlayer(match)
     }
   })
 

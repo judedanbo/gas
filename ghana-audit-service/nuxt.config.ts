@@ -378,6 +378,10 @@ export default defineNuxtConfig({
       '/api/publications/**': { cache: isDev ? false : { maxAge: 300, staleMaxAge: 600 } },
       '/api/events/**': { cache: isDev ? false : { maxAge: 300, staleMaxAge: 600 } },
       '/api/slideshow': { cache: isDev ? false : { maxAge: 300, staleMaxAge: 600 } },
+      // Live-broadcast status must feel current — keep this TTL short (the
+      // handler has its own 60s in-process cache on top; see
+      // server/utils/liveEvents.ts for the quota math).
+      '/api/live-events': { cache: isDev ? false : { maxAge: 60, staleMaxAge: 120 } },
       '/api/team/**': { cache: isDev ? false : { maxAge: 3600, staleMaxAge: 7200 } },
       '/api/gallery/**': { cache: isDev ? false : { maxAge: 600, staleMaxAge: 1200 } },
       '/api/offices/**': { cache: isDev ? false : { maxAge: 3600, staleMaxAge: 7200 } },

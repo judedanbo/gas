@@ -1,6 +1,6 @@
 # Live Events Feature Plan
 
-**Status:** Proposed — not yet implemented
+**Status:** Implemented (see §9 for the change list; e2e specs deferred, Akan copy pending content-team review)
 **Scope:** Surface YouTube live broadcasts from the Ghana Audit Service channel as "LIVE" on the `/media/videos` page, and show a site-wide indicator on the home page linking to the live event.
 
 ---
