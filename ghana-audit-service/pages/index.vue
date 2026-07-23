@@ -1,5 +1,8 @@
 <template>
   <div>
+    <!-- Live Event Banner (renders nothing unless a broadcast is live) -->
+    <HomeLiveEventBanner :events="liveEvents" />
+
     <!-- Hero Slideshow -->
     <HomeHeroSlideshow />
 
@@ -41,7 +44,9 @@
     <section class="section bg-gradient-to-br from-primary to-primary-dark">
       <div class="container">
         <div class="text-center max-w-[600px] mx-auto">
-          <h3 class="text-2xl md:text-3xl font-heading font-bold text-white mb-4">CitizensEye App</h3>
+          <h3 class="text-2xl md:text-3xl font-heading font-bold text-white mb-4">
+            CitizensEye App
+          </h3>
           <p class="text-white/90 text-lg mb-6">
             Report concerns and engage with the Ghana Audit Service through our citizen engagement
             platform.
@@ -61,6 +66,10 @@
 </template>
 
 <script setup lang="ts">
+  // Live YouTube broadcast status — fetched client-side (the page is ISR
+  // cached, so SSR output must not bake in a stale live state).
+  const { liveEvents } = useLiveEvents()
+
   // Schema.org structured data
   const { getOrganizationSchema, getWebSiteSchema } = useSchemaOrg()
 

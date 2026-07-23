@@ -319,6 +319,22 @@ export interface Video {
   thumbnail?: string
   duration?: string
   publishedAt: string
+  isLive?: boolean
+}
+
+export interface LiveEvent {
+  videoId: string
+  title: string
+  thumbnail?: string
+  url: string
+  watchUrl: string
+  startedAt?: string
+}
+
+export interface LiveEventStatus {
+  isLive: boolean
+  events: LiveEvent[]
+  checkedAt: string
 }
 
 // ============================================

@@ -70,7 +70,16 @@
       "staff": "Adwumayɛfoɔ",
       "regions": "Aman Nkuro",
       "districts": "Mman"
+    },
+    "liveBanner": {
+      "label": "Yɛwɔ so seesei",
+      "watchNow": "Hwɛ seesei"
     }
+  },
+  "videos": {
+    "liveBadge": "LIVE",
+    "liveNowA11y": "Dwumadi yi rekɔ so seesei ara",
+    "streamingNow": "Ɛrekɔ so seesei"
   },
   "slideshow": {
     "ariaLabel": "Nsɛm titiriw a ɛwɔ hɔ",
