@@ -25,7 +25,8 @@ describe('materializePdfSource', () => {
     vi.clearAllMocks()
   })
 
-  it('prefers the on-disk asset and returns a no-op cleanup', async () => {
+  it('falls back to the on-disk asset when Blob misses and returns a no-op cleanup', async () => {
+    vi.mocked(tryBlobSource).mockResolvedValue(null)
     vi.mocked(resolvePublicAsset).mockReturnValue('/abs/public/pdf/reports/x.pdf')
 
     const source = await materializePdfSource('/pdf/reports/x.pdf')
@@ -34,7 +35,24 @@ describe('materializePdfSource', () => {
     expect(source!.path).toBe('/abs/public/pdf/reports/x.pdf')
     expect(source!.blobKey).toBeNull()
     await expect(source!.cleanup()).resolves.toBeUndefined()
-    expect(vi.mocked(tryBlobSource)).not.toHaveBeenCalled()
+  })
+
+  it('prefers Blob over disk when the file exists in both backends', async () => {
+    // Same precedence as /api/downloads/** — if these diverge, the optimizer
+    // mutates the disk copy while downloads keep serving the stale blob.
+    vi.mocked(resolvePublicAsset).mockReturnValue('/abs/public/pdf/reports/both.pdf')
+    vi.mocked(tryBlobSource).mockResolvedValue({
+      stream: Readable.from(Buffer.from('blob copy')),
+      contentLength: 9,
+      contentType: 'application/pdf'
+    })
+
+    const source = await materializePdfSource('/pdf/reports/both.pdf')
+
+    expect(source).not.toBeNull()
+    expect(source!.blobKey).toBe('pdf/reports/both.pdf')
+    expect(source!.path).not.toBe('/abs/public/pdf/reports/both.pdf')
+    await source!.cleanup()
   })
 
   it('streams the blob to a temp file when not on disk, and cleanup removes it', async () => {

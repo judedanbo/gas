@@ -20,28 +20,30 @@ export interface LocalPdfSource {
  * Resolve a stored fileUrl (e.g. `/pdf/reports/x.pdf`) to a local, readable
  * PDF path for tools that need a filesystem file (pdftoppm, Ghostscript).
  *
- * Tries the on-disk public asset first (dev/legacy layout), then Azure Blob
- * (backend: 'blob' uploads), streaming the blob to a temp file — the same
- * resolution order as the /api/downloads/** endpoints. Returns null when the
- * file exists in neither backend. Callers must await cleanup() when done.
+ * Tries Azure Blob first (backend: 'blob' uploads), streaming the blob to a
+ * temp file, then falls back to the on-disk public asset (dev/legacy layout) —
+ * the same resolution order as the /api/downloads/** endpoints. Keeping the
+ * orders identical matters: if a file exists in both backends, a consumer that
+ * mutates the disk copy while downloads serve the blob would silently diverge.
+ * Returns null when the file exists in neither backend. Callers must await
+ * cleanup() when done.
  */
 export async function materializePdfSource(fileUrl: string): Promise<LocalPdfSource | null> {
-  const diskPath = resolvePublicAsset(fileUrl)
-  if (diskPath) {
-    return { path: diskPath, blobKey: null, cleanup: async () => {} }
-  }
-
   const blob = await tryBlobSource(fileUrl)
-  if (!blob) return null
-
-  const tempPath = join(tmpdir(), `gas-pdf-src-${randomUUID()}.pdf`)
-  await pipeline(blob.stream, createWriteStream(tempPath))
-
-  return {
-    path: tempPath,
-    blobKey: blobKeyFromFileUrl(fileUrl),
-    cleanup: async () => {
-      await unlink(tempPath).catch(() => {})
+  if (blob) {
+    const tempPath = join(tmpdir(), `gas-pdf-src-${randomUUID()}.pdf`)
+    await pipeline(blob.stream, createWriteStream(tempPath))
+    return {
+      path: tempPath,
+      blobKey: blobKeyFromFileUrl(fileUrl),
+      cleanup: async () => {
+        await unlink(tempPath).catch(() => {})
+      }
     }
   }
+
+  const diskPath = resolvePublicAsset(fileUrl)
+  if (!diskPath) return null
+
+  return { path: diskPath, blobKey: null, cleanup: async () => {} }
 }

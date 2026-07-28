@@ -66,16 +66,17 @@ async function runOptimizeRoute(body: {
   if (!body.fileUrl.startsWith('/pdf/reports/')) {
     throw { statusCode: 400, statusMessage: 'Invalid file path' }
   }
-  let pdfPath = resolvePublicAsset(body.fileUrl)
+  // Blob-first, disk fallback — same order as materializePdfSource.
+  let pdfPath: string | null = null
   let blobKey: string | null = null
-  if (!pdfPath) {
-    const blob = await tryBlobSource(body.fileUrl)
-    if (blob) {
-      blobKey = blobKeyFromFileUrl(body.fileUrl)
-      // The real route streams the blob to a tmpdir file here; the mirror
-      // skips filesystem work and just carries the temp-path/blobKey state.
-      pdfPath = `/tmp/gas-optimize-test.pdf`
-    }
+  const blob = await tryBlobSource(body.fileUrl)
+  if (blob) {
+    blobKey = blobKeyFromFileUrl(body.fileUrl)
+    // The real route streams the blob to a tmpdir file here; the mirror
+    // skips filesystem work and just carries the temp-path/blobKey state.
+    pdfPath = `/tmp/gas-optimize-test.pdf`
+  } else {
+    pdfPath = resolvePublicAsset(body.fileUrl)
   }
   if (!pdfPath) {
     throw { statusCode: 422, statusMessage: 'PDF file not found in storage' }
@@ -204,6 +205,7 @@ describe('POST /api/admin/reports/optimize', () => {
   })
 
   it('starts an optimization job and threads progress events through the store', async () => {
+    vi.mocked(tryBlobSource).mockResolvedValue(null)
     vi.mocked(resolvePublicAsset).mockReturnValue('/abs/pdf/reports/test.pdf')
     vi.mocked(optimizeReportPdf).mockImplementation(
       async (_path: string, opts: OptimizeOptions = {}) => {
@@ -260,6 +262,7 @@ describe('POST /api/admin/reports/optimize', () => {
   })
 
   it('marks the job as errored when the optimizer rejects', async () => {
+    vi.mocked(tryBlobSource).mockResolvedValue(null)
     vi.mocked(resolvePublicAsset).mockReturnValue('/abs/pdf/reports/test.pdf')
     vi.mocked(optimizeReportPdf).mockRejectedValue(new Error('boom'))
 

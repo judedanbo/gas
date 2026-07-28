@@ -10,6 +10,7 @@ import {
 } from '../../../utils/adminHelpers'
 import { logAuditAction, sanitizeForAudit } from '../../../utils/auditLogger'
 import { publicationSchema, validateBody, createValidationError } from '../../../utils/validation'
+import { fileSizeToBytes } from '../../../utils/fileSize'
 import { safeError } from '../../../utils/errors'
 
 export default defineEventHandler(async (event) => {
@@ -90,6 +91,7 @@ async function handleList(event: H3Event) {
 
   const data = publications.map((pub) => ({
     ...pub,
+    fileSize: fileSizeToBytes(pub.fileSize),
     translations: translationsByPub[pub.id] || {}
   }))
 
@@ -179,6 +181,7 @@ async function handleCreate(event: H3Event) {
 
     return {
       ...publication,
+      fileSize: fileSizeToBytes(publication.fileSize),
       translations: translationsMap
     }
   } catch (error) {
