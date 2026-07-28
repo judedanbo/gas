@@ -44,13 +44,12 @@ async function handleList(event: H3Event) {
   if (query.includeDeleted !== 'true') conditions.push(isNull(schema.galleryAlbums.deletedAt))
 
   // Apply search via translations subquery
-  let albumIdsFromSearch: number[] | null = null
   if (search) {
     const rows = await db
       .select({ albumId: schema.galleryAlbumTranslations.albumId })
       .from(schema.galleryAlbumTranslations)
       .where(like(schema.galleryAlbumTranslations.title, `%${search}%`))
-    albumIdsFromSearch = Array.from(new Set(rows.map((r) => r.albumId)))
+    const albumIdsFromSearch = Array.from(new Set(rows.map((r) => r.albumId)))
     if (albumIdsFromSearch.length === 0) {
       // No matches - short-circuit but still return empty meta
       return {
