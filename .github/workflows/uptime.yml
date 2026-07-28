@@ -14,6 +14,10 @@
 #     issue notifications — zero extra configuration.
 #   * Optionally, the same down/recovered transitions post to Slack and/or
 #     send email directly, when the UPTIME_* secrets are configured.
+#   * Every probe result is appended to the `uptime-history` branch by the
+#     record job, which regenerates a status page (README.md), status.json,
+#     and Shields badge JSON there — uptime % over 24h/7d/30d/90d, latency,
+#     and an incident log. See scripts/uptime/update-history.py.
 #
 # NOTE: scheduled workflows only run from the default branch, so monitoring
 # activates once this file lands on main.
@@ -70,10 +74,13 @@ jobs:
           # Homepage is the primary up/down signal: 3 attempts, 15s timeout,
           # 10s between attempts, so a single blip doesn't page anyone.
           home_code=000
+          home_time=0
           for attempt in 1 2 3; do
-            # NB: don't `|| echo 000` here — curl's -w prints 000 itself on
-            # connection failure, and a fallback echo would double it up.
-            home_code=$(curl -sS -o /dev/null -w '%{http_code}' --max-time 15 -L "$SITE_URL/") || home_code=000
+            # NB: don't `|| echo` a fallback here — curl's -w prints 000 itself
+            # on connection failure, and a fallback echo would double it up.
+            out=$(curl -sS -o /dev/null -w '%{http_code} %{time_total}' --max-time 15 -L "$SITE_URL/") || out='000 0'
+            home_code=${out%% *}
+            home_time=${out##* }
             if [ "$home_code" -ge 200 ] && [ "$home_code" -lt 400 ]; then
               break
             fi
@@ -88,23 +95,44 @@ jobs:
           # Deep check: /api/health verifies the database behind the site.
           # 404 = endpoint not deployed on this environment (e.g. the legacy
           # production site) — fall back to the homepage signal alone.
+          # health_status feeds the history record (see scripts/uptime/).
           health_note='skipped (homepage already down)'
+          health_status='skipped'
           if [ "$up" = true ]; then
             health_body=$(mktemp)
             health_code=$(curl -sS -o "$health_body" -w '%{http_code}' --max-time 20 "$SITE_URL/api/health") || health_code=000
             if [ "$health_code" = "404" ]; then
               health_note='not deployed (404); homepage check only'
+              health_status='not_deployed'
             elif [ "$health_code" = "200" ]; then
               health_note="HTTP 200: $(head -c 300 "$health_body")"
+              health_status=$(jq -r '.status // "unknown"' "$health_body" 2>/dev/null || echo unknown)
             else
               up=false
               reason="/api/health returned HTTP $health_code: $(head -c 300 "$health_body" | tr -d '\n')"
               health_note="HTTP $health_code"
+              health_status='error'
             fi
           fi
 
           echo "up=$up" >> "$GITHUB_OUTPUT"
           echo "reason=$reason" >> "$GITHUB_OUTPUT"
+
+          # Probe record for the uptime-history branch (see the record job).
+          # Homepage latency only counts a successful final attempt.
+          latency_ms=$(awk -v t="$home_time" 'BEGIN { printf "%d", t * 1000 }')
+          [ "$up" = true ] || latency_ms=0
+          jq -n \
+            --arg env "$SITE_ENV" \
+            --arg url "$SITE_URL" \
+            --arg ts "$(date -u +'%Y-%m-%dT%H:%M:%SZ')" \
+            --argjson up "$up" \
+            --argjson code "$((10#$home_code))" \
+            --argjson latency "$latency_ms" \
+            --arg health "$health_status" \
+            --arg reason "$reason" \
+            '{env: $env, url: $url, ts: $ts, up: $up, http_code: $code, latency_ms: $latency, health: $health, reason: $reason}' \
+            > "result-${SITE_ENV}.json"
 
           {
             echo "### ${SITE_ENV} — ${SITE_URL}"
@@ -114,6 +142,15 @@ jobs:
               echo "🔴 DOWN — $reason"
             fi
           } >> "$GITHUB_STEP_SUMMARY"
+
+      # Hand the probe record to the `record` job. Runs before the
+      # mark-failed step so downtime is recorded too.
+      - name: Upload result for history
+        uses: actions/upload-artifact@v7
+        with:
+          name: uptime-result-${{ matrix.environment }}
+          path: result-${{ matrix.environment }}.json
+          retention-days: 3
 
       - name: Open or close incident issue
         id: incident
@@ -219,3 +256,76 @@ jobs:
         run: |
           echo "::error::${SITE_ENV} site is down — ${REASON}"
           exit 1
+
+  # Persist every probe result on the `uptime-history` branch and regenerate
+  # the status page there (uptime % over 24h/7d/30d/90d, latency, incident
+  # log). Runs after both environment checks — `if: always()` because down
+  # checks fail their job and MUST still be recorded. Push races between
+  # scheduled runs are prevented by the workflow-level concurrency group.
+  record:
+    name: Record uptime history
+    needs: check
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Download probe results
+        uses: actions/download-artifact@v8
+        with:
+          pattern: uptime-result-*
+          merge-multiple: true
+          path: results
+
+      - name: Append history and regenerate status page
+        run: |
+          set -euo pipefail
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          # Bootstrap the history branch from an empty tree on first run, so
+          # it shares no history with main and carries only uptime data.
+          if ! git fetch origin uptime-history 2>/dev/null; then
+            init_commit=$(git commit-tree "$(git hash-object -t tree /dev/null)" \
+              -m "chore: initialise uptime history branch")
+            git push origin "$init_commit:refs/heads/uptime-history"
+            git fetch origin uptime-history
+          fi
+
+          history_dir="$RUNNER_TEMP/uptime-history"
+          git worktree add --detach "$history_dir" origin/uptime-history
+
+          python3 scripts/uptime/update-history.py results "$history_dir"
+
+          cd "$history_dir"
+          git add -A
+          if git diff --cached --quiet; then
+            echo "No new results to record."
+            exit 0
+          fi
+          git commit -m "uptime: record $(date -u +'%Y-%m-%dT%H:%MZ')"
+          git push origin HEAD:uptime-history
+
+      - name: Add status to run summary
+        run: |
+          status="$RUNNER_TEMP/uptime-history/status.json"
+          if [ -f "$status" ]; then
+            {
+              echo '### Uptime (rolling)'
+              jq -r '
+                .environments | to_entries[] |
+                "- **\(.key)**: \(if .value.current_up then "🟢 up" else "🔴 down" end)" +
+                " — 24h \(.value.windows["24h"].uptime_pct // "–")%," +
+                " 7d \(.value.windows["7d"].uptime_pct // "–")%," +
+                " 30d \(.value.windows["30d"].uptime_pct // "–")%," +
+                " 90d \(.value.windows["90d"].uptime_pct // "–")%"
+              ' "$status"
+              echo
+              echo 'Full history: [`uptime-history` branch](https://github.com/${{ github.repository }}/blob/uptime-history/README.md)'
+            } >> "$GITHUB_STEP_SUMMARY"
+          fi

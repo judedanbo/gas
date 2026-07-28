@@ -52,6 +52,9 @@ surfaces as `down` instead of hanging the probe.
   verifies the database behind the site. A 404 from `/api/health` means the
   endpoint isn't deployed on that environment yet (e.g. the legacy production
   site) and the deep check is skipped.
+- After both checks, a **record job** appends each probe result to the
+  `uptime-history` branch and regenerates the status page there (see
+  [Uptime history](#uptime-history--status-page) below).
 - Scheduled workflows only run from the **default branch** — monitoring goes
   live once the workflow lands on `main`.
 
@@ -93,6 +96,46 @@ scope is not readable by the scheduled monitor):
 
 Unset secrets simply disable that channel — the issue-based alerting always
 works.
+
+## Uptime history & status page
+
+Every probe result is persisted, so uptime can be tracked over time. Storage
+is the **`uptime-history` branch** — an orphan branch holding only monitoring
+data, kept out of `main`'s history. It is bootstrapped automatically on the
+monitor's first run; nothing needs to be created by hand.
+
+| Artifact (on `uptime-history`) | What it is                                                                                                                                 |
+| ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| `README.md`                    | **Status page**: per environment — current state, uptime % over 24h/7d/30d/90d, average latency, and the last 10 incidents with durations. |
+| `data/<env>/<YYYY-MM>.jsonl`   | Raw probe records (one JSON line each: timestamp, up/down, HTTP code, latency ms, health status, failure reason), rotated monthly.         |
+| `status.json`                  | The same rolling stats, machine-readable.                                                                                                  |
+| `badge/<env>.json`             | [Shields.io endpoint](https://shields.io/badges/endpoint) badge JSON (30-day uptime, red when down).                                       |
+
+View the status page at
+`https://github.com/judedanbo/gas/blob/uptime-history/README.md`. Each monitor
+run also prints the rolling uptime summary in its run summary.
+
+Embed live badges anywhere with:
+
+```markdown
+![test uptime](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/judedanbo/gas/uptime-history/badge/test.json)
+![production uptime](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/judedanbo/gas/uptime-history/badge/production.json)
+```
+
+Mechanics (all in `scripts/uptime/update-history.py`, stdlib-only Python run
+by the workflow's `record` job):
+
+- Uptime % = successful checks ÷ total checks in the window, from actual
+  recorded probes — delayed or skipped scheduled runs therefore don't skew
+  the percentage.
+- **Incidents** are derived by grouping consecutive failed checks; an
+  unresolved streak renders as **ongoing**.
+- Records are **deduplicated** by (environment, timestamp), so re-running a
+  workflow's record job never double-counts.
+- A year of data is only a few MB per environment; raw records are kept
+  indefinitely. Stats windows read at most the last ~4 monthly files.
+- Concurrent pushes can't race: the workflow-level concurrency group ensures
+  only one monitor run executes at a time.
 
 ### Adding / changing monitored environments
 

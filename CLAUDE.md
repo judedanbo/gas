@@ -100,7 +100,7 @@ A server-side analytics subsystem captures per-request telemetry, rolls up route
 
 Production deploys to AKS via GitHub Actions (`.github/workflows/deploy.yml`). Pushing to `main` triggers: CI quality gate → build + push images to ACR → apply K8s manifests (MySQL → Redis → migration Job → frontend). Docker Compose remains available for local development. See `k8s/README.md` for cluster prerequisites and manual deploy runbook.
 
-Uptime monitoring: `.github/workflows/uptime.yml` probes both public URLs (test + production) every ~5 minutes against `/` and `GET /api/health` (DB/Redis health; 503 when the DB is down), opening/closing a GitHub incident issue per environment and optionally alerting via Slack/SMTP (`UPTIME_*` repo secrets). See `MONITORING.md`.
+Uptime monitoring: `.github/workflows/uptime.yml` probes both public URLs (test + production) every ~5 minutes against `/` and `GET /api/health` (DB/Redis health; 503 when the DB is down), opening/closing a GitHub incident issue per environment and optionally alerting via Slack/SMTP (`UPTIME_*` repo secrets). Every probe is appended to the orphan `uptime-history` branch, where `scripts/uptime/update-history.py` regenerates a status page (uptime % over 24h/7d/30d/90d, latency, incident log), `status.json`, and Shields badge JSON. See `MONITORING.md`.
 
 ### Dependency management
 
