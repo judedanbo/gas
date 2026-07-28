@@ -8,7 +8,10 @@ metadata:
     app.kubernetes.io/part-of: ghana-audit-service
   annotations:
     cert-manager.io/cluster-issuer: infosys-issuer
-    # nginx.ingress.kubernetes.io/proxy-body-size: "10m"
+    # Must cover the largest app-side upload limit (report PDFs: 100MB in
+    # server/utils/fileUpload.ts) plus multipart overhead, so oversize files
+    # get the app's friendly validation error instead of a raw nginx 413.
+    nginx.ingress.kubernetes.io/proxy-body-size: "105m"
     # nginx.ingress.kubernetes.io/proxy-read-timeout: "60"
     # nginx.ingress.kubernetes.io/ssl-redirect: "true"
 spec:
