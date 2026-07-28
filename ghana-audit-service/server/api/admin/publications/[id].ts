@@ -4,6 +4,7 @@ import { getDatabase, schema } from '../../../database'
 import { requirePermission, getCurrentUser, isAdmin } from '../../../utils/adminHelpers'
 import { logAuditAction, createChangesObject, sanitizeForAudit } from '../../../utils/auditLogger'
 import { publicationSchema, validateBody, createValidationError } from '../../../utils/validation'
+import { fileSizeToBytes } from '../../../utils/fileSize'
 import { safeError } from '../../../utils/errors'
 
 export default defineEventHandler(async (event) => {
@@ -55,7 +56,11 @@ async function handleGet(event: H3Event, id: number) {
     {} as Record<string, { title: string; excerpt: string | null; content: string | null }>
   )
 
-  return { ...publication, translations: translationsMap }
+  return {
+    ...publication,
+    fileSize: fileSizeToBytes(publication.fileSize),
+    translations: translationsMap
+  }
 }
 
 async function handleUpdate(event: H3Event, id: number) {
@@ -176,7 +181,11 @@ async function handleUpdate(event: H3Event, id: number) {
     )
     await logAuditAction(event, 'update', 'publication', id, changes)
 
-    return { ...updated, translations: translationsMap }
+    return {
+      ...updated,
+      fileSize: fileSizeToBytes(updated.fileSize),
+      translations: translationsMap
+    }
   } catch (error) {
     await connection.rollback()
     throw safeError('admin:publications', error)

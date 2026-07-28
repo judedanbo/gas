@@ -4,6 +4,7 @@ import { getDatabase, schema } from '../../../database'
 import { requirePermission, getCurrentUser } from '../../../utils/adminHelpers'
 import { logAuditAction, createChangesObject, sanitizeForAudit } from '../../../utils/auditLogger'
 import { contactSubmissionUpdateSchema, validateBody } from '../../../utils/validation'
+import { contactSubmissionColumns } from '../../../utils/dtoColumns'
 
 export default defineEventHandler(async (event) => {
   const method = event.method
@@ -22,7 +23,7 @@ async function handleGet(event: H3Event, id: number) {
   const db = getDatabase()
 
   const [submission] = await db
-    .select()
+    .select(contactSubmissionColumns)
     .from(schema.contactSubmissions)
     .where(eq(schema.contactSubmissions.id, id))
     .limit(1)
@@ -46,7 +47,7 @@ async function handleUpdate(event: H3Event, id: number) {
   const db = getDatabase()
 
   const [existing] = await db
-    .select()
+    .select(contactSubmissionColumns)
     .from(schema.contactSubmissions)
     .where(eq(schema.contactSubmissions.id, id))
     .limit(1)
@@ -75,7 +76,7 @@ async function handleUpdate(event: H3Event, id: number) {
     .where(eq(schema.contactSubmissions.id, id))
 
   const [updated] = await db
-    .select()
+    .select(contactSubmissionColumns)
     .from(schema.contactSubmissions)
     .where(eq(schema.contactSubmissions.id, id))
     .limit(1)

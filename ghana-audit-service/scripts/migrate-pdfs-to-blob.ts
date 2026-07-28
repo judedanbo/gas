@@ -12,6 +12,11 @@
  * sourceDir defaults to "public/pdf". Blob keys are derived from the path
  * relative to "public/" (e.g. public/pdf/reports/x.pdf -> pdf/reports/x.pdf),
  * matching the keys the download endpoints derive from the stored fileUrl.
+ *
+ * Publication PDFs (uploaded to public/uploads/publications before the
+ * publication upload config moved to backend: 'blob') migrate the same way:
+ *   npx tsx --env-file=.env scripts/migrate-pdfs-to-blob.ts public/uploads
+ * (keys become uploads/publications/x.pdf, matching their stored fileUrl).
  */
 import { readdir, readFile, stat } from 'node:fs/promises'
 import { join, relative, sep } from 'node:path'

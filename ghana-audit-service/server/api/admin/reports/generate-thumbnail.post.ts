@@ -1,5 +1,5 @@
 import { requirePermission } from '../../../utils/adminHelpers'
-import { resolvePublicAsset } from '../../../utils/publicFiles'
+import { materializePdfSource } from '../../../utils/pdfSource'
 import { generateThumbnailFromPdf } from '../../../utils/generateThumbnail'
 
 export default defineEventHandler(async (event) => {
@@ -16,18 +16,22 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 400, statusMessage: 'Invalid file path' })
   }
 
-  const pdfPath = resolvePublicAsset(fileUrl)
-  if (!pdfPath) {
-    throw createError({ statusCode: 422, statusMessage: 'PDF file not found' })
+  const source = await materializePdfSource(fileUrl)
+  if (!source) {
+    throw createError({ statusCode: 422, statusMessage: 'PDF file not found in storage' })
   }
 
-  const thumbnailUrl = generateThumbnailFromPdf(pdfPath)
-  if (!thumbnailUrl) {
-    throw createError({
-      statusCode: 422,
-      statusMessage: 'Thumbnail generation failed — pdftoppm may not be available'
-    })
-  }
+  try {
+    const thumbnailUrl = await generateThumbnailFromPdf(source.path)
+    if (!thumbnailUrl) {
+      throw createError({
+        statusCode: 422,
+        statusMessage: 'Thumbnail generation failed — pdftoppm may not be available'
+      })
+    }
 
-  return { success: true, thumbnailUrl }
+    return { success: true, thumbnailUrl }
+  } finally {
+    await source.cleanup()
+  }
 })

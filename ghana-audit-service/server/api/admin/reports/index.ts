@@ -10,7 +10,8 @@ import {
 } from '../../../utils/adminHelpers'
 import { logAuditAction, sanitizeForAudit } from '../../../utils/auditLogger'
 import { auditReportSchema, validateBody, createValidationError } from '../../../utils/validation'
-import { resolvePublicAsset } from '../../../utils/publicFiles'
+import { fileSizeToBytes } from '../../../utils/fileSize'
+import { materializePdfSource } from '../../../utils/pdfSource'
 import { generateThumbnailFromPdf } from '../../../utils/generateThumbnail'
 import { safeError } from '../../../utils/errors'
 
@@ -179,6 +180,7 @@ async function handleList(event: H3Event) {
   // Combine reports with translations
   const data = reportRows.map((report) => ({
     ...report,
+    fileSize: fileSizeToBytes(report.fileSize),
     translations: translationsByReport[report.id] || {}
   }))
 
@@ -217,9 +219,13 @@ async function handleCreate(event: H3Event) {
   // Auto-generate thumbnail from PDF if none was provided
   let thumbnail = input.thumbnail || null
   if (!thumbnail && input.fileUrl) {
-    const pdfPath = resolvePublicAsset(input.fileUrl)
-    if (pdfPath) {
-      thumbnail = generateThumbnailFromPdf(pdfPath)
+    const source = await materializePdfSource(input.fileUrl)
+    if (source) {
+      try {
+        thumbnail = await generateThumbnailFromPdf(source.path)
+      } finally {
+        await source.cleanup()
+      }
     }
   }
 
@@ -289,6 +295,7 @@ async function handleCreate(event: H3Event) {
 
     return {
       ...report,
+      fileSize: fileSizeToBytes(report.fileSize),
       translations: translationsMap
     }
   } catch (error) {

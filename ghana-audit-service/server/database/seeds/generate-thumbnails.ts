@@ -88,7 +88,7 @@ async function run() {
         continue
       }
 
-      const thumbnailUrl = generateThumbnailFromPdf(pdfPath)
+      const thumbnailUrl = await generateThumbnailFromPdf(pdfPath)
       if (!thumbnailUrl) {
         console.log(`  FAIL  ${label} — pdftoppm could not render`)
         failed++

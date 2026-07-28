@@ -2,7 +2,7 @@ import { describe, it, expect, afterEach } from 'vitest'
 import { mkdtempSync, existsSync, readFileSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { persistUpload, type UploadConfig } from '~/server/utils/fileUpload'
+import { persistUpload, uploadConfigs, type UploadConfig } from '~/server/utils/fileUpload'
 import { __resetBlobForTests, __setContainerClientForTests } from '~/server/utils/blobStorage'
 
 const reportBlobConfig: UploadConfig = {
@@ -66,5 +66,30 @@ describe('persistUpload', () => {
     const written = join(baseDir, 'reports', '20260615-def.pdf')
     expect(existsSync(written)).toBe(true)
     expect(readFileSync(written)).toEqual(data)
+  })
+
+  it('uploads publication PDFs to Blob under uploads/publications/', async () => {
+    const fake = makeFakeContainer()
+    __setContainerClientForTests(fake.client as never)
+    const data = Buffer.from('%PDF-1.7 publication')
+
+    const url = await persistUpload(
+      uploadConfigs.publication,
+      '20260728-pub.pdf',
+      data,
+      'application/pdf'
+    )
+
+    expect(url).toBe('/uploads/publications/20260728-pub.pdf')
+    expect(fake.uploads).toEqual([
+      { key: 'uploads/publications/20260728-pub.pdf', data, contentType: 'application/pdf' }
+    ])
+  })
+
+  it('report and publication configs both use the blob backend', () => {
+    // PDFs must not be written to cwd public/ — that directory is not served
+    // in production (only .output/public is) and dies on container restart.
+    expect(uploadConfigs.report.backend).toBe('blob')
+    expect(uploadConfigs.publication.backend).toBe('blob')
   })
 })

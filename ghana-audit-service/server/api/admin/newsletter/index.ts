@@ -2,6 +2,7 @@ import type { H3Event } from 'h3'
 import { eq, and, sql, desc, isNotNull } from 'drizzle-orm'
 import { getDatabase, schema } from '../../../database'
 import { requirePermission, parsePagination, buildPaginationMeta } from '../../../utils/adminHelpers'
+import { newsletterSubscriberColumns } from '../../../utils/dtoColumns'
 
 export default defineEventHandler(async (event) => {
   const method = event.method
@@ -42,7 +43,7 @@ async function handleList(event: H3Event) {
     .where(whereClause)
 
   const subscribers = await db
-    .select()
+    .select(newsletterSubscriberColumns)
     .from(schema.newsletterSubscribers)
     .where(whereClause)
     .orderBy(desc(schema.newsletterSubscribers.subscribedAt))
