@@ -23,6 +23,7 @@ const ADMIN_PAGE_MODULES: Array<{ prefix: string; module: ModuleKey }> = [
   { prefix: '/admin/tags', module: 'content' },
   { prefix: '/admin/vacancies', module: 'careers' },
   { prefix: '/admin/tenders', module: 'careers' },
+  { prefix: '/admin/auditor-general', module: 'organization' },
   { prefix: '/admin/management-team', module: 'organization' },
   { prefix: '/admin/departments', module: 'organization' },
   { prefix: '/admin/team-members', module: 'organization' },

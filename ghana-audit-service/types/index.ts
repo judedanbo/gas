@@ -182,6 +182,20 @@ export interface BoardMember {
 }
 
 // ============================================
+// Auditor-General Message Types
+// ============================================
+
+/** Public shape for the home page A-G section and /about/auditor-general. */
+export interface AuditorGeneralMessage {
+  id: number
+  photo?: string
+  name: string
+  title: string
+  excerpt: string
+  fullMessage: string
+}
+
+// ============================================
 // Site Statistics Types
 // ============================================
 

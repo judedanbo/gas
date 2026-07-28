@@ -380,6 +380,21 @@ export const siteStatUpdateSchema = z.object({
   isActive: z.boolean().default(true)
 })
 
+// Auditor-General message (singleton, edit-only)
+export const auditorGeneralMessageSchema = z.object({
+  photo: z.string().max(500).optional().nullable().or(z.literal('')),
+  isActive: z.boolean().default(true),
+  translations: translationsSchema({
+    name: z.string().min(1).max(255),
+    title: z.string().min(1).max(255),
+    excerpt: z.string().min(1).max(1000),
+    fullMessage: z.string().min(1)
+  }).refine((t) => !t.ak || (t.ak.name && t.ak.title && t.ak.excerpt && t.ak.fullMessage), {
+    message: 'All Akan fields are required when providing an Akan translation',
+    path: ['ak']
+  })
+})
+
 // Offices
 export const officeSchema = z.object({
   slug: slugSchema,
@@ -520,6 +535,7 @@ export type PastAGInput = z.infer<typeof pastAGSchema>
 export type ManagementTeamInput = z.infer<typeof managementTeamSchema>
 export type BoardMemberInput = z.infer<typeof boardMemberSchema>
 export type SiteStatUpdateInput = z.infer<typeof siteStatUpdateSchema>
+export type AuditorGeneralMessageInput = z.infer<typeof auditorGeneralMessageSchema>
 export type OfficeInput = z.infer<typeof officeSchema>
 export type GalleryImageInput = z.infer<typeof galleryImageSchema>
 export type GalleryAlbumInput = z.infer<typeof galleryAlbumSchema>

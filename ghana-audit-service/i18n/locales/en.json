@@ -65,6 +65,12 @@
     "unableToLoadReports": "Unable to load reports. Please try again later.",
     "noReportsAvailable": "No reports available at this time.",
     "latestNews": "Latest News",
+    "agMessage": {
+      "badge": "Message from the Auditor-General",
+      "readFullMessage": "Read full message",
+      "pageTitle": "Auditor-General's Message",
+      "pageDescription": "A message from the Auditor-General of the Republic of Ghana"
+    },
     "stats": {
       "years": "Years of Service",
       "staff": "Staff Members",

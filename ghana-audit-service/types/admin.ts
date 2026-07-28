@@ -363,6 +363,21 @@ export interface AdminManagementTeamMember {
   }
 }
 
+// Auditor-General message (singleton, edit-only)
+export interface AdminAuditorGeneralMessage {
+  id: number
+  photo: string | null
+  isActive: boolean
+  createdAt: string
+  updatedAt: string
+  translations: Translations<{
+    name: string
+    title: string
+    excerpt: string
+    fullMessage: string
+  }>
+}
+
 export interface AdminOffice {
   id: number
   slug: string

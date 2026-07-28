@@ -349,6 +349,7 @@ export default defineNuxtConfig({
       // DB-backed site statistics (useSiteStats) — regenerate at runtime so
       // admin edits appear; these were removed from prerender.routes above.
       '/about/the-service': { isr: 3600 },
+      '/about/auditor-general': { isr: 3600 },
       '/about/past-auditors-general': { isr: 3600 },
       '/about/management-team': { isr: 3600 },
       '/about/management-team/**': { isr: 3600 },
@@ -366,6 +367,7 @@ export default defineNuxtConfig({
       '/ak/careers/**': { isr: 600 },
       '/ak/contact': { isr: 3600 },
       '/ak/about/the-service': { isr: 3600 },
+      '/ak/about/auditor-general': { isr: 3600 },
       '/ak/about/past-auditors-general': { isr: 3600 },
       '/ak/about/management-team': { isr: 3600 },
       '/ak/about/management-team/**': { isr: 3600 },
@@ -405,10 +407,12 @@ export default defineNuxtConfig({
       '/api/management-team/**': { cache: isDev ? false : { maxAge: 3600, staleMaxAge: 7200 } },
       '/api/board-members': { cache: isDev ? false : { maxAge: 3600, staleMaxAge: 7200 } },
       '/api/board-members/**': { cache: isDev ? false : { maxAge: 3600, staleMaxAge: 7200 } },
-      // /api/site-stats is intentionally NOT edge-cached: it's a tiny (~11-row)
-      // indexed SELECT consumed by ISR pages, so full loads are already shielded
-      // by page ISR. An edge cache here would only add a staleness layer the
-      // admin cannot purge on edit, so admin changes surface promptly instead.
+      // /api/site-stats and /api/auditor-general are intentionally NOT
+      // edge-cached: both are tiny indexed SELECTs consumed by ISR pages, so
+      // full loads are already shielded by page ISR. An edge cache here would
+      // only add a staleness layer the admin cannot purge on edit (and
+      // /api/auditor-general varies by Accept-Language, which the route-rule
+      // cache does not key on), so admin changes surface promptly instead.
 
       // Admin routes - hidden from SEO, cached only in production
       '/admin/**': {
