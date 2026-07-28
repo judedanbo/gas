@@ -287,6 +287,20 @@ export default defineNuxtConfig({
 
   // Nitro server configuration
   nitro: {
+    // Keep report PDFs (136MB+) out of .output/public. They are never served
+    // from the build output: production excludes public/pdf via .dockerignore
+    // (downloads stream from Azure Blob / the API), and local dev resolves
+    // them from cwd public/ (resolvePublicAsset). Without this, every build
+    // spent minutes brotli-compressing them at max quality only for the
+    // postbuild strip script to delete the artifacts.
+    // After `pdf:migrate-blob public/uploads` has run in production,
+    // public/uploads/publications can join this list for the same win.
+    //
+    // The pattern must be ABSOLUTE: Nitro resolves relative ignore patterns
+    // against its srcDir (which Nuxt sets to server/), then silently drops
+    // any pattern that escapes the public dir — a relative 'public/pdf/**'
+    // becomes '../server/public/pdf/**' and is discarded without effect.
+    ignore: [resolve(__dirname, 'public/pdf') + '/**'],
     compressPublicAssets: true,
     experimental: {
       // Enable Nitro tasks (server/tasks/**) so the analytics rollup +
