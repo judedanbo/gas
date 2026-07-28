@@ -139,7 +139,7 @@ async function handleUpdate(event: H3Event, id: number) {
     const source = await materializePdfSource(input.fileUrl)
     if (source) {
       try {
-        thumbnail = generateThumbnailFromPdf(source.path)
+        thumbnail = await generateThumbnailFromPdf(source.path)
       } finally {
         await source.cleanup()
       }

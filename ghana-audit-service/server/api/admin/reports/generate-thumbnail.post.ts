@@ -22,7 +22,7 @@ export default defineEventHandler(async (event) => {
   }
 
   try {
-    const thumbnailUrl = generateThumbnailFromPdf(source.path)
+    const thumbnailUrl = await generateThumbnailFromPdf(source.path)
     if (!thumbnailUrl) {
       throw createError({
         statusCode: 422,

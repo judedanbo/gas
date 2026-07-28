@@ -1,9 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { resolvePublicAsset } from '~/server/utils/publicFiles'
+import { materializePdfSource, type LocalPdfSource } from '~/server/utils/pdfSource'
 import { generateThumbnailFromPdf } from '~/server/utils/generateThumbnail'
 
-vi.mock('~/server/utils/publicFiles', () => ({
-  resolvePublicAsset: vi.fn()
+vi.mock('~/server/utils/pdfSource', () => ({
+  materializePdfSource: vi.fn()
 }))
 
 vi.mock('~/server/utils/generateThumbnail', () => ({
@@ -14,6 +14,9 @@ vi.mock('~/server/utils/adminHelpers', () => ({
   requirePermission: vi.fn()
 }))
 
+// Mirrors generate-thumbnail.post.ts's control flow (H3 globals aren't worth
+// booting for a unit test): materialize the PDF (disk or blob temp), generate,
+// always clean up the source.
 async function handleGenerateThumbnail(body: { fileUrl?: string }) {
   const fileUrl = body?.fileUrl
   if (!fileUrl || typeof fileUrl !== 'string') {
@@ -23,20 +26,28 @@ async function handleGenerateThumbnail(body: { fileUrl?: string }) {
     throw { statusCode: 400, statusMessage: 'Invalid file path' }
   }
 
-  const pdfPath = resolvePublicAsset(fileUrl)
-  if (!pdfPath) {
-    throw { statusCode: 422, statusMessage: 'PDF file not found' }
+  const source = await materializePdfSource(fileUrl)
+  if (!source) {
+    throw { statusCode: 422, statusMessage: 'PDF file not found in storage' }
   }
 
-  const thumbnailUrl = generateThumbnailFromPdf(pdfPath)
-  if (!thumbnailUrl) {
-    throw {
-      statusCode: 422,
-      statusMessage: 'Thumbnail generation failed — pdftoppm may not be available'
+  try {
+    const thumbnailUrl = await generateThumbnailFromPdf(source.path)
+    if (!thumbnailUrl) {
+      throw {
+        statusCode: 422,
+        statusMessage: 'Thumbnail generation failed — pdftoppm may not be available'
+      }
     }
-  }
 
-  return { success: true, thumbnailUrl }
+    return { success: true, thumbnailUrl }
+  } finally {
+    await source.cleanup()
+  }
+}
+
+function fakeSource(path: string): LocalPdfSource {
+  return { path, blobKey: null, cleanup: vi.fn(async () => undefined) }
 }
 
 describe('generate-thumbnail endpoint', () => {
@@ -60,20 +71,21 @@ describe('generate-thumbnail endpoint', () => {
     })
   })
 
-  it('returns 422 when PDF file is not found on disk', async () => {
-    vi.mocked(resolvePublicAsset).mockReturnValue(null)
+  it('returns 422 when the PDF is on neither disk nor Blob', async () => {
+    vi.mocked(materializePdfSource).mockResolvedValue(null)
 
     await expect(
       handleGenerateThumbnail({ fileUrl: '/pdf/reports/test.pdf' })
     ).rejects.toMatchObject({
       statusCode: 422,
-      statusMessage: 'PDF file not found'
+      statusMessage: 'PDF file not found in storage'
     })
   })
 
-  it('returns 422 when thumbnail generation fails', async () => {
-    vi.mocked(resolvePublicAsset).mockReturnValue('/abs/path/test.pdf')
-    vi.mocked(generateThumbnailFromPdf).mockReturnValue(null)
+  it('returns 422 and cleans up when thumbnail generation fails', async () => {
+    const source = fakeSource('/abs/path/test.pdf')
+    vi.mocked(materializePdfSource).mockResolvedValue(source)
+    vi.mocked(generateThumbnailFromPdf).mockResolvedValue(null)
 
     await expect(
       handleGenerateThumbnail({ fileUrl: '/pdf/reports/test.pdf' })
@@ -81,11 +93,13 @@ describe('generate-thumbnail endpoint', () => {
       statusCode: 422,
       statusMessage: 'Thumbnail generation failed — pdftoppm may not be available'
     })
+    expect(source.cleanup).toHaveBeenCalled()
   })
 
-  it('returns success with thumbnailUrl on success', async () => {
-    vi.mocked(resolvePublicAsset).mockReturnValue('/abs/path/test.pdf')
-    vi.mocked(generateThumbnailFromPdf).mockReturnValue('/uploads/thumbnails/20260513-abc.jpg')
+  it('returns success with thumbnailUrl and cleans up the source', async () => {
+    const source = fakeSource('/abs/path/test.pdf')
+    vi.mocked(materializePdfSource).mockResolvedValue(source)
+    vi.mocked(generateThumbnailFromPdf).mockResolvedValue('/uploads/thumbnails/20260513-abc.jpg')
 
     const result = await handleGenerateThumbnail({
       fileUrl: '/pdf/reports/test.pdf'
@@ -95,7 +109,8 @@ describe('generate-thumbnail endpoint', () => {
       success: true,
       thumbnailUrl: '/uploads/thumbnails/20260513-abc.jpg'
     })
-    expect(resolvePublicAsset).toHaveBeenCalledWith('/pdf/reports/test.pdf')
+    expect(materializePdfSource).toHaveBeenCalledWith('/pdf/reports/test.pdf')
     expect(generateThumbnailFromPdf).toHaveBeenCalledWith('/abs/path/test.pdf')
+    expect(source.cleanup).toHaveBeenCalled()
   })
 })
