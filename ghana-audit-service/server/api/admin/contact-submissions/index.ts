@@ -7,6 +7,7 @@ import {
   parsePagination,
   buildPaginationMeta
 } from '../../../utils/adminHelpers'
+import { contactSubmissionColumns } from '../../../utils/dtoColumns'
 
 export default defineEventHandler(async (event) => {
   const method = event.method
@@ -38,7 +39,7 @@ async function handleList(event: H3Event) {
     .where(whereClause)
 
   const submissions = await db
-    .select()
+    .select(contactSubmissionColumns)
     .from(schema.contactSubmissions)
     .where(whereClause)
     .orderBy(desc(schema.contactSubmissions.submittedAt))

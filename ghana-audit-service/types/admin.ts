@@ -465,7 +465,6 @@ export interface ContactSubmission {
   respondedAt: string | null
   respondedBy: number | null
   submittedAt: string
-  createdAt: string
 }
 
 // Form input types for create/update
