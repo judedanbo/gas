@@ -276,6 +276,10 @@ kubectl wait --for=condition=complete job/gas-migrate-${JOB_SUFFIX} -n gas --tim
 # 5b. (One-time bootstrap) Seed the admin user + content. Idempotent — re-running
 #     skips existing rows. Requires ADMIN_EMAIL/ADMIN_PASSWORD in gas-secrets and a
 #     migrator image rebuilt with the seed scripts. See k8s/jobs/seed-job.yaml header.
+#     SEED_SCRIPT picks the package.json seed script — db:seed:all for the full
+#     bootstrap, or a targeted one (e.g. db:seed:auditor-general). Also runnable
+#     from GitHub Actions: the "Seed Database" workflow (.github/workflows/seed.yml).
+export SEED_SCRIPT=db:seed:all
 envsubst < k8s/jobs/seed-job.yaml | kubectl apply -f -
 kubectl wait --for=condition=complete job/gas-seed-job -n gas --timeout=300s
 

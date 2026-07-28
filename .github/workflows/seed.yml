@@ -1,0 +1,84 @@
+name: Seed Database
+
+# Manually-triggered wrapper around k8s/jobs/seed-job.yaml for operators
+# without direct kubectl access. Runs the requested db:seed* script against
+# the production database using the already-deployed gas-migrate image.
+#
+# Every seed script is self-guarding (skips existing rows), so re-running is a
+# safe no-op — see the seed-job.yaml header. This workflow never passes --force.
+
+on:
+  workflow_dispatch:
+    inputs:
+      script:
+        description: 'Seed script to run (a db:seed* script from package.json)'
+        required: true
+        default: 'db:seed:all'
+        type: string
+      image_tag:
+        description: 'gas-migrate image tag to run (defaults to latest deploy)'
+        required: true
+        default: 'latest'
+        type: string
+
+# Serialize with deploys so the seed never races a migration Job.
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+env:
+  ACR_NAME: regisry
+
+jobs:
+  seed:
+    name: Run seed Job
+    runs-on: ubuntu-latest
+    environment: production
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Validate script input
+        run: |
+          case "${{ inputs.script }}" in
+            db:seed|db:seed:*) ;;
+            *)
+              echo "Refusing to run '${{ inputs.script }}' — only db:seed* scripts are allowed."
+              exit 1
+              ;;
+          esac
+
+      - name: Login to Azure
+        uses: azure/login@v3
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Set up kubectl
+        uses: azure/aks-set-context@v5
+        with:
+          cluster-name: ${{ secrets.AKS_CLUSTER_NAME }}
+          resource-group: ${{ secrets.AKS_RESOURCE_GROUP }}
+
+      - name: Run seed Job
+        run: |
+          export ACR_REGISTRY=${{ env.ACR_NAME }}
+          export IMAGE_TAG=${{ inputs.image_tag }}
+          export SEED_SCRIPT=${{ inputs.script }}
+          # Jobs are immutable — remove any previous run first (ttl also reaps
+          # finished Jobs after 10 minutes).
+          kubectl delete job gas-seed-job -n gas --ignore-not-found
+          envsubst < k8s/jobs/seed-job.yaml | kubectl apply -f -
+
+      - name: Wait for completion
+        run: |
+          kubectl wait --for=condition=complete job/gas-seed-job -n gas --timeout=300s
+
+      - name: Print seed logs
+        if: always()
+        run: |
+          kubectl logs -n gas job/gas-seed-job --tail=200 || true
