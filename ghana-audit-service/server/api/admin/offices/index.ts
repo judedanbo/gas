@@ -8,6 +8,7 @@ import {
 } from '../../../utils/adminHelpers'
 import { logAuditAction, sanitizeForAudit } from '../../../utils/auditLogger'
 import { officeSchema, validateBody, createValidationError } from '../../../utils/validation'
+import { decimalToNumber } from '../../../utils/decimal'
 import { safeError } from '../../../utils/errors'
 
 export default defineEventHandler(async (event) => {
@@ -94,6 +95,8 @@ async function handleList(event: H3Event) {
 
   const data = offices.map((o) => ({
     ...o,
+    latitude: decimalToNumber(o.latitude),
+    longitude: decimalToNumber(o.longitude),
     typeName: typeMap[o.typeId] || '',
     typeSlug: typeSlugMap[o.typeId] || '',
     translations: translationsByOffice[o.id] || {}
@@ -179,7 +182,12 @@ async function handleCreate(event: H3Event) {
       after: sanitizeForAudit({ ...office, translations: translationsMap })
     })
 
-    return { ...office, translations: translationsMap }
+    return {
+      ...office,
+      latitude: decimalToNumber(office.latitude),
+      longitude: decimalToNumber(office.longitude),
+      translations: translationsMap
+    }
   } catch (error) {
     await connection.rollback()
     throw safeError('admin:offices', error)
