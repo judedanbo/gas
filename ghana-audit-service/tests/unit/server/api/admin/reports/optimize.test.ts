@@ -7,10 +7,17 @@ import {
   type ProgressEvent
 } from '~/server/utils/pdfOptimizer'
 import { createJob, getJob, pushEvent, updateJob } from '~/server/utils/pdfOptimizationJobs'
+import { tryBlobSource, blobKeyFromFileUrl, uploadBlob } from '~/server/utils/blobStorage'
 
 // Per CLAUDE.md: vi.mock factories must use `function` declarations (hoisted).
 vi.mock('~/server/utils/publicFiles', () => ({
   resolvePublicAsset: vi.fn()
+}))
+
+vi.mock('~/server/utils/blobStorage', () => ({
+  tryBlobSource: vi.fn(async () => null),
+  blobKeyFromFileUrl: vi.fn((url: string) => url.replace(/^\/+/, '')),
+  uploadBlob: vi.fn(async () => undefined)
 }))
 
 vi.mock('~/server/utils/pdfOptimizer', async () => {
@@ -59,9 +66,19 @@ async function runOptimizeRoute(body: {
   if (!body.fileUrl.startsWith('/pdf/reports/')) {
     throw { statusCode: 400, statusMessage: 'Invalid file path' }
   }
-  const pdfPath = resolvePublicAsset(body.fileUrl)
+  let pdfPath = resolvePublicAsset(body.fileUrl)
+  let blobKey: string | null = null
   if (!pdfPath) {
-    throw { statusCode: 422, statusMessage: 'PDF file not found' }
+    const blob = await tryBlobSource(body.fileUrl)
+    if (blob) {
+      blobKey = blobKeyFromFileUrl(body.fileUrl)
+      // The real route streams the blob to a tmpdir file here; the mirror
+      // skips filesystem work and just carries the temp-path/blobKey state.
+      pdfPath = `/tmp/gas-optimize-test.pdf`
+    }
+  }
+  if (!pdfPath) {
+    throw { statusCode: 422, statusMessage: 'PDF file not found in storage' }
   }
 
   const job = createJob(body.fileUrl, body.reportId ?? null)
@@ -79,6 +96,9 @@ async function runOptimizeRoute(body: {
         allowDropBookmarks: body.allowDropBookmarks === true,
         onProgress: (e: ProgressEvent) => pushEvent(job.id, e)
       })
+      if (blobKey && !result.skippedCompression) {
+        await uploadBlob(blobKey, Buffer.from('optimized'), 'application/pdf')
+      }
       updateJob(job.id, { status: 'success', result })
     } catch (err) {
       updateJob(job.id, {
@@ -112,12 +132,75 @@ describe('POST /api/admin/reports/optimize', () => {
     })
   })
 
-  it('returns 422 when the PDF does not resolve to disk', async () => {
+  it('returns 422 when the PDF is on neither disk nor Blob', async () => {
     vi.mocked(resolvePublicAsset).mockReturnValue(null)
+    vi.mocked(tryBlobSource).mockResolvedValue(null)
     await expect(runOptimizeRoute({ fileUrl: '/pdf/reports/missing.pdf' })).rejects.toMatchObject({
       statusCode: 422,
-      statusMessage: 'PDF file not found'
+      statusMessage: 'PDF file not found in storage'
     })
+  })
+
+  it('falls back to Blob when the PDF is not on disk and uploads the optimized result back', async () => {
+    vi.mocked(resolvePublicAsset).mockReturnValue(null)
+    vi.mocked(tryBlobSource).mockResolvedValue({
+      stream: {} as never,
+      contentLength: 100,
+      contentType: 'application/pdf'
+    })
+    vi.mocked(optimizeReportPdf).mockResolvedValue({
+      originalSize: 100,
+      optimizedSize: 40,
+      savedBytes: 60,
+      skippedCompression: false,
+      nativePages: 1,
+      scannedPages: 0,
+      pageCount: 1
+    })
+
+    const { jobId } = await runOptimizeRoute({ fileUrl: '/pdf/reports/blob-only.pdf' })
+
+    for (let i = 0; i < 50; i++) {
+      const j = getJob(jobId)
+      if (j && (j.status === 'success' || j.status === 'error')) break
+      await new Promise((r) => setTimeout(r, 5))
+    }
+
+    expect(getJob(jobId)?.status).toBe('success')
+    expect(vi.mocked(uploadBlob)).toHaveBeenCalledWith(
+      'pdf/reports/blob-only.pdf',
+      expect.anything(),
+      'application/pdf'
+    )
+  })
+
+  it('does not re-upload to Blob when compression was skipped', async () => {
+    vi.mocked(resolvePublicAsset).mockReturnValue(null)
+    vi.mocked(tryBlobSource).mockResolvedValue({
+      stream: {} as never,
+      contentLength: 100,
+      contentType: 'application/pdf'
+    })
+    vi.mocked(optimizeReportPdf).mockResolvedValue({
+      originalSize: 100,
+      optimizedSize: 100,
+      savedBytes: 0,
+      skippedCompression: true,
+      nativePages: 1,
+      scannedPages: 0,
+      pageCount: 1
+    })
+
+    const { jobId } = await runOptimizeRoute({ fileUrl: '/pdf/reports/tight.pdf' })
+
+    for (let i = 0; i < 50; i++) {
+      const j = getJob(jobId)
+      if (j && (j.status === 'success' || j.status === 'error')) break
+      await new Promise((r) => setTimeout(r, 5))
+    }
+
+    expect(getJob(jobId)?.status).toBe('success')
+    expect(vi.mocked(uploadBlob)).not.toHaveBeenCalled()
   })
 
   it('starts an optimization job and threads progress events through the store', async () => {

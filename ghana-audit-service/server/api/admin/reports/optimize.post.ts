@@ -1,8 +1,10 @@
 import { statSync } from 'node:fs'
+import { readFile } from 'node:fs/promises'
 import { eq } from 'drizzle-orm'
 import { getDatabase, schema } from '../../../database'
 import { requirePermission } from '../../../utils/adminHelpers'
-import { resolvePublicAsset } from '../../../utils/publicFiles'
+import { materializePdfSource, type LocalPdfSource } from '../../../utils/pdfSource'
+import { uploadBlob } from '../../../utils/blobStorage'
 import { logAuditAction } from '../../../utils/auditLogger'
 import {
   optimizeReportPdf,
@@ -40,16 +42,16 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 400, statusMessage: 'Invalid file path' })
   }
 
-  const pdfPath = resolvePublicAsset(fileUrl)
-  if (!pdfPath) {
-    throw createError({ statusCode: 422, statusMessage: 'PDF file not found' })
+  const source = await materializePdfSource(fileUrl)
+  if (!source) {
+    throw createError({ statusCode: 422, statusMessage: 'PDF file not found in storage' })
   }
 
   const job = createJob(fileUrl, reportId)
 
   // Run the optimizer detached from the request lifetime. The SSE endpoint
   // (optimize-stream.get.ts) streams the job's events to the admin UI.
-  void runOptimization(job.id, pdfPath, preset, allowDropBookmarks, event, reportId)
+  void runOptimization(job.id, source, preset, allowDropBookmarks, event, reportId)
 
   // Mint a short-lived SSE ticket so the EventSource auth travels as a ~2min
   // aud-scoped ticket rather than the long-lived session JWT in the URL.
@@ -61,12 +63,13 @@ export default defineEventHandler(async (event) => {
 
 async function runOptimization(
   jobId: string,
-  pdfPath: string,
+  source: LocalPdfSource,
   preset: CompressionPreset,
   allowDropBookmarks: boolean,
   event: Parameters<typeof logAuditAction>[0],
   reportId: number | null
 ): Promise<void> {
+  const { path: pdfPath, blobKey } = source
   updateJob(jobId, { status: 'running' })
   try {
     const result = await optimizeReportPdf(pdfPath, {
@@ -74,6 +77,14 @@ async function runOptimization(
       allowDropBookmarks,
       onProgress: (e) => pushEvent(jobId, e)
     })
+
+    // Blob-backed file: pdfPath is a temp download, so push the optimized
+    // bytes back to the same key. Must happen before the DB fileSize update
+    // and the success event — if the upload fails, Blob still holds the
+    // original and the error path reports honestly.
+    if (blobKey && !result.skippedCompression) {
+      await uploadBlob(blobKey, await readFile(pdfPath), 'application/pdf')
+    }
 
     // Persist the new file size when the optimization is tied to a saved
     // report row. For the unsaved create flow (no reportId yet), the UI
@@ -148,5 +159,7 @@ async function runOptimization(
     void logAuditAction(event, 'update', 'report_optimization', reportId, {
       after: { fileUrl: pdfPath, preset, error: message }
     })
+  } finally {
+    await source.cleanup()
   }
 }

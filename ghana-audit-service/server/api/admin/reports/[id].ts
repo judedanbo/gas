@@ -4,7 +4,7 @@ import { getDatabase, schema } from '../../../database'
 import { requirePermission, getCurrentUser, isAdmin } from '../../../utils/adminHelpers'
 import { logAuditAction, createChangesObject, sanitizeForAudit } from '../../../utils/auditLogger'
 import { auditReportSchema, validateBody, createValidationError } from '../../../utils/validation'
-import { resolvePublicAsset } from '../../../utils/publicFiles'
+import { materializePdfSource } from '../../../utils/pdfSource'
 import { fileSizeToBytes } from '../../../utils/fileSize'
 import { generateThumbnailFromPdf } from '../../../utils/generateThumbnail'
 import { safeError } from '../../../utils/errors'
@@ -136,9 +136,13 @@ async function handleUpdate(event: H3Event, id: number) {
   let thumbnail = input.thumbnail || null
   const fileUrlChanged = input.fileUrl !== existingReport.fileUrl
   if (!thumbnail && input.fileUrl && (fileUrlChanged || !existingReport.thumbnail)) {
-    const pdfPath = resolvePublicAsset(input.fileUrl)
-    if (pdfPath) {
-      thumbnail = generateThumbnailFromPdf(pdfPath)
+    const source = await materializePdfSource(input.fileUrl)
+    if (source) {
+      try {
+        thumbnail = generateThumbnailFromPdf(source.path)
+      } finally {
+        await source.cleanup()
+      }
     }
   }
 
