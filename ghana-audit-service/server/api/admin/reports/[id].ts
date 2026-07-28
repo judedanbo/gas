@@ -5,6 +5,7 @@ import { requirePermission, getCurrentUser, isAdmin } from '../../../utils/admin
 import { logAuditAction, createChangesObject, sanitizeForAudit } from '../../../utils/auditLogger'
 import { auditReportSchema, validateBody, createValidationError } from '../../../utils/validation'
 import { resolvePublicAsset } from '../../../utils/publicFiles'
+import { fileSizeToBytes } from '../../../utils/fileSize'
 import { generateThumbnailFromPdf } from '../../../utils/generateThumbnail'
 import { safeError } from '../../../utils/errors'
 
@@ -74,6 +75,7 @@ async function handleGet(event: H3Event, id: number) {
 
   return {
     ...report,
+    fileSize: fileSizeToBytes(report.fileSize),
     translations: translationsMap
   }
 }
@@ -229,6 +231,7 @@ async function handleUpdate(event: H3Event, id: number) {
 
     return {
       ...updatedReport,
+      fileSize: fileSizeToBytes(updatedReport.fileSize),
       translations: translationsMap
     }
   } catch (error) {

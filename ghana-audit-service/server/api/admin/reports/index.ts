@@ -10,6 +10,7 @@ import {
 } from '../../../utils/adminHelpers'
 import { logAuditAction, sanitizeForAudit } from '../../../utils/auditLogger'
 import { auditReportSchema, validateBody, createValidationError } from '../../../utils/validation'
+import { fileSizeToBytes } from '../../../utils/fileSize'
 import { resolvePublicAsset } from '../../../utils/publicFiles'
 import { generateThumbnailFromPdf } from '../../../utils/generateThumbnail'
 import { safeError } from '../../../utils/errors'
@@ -179,6 +180,7 @@ async function handleList(event: H3Event) {
   // Combine reports with translations
   const data = reportRows.map((report) => ({
     ...report,
+    fileSize: fileSizeToBytes(report.fileSize),
     translations: translationsByReport[report.id] || {}
   }))
 
@@ -289,6 +291,7 @@ async function handleCreate(event: H3Event) {
 
     return {
       ...report,
+      fileSize: fileSizeToBytes(report.fileSize),
       translations: translationsMap
     }
   } catch (error) {
