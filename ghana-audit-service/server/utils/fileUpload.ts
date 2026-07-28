@@ -27,7 +27,7 @@ export interface UploadResult {
   mimeType: string
 }
 
-const uploadConfigs: Record<string, UploadConfig> = {
+export const uploadConfigs: Record<string, UploadConfig> = {
   report: {
     allowedTypes: ['application/pdf'],
     maxSize: 100 * 1024 * 1024, // 100MB
@@ -39,7 +39,12 @@ const uploadConfigs: Record<string, UploadConfig> = {
   publication: {
     allowedTypes: ['application/pdf'],
     maxSize: 10 * 1024 * 1024, // 10MB
-    directory: 'publications'
+    directory: 'publications',
+    // Like reports: served via /api/downloads/publications/{id} (blob-first),
+    // and direct /uploads/publications/*.pdf access is blocked (staticAssets),
+    // so nothing depends on the file being on disk. Writing to cwd public/
+    // would be invisible in production anyway (only .output/public is served).
+    backend: 'blob'
   },
   image: {
     allowedTypes: ['image/jpeg', 'image/png', 'image/webp', 'image/gif'],
