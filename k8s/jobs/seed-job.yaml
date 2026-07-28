@@ -22,14 +22,20 @@
 #      Without them server/database/seed.ts exits 1.
 #
 # Usage:
-#   1. Run it (export the same image vars deploy.yml uses, then envsubst):
-#        export ACR_REGISTRY=<ACR_NAME> IMAGE_TAG=<TAG>
+#   1. Run it (export the same image vars deploy.yml uses plus the seed script,
+#      then envsubst). SEED_SCRIPT is any db:seed* script from package.json —
+#      db:seed:all for the full bootstrap, or a targeted seed such as
+#      db:seed:auditor-general:
+#        export ACR_REGISTRY=<ACR_NAME> IMAGE_TAG=<TAG> SEED_SCRIPT=db:seed:all
 #        envsubst < k8s/jobs/seed-job.yaml | kubectl apply -f -
 #   2. Watch:
 #        kubectl logs -n gas job/gas-seed-job -f
 #   3. Re-run later (Jobs are immutable — delete first):
 #        kubectl delete job gas-seed-job -n gas
 #        envsubst < k8s/jobs/seed-job.yaml | kubectl apply -f -
+#
+# The Seed Database workflow (.github/workflows/seed.yml) runs these same steps
+# from GitHub Actions via workflow_dispatch, for operators without kubectl.
 # =============================================================================
 apiVersion: batch/v1
 kind: Job
@@ -66,8 +72,10 @@ spec:
           # migration Job — so this always matches what build-and-push pushed.
           image: ${ACR_REGISTRY}.azurecr.io/gas-migrate:${IMAGE_TAG}
           imagePullPolicy: Always
-          # Override the image's default migrate command with the full seed chain.
-          command: ["npm", "run", "db:seed:all"]
+          # Override the image's default migrate command with the requested seed
+          # script (envsubst-templated like the image vars above — export
+          # SEED_SCRIPT=db:seed:all for the full bootstrap chain).
+          command: ["npm", "run", "${SEED_SCRIPT}"]
           envFrom:
             - configMapRef:
                 name: gas-config
