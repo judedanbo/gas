@@ -270,6 +270,12 @@ export default defineNuxtConfig({
     // M365 reject a From the auth mailbox can't send as). Set NUXT_SMTP_FROM to
     // an authorized address; until then email is skipped (see server/utils/email.ts).
     smtpFrom: '',
+    // HR application API — supplies staff-related site statistics. Left empty
+    // by default; when unset the HR integration is a graceful no-op and figures
+    // fall back to their manual values. Filled from NUXT_HR_API_BASE_URL /
+    // NUXT_HR_API_KEY. Keep server-side only (never expose the key to clients).
+    hrApiBaseUrl: '',
+    hrApiKey: '',
     // Public keys (exposed to client)
     public: {
       siteUrl: 'https://audit.gov.gh',
@@ -297,7 +303,10 @@ export default defineNuxtConfig({
       // Trim abuse_incidents per severity tier (info=90d, warn/critical=365d).
       '15 3 * * *': ['analytics:retention-incidents'],
       // Decay scores on bot_signatures not seen in a week.
-      '30 3 * * *': ['analytics:bot-decay']
+      '30 3 * * *': ['analytics:bot-decay'],
+      // Refresh HR-backed site statistics from the HR API daily at 04:00.
+      // No-op until NUXT_HR_API_BASE_URL / NUXT_HR_API_KEY are configured.
+      '0 4 * * *': ['hr:refresh-stats']
     },
     prerender: {
       // Only fully static pages are prerendered at build time. DB-backed pages
@@ -307,9 +316,11 @@ export default defineNuxtConfig({
       crawlLinks: false,
       routes: [
         '/about',
-        '/about/the-service',
+        // '/about/the-service' and '/about/past-auditors-general' are NOT
+        // prerendered: they now render DB-backed site statistics (useSiteStats),
+        // so they must render at runtime where MySQL exists. See their ISR
+        // routeRules below.
         '/about/departmental-profile',
-        '/about/past-auditors-general',
         '/privacy-policy',
         '/terms',
         '/accessibility',
@@ -335,6 +346,10 @@ export default defineNuxtConfig({
       '/careers': { isr: 600 },
       '/careers/**': { isr: 600 },
       '/contact': { isr: 3600 },
+      // DB-backed site statistics (useSiteStats) — regenerate at runtime so
+      // admin edits appear; these were removed from prerender.routes above.
+      '/about/the-service': { isr: 3600 },
+      '/about/past-auditors-general': { isr: 3600 },
       '/about/management-team': { isr: 3600 },
       '/about/management-team/**': { isr: 3600 },
       '/about/board-members': { isr: 3600 },
@@ -350,6 +365,8 @@ export default defineNuxtConfig({
       '/ak/careers': { isr: 600 },
       '/ak/careers/**': { isr: 600 },
       '/ak/contact': { isr: 3600 },
+      '/ak/about/the-service': { isr: 3600 },
+      '/ak/about/past-auditors-general': { isr: 3600 },
       '/ak/about/management-team': { isr: 3600 },
       '/ak/about/management-team/**': { isr: 3600 },
       '/ak/about/board-members': { isr: 3600 },
@@ -384,6 +401,10 @@ export default defineNuxtConfig({
       '/api/management-team/**': { cache: isDev ? false : { maxAge: 3600, staleMaxAge: 7200 } },
       '/api/board-members': { cache: isDev ? false : { maxAge: 3600, staleMaxAge: 7200 } },
       '/api/board-members/**': { cache: isDev ? false : { maxAge: 3600, staleMaxAge: 7200 } },
+      // /api/site-stats is intentionally NOT edge-cached: it's a tiny (~11-row)
+      // indexed SELECT consumed by ISR pages, so full loads are already shielded
+      // by page ISR. An edge cache here would only add a staleness layer the
+      // admin cannot purge on edit, so admin changes surface promptly instead.
 
       // Admin routes - hidden from SEO, cached only in production
       '/admin/**': {

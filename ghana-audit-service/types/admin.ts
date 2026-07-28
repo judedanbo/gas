@@ -722,3 +722,37 @@ export interface BoardMemberInput {
   displayOrder: number
   isActive: boolean
 }
+
+export type SiteStatSection = 'home' | 'about_service' | 'about_legacy'
+export type SiteStatSource = 'manual' | 'hr_api'
+
+export interface AdminSiteStat {
+  id: number
+  section: SiteStatSection
+  statKey: string
+  label: string
+  suffix: string | null
+  icon: string | null
+  displayOrder: number
+  source: SiteStatSource
+  hrMetricKey: string | null
+  manualValue: number
+  apiValue: number | null
+  overrideEnabled: boolean
+  apiSyncedAt: string | null
+  isActive: boolean
+  createdAt: string
+  updatedAt: string
+}
+
+export interface SiteStatUpdateInput {
+  label: string
+  suffix?: string | null
+  icon?: string | null
+  source: SiteStatSource
+  hrMetricKey?: string | null
+  manualValue: number
+  overrideEnabled: boolean
+  displayOrder: number
+  isActive: boolean
+}
