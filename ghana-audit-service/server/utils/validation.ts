@@ -367,6 +367,19 @@ export const boardMemberSchema = z.object({
   isActive: z.boolean().default(true)
 })
 
+// Site Statistics (edit-only — statKey/section are fixed and not editable)
+export const siteStatUpdateSchema = z.object({
+  label: z.string().min(1).max(255),
+  suffix: z.string().max(16).optional().nullable(),
+  icon: z.string().max(255).optional().nullable(),
+  source: z.enum(['manual', 'hr_api']).default('manual'),
+  hrMetricKey: z.string().max(100).optional().nullable(),
+  manualValue: z.coerce.number().int().min(0),
+  overrideEnabled: z.boolean().default(false),
+  displayOrder: z.coerce.number().int().default(0),
+  isActive: z.boolean().default(true)
+})
+
 // Offices
 export const officeSchema = z.object({
   slug: slugSchema,
@@ -506,6 +519,7 @@ export type TeamMemberInput = z.infer<typeof teamMemberSchema>
 export type PastAGInput = z.infer<typeof pastAGSchema>
 export type ManagementTeamInput = z.infer<typeof managementTeamSchema>
 export type BoardMemberInput = z.infer<typeof boardMemberSchema>
+export type SiteStatUpdateInput = z.infer<typeof siteStatUpdateSchema>
 export type OfficeInput = z.infer<typeof officeSchema>
 export type GalleryImageInput = z.infer<typeof galleryImageSchema>
 export type GalleryAlbumInput = z.infer<typeof galleryAlbumSchema>

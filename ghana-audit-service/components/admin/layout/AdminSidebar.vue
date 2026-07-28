@@ -111,6 +111,12 @@
           />
           <SidebarLink to="/admin/news" icon="newspaper" label="News" :collapsed="isCollapsed" />
           <SidebarLink to="/admin/events" icon="calendar" label="Events" :collapsed="isCollapsed" />
+          <SidebarLink
+            to="/admin/site-stats"
+            icon="chart-bar"
+            label="Site Statistics"
+            :collapsed="isCollapsed"
+          />
         </template>
       </SidebarSection>
 

@@ -19,6 +19,9 @@ export * from './events'
 // Organization Tables
 export * from './organization'
 
+// Site Statistics (editable public figures)
+export * from './site-stats'
+
 // Career & Procurement Tables
 export * from './careers'
 export * from './tenders'

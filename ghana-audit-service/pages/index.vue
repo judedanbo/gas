@@ -95,13 +95,8 @@
     ogType: 'website'
   })
 
-  // Organization statistics
-  const stats = [
-    { label: 'Years of Service', value: 115, suffix: '+' },
-    { label: 'Staff Members', value: 2295, suffix: '' },
-    { label: 'Regions Covered', value: 16, suffix: '' },
-    { label: 'Districts Nationwide', value: 95, suffix: '' }
-  ]
+  // Organization statistics (admin-managed via /admin/site-stats)
+  const { stats } = useSiteStats('home')
 
   // Quick links data
   const quickLinks = [

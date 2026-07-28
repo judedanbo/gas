@@ -29,6 +29,7 @@
     "db:seed:departments": "npx tsx server/database/seeds/departments.ts",
     "db:seed:management-team": "npx tsx server/database/seeds/management-team.ts",
     "db:seed:board-members": "npx tsx server/database/seeds/board-members.ts",
+    "db:seed:site-stats": "npx tsx server/database/seeds/site-stats.ts",
     "db:seed:news": "npx tsx server/database/seeds/news.ts",
     "db:seed:events": "npx tsx server/database/seeds/events.ts",
     "db:seed:gallery": "npx tsx server/database/seeds/gallery.ts",
@@ -45,7 +46,7 @@
     "db:seed:publications": "npx tsx server/database/seeds/publications.ts",
     "db:seed:offices": "npx tsx server/database/seeds/offices.ts",
     "db:seed:sectors": "npx tsx server/database/seeds/seed-sectors.ts",
-    "db:seed:all": "npm run db:seed && npm run db:seed:departments && npm run db:seed:offices && npm run db:seed:sectors && npm run db:seed:management-team && npm run db:seed:board-members && npm run db:seed:reports && npm run db:seed:publications && npm run db:seed:news && npm run db:seed:events && npm run db:seed:gallery && npm run db:seed:videos",
+    "db:seed:all": "npm run db:seed && npm run db:seed:departments && npm run db:seed:offices && npm run db:seed:sectors && npm run db:seed:management-team && npm run db:seed:board-members && npm run db:seed:site-stats && npm run db:seed:reports && npm run db:seed:publications && npm run db:seed:news && npm run db:seed:events && npm run db:seed:gallery && npm run db:seed:videos",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "prepare": "husky"

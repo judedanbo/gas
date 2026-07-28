@@ -34,10 +34,11 @@ const easeOutQuart = (t: number): number => {
   return 1 - Math.pow(1 - t, 4)
 }
 
-// Animate a single number
+// Animate a single number (from its current displayed value to the target, so
+// re-animating on a data change eases from where it is rather than jumping to 0)
 const animateNumber = (index: number, target: number, duration: number = 2000) => {
   const startTime = performance.now()
-  const startValue = 0
+  const startValue = animatedValues.value[index] ?? 0
 
   const animate = (currentTime: number) => {
     const elapsed = currentTime - startTime
@@ -66,6 +67,26 @@ const startAnimation = () => {
     }, index * 150)
   })
 }
+
+// Keep the display in sync when the stats prop changes — e.g. async data
+// (useSiteStats) arriving after the section has already animated, or an admin
+// edit surfacing on a client-side navigation. Without this the counter would
+// stay frozen on whatever values were present at first reveal.
+watch(
+  () => props.stats,
+  (newStats) => {
+    // Resize the animated buffer to match, preserving already-shown values.
+    if (animatedValues.value.length !== newStats.length) {
+      animatedValues.value = newStats.map((_, i) => animatedValues.value[i] ?? 0)
+    }
+    // Only drive the count-up here once revealed; before the first intersection
+    // startAnimation() owns the initial animation.
+    if (hasAnimated.value) {
+      newStats.forEach((stat, index) => animateNumber(index, stat.value))
+    }
+  },
+  { deep: true }
+)
 
 // Intersection Observer to trigger animation when visible
 onMounted(() => {

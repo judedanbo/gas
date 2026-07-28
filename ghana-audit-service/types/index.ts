@@ -182,6 +182,22 @@ export interface BoardMember {
 }
 
 // ============================================
+// Site Statistics Types
+// ============================================
+
+export type SiteStatSection = 'home' | 'about_service' | 'about_legacy'
+
+/** Public shape consumed by HomeStatsCounter and UiStatGrid. */
+export interface SiteStat {
+  section: SiteStatSection
+  statKey: string
+  icon?: string
+  value: number
+  label: string
+  suffix: string
+}
+
+// ============================================
 // Career & Procurement Types
 // ============================================
 

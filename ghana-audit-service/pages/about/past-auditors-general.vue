@@ -253,11 +253,8 @@
     }
   ]
 
-  const legacyStats = [
-    { icon: 'heroicons:document', value: 115, label: 'Years of Service', suffix: '+' },
-    { icon: 'heroicons:user', value: pastAuditorsGeneral.length + 1, label: 'Auditors-General' },
-    { icon: 'heroicons:flag', value: 4, label: 'Republics Served' }
-  ]
+  // A Legacy of Excellence statistics (admin-managed via /admin/site-stats)
+  const { stats: legacyStats } = useSiteStats('about_legacy')
 
   const agRoles = [
     {

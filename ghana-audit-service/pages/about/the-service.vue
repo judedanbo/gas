@@ -239,13 +239,8 @@ const auditTypes = [
   { icon: 'heroicons:clipboard-document-list', title: 'Follow-up Review', description: 'Assessment of actions taken by entities in response to previous audit recommendations.' }
 ]
 
-// Universe statistics
-const universeStats = [
-  { icon: 'heroicons:building-library', value: 35, label: 'Ministries', suffix: '+' },
-  { icon: 'heroicons:building-office', value: 200, label: 'Departments & Agencies', suffix: '+' },
-  { icon: 'heroicons:building-office', value: 261, label: 'MMDAs' },
-  { icon: 'heroicons:building-library', value: 100, label: 'Public Institutions', suffix: '+' }
-]
+// Universe statistics (admin-managed via /admin/site-stats)
+const { stats: universeStats } = useSiteStats('about_service')
 
 // Entity categories
 const entityCategories = [
