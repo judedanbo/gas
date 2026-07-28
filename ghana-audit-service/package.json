@@ -127,6 +127,9 @@
     "@esbuild-kit/esm-loader": "npm:tsx@^4.21.0",
     "@esbuild-kit/core-utils": "npm:tsx@^4.21.0",
     "glob": "^13.0.6",
+    "readdir-glob": "^3.0.0",
+    "filelist": "^2.0.2",
+    "editorconfig": "^3.0.2",
     "ipx": {
       "sharp": "^0.35.0"
     }
