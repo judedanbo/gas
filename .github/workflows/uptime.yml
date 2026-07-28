@@ -37,6 +37,9 @@ jobs:
   check:
     name: Check ${{ matrix.environment }}
     runs-on: ubuntu-latest
+    # Worst healthy case is ~2 min (3 homepage attempts + health check);
+    # cap the job so a hung run can't stack the 5-minute schedule for hours.
+    timeout-minutes: 10
     strategy:
       fail-fast: false
       matrix:
@@ -68,7 +71,9 @@ jobs:
           # 10s between attempts, so a single blip doesn't page anyone.
           home_code=000
           for attempt in 1 2 3; do
-            home_code=$(curl -sS -o /dev/null -w '%{http_code}' --max-time 15 -L "$SITE_URL/" || echo 000)
+            # NB: don't `|| echo 000` here — curl's -w prints 000 itself on
+            # connection failure, and a fallback echo would double it up.
+            home_code=$(curl -sS -o /dev/null -w '%{http_code}' --max-time 15 -L "$SITE_URL/") || home_code=000
             if [ "$home_code" -ge 200 ] && [ "$home_code" -lt 400 ]; then
               break
             fi
@@ -86,7 +91,7 @@ jobs:
           health_note='skipped (homepage already down)'
           if [ "$up" = true ]; then
             health_body=$(mktemp)
-            health_code=$(curl -sS -o "$health_body" -w '%{http_code}' --max-time 20 "$SITE_URL/api/health" || echo 000)
+            health_code=$(curl -sS -o "$health_body" -w '%{http_code}' --max-time 20 "$SITE_URL/api/health") || health_code=000
             if [ "$health_code" = "404" ]; then
               health_note='not deployed (404); homepage check only'
             elif [ "$health_code" = "200" ]; then
@@ -188,7 +193,7 @@ jobs:
 
       - name: Email alert
         if: env.SMTP_HOST != '' && steps.incident.outputs.transition != 'none'
-        uses: dawidd6/action-send-mail@v6
+        uses: dawidd6/action-send-mail@v18
         with:
           server_address: ${{ secrets.UPTIME_SMTP_HOST }}
           server_port: ${{ secrets.UPTIME_SMTP_PORT }}
