@@ -405,6 +405,10 @@ export default defineNuxtConfig({
       // serves cached without giving the wrapper a chance to flag the hit.
       // /api/reports/** (detail + deeper) still uses route-rule caching
       // until those handlers are migrated too.
+      // Health probe (uptime monitors, k8s checks) — must always reflect live
+      // state; a cached "ok" would mask an outage. The handler also sets
+      // Cache-Control: no-store.
+      '/api/health': { cache: false },
       '/api/reports': { cache: false },
       '/api/reports/**': { cache: isDev ? false : { maxAge: 300, staleMaxAge: 600 } },
       '/api/news/**': { cache: isDev ? false : { maxAge: 300, staleMaxAge: 600 } },

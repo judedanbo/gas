@@ -52,6 +52,10 @@ export default defineEventHandler((event) => {
   const path = rawPath.split('?')[0]
   if (isStaticAsset(path)) return
   if (BLOCKED_DIRECT_PATHS.test(path)) return
+  // Health-probe traffic (external uptime monitor every few minutes, plus any
+  // in-cluster checks) is operational noise, not visitor traffic — skip capture
+  // so it doesn't pollute request_events and route rollups.
+  if (path === '/api/health') return
 
   const start = performance.now()
   const method = (event.method || 'GET').slice(0, 8)

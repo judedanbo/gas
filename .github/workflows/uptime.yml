@@ -1,0 +1,216 @@
+# External uptime monitoring for both deployments. See MONITORING.md for the
+# full runbook (alert channels, secrets, and how this relates to in-cluster
+# k8s probes).
+#
+# How it works:
+#   * Every 5 minutes (best-effort — GitHub may delay scheduled runs under
+#     load), each environment is probed: the homepage is the up/down signal,
+#     and /api/health is a deeper database check where deployed (a 404 means
+#     the endpoint isn't on that environment yet and is skipped).
+#   * Alerting is edge-triggered via a GitHub incident issue per environment
+#     (label `uptime:<env>`): the first failed check opens the issue, the
+#     first successful check after an outage comments and closes it. Repo
+#     watchers get notified externally (email/mobile) through normal GitHub
+#     issue notifications — zero extra configuration.
+#   * Optionally, the same down/recovered transitions post to Slack and/or
+#     send email directly, when the UPTIME_* secrets are configured.
+#
+# NOTE: scheduled workflows only run from the default branch, so monitoring
+# activates once this file lands on main.
+
+name: Uptime Monitor
+
+on:
+  schedule:
+    - cron: "*/5 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: uptime-monitor
+  cancel-in-progress: false
+
+jobs:
+  check:
+    name: Check ${{ matrix.environment }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - environment: test
+            url: https://test.audit.gov.gh
+          - environment: production
+            url: https://audit.gov.gh
+    env:
+      SITE_ENV: ${{ matrix.environment }}
+      SITE_URL: ${{ matrix.url }}
+      REPO: ${{ github.repository }}
+      GH_TOKEN: ${{ github.token }}
+      # Optional alert channels — empty unless the secrets are configured
+      # (repo-level secrets, not the `production` environment scope, so the
+      # scheduled job can read them). See MONITORING.md.
+      SLACK_WEBHOOK_URL: ${{ secrets.UPTIME_SLACK_WEBHOOK_URL }}
+      SMTP_HOST: ${{ secrets.UPTIME_SMTP_HOST }}
+    steps:
+      - name: Probe site
+        id: probe
+        run: |
+          set -uo pipefail
+
+          up=true
+          reason=''
+
+          # Homepage is the primary up/down signal: 3 attempts, 15s timeout,
+          # 10s between attempts, so a single blip doesn't page anyone.
+          home_code=000
+          for attempt in 1 2 3; do
+            home_code=$(curl -sS -o /dev/null -w '%{http_code}' --max-time 15 -L "$SITE_URL/" || echo 000)
+            if [ "$home_code" -ge 200 ] && [ "$home_code" -lt 400 ]; then
+              break
+            fi
+            echo "Attempt $attempt: homepage returned HTTP $home_code"
+            [ "$attempt" -lt 3 ] && sleep 10
+          done
+          if [ "$home_code" -lt 200 ] || [ "$home_code" -ge 400 ]; then
+            up=false
+            reason="Homepage returned HTTP $home_code on 3 consecutive attempts"
+          fi
+
+          # Deep check: /api/health verifies the database behind the site.
+          # 404 = endpoint not deployed on this environment (e.g. the legacy
+          # production site) — fall back to the homepage signal alone.
+          health_note='skipped (homepage already down)'
+          if [ "$up" = true ]; then
+            health_body=$(mktemp)
+            health_code=$(curl -sS -o "$health_body" -w '%{http_code}' --max-time 20 "$SITE_URL/api/health" || echo 000)
+            if [ "$health_code" = "404" ]; then
+              health_note='not deployed (404); homepage check only'
+            elif [ "$health_code" = "200" ]; then
+              health_note="HTTP 200: $(head -c 300 "$health_body")"
+            else
+              up=false
+              reason="/api/health returned HTTP $health_code: $(head -c 300 "$health_body" | tr -d '\n')"
+              health_note="HTTP $health_code"
+            fi
+          fi
+
+          echo "up=$up" >> "$GITHUB_OUTPUT"
+          echo "reason=$reason" >> "$GITHUB_OUTPUT"
+
+          {
+            echo "### ${SITE_ENV} — ${SITE_URL}"
+            if [ "$up" = true ]; then
+              echo "✅ Up (homepage HTTP $home_code; health: $health_note)"
+            else
+              echo "🔴 DOWN — $reason"
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Open or close incident issue
+        id: incident
+        env:
+          UP: ${{ steps.probe.outputs.up }}
+          REASON: ${{ steps.probe.outputs.reason }}
+        run: |
+          set -euo pipefail
+
+          label="uptime:${SITE_ENV}"
+          gh label create "$label" --repo "$REPO" \
+            --color D93F0B \
+            --description "Automated uptime incident (${SITE_ENV})" \
+            2>/dev/null || true
+
+          issue_number=$(gh issue list --repo "$REPO" --label "$label" --state open \
+            --json number --jq '.[0].number // empty')
+
+          transition=none
+          issue_url=''
+          run_url="https://github.com/${REPO}/actions/runs/${{ github.run_id }}"
+          now=$(date -u +'%Y-%m-%d %H:%M UTC')
+
+          if [ "$UP" = "false" ]; then
+            if [ -z "$issue_number" ]; then
+              body_file=$(mktemp)
+              cat > "$body_file" <<EOF
+          The uptime monitor could not reach **${SITE_URL}**.
+
+          | | |
+          |---|---|
+          | Environment | \`${SITE_ENV}\` |
+          | Detected | ${now} |
+          | Failure | ${REASON} |
+          | Monitor run | ${run_url} |
+
+          The monitor keeps checking every ~5 minutes and will close this issue automatically when the site recovers. Checked from GitHub-hosted runners — if the site loads for you, look for a geo/DNS/CDN-level cause.
+          EOF
+              issue_url=$(gh issue create --repo "$REPO" \
+                --title "🔴 Site down (${SITE_ENV}): ${SITE_URL}" \
+                --label "$label" \
+                --body-file "$body_file")
+              transition=down
+              echo "Opened incident: $issue_url"
+            else
+              echo "Incident #$issue_number already open; site still down — not re-alerting."
+            fi
+          else
+            if [ -n "$issue_number" ]; then
+              gh issue comment "$issue_number" --repo "$REPO" \
+                --body "✅ **Recovered** at ${now} — ${SITE_URL} is responding again. ([monitor run](${run_url}))"
+              gh issue close "$issue_number" --repo "$REPO" --reason completed
+              issue_url=$(gh issue view "$issue_number" --repo "$REPO" --json url --jq .url)
+              transition=recovered
+              echo "Closed incident #$issue_number"
+            fi
+          fi
+
+          echo "transition=$transition" >> "$GITHUB_OUTPUT"
+          echo "issue_url=$issue_url" >> "$GITHUB_OUTPUT"
+
+      - name: Slack alert
+        if: env.SLACK_WEBHOOK_URL != '' && steps.incident.outputs.transition != 'none'
+        env:
+          TRANSITION: ${{ steps.incident.outputs.transition }}
+          REASON: ${{ steps.probe.outputs.reason }}
+          ISSUE_URL: ${{ steps.incident.outputs.issue_url }}
+        run: |
+          set -euo pipefail
+          if [ "$TRANSITION" = "down" ]; then
+            text="🔴 *${SITE_ENV} site DOWN*: ${SITE_URL} — ${REASON}. Incident: ${ISSUE_URL}"
+          else
+            text="✅ *${SITE_ENV} site recovered*: ${SITE_URL} (${ISSUE_URL})"
+          fi
+          jq -n --arg text "$text" '{text: $text}' \
+            | curl -fsS -X POST -H 'Content-Type: application/json' --data @- "$SLACK_WEBHOOK_URL"
+
+      - name: Email alert
+        if: env.SMTP_HOST != '' && steps.incident.outputs.transition != 'none'
+        uses: dawidd6/action-send-mail@v6
+        with:
+          server_address: ${{ secrets.UPTIME_SMTP_HOST }}
+          server_port: ${{ secrets.UPTIME_SMTP_PORT }}
+          username: ${{ secrets.UPTIME_SMTP_USER }}
+          password: ${{ secrets.UPTIME_SMTP_PASS }}
+          from: ${{ secrets.UPTIME_SMTP_FROM }}
+          to: ${{ secrets.UPTIME_ALERT_TO }}
+          subject: >-
+            ${{ steps.incident.outputs.transition == 'down'
+                && format('🔴 Site down ({0}): {1}', matrix.environment, matrix.url)
+                || format('✅ Site recovered ({0}): {1}', matrix.environment, matrix.url) }}
+          body: |
+            Environment: ${{ matrix.environment }}
+            URL: ${{ matrix.url }}
+            Status: ${{ steps.incident.outputs.transition }}
+            Details: ${{ steps.probe.outputs.reason || 'site is responding again' }}
+            Incident issue: ${{ steps.incident.outputs.issue_url }}
+
+      - name: Mark run failed while site is down
+        if: steps.probe.outputs.up == 'false'
+        env:
+          REASON: ${{ steps.probe.outputs.reason }}
+        run: |
+          echo "::error::${SITE_ENV} site is down — ${REASON}"
+          exit 1
