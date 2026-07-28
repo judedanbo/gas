@@ -109,6 +109,17 @@ RUN apk add --no-cache \
 ENV PUPPETEER_SKIP_DOWNLOAD=true
 ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser
 
+# The runtime never invokes a package manager (CMD is plain `node`), but the
+# base image bundles npm/corepack/yarn — and npm vendors its own node_modules
+# (tar, glob, ...) that regularly trip the deploy's fail-on-critical Trivy
+# gate (e.g. CVE-2026-59873 in npm's bundled tar) even though nothing here
+# executes them. Removing the package managers eliminates that attack surface.
+# The migrator stage keeps npm — its CMD needs `npm run db:apply`.
+RUN rm -rf /usr/local/lib/node_modules/npm \
+        /usr/local/lib/node_modules/corepack \
+        /usr/local/bin/npm /usr/local/bin/npx /usr/local/bin/corepack \
+        /opt/yarn* /usr/local/bin/yarn /usr/local/bin/yarnpkg
+
 # Create non-root user for security
 RUN addgroup --system --gid 1001 nodejs && \
     adduser --system --uid 1001 nuxtjs
