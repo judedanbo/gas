@@ -686,8 +686,9 @@
   async function fetchHistory() {
     historyLoading.value = true
     try {
-      const response = await $fetch<{ data: (typeof historyEntries.value)[number][] }>(
-        `/api/admin/reports/${id}/history`
+      const { get } = useAdminApi()
+      const response = await get<{ data: (typeof historyEntries.value)[number][] }>(
+        `reports/${id}/history`
       )
       historyEntries.value = response.data.map((e) => ({ ...e, _expanded: false }))
     } catch {
