@@ -19,6 +19,9 @@ export * from './events'
 // Organization Tables
 export * from './organization'
 
+// Auditor-General message (singleton home-page section content)
+export * from './auditor-general'
+
 // Site Statistics (editable public figures)
 export * from './site-stats'
 

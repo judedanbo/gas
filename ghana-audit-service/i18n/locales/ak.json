@@ -65,6 +65,12 @@
     "unableToLoadReports": "Yɛantumi amfa amanneɛbɔ no amma. Yɛsrɛ wo bɔ mmɔden bio akyiri yi.",
     "noReportsAvailable": "Amanneɛbɔ biara nni hɔ seesei.",
     "latestNews": "Nsɛm Foforɔ",
+    "agMessage": {
+      "badge": "Nsɛm a ɛfiri Nsɛmhwɛfo Panyin hɔ",
+      "readFullMessage": "Kenkan nsɛm no nyinaa",
+      "pageTitle": "Nsɛmhwɛfo Panyin Nsɛm",
+      "pageDescription": "Nsɛm a ɛfiri Ghana Nsɛmhwɛfo Panyin hɔ"
+    },
     "stats": {
       "years": "Mfeɛ Adwuma Mu",
       "staff": "Adwumayɛfoɔ",
