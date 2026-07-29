@@ -30,16 +30,14 @@
             >
               <button
                 class="touch-target-area p-2 text-white/80 hover:text-white hover:bg-white/10 rounded transition-colors flex items-center justify-center"
-                :aria-pressed="colorMode.value === 'dark'"
+                :aria-pressed="isDark"
                 title="Toggle dark mode"
-                :aria-label="
-                  colorMode.value === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'
-                "
+                :aria-label="isDark ? 'Switch to light mode' : 'Switch to dark mode'"
                 @click="toggleDarkMode"
               >
                 <ClientOnly>
                   <Icon
-                    :name="colorMode.value === 'dark' ? 'heroicons:sun' : 'heroicons:moon'"
+                    :name="isDark ? 'heroicons:sun' : 'heroicons:moon'"
                     class="w-4 h-4"
                     aria-hidden="true"
                   />
@@ -204,6 +202,12 @@
   // Color mode (dark mode)
   const colorMode = useColorMode()
 
+  // SSR renders colorMode.value as 'system' while the client resolves it to
+  // dark/light before hydration, so bind dark-mode UI through a mounted gate
+  // to keep the first client render identical to the server HTML.
+  const mounted = ref(false)
+  const isDark = computed(() => mounted.value && colorMode.value === 'dark')
+
   function toggleDarkMode() {
     colorMode.preference = colorMode.value === 'dark' ? 'light' : 'dark'
   }
@@ -269,6 +273,7 @@
   )
 
   onMounted(() => {
+    mounted.value = true
     window.addEventListener('scroll', handleScroll)
   })
 

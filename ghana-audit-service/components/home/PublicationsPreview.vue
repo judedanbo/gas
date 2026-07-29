@@ -201,14 +201,7 @@
     return labels[type] || type
   }
 
-  const formatDate = (dateStr: string): string => {
-    const date = new Date(dateStr)
-    return date.toLocaleDateString('en-GB', {
-      day: 'numeric',
-      month: 'short',
-      year: 'numeric'
-    })
-  }
+  const { formatDateShort: formatDate } = useLocaleDate()
 
   const getPublicationUrl = (publication: Publication): string => {
     const typeToPath: Record<PublicationType, string> = {
