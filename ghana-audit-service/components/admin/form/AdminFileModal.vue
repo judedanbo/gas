@@ -69,7 +69,7 @@
               {{ displayFilename }}
             </p>
             <p v-if="cardFileSize" class="text-xs text-gray-500 dark:text-gray-400">
-              {{ formatFileSize(cardFileSize) }}
+              {{ formatBytes(cardFileSize) }}
             </p>
           </div>
           <span class="text-xs text-primary font-medium flex-shrink-0">Change</span>
@@ -134,7 +134,7 @@
           <div v-if="optimization.isRunning.value" class="space-y-2">
             <div class="flex items-center justify-between text-sm">
               <span class="font-medium text-gray-700 dark:text-gray-300">
-                {{ optimizationPhaseLabel }}
+                {{ optimizationPhaseLabel(optimization.phase.value) }}
               </span>
               <span
                 v-if="
@@ -172,9 +172,9 @@
               File was already well-compressed; original kept.
             </p>
             <p v-else class="text-green-700 dark:text-green-400 font-medium">
-              Reduced {{ formatFileSize(optimization.result.value.originalSize) }} &rarr;
-              {{ formatFileSize(optimization.result.value.optimizedSize) }} (saved
-              {{ formatFileSize(optimization.result.value.savedBytes) }})
+              Reduced {{ formatBytes(optimization.result.value.originalSize) }} &rarr;
+              {{ formatBytes(optimization.result.value.optimizedSize) }} (saved
+              {{ formatBytes(optimization.result.value.savedBytes) }})
             </p>
             <p class="text-xs text-gray-500">
               {{ optimization.result.value.nativePages }} native ·
@@ -236,7 +236,7 @@
                   {{ extractFilename(modalFileUrl) }}
                 </p>
                 <p v-if="modalFileSize" class="text-xs text-gray-500 dark:text-gray-400">
-                  {{ formatFileSize(modalFileSize) }}
+                  {{ formatBytes(modalFileSize) }}
                 </p>
               </div>
             </div>
@@ -444,19 +444,8 @@
   const modalThumbnail = ref<string | null>(null)
 
   // Compression preset for the optimization pipeline. Only applies to
-  // reports — publications skip optimization. Persisted in localStorage so
-  // the admin's preference sticks across uploads.
-  const PRESET_STORAGE_KEY = 'gas:report-optimize-preset'
-  const optimizePreset = ref<CompressionPreset>('ebook')
-  if (import.meta.client) {
-    const stored = window.localStorage.getItem(PRESET_STORAGE_KEY) as CompressionPreset | null
-    if (stored === 'screen' || stored === 'ebook' || stored === 'printer') {
-      optimizePreset.value = stored
-    }
-  }
-  watch(optimizePreset, (val) => {
-    if (import.meta.client) window.localStorage.setItem(PRESET_STORAGE_KEY, val)
-  })
+  // reports — publications skip optimization. Shared with the edit page.
+  const optimizePreset = useOptimizePreset()
 
   // What the card displays (committed values from props)
   const cardFileUrl = computed(() => props.fileUrl || null)
@@ -469,31 +458,6 @@
     if (!url) return ''
     return url.split('/').pop() || url
   }
-
-  function formatFileSize(bytes: number): string {
-    if (bytes < 1024) return `${bytes} B`
-    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
-    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
-  }
-
-  const optimizationPhaseLabel = computed(() => {
-    switch (optimization.phase.value) {
-      case 'inspect':
-        return 'Inspecting PDF…'
-      case 'split':
-        return 'Splitting pages…'
-      case 'classify':
-        return 'Classifying pages…'
-      case 'ocr':
-        return 'Running OCR on scanned pages…'
-      case 'merge':
-        return 'Reassembling document…'
-      case 'compress':
-        return 'Compressing…'
-      default:
-        return 'Optimizing PDF…'
-    }
-  })
 
   function openModal() {
     modalFileUrl.value = props.fileUrl || null

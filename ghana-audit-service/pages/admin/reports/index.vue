@@ -392,16 +392,15 @@
     special: 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-300'
   }
 
+  // Wrapper around the shared formatBytes: DB fileSize values can be legacy
+  // pre-formatted labels ("4.2 MB") from the crawlers as well as byte counts.
   function formatFileSize(value: unknown): string {
     if (!value) return '—'
     const str = String(value)
     if (str.includes('MB') || str.includes('KB') || str.includes('GB')) return str
     const bytes = Number(str)
     if (isNaN(bytes)) return str
-    if (bytes < 1024) return `${bytes} B`
-    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
-    if (bytes < 1024 * 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
-    return `${(bytes / (1024 * 1024 * 1024)).toFixed(1)} GB`
+    return formatBytes(bytes)
   }
 
   function formatReportMeta(report: AdminAuditReport): string[] {

@@ -1,4 +1,4 @@
-import { ref, computed } from 'vue'
+import { ref, computed, watch, type Ref } from 'vue'
 import { optimizationErrorMessage } from '~/utils/reportOptimizationUi'
 
 export type CompressionPreset = 'screen' | 'ebook' | 'printer'
@@ -76,6 +76,26 @@ interface StatusResponse {
 const POLL_INTERVAL_MS = 2_000
 const POLL_MAX_FAILURES = 5
 const POLL_MAX_MS = 30 * 60_000
+
+const PRESET_STORAGE_KEY = 'gas:report-optimize-preset'
+
+/**
+ * The admin's preferred compression preset, persisted in localStorage so it
+ * sticks across uploads and pages (upload modal + edit page share it).
+ */
+export function useOptimizePreset(): Ref<CompressionPreset> {
+  const preset = ref<CompressionPreset>('ebook')
+  if (import.meta.client) {
+    const stored = window.localStorage.getItem(PRESET_STORAGE_KEY) as CompressionPreset | null
+    if (stored === 'screen' || stored === 'ebook' || stored === 'printer') {
+      preset.value = stored
+    }
+  }
+  watch(preset, (val) => {
+    if (import.meta.client) window.localStorage.setItem(PRESET_STORAGE_KEY, val)
+  })
+  return preset
+}
 
 const PHASE_PROGRESS: Record<OptimizationPhase, number> = {
   inspect: 5,

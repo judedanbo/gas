@@ -137,7 +137,7 @@
                 <div v-if="optimization.isRunning.value" class="space-y-2">
                   <div class="flex items-center justify-between text-sm">
                     <span class="font-medium text-gray-700 dark:text-gray-300">
-                      {{ inlinePhaseLabel }}
+                      {{ optimizationPhaseLabel(optimization.phase.value) }}
                     </span>
                     <span
                       v-if="
@@ -513,31 +513,6 @@
     } else if (optimization.status.value === 'error') {
       toast.error(optimization.errorMessage.value || 'Optimization failed')
     }
-  }
-
-  const inlinePhaseLabel = computed(() => {
-    switch (optimization.phase.value) {
-      case 'inspect':
-        return 'Inspecting PDF…'
-      case 'split':
-        return 'Splitting pages…'
-      case 'classify':
-        return 'Classifying pages…'
-      case 'ocr':
-        return 'Running OCR…'
-      case 'merge':
-        return 'Reassembling…'
-      case 'compress':
-        return 'Compressing…'
-      default:
-        return 'Optimizing PDF…'
-    }
-  })
-
-  function formatBytes(bytes: number): string {
-    if (bytes < 1024) return `${bytes} B`
-    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
-    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
   }
 
   // Slug checking state
