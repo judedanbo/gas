@@ -96,7 +96,7 @@ export type ProgressEvent =
   | { phase: 'inspect'; pageCount: number; hasBookmarks: boolean }
   | { phase: 'split' }
   | { phase: 'classify'; page: number; totalPages: number; kind: PageKind; reason: string }
-  | { phase: 'ocr'; page: number; totalPages: number }
+  | { phase: 'ocr'; page: number; totalPages: number; failed?: boolean }
   | { phase: 'merge' }
   | { phase: 'compress' }
   | {
@@ -107,6 +107,7 @@ export type ProgressEvent =
       skippedCompression: boolean
       nativePages: number
       scannedPages: number
+      ocrFailedPages: number
     }
 
 export interface OptimizeResult {
@@ -116,6 +117,7 @@ export interface OptimizeResult {
   skippedCompression: boolean
   nativePages: number
   scannedPages: number
+  ocrFailedPages: number
   pageCount: number
 }
 
@@ -239,25 +241,42 @@ export async function optimizeReportPdf(
     }
 
     // OCR scanned pages with bounded concurrency. Native pages don't need any
-    // work — their split file IS the final page file.
+    // work — their split file IS the final page file. A single page failing
+    // OCR (timeout on a dense scan, damaged stream) must not abort the whole
+    // job: the page falls back to its original split file. MISSING_BINARY is
+    // the exception — every page would fail, so the job-level error is right.
     const scannedJobs = bodyClassifications.filter((c) => c.kind === 'scanned')
     const ocrOutputs = new Map<number, string>()
+    let ocrFailedPages = 0
 
     await runWithConcurrency(scannedJobs, OCR_CONCURRENCY, async (job) => {
-      const out = await ocrPage(job.src, workDir, job.idx, ocrLanguage)
-      ocrOutputs.set(job.idx, out)
-      emit({
-        phase: 'ocr',
-        page: job.idx + 1,
-        totalPages: pageFiles.length
-      })
+      try {
+        const out = await ocrPage(job.src, workDir, job.idx, ocrLanguage)
+        ocrOutputs.set(job.idx, out)
+        emit({
+          phase: 'ocr',
+          page: job.idx + 1,
+          totalPages: pageFiles.length
+        })
+      } catch (err) {
+        if (err instanceof PdfOptimizerError && err.code === 'MISSING_BINARY') {
+          throw err
+        }
+        ocrFailedPages++
+        emit({
+          phase: 'ocr',
+          page: job.idx + 1,
+          totalPages: pageFiles.length,
+          failed: true
+        })
+      }
     })
 
     for (const c of bodyClassifications) {
       if (c.kind === 'scanned') {
         const ocrPath = ocrOutputs.get(c.idx)
         if (!ocrPath) {
-          // Fall back to the original page if OCR mysteriously produced nothing.
+          // OCR failed for this page — keep the original page file.
           finalPagePaths.push(c.src)
           nativePages++
         } else {
@@ -310,6 +329,7 @@ export async function optimizeReportPdf(
       skippedCompression,
       nativePages,
       scannedPages,
+      ocrFailedPages,
       pageCount: info.pageCount
     }
 
@@ -320,7 +340,8 @@ export async function optimizeReportPdf(
       savedBytes: result.savedBytes,
       skippedCompression,
       nativePages,
-      scannedPages
+      scannedPages,
+      ocrFailedPages
     })
 
     return result

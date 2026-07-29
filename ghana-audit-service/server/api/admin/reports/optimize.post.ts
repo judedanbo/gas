@@ -114,7 +114,8 @@ async function runOptimization(
       savedBytes: result.savedBytes,
       skippedCompression: result.skippedCompression,
       nativePages: result.nativePages,
-      scannedPages: result.scannedPages
+      scannedPages: result.scannedPages,
+      ocrFailedPages: result.ocrFailedPages
     })
 
     void logAuditAction(event, 'update', 'report_optimization', reportId, {
@@ -126,6 +127,7 @@ async function runOptimization(
         savedBytes: result.savedBytes,
         nativePages: result.nativePages,
         scannedPages: result.scannedPages,
+        ocrFailedPages: result.ocrFailedPages,
         skippedCompression: result.skippedCompression
       }
     })
@@ -154,7 +156,8 @@ async function runOptimization(
       savedBytes: 0,
       skippedCompression: true,
       nativePages: 0,
-      scannedPages: 0
+      scannedPages: 0,
+      ocrFailedPages: 0
     })
 
     void logAuditAction(event, 'update', 'report_optimization', reportId, {

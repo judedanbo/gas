@@ -230,6 +230,113 @@ describe('optimizeReportPdf', () => {
     expect(result.optimizedSize).toBeLessThan(result.originalSize)
   })
 
+  it('falls back to the original page when OCR fails for a single page', async () => {
+    const input = makeInputPdf(4096)
+
+    programExec([
+      () => ({ stdout: pdfinfoResult(2), stderr: '' }),
+      () => ({ stdout: qpdfOutlines(0), stderr: '' }),
+      (_b, args) => {
+        const outDir = args[args.length - 1].replace(/[\\/]page-%d\.pdf$/, '')
+        writeSplitPages(outDir, 2)
+        return { stdout: '', stderr: '' }
+      },
+      // classify page 2: pdftotext → empty, pdffonts → none, pdfimages → 1 image
+      () => ({ stdout: '', stderr: '' }),
+      () => ({
+        stdout: 'name type encoding emb sub uni object ID\n--- --- --- --- --- --- ---',
+        stderr: ''
+      }),
+      () => ({
+        stdout:
+          'page num  type  width height\n--- ---  ---  ----- ------\n   2   0 image  2480  3508',
+        stderr: ''
+      }),
+      // ocr page 2: pdftoppm → write .pgm
+      (_b, args) => {
+        const prefix = args[args.length - 1]
+        const renderDir = prefix.substring(0, prefix.lastIndexOf('/'))
+        const base = prefix.substring(prefix.lastIndexOf('/') + 1)
+        mkdirSync(renderDir, { recursive: true })
+        writeFileSync(join(renderDir, `${base}-1.pgm`), 'P5\n')
+        return { stdout: '', stderr: '' }
+      },
+      // ocr page 2: tesseract → transient failure (NOT a missing binary)
+      () => {
+        throw new Error('tesseract timed out on dense page')
+      },
+      // qpdf merge — job continues with the original page file
+      (_b, args) => {
+        writeFileSync(args[args.length - 1], Buffer.alloc(2000, 0x22))
+        return { stdout: '', stderr: '' }
+      },
+      // gs → smaller
+      (_b, args) => {
+        const out = args.find((a) => a.startsWith('-sOutputFile='))!.replace('-sOutputFile=', '')
+        writeFileSync(out, Buffer.alloc(1024, 0x22))
+        return { stdout: '', stderr: '' }
+      },
+      () => ({ stdout: pdfinfoResult(2), stderr: '' })
+    ])
+
+    const ocrEvents: Array<{ page: number; failed?: boolean }> = []
+    const result = await optimizeReportPdf(input, {
+      onProgress: (e) => {
+        if (e.phase === 'ocr') ocrEvents.push({ page: e.page, failed: e.failed })
+      }
+    })
+
+    expect(result.ocrFailedPages).toBe(1)
+    // The failed page fell back to its original split file and counts as kept.
+    expect(result.scannedPages).toBe(0)
+    expect(result.nativePages).toBe(2)
+    expect(result.nativePages + result.scannedPages).toBe(result.pageCount)
+    expect(ocrEvents).toEqual([{ page: 2, failed: true }])
+  })
+
+  it('still fails the whole job when tesseract itself is missing', async () => {
+    const input = makeInputPdf(4096)
+
+    programExec([
+      () => ({ stdout: pdfinfoResult(2), stderr: '' }),
+      () => ({ stdout: qpdfOutlines(0), stderr: '' }),
+      (_b, args) => {
+        const outDir = args[args.length - 1].replace(/[\\/]page-%d\.pdf$/, '')
+        writeSplitPages(outDir, 2)
+        return { stdout: '', stderr: '' }
+      },
+      () => ({ stdout: '', stderr: '' }),
+      () => ({
+        stdout: 'name type encoding emb sub uni object ID\n--- --- --- --- --- --- ---',
+        stderr: ''
+      }),
+      () => ({
+        stdout:
+          'page num  type  width height\n--- ---  ---  ----- ------\n   2   0 image  2480  3508',
+        stderr: ''
+      }),
+      (_b, args) => {
+        const prefix = args[args.length - 1]
+        const renderDir = prefix.substring(0, prefix.lastIndexOf('/'))
+        const base = prefix.substring(prefix.lastIndexOf('/') + 1)
+        mkdirSync(renderDir, { recursive: true })
+        writeFileSync(join(renderDir, `${base}-1.pgm`), 'P5\n')
+        return { stdout: '', stderr: '' }
+      },
+      // tesseract → ENOENT: every page would fail, so the job must error
+      () => {
+        throw Object.assign(new Error('spawn tesseract ENOENT'), {
+          code: 'ENOENT',
+          path: 'tesseract'
+        })
+      }
+    ])
+
+    await expect(optimizeReportPdf(input)).rejects.toMatchObject({
+      code: 'MISSING_BINARY'
+    })
+  })
+
   it('keeps the original when Ghostscript output grows the file', async () => {
     const input = makeInputPdf(1024)
 
