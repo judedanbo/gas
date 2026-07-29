@@ -69,7 +69,7 @@
               {{ displayFilename }}
             </p>
             <p v-if="cardFileSize" class="text-xs text-gray-500 dark:text-gray-400">
-              {{ formatFileSize(cardFileSize) }}
+              {{ formatBytes(cardFileSize) }}
             </p>
           </div>
           <span class="text-xs text-primary font-medium flex-shrink-0">Change</span>
@@ -134,7 +134,7 @@
           <div v-if="optimization.isRunning.value" class="space-y-2">
             <div class="flex items-center justify-between text-sm">
               <span class="font-medium text-gray-700 dark:text-gray-300">
-                {{ optimizationPhaseLabel }}
+                {{ optimizationPhaseLabel(optimization.phase.value) }}
               </span>
               <span
                 v-if="
@@ -159,6 +159,9 @@
               {{ optimization.nativePages.value }} native ·
               {{ optimization.scannedPages.value }} scanned
             </p>
+            <p class="text-xs text-gray-500">
+              You can confirm now — optimization continues in the background.
+            </p>
           </div>
 
           <div
@@ -172,26 +175,32 @@
               File was already well-compressed; original kept.
             </p>
             <p v-else class="text-green-700 dark:text-green-400 font-medium">
-              Reduced {{ formatFileSize(optimization.result.value.originalSize) }} &rarr;
-              {{ formatFileSize(optimization.result.value.optimizedSize) }} (saved
-              {{ formatFileSize(optimization.result.value.savedBytes) }})
+              Reduced {{ formatBytes(optimization.result.value.originalSize) }} &rarr;
+              {{ formatBytes(optimization.result.value.optimizedSize) }} (saved
+              {{ formatBytes(optimization.result.value.savedBytes) }})
             </p>
             <p class="text-xs text-gray-500">
               {{ optimization.result.value.nativePages }} native ·
               {{ optimization.result.value.scannedPages }} scanned
             </p>
+            <p
+              v-if="(optimization.result.value.ocrFailedPages ?? 0) > 0"
+              class="text-xs text-amber-600 dark:text-amber-400"
+            >
+              {{ optimization.result.value.ocrFailedPages }} page(s) could not be OCR-processed and
+              were kept as scans.
+            </p>
           </div>
 
           <div v-else-if="optimization.status.value === 'error'" class="text-sm space-y-2">
             <p class="text-amber-700 dark:text-amber-400">
-              Optimization failed:
-              <span class="font-mono text-xs">{{ optimization.error.value }}</span>
+              {{ optimization.errorMessage.value }}
             </p>
             <p class="text-xs text-gray-500">
               The original file will be used. You can retry from the edit page.
             </p>
             <button
-              v-if="optimization.error.value && optimization.error.value.includes('HAS_BOOKMARKS')"
+              v-if="optimization.errorCode.value === 'HAS_BOOKMARKS'"
               type="button"
               class="btn btn-ghost text-sm"
               @click="retryWithBookmarksDropped"
@@ -230,7 +239,7 @@
                   {{ extractFilename(modalFileUrl) }}
                 </p>
                 <p v-if="modalFileSize" class="text-xs text-gray-500 dark:text-gray-400">
-                  {{ formatFileSize(modalFileSize) }}
+                  {{ formatBytes(modalFileSize) }}
                 </p>
               </div>
             </div>
@@ -370,10 +379,10 @@
           <button
             type="button"
             class="btn btn-primary"
-            :disabled="!modalFileUrl || optimization.isRunning.value"
+            :disabled="!modalFileUrl"
             @click="handleConfirm"
           >
-            {{ optimization.isRunning.value ? 'Optimizing…' : 'Confirm' }}
+            Confirm
           </button>
         </div>
       </template>
@@ -382,7 +391,15 @@
 </template>
 
 <script setup lang="ts">
-  import type { CompressionPreset } from '~/composables/useReportOptimization'
+  import { useOptimizePreset } from '~/composables/useReportOptimization'
+  import { formatBytes } from '~/utils/formatBytes'
+  import { optimizationPhaseLabel } from '~/utils/reportOptimizationUi'
+  import type { ReportOptimizationMeta } from '~/types/admin'
+
+  export interface OptimizationSnapshot {
+    optimizedAt: string
+    meta: ReportOptimizationMeta
+  }
 
   interface Props {
     resource: 'reports' | 'publications'
@@ -409,6 +426,10 @@
     'update:fileUrl': [url: string]
     'update:fileSize': [size: number | undefined]
     'update:thumbnail': [url: string]
+    // Result snapshot of a completed optimization, for the create flow to
+    // send with its POST (a saved report gets this persisted server-side
+    // instead). null when no optimization finished for the confirmed file.
+    'update:optimization': [snapshot: OptimizationSnapshot | null]
   }>()
 
   const api = useAdminApi()
@@ -428,19 +449,8 @@
   const modalThumbnail = ref<string | null>(null)
 
   // Compression preset for the optimization pipeline. Only applies to
-  // reports — publications skip optimization. Persisted in localStorage so
-  // the admin's preference sticks across uploads.
-  const PRESET_STORAGE_KEY = 'gas:report-optimize-preset'
-  const optimizePreset = ref<CompressionPreset>('ebook')
-  if (import.meta.client) {
-    const stored = window.localStorage.getItem(PRESET_STORAGE_KEY) as CompressionPreset | null
-    if (stored === 'screen' || stored === 'ebook' || stored === 'printer') {
-      optimizePreset.value = stored
-    }
-  }
-  watch(optimizePreset, (val) => {
-    if (import.meta.client) window.localStorage.setItem(PRESET_STORAGE_KEY, val)
-  })
+  // reports — publications skip optimization. Shared with the edit page.
+  const optimizePreset = useOptimizePreset()
 
   // What the card displays (committed values from props)
   const cardFileUrl = computed(() => props.fileUrl || null)
@@ -453,31 +463,6 @@
     if (!url) return ''
     return url.split('/').pop() || url
   }
-
-  function formatFileSize(bytes: number): string {
-    if (bytes < 1024) return `${bytes} B`
-    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
-    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
-  }
-
-  const optimizationPhaseLabel = computed(() => {
-    switch (optimization.phase.value) {
-      case 'inspect':
-        return 'Inspecting PDF…'
-      case 'split':
-        return 'Splitting pages…'
-      case 'classify':
-        return 'Classifying pages…'
-      case 'ocr':
-        return 'Running OCR on scanned pages…'
-      case 'merge':
-        return 'Reassembling document…'
-      case 'compress':
-        return 'Compressing…'
-      default:
-        return 'Optimizing PDF…'
-    }
-  })
 
   function openModal() {
     modalFileUrl.value = props.fileUrl || null
@@ -498,12 +483,12 @@
     modalThumbnail.value = null
     thumbnailSource.value = null
 
-    // Reports run through the optimization pipeline before thumbnailing.
-    // The cover (page 1) is preserved byte-for-byte, so the thumbnail it
-    // produces is identical to one taken before optimization, but the
-    // generated file is smaller and (where applicable) searchable.
+    // Reports kick off the optimization pipeline in the background — the
+    // admin can keep working (and even confirm/save) while it runs; the
+    // server persists the result when the job finishes. The cover (page 1)
+    // is preserved byte-for-byte, so thumbnailing immediately is safe.
     if (props.resource === 'reports') {
-      await runOptimization()
+      void runOptimization()
     }
 
     generateThumbnail()
@@ -558,10 +543,32 @@
     isUploadingCustomThumbnail.value = false
   }
 
+  function optimizationSnapshot(): OptimizationSnapshot | null {
+    const r = optimization.result.value
+    if (props.resource !== 'reports' || optimization.status.value !== 'success' || !r) {
+      return null
+    }
+    return {
+      optimizedAt: new Date().toISOString(),
+      meta: {
+        preset: optimizePreset.value,
+        originalSize: r.originalSize,
+        optimizedSize: r.optimizedSize,
+        savedBytes: r.savedBytes,
+        pageCount: r.pageCount ?? optimization.totalPages.value,
+        nativePages: r.nativePages,
+        scannedPages: r.scannedPages,
+        ocrFailedPages: r.ocrFailedPages ?? 0,
+        skippedCompression: r.skippedCompression
+      }
+    }
+  }
+
   function handleConfirm() {
     emit('update:fileUrl', modalFileUrl.value || '')
     emit('update:fileSize', modalFileSize.value || undefined)
     emit('update:thumbnail', modalThumbnail.value || '')
+    emit('update:optimization', optimizationSnapshot())
     isOpen.value = false
   }
 

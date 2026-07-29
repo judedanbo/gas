@@ -2,10 +2,13 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { getRedis } from '~/server/utils/redis'
 import {
   createJob,
+  effectiveJobState,
   getJob,
   getJobAcrossInstances,
+  sweepStalledJobs,
   updateJob,
-  pushEvent
+  pushEvent,
+  type JobState
 } from '~/server/utils/pdfOptimizationJobs'
 
 // Per CLAUDE.md: vi.mock factories must use `function` declarations (hoisted).
@@ -53,6 +56,24 @@ describe('pdfOptimizationJobs', () => {
     const parsed = JSON.parse(mirrored!)
     expect(parsed.status).toBe('running')
     expect(parsed.events).toHaveLength(1)
+    // Seqs survive the JSON round-trip so remote consumers can dedupe.
+    expect(parsed.events[0]).toEqual({ seq: 1, event: { phase: 'compress' } })
+    expect(parsed.nextSeq).toBe(2)
+  })
+
+  it('stamps monotonically increasing seqs and keeps the highest after trimming', () => {
+    const job = createJob('/pdf/reports/big.pdf', 4)
+    for (let i = 0; i < 510; i++) {
+      pushEvent(job.id, { phase: 'classify', page: i, totalPages: 510 } as never)
+    }
+    const state = getJob(job.id)!
+    // Ring buffer caps at 500 — the oldest 10 are trimmed, seqs are stable.
+    expect(state.events).toHaveLength(500)
+    expect(state.events[0].seq).toBe(11)
+    expect(state.events[state.events.length - 1].seq).toBe(510)
+    for (let i = 1; i < state.events.length; i++) {
+      expect(state.events[i].seq).toBe(state.events[i - 1].seq + 1)
+    }
   })
 
   it('falls back to the Redis mirror for jobs owned by another instance', async () => {
@@ -66,7 +87,8 @@ describe('pdfOptimizationJobs', () => {
       status: 'running',
       fileUrl: '/pdf/reports/z.pdf',
       reportId: 3,
-      events: [{ phase: 'inspect' }],
+      events: [{ seq: 1, event: { phase: 'inspect' } }],
+      nextSeq: 2,
       startedAt: 1,
       updatedAt: 2
     }
@@ -80,5 +102,62 @@ describe('pdfOptimizationJobs', () => {
     const fake = makeFakeRedis()
     vi.mocked(getRedis).mockReturnValue(fake.client as never)
     await expect(getJobAcrossInstances('ghost')).resolves.toBeUndefined()
+  })
+
+  describe('watchdog', () => {
+    it('times out a running job with no recent activity', () => {
+      const job = createJob('/pdf/reports/stalled.pdf', 5)
+      updateJob(job.id, { status: 'running' })
+      const state = getJob(job.id)!
+      const now = state.updatedAt + 16 * 60_000
+
+      sweepStalledJobs(now)
+
+      expect(state.status).toBe('error')
+      expect(state.errorCode).toBe('TIMEOUT')
+      // Terminal event pushed so SSE subscribers are released.
+      expect(state.events.at(-1)?.event.phase).toBe('done')
+    })
+
+    it('times out a queued job by total wait, not inactivity', () => {
+      const job = createJob('/pdf/reports/queued-forever.pdf', 6)
+      const state = getJob(job.id)!
+      // 20 minutes queued: past the running-stall window but within the
+      // queue-wait cap — must NOT be swept.
+      sweepStalledJobs(state.startedAt + 20 * 60_000)
+      expect(state.status).toBe('queued')
+
+      sweepStalledJobs(state.startedAt + 31 * 60_000)
+      expect(state.status).toBe('error')
+      expect(state.errorCode).toBe('QUEUE_TIMEOUT')
+    })
+
+    it('leaves active jobs alone', () => {
+      const job = createJob('/pdf/reports/busy.pdf', 7)
+      updateJob(job.id, { status: 'running' })
+      const state = getJob(job.id)!
+      sweepStalledJobs(state.updatedAt + 60_000)
+      expect(state.status).toBe('running')
+    })
+
+    it('effectiveJobState turns a stalled deserialized state terminal without mutating it', () => {
+      const remote: JobState = {
+        id: 'dead-pod-job',
+        status: 'running',
+        fileUrl: '/pdf/reports/dead.pdf',
+        reportId: 8,
+        events: [],
+        nextSeq: 1,
+        startedAt: 0,
+        updatedAt: 0
+      }
+      const effective = effectiveJobState(remote, 16 * 60_000)
+      expect(effective.status).toBe('error')
+      expect(effective.errorCode).toBe('TIMEOUT')
+      expect(remote.status).toBe('running')
+
+      // Fresh state passes through untouched.
+      expect(effectiveJobState(remote, 60_000)).toBe(remote)
+    })
   })
 })

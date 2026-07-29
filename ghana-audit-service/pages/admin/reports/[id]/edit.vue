@@ -104,17 +104,38 @@
 
             <!-- Report File -->
             <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-              <div class="flex items-start justify-between mb-4">
-                <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Report File</h2>
-                <button
-                  v-if="form.fileUrl"
-                  type="button"
-                  class="btn btn-ghost text-sm"
-                  :disabled="optimization.isRunning.value"
-                  @click="optimizeExistingFile()"
-                >
-                  {{ optimization.isRunning.value ? 'Optimizing…' : 'Optimize PDF' }}
-                </button>
+              <div class="flex items-start justify-between gap-3 mb-4">
+                <div class="flex items-center gap-2 min-w-0">
+                  <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Report File</h2>
+                  <span
+                    v-if="currentItem?.optimizedAt"
+                    class="badge badge-success"
+                    :title="optimizedBadgeTitle"
+                  >
+                    Optimized
+                  </span>
+                </div>
+                <div v-if="form.fileUrl" class="flex items-center gap-2 flex-shrink-0">
+                  <label for="reoptimize-preset" class="sr-only">Compression preset</label>
+                  <select
+                    id="reoptimize-preset"
+                    v-model="optimizePreset"
+                    class="rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white text-sm"
+                    :disabled="optimization.isRunning.value"
+                  >
+                    <option value="ebook">Balanced (150 DPI)</option>
+                    <option value="screen">Aggressive (72 DPI)</option>
+                    <option value="printer">Conservative (300 DPI)</option>
+                  </select>
+                  <button
+                    type="button"
+                    class="btn btn-ghost text-sm"
+                    :disabled="optimization.isRunning.value"
+                    @click="optimizeExistingFile()"
+                  >
+                    {{ optimization.isRunning.value ? 'Optimizing…' : 'Optimize PDF' }}
+                  </button>
+                </div>
               </div>
               <AdminFormAdminFileModal
                 resource="reports"
@@ -137,7 +158,7 @@
                 <div v-if="optimization.isRunning.value" class="space-y-2">
                   <div class="flex items-center justify-between text-sm">
                     <span class="font-medium text-gray-700 dark:text-gray-300">
-                      {{ inlinePhaseLabel }}
+                      {{ optimizationPhaseLabel(optimization.phase.value) }}
                     </span>
                     <span
                       v-if="
@@ -157,27 +178,34 @@
                     />
                   </div>
                 </div>
-                <p
+                <div
                   v-else-if="optimization.status.value === 'success' && optimization.result.value"
-                  class="text-green-700 dark:text-green-400"
+                  class="space-y-1"
                 >
-                  <template v-if="optimization.result.value.skippedCompression">
-                    File was already well-compressed; original kept.
-                  </template>
-                  <template v-else>
-                    Reduced to {{ formatBytes(optimization.result.value.optimizedSize) }} (saved
-                    {{ formatBytes(optimization.result.value.savedBytes) }})
-                  </template>
-                </p>
+                  <p class="text-green-700 dark:text-green-400">
+                    <template v-if="optimization.result.value.skippedCompression">
+                      File was already well-compressed; original kept.
+                    </template>
+                    <template v-else>
+                      Reduced to {{ formatBytes(optimization.result.value.optimizedSize) }} (saved
+                      {{ formatBytes(optimization.result.value.savedBytes) }})
+                    </template>
+                  </p>
+                  <p
+                    v-if="(optimization.result.value.ocrFailedPages ?? 0) > 0"
+                    class="text-xs text-amber-600 dark:text-amber-400"
+                  >
+                    {{ optimization.result.value.ocrFailedPages }} page(s) could not be
+                    OCR-processed and were kept as scans.
+                  </p>
+                </div>
                 <p
                   v-else-if="optimization.status.value === 'error'"
                   class="text-amber-700 dark:text-amber-400"
                 >
-                  Optimization failed: {{ optimization.error.value }}
+                  {{ optimization.errorMessage.value }}
                   <button
-                    v-if="
-                      optimization.error.value && optimization.error.value.includes('HAS_BOOKMARKS')
-                    "
+                    v-if="optimization.errorCode.value === 'HAS_BOOKMARKS'"
                     type="button"
                     class="ml-2 underline"
                     @click="optimizeExistingFile({ allowDropBookmarks: true })"
@@ -414,6 +442,9 @@
             >
               <p>Created: {{ formatDate(currentItem.createdAt) }}</p>
               <p>Updated: {{ formatDate(currentItem.updatedAt) }}</p>
+              <p v-if="currentItem.optimizedAt">
+                Last optimized: {{ formatDate(currentItem.optimizedAt) }}
+              </p>
             </div>
           </div>
         </div>
@@ -471,6 +502,9 @@
 </template>
 
 <script setup lang="ts">
+  import { useOptimizePreset } from '~/composables/useReportOptimization'
+  import { formatBytes } from '~/utils/formatBytes'
+  import { optimizationPhaseLabel } from '~/utils/reportOptimizationUi'
   import type { AdminAuditReport, ReportInput } from '~/types/admin'
 
   definePageMeta({
@@ -485,12 +519,24 @@
   const { errors, validate, setErrors, clearFieldError, rules } = useFormValidation()
   const toast = useToast()
   const optimization = useReportOptimization()
+  const optimizePreset = useOptimizePreset()
+
+  // Tooltip summary for the "Optimized" badge, from the persisted snapshot.
+  const optimizedBadgeTitle = computed(() => {
+    const item = currentItem.value
+    if (!item?.optimizedAt) return ''
+    const when = new Date(item.optimizedAt).toLocaleString()
+    const meta = item.optimizationMeta
+    if (!meta) return `Optimized ${when}`
+    if (meta.skippedCompression) return `Optimized ${when} — already well-compressed`
+    return `Optimized ${when} — saved ${formatBytes(meta.savedBytes)} (${meta.preset} preset)`
+  })
 
   async function optimizeExistingFile(opts?: { allowDropBookmarks?: boolean }) {
     if (!form.fileUrl) return
     await optimization.start({
       fileUrl: form.fileUrl,
-      preset: 'ebook',
+      preset: optimizePreset.value,
       reportId: id,
       allowDropBookmarks: opts?.allowDropBookmarks
     })
@@ -504,33 +550,8 @@
       // Refresh the row so other fields (e.g. updatedAt) stay current.
       await fetchOne(id)
     } else if (optimization.status.value === 'error') {
-      toast.error(optimization.error.value || 'Optimization failed')
+      toast.error(optimization.errorMessage.value || 'Optimization failed')
     }
-  }
-
-  const inlinePhaseLabel = computed(() => {
-    switch (optimization.phase.value) {
-      case 'inspect':
-        return 'Inspecting PDF…'
-      case 'split':
-        return 'Splitting pages…'
-      case 'classify':
-        return 'Classifying pages…'
-      case 'ocr':
-        return 'Running OCR…'
-      case 'merge':
-        return 'Reassembling…'
-      case 'compress':
-        return 'Compressing…'
-      default:
-        return 'Optimizing PDF…'
-    }
-  })
-
-  function formatBytes(bytes: number): string {
-    if (bytes < 1024) return `${bytes} B`
-    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
-    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
   }
 
   // Slug checking state
@@ -713,6 +734,24 @@
       nextTick(() => markSaved())
     }
     fetchHistory()
+
+    // Re-attach to an optimization started elsewhere (upload modal, another
+    // tab, a previous visit) so its progress shows here. Followed via
+    // authenticated polling — no SSE ticket needed.
+    const attached = await optimization.attach({ reportId: id })
+    if (attached) {
+      const unwatch = watch(optimization.status, async (s) => {
+        if (s !== 'success' && s !== 'error') return
+        unwatch()
+        if (s === 'success' && optimization.result.value) {
+          if (!optimization.result.value.skippedCompression) {
+            form.fileSize = optimization.result.value.optimizedSize
+          }
+          // Pick up the persisted size/metadata written by the job.
+          await fetchOne(id)
+        }
+      })
+    }
   })
 
   function formatDate(date: string): string {

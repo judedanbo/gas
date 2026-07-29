@@ -6,12 +6,29 @@ import {
   date,
   boolean,
   text,
+  json,
   mysqlEnum,
   index,
   uniqueIndex
 } from 'drizzle-orm/mysql-core'
 import { sql } from 'drizzle-orm'
 import { users } from './users'
+
+/**
+ * Snapshot of the last successful PDF optimization run for a report.
+ * Written by the optimize endpoint; never edited by admins directly.
+ */
+export interface ReportOptimizationMeta {
+  preset: 'screen' | 'ebook' | 'printer'
+  originalSize: number
+  optimizedSize: number
+  savedBytes: number
+  pageCount: number
+  nativePages: number
+  scannedPages: number
+  ocrFailedPages: number
+  skippedCompression: boolean
+}
 
 /**
  * Audit reports table - Main audit report records
@@ -35,6 +52,8 @@ export const auditReports = mysqlTable(
     fileSize: varchar('file_size', { length: 50 }).notNull(),
     thumbnail: varchar('thumbnail', { length: 500 }),
     isPublished: boolean('is_published').notNull().default(false),
+    optimizedAt: datetime('optimized_at'),
+    optimizationMeta: json('optimization_meta').$type<ReportOptimizationMeta>(),
     createdAt: datetime('created_at')
       .notNull()
       .default(sql`(CURRENT_TIMESTAMP)`),

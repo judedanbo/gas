@@ -1,11 +1,12 @@
 import { requirePermission } from '../../../utils/adminHelpers'
 import {
+  effectiveJobState,
   getJob,
   getJobAcrossInstances,
   subscribe,
-  type JobState
+  type JobState,
+  type SequencedEvent
 } from '../../../utils/pdfOptimizationJobs'
-import type { ProgressEvent } from '../../../utils/pdfOptimizer'
 
 // Heartbeat keeps idle proxies / browsers from killing the SSE connection
 // before the optimizer finishes a long Ghostscript pass.
@@ -47,7 +48,10 @@ export default defineEventHandler(async (event) => {
   const res = event.node.res
   res.flushHeaders?.()
 
-  function send(name: string, data: unknown): void {
+  function send(name: string, data: unknown, id?: number): void {
+    if (id !== undefined) {
+      res.write(`id: ${id}\n`)
+    }
     res.write(`event: ${name}\n`)
     res.write(`data: ${JSON.stringify(data)}\n\n`)
   }
@@ -58,7 +62,12 @@ export default defineEventHandler(async (event) => {
 
   function sendTerminal(state: JobState): void {
     if (state.status === 'success') send('done', state.result ?? null)
-    else if (state.status === 'error') send('error', { message: state.error ?? 'unknown error' })
+    else if (state.status === 'error') {
+      send('error', {
+        message: state.error ?? 'unknown error',
+        code: state.errorCode ?? null
+      })
+    }
   }
 
   let closed = false
@@ -78,13 +87,23 @@ export default defineEventHandler(async (event) => {
     res.end()
   }
 
-  // Cursor-tracked replay: the initial flush and live delivery (emitter or
-  // poll) never duplicate or skip an event.
-  let cursor = 0
+  // Seq-tracked replay: the initial flush and live delivery (emitter or poll)
+  // never duplicate or skip an event, even after the job's ring buffer trims
+  // old entries (an array index would shift; seqs are stable). Each frame
+  // carries an SSE `id:` so the browser sends Last-Event-ID on auto-reconnect
+  // and we resume without re-replaying. A reconnect whose Last-Event-ID
+  // predates the trimmed window loses that gap by design — progress events
+  // are cosmetic and the terminal 'done' event carries authoritative totals.
+  let lastSeq = 0
+  const resumeFrom = Number(getHeader(event, 'last-event-id'))
+  if (Number.isFinite(resumeFrom) && resumeFrom > 0) {
+    lastSeq = resumeFrom
+  }
   function flushFrom(state: JobState): void {
-    while (cursor < state.events.length) {
-      send('progress', state.events[cursor])
-      cursor++
+    for (const e of state.events) {
+      if (e.seq <= lastSeq) continue
+      send('progress', e.event, e.seq)
+      lastSeq = e.seq
     }
   }
 
@@ -102,7 +121,7 @@ export default defineEventHandler(async (event) => {
     // Subscribe BEFORE the initial replay so an event emitted during replay
     // (the producer can finish a fast job in that window) is not lost.
     // flushFrom dedupes via the cursor, so double delivery is harmless.
-    unsubscribe = subscribe(jobId, (_e: ProgressEvent) => {
+    unsubscribe = subscribe(jobId, (_e: SequencedEvent) => {
       if (closed) return
       const state = getJob(jobId)
       if (!state) return
@@ -125,8 +144,11 @@ export default defineEventHandler(async (event) => {
             close()
             return
           }
-          flushFrom(state)
-          terminalFrom(state)
+          // A remote job whose producer pod died stops updating its mirror;
+          // the stall rules turn it terminal here instead of hanging.
+          const effective = effectiveJobState(state)
+          flushFrom(effective)
+          terminalFrom(effective)
         })
         .catch(() => {
           // Transient Redis error — keep polling; the TTL branch above ends

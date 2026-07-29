@@ -1,8 +1,7 @@
 import { statSync } from 'node:fs'
 import { readFile } from 'node:fs/promises'
-import { eq } from 'drizzle-orm'
-import { getDatabase, schema } from '../../../database'
 import { requirePermission } from '../../../utils/adminHelpers'
+import { persistOptimizationResult } from '../../../utils/persistOptimizationResult'
 import { materializePdfSource, type LocalPdfSource } from '../../../utils/pdfSource'
 import { uploadBlob } from '../../../utils/blobStorage'
 import { logAuditAction } from '../../../utils/auditLogger'
@@ -12,6 +11,12 @@ import {
   type CompressionPreset
 } from '../../../utils/pdfOptimizer'
 import { createJob, pushEvent, updateJob } from '../../../utils/pdfOptimizationJobs'
+import {
+  enqueue,
+  getActiveJobForFile,
+  getActiveJobIdLocal,
+  registerActiveJob
+} from '../../../utils/pdfOptimizationScheduler'
 import { signSseTicket } from '../../../utils/sseTicket'
 import { logError } from '../../../utils/logger'
 
@@ -42,21 +47,43 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 400, statusMessage: 'Invalid file path' })
   }
 
+  // Mint a short-lived SSE ticket so the EventSource auth travels as a ~2min
+  // aud-scoped ticket rather than the long-lived session JWT in the URL.
+  const auth = event.context.auth!
+  const sseTicket = signSseTicket({ userId: auth.user.id, sid: auth.sessionId })
+
+  // Same-file dedup: if an optimization is already queued/running for this
+  // file (on any replica), attach the caller to it instead of starting a
+  // duplicate — checked before materializing so we don't download a blob
+  // just to attach.
+  const existingJobId = await getActiveJobForFile(fileUrl)
+  if (existingJobId) {
+    return { jobId: existingJobId, sseTicket, attached: true }
+  }
+
   const source = await materializePdfSource(fileUrl)
   if (!source) {
     throw createError({ statusCode: 422, statusMessage: 'PDF file not found in storage' })
   }
 
+  // Re-check after the async materialize: a concurrent same-file POST on this
+  // pod may have claimed the file meanwhile. From here to registerActiveJob
+  // there is no await, so the claim itself is race-free in-process.
+  const raceWinner = getActiveJobIdLocal(fileUrl)
+  if (raceWinner) {
+    await source.cleanup()
+    return { jobId: raceWinner, sseTicket, attached: true }
+  }
+
   const job = createJob(fileUrl, reportId)
+  registerActiveJob(fileUrl, job.id)
 
-  // Run the optimizer detached from the request lifetime. The SSE endpoint
+  // Run the optimizer detached from the request lifetime, throttled by the
+  // scheduler (bounded concurrency + FIFO queue). The SSE endpoint
   // (optimize-stream.get.ts) streams the job's events to the admin UI.
-  void runOptimization(job.id, source, preset, allowDropBookmarks, event, reportId)
-
-  // Mint a short-lived SSE ticket so the EventSource auth travels as a ~2min
-  // aud-scoped ticket rather than the long-lived session JWT in the URL.
-  const auth = event.context.auth!
-  const sseTicket = signSseTicket({ userId: auth.user.id, sid: auth.sessionId })
+  enqueue(job.id, fileUrl, () =>
+    runOptimization(job.id, source, fileUrl, preset, allowDropBookmarks, event, reportId)
+  )
 
   return { jobId: job.id, sseTicket }
 })
@@ -64,6 +91,7 @@ export default defineEventHandler(async (event) => {
 async function runOptimization(
   jobId: string,
   source: LocalPdfSource,
+  fileUrl: string,
   preset: CompressionPreset,
   allowDropBookmarks: boolean,
   event: Parameters<typeof logAuditAction>[0],
@@ -86,20 +114,11 @@ async function runOptimization(
       await uploadBlob(blobKey, await readFile(pdfPath), 'application/pdf')
     }
 
-    // Persist the new file size when the optimization is tied to a saved
-    // report row. For the unsaved create flow (no reportId yet), the UI
-    // reads the new size from the SSE 'done' event.
-    if (reportId && !result.skippedCompression) {
-      try {
-        const db = getDatabase()
-        await db
-          .update(schema.auditReports)
-          .set({ fileSize: String(result.optimizedSize) })
-          .where(eq(schema.auditReports.id, reportId))
-      } catch (dbErr) {
-        logError('pdfOptimizer', dbErr)
-      }
-    }
+    // Persist size + optimization metadata on the report row — by reportId
+    // for the edit flow, by fileUrl for a create-flow report that was saved
+    // while the job ran. (An unsaved create form instead carries the result
+    // via the modal's update:optimization emit.)
+    await persistOptimizationResult(fileUrl, reportId, preset, result)
 
     updateJob(jobId, { status: 'success', result })
     // Emit a terminal 'done' event so SSE subscribers that connected while the
@@ -113,18 +132,20 @@ async function runOptimization(
       savedBytes: result.savedBytes,
       skippedCompression: result.skippedCompression,
       nativePages: result.nativePages,
-      scannedPages: result.scannedPages
+      scannedPages: result.scannedPages,
+      ocrFailedPages: result.ocrFailedPages
     })
 
     void logAuditAction(event, 'update', 'report_optimization', reportId, {
       after: {
-        fileUrl: pdfPath,
+        fileUrl,
         preset,
         originalSize: result.originalSize,
         optimizedSize: result.optimizedSize,
         savedBytes: result.savedBytes,
         nativePages: result.nativePages,
         scannedPages: result.scannedPages,
+        ocrFailedPages: result.ocrFailedPages,
         skippedCompression: result.skippedCompression
       }
     })
@@ -133,6 +154,7 @@ async function runOptimization(
     // admin client. PdfOptimizerError.code is a fixed enum (no internals); the
     // free-form message can contain file paths, so it is not sent to the client.
     logError('pdfOptimizer', err)
+    const errorCode = err instanceof PdfOptimizerError ? err.code : 'UNKNOWN'
     const message = err instanceof PdfOptimizerError ? err.code : 'Optimization failed'
 
     // The file is left untouched on any error path (the optimizer only
@@ -145,7 +167,7 @@ async function runOptimization(
       currentSize = undefined
     }
 
-    updateJob(jobId, { status: 'error', error: message })
+    updateJob(jobId, { status: 'error', error: message, errorCode })
     pushEvent(jobId, {
       phase: 'done',
       originalSize: currentSize ?? 0,
@@ -153,11 +175,12 @@ async function runOptimization(
       savedBytes: 0,
       skippedCompression: true,
       nativePages: 0,
-      scannedPages: 0
+      scannedPages: 0,
+      ocrFailedPages: 0
     })
 
     void logAuditAction(event, 'update', 'report_optimization', reportId, {
-      after: { fileUrl: pdfPath, preset, error: message }
+      after: { fileUrl, preset, error: message }
     })
   } finally {
     await source.cleanup()

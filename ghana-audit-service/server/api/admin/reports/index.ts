@@ -238,8 +238,8 @@ async function handleCreate(event: H3Event) {
 
     // Insert main report
     const [result] = await connection.execute(
-      `INSERT INTO audit_reports (slug, category, published_at, file_url, file_size, thumbnail, is_published, created_by, updated_by)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO audit_reports (slug, category, published_at, file_url, file_size, thumbnail, is_published, optimized_at, optimization_meta, created_by, updated_by)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         input.slug,
         input.category,
@@ -248,6 +248,8 @@ async function handleCreate(event: H3Event) {
         input.fileSize,
         thumbnail,
         input.isPublished,
+        input.optimizedAt ? new Date(input.optimizedAt) : null,
+        input.optimizationMeta ? JSON.stringify(input.optimizationMeta) : null,
         user.id,
         user.id
       ]

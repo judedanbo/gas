@@ -5,13 +5,24 @@ import type { OptimizeResult, ProgressEvent } from './pdfOptimizer'
 
 export type JobStatus = 'queued' | 'running' | 'success' | 'error'
 
+// Events carry a per-job monotonically increasing sequence number so consumers
+// (SSE replay, polling clients) can dedupe across reconnects even after the
+// ring buffer below has trimmed older entries — an array index cannot survive
+// a trim, a seq can.
+export interface SequencedEvent {
+  seq: number
+  event: ProgressEvent
+}
+
 export interface JobState {
   id: string
   status: JobStatus
   fileUrl: string
   reportId?: number | null
-  events: ProgressEvent[]
+  events: SequencedEvent[]
+  nextSeq: number
   error?: string
+  errorCode?: string
   result?: OptimizeResult
   startedAt: number
   updatedAt: number
@@ -28,6 +39,15 @@ const COMPLETED_TTL_MS = 30 * 60 * 1000
 
 const JOB_REDIS_PREFIX = 'gas:pdf-opt:'
 const JOB_REDIS_TTL_SEC = 30 * 60
+
+// Watchdog thresholds. A 'running' job whose producer died mid-flight stops
+// emitting events, so inactivity (updatedAt) is the signal — the threshold
+// sits above the longest single child-process timeout (Ghostscript, 10 min),
+// because a live job always emits or fails within that window. Queued jobs
+// never advance updatedAt, so they get a separate total-wait cap instead.
+const RUNNING_STALL_TIMEOUT_MS = 15 * 60_000
+const QUEUE_WAIT_TIMEOUT_MS = 30 * 60_000
+const SWEEP_INTERVAL_MS = 60_000
 
 const jobs = new Map<string, JobState>()
 
@@ -66,13 +86,83 @@ async function mirrorToRedis(state: JobState): Promise<void> {
   }
 }
 
+let sweepTimer: ReturnType<typeof setInterval> | undefined
+
+// Lazily started with the first job so idle processes never tick.
+function ensureSweeper(): void {
+  if (sweepTimer) return
+  sweepTimer = setInterval(() => sweepStalledJobs(), SWEEP_INTERVAL_MS)
+  sweepTimer.unref?.()
+}
+
+function stallOf(state: JobState, now: number): { errorCode: 'TIMEOUT' | 'QUEUE_TIMEOUT' } | null {
+  if (state.status === 'running' && now - state.updatedAt > RUNNING_STALL_TIMEOUT_MS) {
+    return { errorCode: 'TIMEOUT' }
+  }
+  if (state.status === 'queued' && now - state.startedAt > QUEUE_WAIT_TIMEOUT_MS) {
+    return { errorCode: 'QUEUE_TIMEOUT' }
+  }
+  return null
+}
+
+/**
+ * Mark local jobs that stopped making progress as errored so clients don't
+ * hang until the Redis TTL expires. Exported (with injectable clock) for
+ * tests; production runs it on the sweep interval.
+ *
+ * The watchdog only flips client-visible job state — scheduler slots and
+ * per-file indexes are owned by the scheduler's own completion handling (or,
+ * for a dead pod, the Redis TTL).
+ */
+export function sweepStalledJobs(now: number = Date.now()): void {
+  for (const state of jobs.values()) {
+    const stall = stallOf(state, now)
+    if (!stall) continue
+    updateJob(state.id, {
+      status: 'error',
+      error: 'Optimization timed out',
+      errorCode: stall.errorCode
+    })
+    // Terminal event so SSE subscribers get notified instead of hanging.
+    pushEvent(state.id, {
+      phase: 'done',
+      originalSize: 0,
+      optimizedSize: 0,
+      savedBytes: 0,
+      skippedCompression: true,
+      nativePages: 0,
+      scannedPages: 0,
+      ocrFailedPages: 0
+    })
+  }
+}
+
+/**
+ * Apply the stall rules to a job state without mutating it. Consumers of
+ * Redis-deserialized states (SSE remote poll, status endpoint, scheduler
+ * stale-index check) use this so a job owned by a dead pod still terminates
+ * client-side before the 30-minute mirror TTL.
+ */
+export function effectiveJobState(state: JobState, now: number = Date.now()): JobState {
+  const stall = stallOf(state, now)
+  if (!stall) return state
+  return {
+    ...state,
+    status: 'error',
+    error: 'Optimization timed out',
+    errorCode: stall.errorCode
+  }
+}
+
 export function createJob(fileUrl: string, reportId?: number | null): JobState {
+  ensureSweeper()
   const state: JobState = {
     id: randomUUID(),
     status: 'queued',
     fileUrl,
     reportId: reportId ?? null,
     events: [],
+    nextSeq: 1,
     startedAt: Date.now(),
     updatedAt: Date.now()
   }
@@ -113,16 +203,17 @@ export function updateJob(id: string, patch: Partial<JobState>): JobState | unde
 export function pushEvent(id: string, event: ProgressEvent): void {
   const state = jobs.get(id)
   if (!state) return
-  state.events.push(event)
+  const wrapped: SequencedEvent = { seq: state.nextSeq++, event }
+  state.events.push(wrapped)
   if (state.events.length > MAX_EVENTS_PER_JOB) {
     state.events.splice(0, state.events.length - MAX_EVENTS_PER_JOB)
   }
   state.updatedAt = Date.now()
   void mirrorToRedis(state)
-  getEmitter(id).emit('event', event)
+  getEmitter(id).emit('event', wrapped)
 }
 
-export function subscribe(id: string, listener: (event: ProgressEvent) => void): () => void {
+export function subscribe(id: string, listener: (event: SequencedEvent) => void): () => void {
   const em = getEmitter(id)
   em.on('event', listener)
   return () => em.off('event', listener)
