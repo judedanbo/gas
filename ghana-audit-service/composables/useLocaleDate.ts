@@ -38,11 +38,19 @@ export function useLocaleDate() {
       year: 'numeric'
     }
 
+    // Date-only DB strings ("YYYY-MM-DD") parse as UTC midnight; formatting in
+    // the viewer's zone shifts the calendar day west of UTC and makes ISR-cached
+    // SSR HTML mismatch the client render during hydration.
+    const resolvedOptions: Intl.DateTimeFormatOptions = {
+      timeZone: 'UTC',
+      ...(options ?? defaultOptions)
+    }
+
     try {
-      return d.toLocaleDateString(resolvedLocale, options ?? defaultOptions)
+      return d.toLocaleDateString(resolvedLocale, resolvedOptions)
     } catch {
       // Fallback to en-GB if the locale is not supported
-      return d.toLocaleDateString('en-GB', options ?? defaultOptions)
+      return d.toLocaleDateString('en-GB', resolvedOptions)
     }
   }
 

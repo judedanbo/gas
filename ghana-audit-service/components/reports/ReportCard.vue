@@ -26,7 +26,7 @@
     <div class="flex flex-col flex-grow p-4">
       <!-- Year -->
       <span class="text-xs font-semibold text-primary dark:text-primary-light tracking-wide uppercase mb-1">
-        {{ new Date(report.publishedAt).getFullYear() }}
+        {{ new Date(report.publishedAt).getUTCFullYear() }}
       </span>
 
       <!-- Title (clickable card target) -->

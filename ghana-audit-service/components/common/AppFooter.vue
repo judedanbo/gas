@@ -302,7 +302,10 @@
 </template>
 
 <script setup lang="ts">
-  const currentYear = new Date().getFullYear()
+  // useState serializes the server-computed year into the payload, so the
+  // client shows the same year as the ISR-cached HTML even across a year
+  // rollover (where a fresh client-side Date would mismatch during hydration).
+  const currentYear = useState('footer-year', () => new Date().getFullYear())
 
   const affiliations = [
     {
