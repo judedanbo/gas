@@ -51,7 +51,7 @@ export default defineEventHandler(async (event) => {
 
   // Run the optimizer detached from the request lifetime. The SSE endpoint
   // (optimize-stream.get.ts) streams the job's events to the admin UI.
-  void runOptimization(job.id, source, preset, allowDropBookmarks, event, reportId)
+  void runOptimization(job.id, source, fileUrl, preset, allowDropBookmarks, event, reportId)
 
   // Mint a short-lived SSE ticket so the EventSource auth travels as a ~2min
   // aud-scoped ticket rather than the long-lived session JWT in the URL.
@@ -64,6 +64,7 @@ export default defineEventHandler(async (event) => {
 async function runOptimization(
   jobId: string,
   source: LocalPdfSource,
+  fileUrl: string,
   preset: CompressionPreset,
   allowDropBookmarks: boolean,
   event: Parameters<typeof logAuditAction>[0],
@@ -118,7 +119,7 @@ async function runOptimization(
 
     void logAuditAction(event, 'update', 'report_optimization', reportId, {
       after: {
-        fileUrl: pdfPath,
+        fileUrl,
         preset,
         originalSize: result.originalSize,
         optimizedSize: result.optimizedSize,
@@ -157,7 +158,7 @@ async function runOptimization(
     })
 
     void logAuditAction(event, 'update', 'report_optimization', reportId, {
-      after: { fileUrl: pdfPath, preset, error: message }
+      after: { fileUrl, preset, error: message }
     })
   } finally {
     await source.cleanup()
