@@ -720,6 +720,24 @@
       nextTick(() => markSaved())
     }
     fetchHistory()
+
+    // Re-attach to an optimization started elsewhere (upload modal, another
+    // tab, a previous visit) so its progress shows here. Followed via
+    // authenticated polling — no SSE ticket needed.
+    const attached = await optimization.attach({ reportId: id })
+    if (attached) {
+      const unwatch = watch(optimization.status, async (s) => {
+        if (s !== 'success' && s !== 'error') return
+        unwatch()
+        if (s === 'success' && optimization.result.value) {
+          if (!optimization.result.value.skippedCompression) {
+            form.fileSize = optimization.result.value.optimizedSize
+          }
+          // Pick up the persisted size/metadata written by the job.
+          await fetchOne(id)
+        }
+      })
+    }
   })
 
   function formatDate(date: string): string {
