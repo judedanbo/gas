@@ -91,6 +91,7 @@ const successResult: OptimizeResult = {
   skippedCompression: false,
   nativePages: 2,
   scannedPages: 1,
+  ocrFailedPages: 0,
   pageCount: 3
 }
 
@@ -119,7 +120,8 @@ describe('GET /api/admin/reports/optimize-stream', () => {
       savedBytes: 40,
       skippedCompression: false,
       nativePages: 2,
-      scannedPages: 1
+      scannedPages: 1,
+      ocrFailedPages: 0
     })
     await done
 
@@ -138,7 +140,7 @@ describe('GET /api/admin/reports/optimize-stream', () => {
     const job = createJob('/pdf/reports/huge.pdf', 2)
     updateJob(job.id, { status: 'running' })
     for (let i = 0; i < 510; i++) {
-      pushEvent(job.id, { phase: 'classify', page: i + 1, totalPages: 510, kind: 'native' })
+      pushEvent(job.id, { phase: 'classify', page: i + 1, totalPages: 510, kind: 'native', reason: 'text' })
     }
 
     const { event, res } = makeEvent(job.id)
@@ -153,7 +155,8 @@ describe('GET /api/admin/reports/optimize-stream', () => {
       savedBytes: 0,
       skippedCompression: true,
       nativePages: 0,
-      scannedPages: 0
+      scannedPages: 0,
+      ocrFailedPages: 0
     })
     await done
 
@@ -186,7 +189,7 @@ describe('GET /api/admin/reports/optimize-stream', () => {
     const job = createJob('/pdf/reports/resume.pdf', 4)
     updateJob(job.id, { status: 'running' })
     for (let i = 0; i < 5; i++) {
-      pushEvent(job.id, { phase: 'classify', page: i + 1, totalPages: 5, kind: 'native' })
+      pushEvent(job.id, { phase: 'classify', page: i + 1, totalPages: 5, kind: 'native', reason: 'text' })
     }
     updateJob(job.id, { status: 'error', error: 'gone' })
 

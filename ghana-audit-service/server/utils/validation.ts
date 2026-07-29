@@ -109,6 +109,28 @@ export const auditReportSchema = z.object({
   fileSize: z.coerce.number().optional().nullable(),
   thumbnail: z.string().max(500).optional().nullable().or(z.literal('')),
   isPublished: z.boolean().default(false),
+  // Optimization snapshot from the create flow's upload modal. Only used on
+  // create — the update endpoint ignores these so stale form data can never
+  // clobber server-written optimization state.
+  optimizedAt: z
+    .string()
+    .refine((val) => !isNaN(Date.parse(val)), 'Invalid date')
+    .optional()
+    .nullable(),
+  optimizationMeta: z
+    .object({
+      preset: z.enum(['screen', 'ebook', 'printer']),
+      originalSize: z.number(),
+      optimizedSize: z.number(),
+      savedBytes: z.number(),
+      pageCount: z.number(),
+      nativePages: z.number(),
+      scannedPages: z.number(),
+      ocrFailedPages: z.number(),
+      skippedCompression: z.boolean()
+    })
+    .optional()
+    .nullable(),
   translations: translationsSchema({
     title: z.string().min(1).max(500),
     summary: z.string().optional().nullable()

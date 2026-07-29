@@ -389,6 +389,12 @@
 
 <script setup lang="ts">
   import type { CompressionPreset } from '~/composables/useReportOptimization'
+  import type { ReportOptimizationMeta } from '~/types/admin'
+
+  export interface OptimizationSnapshot {
+    optimizedAt: string
+    meta: ReportOptimizationMeta
+  }
 
   interface Props {
     resource: 'reports' | 'publications'
@@ -415,6 +421,10 @@
     'update:fileUrl': [url: string]
     'update:fileSize': [size: number | undefined]
     'update:thumbnail': [url: string]
+    // Result snapshot of a completed optimization, for the create flow to
+    // send with its POST (a saved report gets this persisted server-side
+    // instead). null when no optimization finished for the confirmed file.
+    'update:optimization': [snapshot: OptimizationSnapshot | null]
   }>()
 
   const api = useAdminApi()
@@ -564,10 +574,32 @@
     isUploadingCustomThumbnail.value = false
   }
 
+  function optimizationSnapshot(): OptimizationSnapshot | null {
+    const r = optimization.result.value
+    if (props.resource !== 'reports' || optimization.status.value !== 'success' || !r) {
+      return null
+    }
+    return {
+      optimizedAt: new Date().toISOString(),
+      meta: {
+        preset: optimizePreset.value,
+        originalSize: r.originalSize,
+        optimizedSize: r.optimizedSize,
+        savedBytes: r.savedBytes,
+        pageCount: r.pageCount ?? optimization.totalPages.value,
+        nativePages: r.nativePages,
+        scannedPages: r.scannedPages,
+        ocrFailedPages: r.ocrFailedPages ?? 0,
+        skippedCompression: r.skippedCompression
+      }
+    }
+  }
+
   function handleConfirm() {
     emit('update:fileUrl', modalFileUrl.value || '')
     emit('update:fileSize', modalFileSize.value || undefined)
     emit('update:thumbnail', modalThumbnail.value || '')
+    emit('update:optimization', optimizationSnapshot())
     isOpen.value = false
   }
 

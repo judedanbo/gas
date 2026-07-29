@@ -1,8 +1,7 @@
 import { statSync } from 'node:fs'
 import { readFile } from 'node:fs/promises'
-import { eq } from 'drizzle-orm'
-import { getDatabase, schema } from '../../../database'
 import { requirePermission } from '../../../utils/adminHelpers'
+import { persistOptimizationResult } from '../../../utils/persistOptimizationResult'
 import { materializePdfSource, type LocalPdfSource } from '../../../utils/pdfSource'
 import { uploadBlob } from '../../../utils/blobStorage'
 import { logAuditAction } from '../../../utils/auditLogger'
@@ -115,20 +114,11 @@ async function runOptimization(
       await uploadBlob(blobKey, await readFile(pdfPath), 'application/pdf')
     }
 
-    // Persist the new file size when the optimization is tied to a saved
-    // report row. For the unsaved create flow (no reportId yet), the UI
-    // reads the new size from the SSE 'done' event.
-    if (reportId && !result.skippedCompression) {
-      try {
-        const db = getDatabase()
-        await db
-          .update(schema.auditReports)
-          .set({ fileSize: String(result.optimizedSize) })
-          .where(eq(schema.auditReports.id, reportId))
-      } catch (dbErr) {
-        logError('pdfOptimizer', dbErr)
-      }
-    }
+    // Persist size + optimization metadata on the report row — by reportId
+    // for the edit flow, by fileUrl for a create-flow report that was saved
+    // while the job ran. (An unsaved create form instead carries the result
+    // via the modal's update:optimization emit.)
+    await persistOptimizationResult(fileUrl, reportId, preset, result)
 
     updateJob(jobId, { status: 'success', result })
     // Emit a terminal 'done' event so SSE subscribers that connected while the

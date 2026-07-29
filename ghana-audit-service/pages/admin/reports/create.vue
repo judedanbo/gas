@@ -59,6 +59,7 @@
               @update:file-url="form.fileUrl = $event"
               @update:file-size="form.fileSize = $event"
               @update:thumbnail="form.thumbnail = $event"
+              @update:optimization="handleOptimizationSnapshot"
             />
           </div>
         </div>
@@ -221,10 +222,23 @@
     thumbnail: '',
     isPublished: false,
     publishedAt: '',
+    optimizedAt: null,
+    optimizationMeta: null,
     translations: {
       en: { title: '', summary: '' }
     }
   })
+
+  // Optimization snapshot handed back by the upload modal — sent with the
+  // create POST so the new row records that its file was optimized. (When
+  // the job finishes after saving, the server's fileUrl-fallback update
+  // covers it instead.)
+  function handleOptimizationSnapshot(
+    snapshot: { optimizedAt: string; meta: NonNullable<ReportInput['optimizationMeta']> } | null
+  ) {
+    form.optimizedAt = snapshot?.optimizedAt ?? null
+    form.optimizationMeta = snapshot?.meta ?? null
+  }
 
   const validationRules = {
     'translations.en.title': [rules.required],

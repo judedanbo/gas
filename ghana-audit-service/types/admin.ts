@@ -149,6 +149,20 @@ export type VacancyType = 'full-time' | 'part-time' | 'contract'
 export type TenderStatus = 'open' | 'closed' | 'awarded' | 'cancelled'
 export type SubmissionStatus = 'pending' | 'read' | 'responded' | 'archived'
 
+// Snapshot of the last successful PDF optimization run for a report.
+// Mirrors ReportOptimizationMeta in server/database/schema/audit-reports.ts.
+export interface ReportOptimizationMeta {
+  preset: 'screen' | 'ebook' | 'printer'
+  originalSize: number
+  optimizedSize: number
+  savedBytes: number
+  pageCount: number
+  nativePages: number
+  scannedPages: number
+  ocrFailedPages: number
+  skippedCompression: boolean
+}
+
 // Admin content types with translations
 export interface AdminAuditReport {
   id: number
@@ -159,6 +173,8 @@ export interface AdminAuditReport {
   thumbnail: string | null
   isPublished: boolean
   publishedAt: string | null
+  optimizedAt: string | null
+  optimizationMeta: ReportOptimizationMeta | null
   createdBy: number
   updatedBy: number | null
   createdAt: string
@@ -491,6 +507,10 @@ export interface ReportInput {
   thumbnail?: string | null
   isPublished: boolean
   publishedAt?: string | null
+  // Carried by the create flow only (see AdminFileModal's update:optimization
+  // emit); the update endpoint ignores these fields.
+  optimizedAt?: string | null
+  optimizationMeta?: ReportOptimizationMeta | null
   translations: Translations<{
     title: string
     summary?: string | null
