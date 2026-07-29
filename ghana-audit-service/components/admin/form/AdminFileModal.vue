@@ -159,6 +159,9 @@
               {{ optimization.nativePages.value }} native ·
               {{ optimization.scannedPages.value }} scanned
             </p>
+            <p class="text-xs text-gray-500">
+              You can confirm now — optimization continues in the background.
+            </p>
           </div>
 
           <div
@@ -376,10 +379,10 @@
           <button
             type="button"
             class="btn btn-primary"
-            :disabled="!modalFileUrl || optimization.isRunning.value"
+            :disabled="!modalFileUrl"
             @click="handleConfirm"
           >
-            {{ optimization.isRunning.value ? 'Optimizing…' : 'Confirm' }}
+            Confirm
           </button>
         </div>
       </template>
@@ -388,7 +391,9 @@
 </template>
 
 <script setup lang="ts">
-  import type { CompressionPreset } from '~/composables/useReportOptimization'
+  import { useOptimizePreset } from '~/composables/useReportOptimization'
+  import { formatBytes } from '~/utils/formatBytes'
+  import { optimizationPhaseLabel } from '~/utils/reportOptimizationUi'
   import type { ReportOptimizationMeta } from '~/types/admin'
 
   export interface OptimizationSnapshot {
@@ -478,12 +483,12 @@
     modalThumbnail.value = null
     thumbnailSource.value = null
 
-    // Reports run through the optimization pipeline before thumbnailing.
-    // The cover (page 1) is preserved byte-for-byte, so the thumbnail it
-    // produces is identical to one taken before optimization, but the
-    // generated file is smaller and (where applicable) searchable.
+    // Reports kick off the optimization pipeline in the background — the
+    // admin can keep working (and even confirm/save) while it runs; the
+    // server persists the result when the job finishes. The cover (page 1)
+    // is preserved byte-for-byte, so thumbnailing immediately is safe.
     if (props.resource === 'reports') {
-      await runOptimization()
+      void runOptimization()
     }
 
     generateThumbnail()

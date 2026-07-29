@@ -104,17 +104,38 @@
 
             <!-- Report File -->
             <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-              <div class="flex items-start justify-between mb-4">
-                <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Report File</h2>
-                <button
-                  v-if="form.fileUrl"
-                  type="button"
-                  class="btn btn-ghost text-sm"
-                  :disabled="optimization.isRunning.value"
-                  @click="optimizeExistingFile()"
-                >
-                  {{ optimization.isRunning.value ? 'Optimizing…' : 'Optimize PDF' }}
-                </button>
+              <div class="flex items-start justify-between gap-3 mb-4">
+                <div class="flex items-center gap-2 min-w-0">
+                  <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Report File</h2>
+                  <span
+                    v-if="currentItem?.optimizedAt"
+                    class="badge badge-success"
+                    :title="optimizedBadgeTitle"
+                  >
+                    Optimized
+                  </span>
+                </div>
+                <div v-if="form.fileUrl" class="flex items-center gap-2 flex-shrink-0">
+                  <label for="reoptimize-preset" class="sr-only">Compression preset</label>
+                  <select
+                    id="reoptimize-preset"
+                    v-model="optimizePreset"
+                    class="rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white text-sm"
+                    :disabled="optimization.isRunning.value"
+                  >
+                    <option value="ebook">Balanced (150 DPI)</option>
+                    <option value="screen">Aggressive (72 DPI)</option>
+                    <option value="printer">Conservative (300 DPI)</option>
+                  </select>
+                  <button
+                    type="button"
+                    class="btn btn-ghost text-sm"
+                    :disabled="optimization.isRunning.value"
+                    @click="optimizeExistingFile()"
+                  >
+                    {{ optimization.isRunning.value ? 'Optimizing…' : 'Optimize PDF' }}
+                  </button>
+                </div>
               </div>
               <AdminFormAdminFileModal
                 resource="reports"
@@ -421,6 +442,9 @@
             >
               <p>Created: {{ formatDate(currentItem.createdAt) }}</p>
               <p>Updated: {{ formatDate(currentItem.updatedAt) }}</p>
+              <p v-if="currentItem.optimizedAt">
+                Last optimized: {{ formatDate(currentItem.optimizedAt) }}
+              </p>
             </div>
           </div>
         </div>
@@ -478,6 +502,9 @@
 </template>
 
 <script setup lang="ts">
+  import { useOptimizePreset } from '~/composables/useReportOptimization'
+  import { formatBytes } from '~/utils/formatBytes'
+  import { optimizationPhaseLabel } from '~/utils/reportOptimizationUi'
   import type { AdminAuditReport, ReportInput } from '~/types/admin'
 
   definePageMeta({
@@ -492,12 +519,24 @@
   const { errors, validate, setErrors, clearFieldError, rules } = useFormValidation()
   const toast = useToast()
   const optimization = useReportOptimization()
+  const optimizePreset = useOptimizePreset()
+
+  // Tooltip summary for the "Optimized" badge, from the persisted snapshot.
+  const optimizedBadgeTitle = computed(() => {
+    const item = currentItem.value
+    if (!item?.optimizedAt) return ''
+    const when = new Date(item.optimizedAt).toLocaleString()
+    const meta = item.optimizationMeta
+    if (!meta) return `Optimized ${when}`
+    if (meta.skippedCompression) return `Optimized ${when} — already well-compressed`
+    return `Optimized ${when} — saved ${formatBytes(meta.savedBytes)} (${meta.preset} preset)`
+  })
 
   async function optimizeExistingFile(opts?: { allowDropBookmarks?: boolean }) {
     if (!form.fileUrl) return
     await optimization.start({
       fileUrl: form.fileUrl,
-      preset: 'ebook',
+      preset: optimizePreset.value,
       reportId: id,
       allowDropBookmarks: opts?.allowDropBookmarks
     })

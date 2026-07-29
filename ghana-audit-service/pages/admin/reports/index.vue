@@ -198,9 +198,24 @@
         {{ value ? new Date(value as string).toLocaleDateString() : '-' }}
       </template>
 
-      <template #cell-fileSize="{ value }">
-        <span class="text-gray-500 dark:text-gray-400 text-sm">
+      <template #cell-fileSize="{ value, row }">
+        <span class="inline-flex items-center gap-1.5 text-gray-500 dark:text-gray-400 text-sm">
           {{ formatFileSize(value) }}
+          <span
+            v-if="optimizedCellTitle(row)"
+            class="inline-flex items-center text-green-600 dark:text-green-400"
+            :title="optimizedCellTitle(row)"
+            aria-label="Optimized"
+          >
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+              />
+            </svg>
+          </span>
         </span>
       </template>
 
@@ -330,6 +345,7 @@
 </template>
 
 <script setup lang="ts">
+  import { formatBytes } from '~/utils/formatBytes'
   import type { AdminAuditReport } from '~/types/admin'
 
   definePageMeta({
@@ -403,11 +419,23 @@
     return formatBytes(bytes)
   }
 
+  // Accepts the untyped table row; empty string means "not optimized" (used
+  // as both the v-if guard and the tooltip).
+  function optimizedCellTitle(row: unknown): string {
+    const report = row as AdminAuditReport
+    if (!report?.optimizedAt) return ''
+    const when = new Date(report.optimizedAt).toLocaleDateString()
+    const meta = report.optimizationMeta
+    if (!meta || meta.skippedCompression) return `Optimized ${when}`
+    return `Optimized ${when} — saved ${formatBytes(meta.savedBytes)}`
+  }
+
   function formatReportMeta(report: AdminAuditReport): string[] {
     const meta: string[] = []
     if (report.publishedAt) meta.push(new Date(report.publishedAt).toLocaleDateString())
     const size = formatFileSize(report.fileSize)
     if (size && size !== '—') meta.push(size)
+    if (report.optimizedAt) meta.push('Optimized')
     return meta
   }
 
