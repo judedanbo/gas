@@ -53,6 +53,24 @@ describe('pdfOptimizationJobs', () => {
     const parsed = JSON.parse(mirrored!)
     expect(parsed.status).toBe('running')
     expect(parsed.events).toHaveLength(1)
+    // Seqs survive the JSON round-trip so remote consumers can dedupe.
+    expect(parsed.events[0]).toEqual({ seq: 1, event: { phase: 'compress' } })
+    expect(parsed.nextSeq).toBe(2)
+  })
+
+  it('stamps monotonically increasing seqs and keeps the highest after trimming', () => {
+    const job = createJob('/pdf/reports/big.pdf', 4)
+    for (let i = 0; i < 510; i++) {
+      pushEvent(job.id, { phase: 'classify', page: i, totalPages: 510 } as never)
+    }
+    const state = getJob(job.id)!
+    // Ring buffer caps at 500 — the oldest 10 are trimmed, seqs are stable.
+    expect(state.events).toHaveLength(500)
+    expect(state.events[0].seq).toBe(11)
+    expect(state.events[state.events.length - 1].seq).toBe(510)
+    for (let i = 1; i < state.events.length; i++) {
+      expect(state.events[i].seq).toBe(state.events[i - 1].seq + 1)
+    }
   })
 
   it('falls back to the Redis mirror for jobs owned by another instance', async () => {
@@ -66,7 +84,8 @@ describe('pdfOptimizationJobs', () => {
       status: 'running',
       fileUrl: '/pdf/reports/z.pdf',
       reportId: 3,
-      events: [{ phase: 'inspect' }],
+      events: [{ seq: 1, event: { phase: 'inspect' } }],
+      nextSeq: 2,
       startedAt: 1,
       updatedAt: 2
     }

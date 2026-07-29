@@ -254,10 +254,14 @@ describe('POST /api/admin/reports/optimize', () => {
 
     const job = getJob(jobId)
     expect(job?.status).toBe('success')
-    expect(job?.events.some((e) => e.phase === 'inspect')).toBe(true)
-    expect(job?.events.some((e) => e.phase === 'classify' && e.kind === 'native')).toBe(true)
-    expect(job?.events.some((e) => e.phase === 'classify' && e.kind === 'scanned')).toBe(true)
-    expect(job?.events.some((e) => e.phase === 'ocr')).toBe(true)
+    expect(job?.events.some((e) => e.event.phase === 'inspect')).toBe(true)
+    expect(job?.events.some((e) => e.event.phase === 'classify' && e.event.kind === 'native')).toBe(
+      true
+    )
+    expect(
+      job?.events.some((e) => e.event.phase === 'classify' && e.event.kind === 'scanned')
+    ).toBe(true)
+    expect(job?.events.some((e) => e.event.phase === 'ocr')).toBe(true)
     expect(job?.result?.savedBytes).toBe(5 * 1024 * 1024)
   })
 

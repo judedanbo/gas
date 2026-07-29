@@ -5,12 +5,22 @@ import type { OptimizeResult, ProgressEvent } from './pdfOptimizer'
 
 export type JobStatus = 'queued' | 'running' | 'success' | 'error'
 
+// Events carry a per-job monotonically increasing sequence number so consumers
+// (SSE replay, polling clients) can dedupe across reconnects even after the
+// ring buffer below has trimmed older entries — an array index cannot survive
+// a trim, a seq can.
+export interface SequencedEvent {
+  seq: number
+  event: ProgressEvent
+}
+
 export interface JobState {
   id: string
   status: JobStatus
   fileUrl: string
   reportId?: number | null
-  events: ProgressEvent[]
+  events: SequencedEvent[]
+  nextSeq: number
   error?: string
   result?: OptimizeResult
   startedAt: number
@@ -73,6 +83,7 @@ export function createJob(fileUrl: string, reportId?: number | null): JobState {
     fileUrl,
     reportId: reportId ?? null,
     events: [],
+    nextSeq: 1,
     startedAt: Date.now(),
     updatedAt: Date.now()
   }
@@ -113,16 +124,17 @@ export function updateJob(id: string, patch: Partial<JobState>): JobState | unde
 export function pushEvent(id: string, event: ProgressEvent): void {
   const state = jobs.get(id)
   if (!state) return
-  state.events.push(event)
+  const wrapped: SequencedEvent = { seq: state.nextSeq++, event }
+  state.events.push(wrapped)
   if (state.events.length > MAX_EVENTS_PER_JOB) {
     state.events.splice(0, state.events.length - MAX_EVENTS_PER_JOB)
   }
   state.updatedAt = Date.now()
   void mirrorToRedis(state)
-  getEmitter(id).emit('event', event)
+  getEmitter(id).emit('event', wrapped)
 }
 
-export function subscribe(id: string, listener: (event: ProgressEvent) => void): () => void {
+export function subscribe(id: string, listener: (event: SequencedEvent) => void): () => void {
   const em = getEmitter(id)
   em.on('event', listener)
   return () => em.off('event', listener)
