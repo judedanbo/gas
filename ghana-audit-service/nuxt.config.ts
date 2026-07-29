@@ -388,6 +388,26 @@ export default defineNuxtConfig({
       '/ak/about/board-members': { isr: 3600 },
       '/ak/about/board-members/**': { isr: 3600 },
 
+      // Payload routes for the exact-match ISR pages above. Nuxt should
+      // generate these automatically from the ISR rules, but in the production
+      // build the generated rules land after routeRules is snapshotted into
+      // runtime config (Nuxt 3.21.8), so /_payload.json 404s and the client
+      // hydrates without SSR data. Keep each TTL in sync with its page rule.
+      // Pages with a same-TTL `/**` sibling (reports, media, careers, …) are
+      // already covered by the wildcard and need no entry here.
+      '/_payload.json': { isr: 600 },
+      '/publications/_payload.json': { isr: 600 }, // page is 600; /publications/** would give 3600
+      '/contact/_payload.json': { isr: 3600 },
+      '/about/the-service/_payload.json': { isr: 3600 },
+      '/about/auditor-general/_payload.json': { isr: 3600 },
+      '/about/past-auditors-general/_payload.json': { isr: 3600 },
+      '/ak/_payload.json': { isr: 600 },
+      '/ak/publications/_payload.json': { isr: 600 },
+      '/ak/contact/_payload.json': { isr: 3600 },
+      '/ak/about/the-service/_payload.json': { isr: 3600 },
+      '/ak/about/auditor-general/_payload.json': { isr: 3600 },
+      '/ak/about/past-auditors-general/_payload.json': { isr: 3600 },
+
       // Exclude image optimization and download routes from prerendering —
       // the crawler discovers every srcset breakpoint, adding 90+ routes at
       // ~1s each. Images are generated on-demand at runtime instead.
