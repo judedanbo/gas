@@ -157,27 +157,34 @@
                     />
                   </div>
                 </div>
-                <p
+                <div
                   v-else-if="optimization.status.value === 'success' && optimization.result.value"
-                  class="text-green-700 dark:text-green-400"
+                  class="space-y-1"
                 >
-                  <template v-if="optimization.result.value.skippedCompression">
-                    File was already well-compressed; original kept.
-                  </template>
-                  <template v-else>
-                    Reduced to {{ formatBytes(optimization.result.value.optimizedSize) }} (saved
-                    {{ formatBytes(optimization.result.value.savedBytes) }})
-                  </template>
-                </p>
+                  <p class="text-green-700 dark:text-green-400">
+                    <template v-if="optimization.result.value.skippedCompression">
+                      File was already well-compressed; original kept.
+                    </template>
+                    <template v-else>
+                      Reduced to {{ formatBytes(optimization.result.value.optimizedSize) }} (saved
+                      {{ formatBytes(optimization.result.value.savedBytes) }})
+                    </template>
+                  </p>
+                  <p
+                    v-if="(optimization.result.value.ocrFailedPages ?? 0) > 0"
+                    class="text-xs text-amber-600 dark:text-amber-400"
+                  >
+                    {{ optimization.result.value.ocrFailedPages }} page(s) could not be
+                    OCR-processed and were kept as scans.
+                  </p>
+                </div>
                 <p
                   v-else-if="optimization.status.value === 'error'"
                   class="text-amber-700 dark:text-amber-400"
                 >
-                  Optimization failed: {{ optimization.error.value }}
+                  {{ optimization.errorMessage.value }}
                   <button
-                    v-if="
-                      optimization.error.value && optimization.error.value.includes('HAS_BOOKMARKS')
-                    "
+                    v-if="optimization.errorCode.value === 'HAS_BOOKMARKS'"
                     type="button"
                     class="ml-2 underline"
                     @click="optimizeExistingFile({ allowDropBookmarks: true })"
@@ -504,7 +511,7 @@
       // Refresh the row so other fields (e.g. updatedAt) stay current.
       await fetchOne(id)
     } else if (optimization.status.value === 'error') {
-      toast.error(optimization.error.value || 'Optimization failed')
+      toast.error(optimization.errorMessage.value || 'Optimization failed')
     }
   }
 

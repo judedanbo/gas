@@ -1,4 +1,5 @@
 import { ref, computed } from 'vue'
+import { optimizationErrorMessage } from '~/utils/reportOptimizationUi'
 
 export type CompressionPreset = 'screen' | 'ebook' | 'printer'
 export type PageKind = 'native' | 'scanned'
@@ -20,6 +21,7 @@ export interface OptimizationResult {
   skippedCompression: boolean
   nativePages: number
   scannedPages: number
+  ocrFailedPages?: number
   pageCount?: number
 }
 
@@ -31,12 +33,14 @@ export interface ProgressEvent {
   totalPages?: number
   kind?: PageKind
   reason?: string
+  failed?: boolean
   originalSize?: number
   optimizedSize?: number
   savedBytes?: number
   skippedCompression?: boolean
   nativePages?: number
   scannedPages?: number
+  ocrFailedPages?: number
 }
 
 export interface OptimizationStartOptions {
@@ -66,7 +70,14 @@ export function useReportOptimization() {
   const hasBookmarks = ref(false)
   const result = ref<OptimizationResult | null>(null)
   const error = ref<string | null>(null)
+  const errorCode = ref<string | null>(null)
   const jobId = ref<string | null>(null)
+
+  // Friendly, admin-facing message for the current error code. The raw
+  // `error` string stays available for logging/debugging.
+  const errorMessage = computed(() =>
+    status.value === 'error' ? optimizationErrorMessage(errorCode.value) : null
+  )
 
   let eventSource: EventSource | null = null
 
@@ -96,6 +107,7 @@ export function useReportOptimization() {
     hasBookmarks.value = false
     result.value = null
     error.value = null
+    errorCode.value = null
     jobId.value = null
     closeStream()
   }
@@ -128,7 +140,8 @@ export function useReportOptimization() {
           savedBytes: e.savedBytes ?? 0,
           skippedCompression: e.skippedCompression ?? false,
           nativePages: e.nativePages ?? nativePages.value,
-          scannedPages: e.scannedPages ?? scannedPages.value
+          scannedPages: e.scannedPages ?? scannedPages.value,
+          ocrFailedPages: e.ocrFailedPages ?? 0
         }
       }
     }
@@ -149,9 +162,14 @@ export function useReportOptimization() {
         allowDropBookmarks: opts.allowDropBookmarks === true
       })
     } catch (err) {
-      const e = err as { statusMessage?: string; message?: string }
+      const e = err as {
+        statusMessage?: string
+        message?: string
+        data?: { data?: { code?: string } }
+      }
       status.value = 'error'
       error.value = e.statusMessage || e.message || 'Failed to start optimization'
+      errorCode.value = e.data?.data?.code ?? null
       return
     }
 
@@ -199,10 +217,12 @@ export function useReportOptimization() {
       eventSource!.addEventListener('error', (msg) => {
         const ev = msg as MessageEvent | Event
         let message = 'Optimization stream error'
+        let code: string | null = null
         if ('data' in ev && typeof ev.data === 'string') {
           try {
-            const data = JSON.parse(ev.data) as { message?: string }
+            const data = JSON.parse(ev.data) as { message?: string; code?: string | null }
             if (data?.message) message = data.message
+            if (data?.code) code = data.code
           } catch {
             /* ignore */
           }
@@ -215,6 +235,7 @@ export function useReportOptimization() {
           if (eventSource && eventSource.readyState === EventSource.CLOSED) {
             status.value = 'error'
             error.value = message
+            errorCode.value = code
             closeStream()
             settle()
           }
@@ -241,6 +262,8 @@ export function useReportOptimization() {
     hasBookmarks,
     result,
     error,
+    errorCode,
+    errorMessage,
     jobId,
     progress,
     isRunning,

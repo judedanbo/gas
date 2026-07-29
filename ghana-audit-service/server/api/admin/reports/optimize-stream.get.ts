@@ -62,7 +62,12 @@ export default defineEventHandler(async (event) => {
 
   function sendTerminal(state: JobState): void {
     if (state.status === 'success') send('done', state.result ?? null)
-    else if (state.status === 'error') send('error', { message: state.error ?? 'unknown error' })
+    else if (state.status === 'error') {
+      send('error', {
+        message: state.error ?? 'unknown error',
+        code: state.errorCode ?? null
+      })
+    }
   }
 
   let closed = false

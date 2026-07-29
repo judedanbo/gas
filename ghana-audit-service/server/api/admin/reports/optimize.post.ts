@@ -164,6 +164,7 @@ async function runOptimization(
     // admin client. PdfOptimizerError.code is a fixed enum (no internals); the
     // free-form message can contain file paths, so it is not sent to the client.
     logError('pdfOptimizer', err)
+    const errorCode = err instanceof PdfOptimizerError ? err.code : 'UNKNOWN'
     const message = err instanceof PdfOptimizerError ? err.code : 'Optimization failed'
 
     // The file is left untouched on any error path (the optimizer only
@@ -176,7 +177,7 @@ async function runOptimization(
       currentSize = undefined
     }
 
-    updateJob(jobId, { status: 'error', error: message })
+    updateJob(jobId, { status: 'error', error: message, errorCode })
     pushEvent(jobId, {
       phase: 'done',
       originalSize: currentSize ?? 0,

@@ -180,18 +180,24 @@
               {{ optimization.result.value.nativePages }} native ·
               {{ optimization.result.value.scannedPages }} scanned
             </p>
+            <p
+              v-if="(optimization.result.value.ocrFailedPages ?? 0) > 0"
+              class="text-xs text-amber-600 dark:text-amber-400"
+            >
+              {{ optimization.result.value.ocrFailedPages }} page(s) could not be OCR-processed and
+              were kept as scans.
+            </p>
           </div>
 
           <div v-else-if="optimization.status.value === 'error'" class="text-sm space-y-2">
             <p class="text-amber-700 dark:text-amber-400">
-              Optimization failed:
-              <span class="font-mono text-xs">{{ optimization.error.value }}</span>
+              {{ optimization.errorMessage.value }}
             </p>
             <p class="text-xs text-gray-500">
               The original file will be used. You can retry from the edit page.
             </p>
             <button
-              v-if="optimization.error.value && optimization.error.value.includes('HAS_BOOKMARKS')"
+              v-if="optimization.errorCode.value === 'HAS_BOOKMARKS'"
               type="button"
               class="btn btn-ghost text-sm"
               @click="retryWithBookmarksDropped"
