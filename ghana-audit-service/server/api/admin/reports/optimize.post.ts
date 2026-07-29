@@ -12,6 +12,12 @@ import {
   type CompressionPreset
 } from '../../../utils/pdfOptimizer'
 import { createJob, pushEvent, updateJob } from '../../../utils/pdfOptimizationJobs'
+import {
+  enqueue,
+  getActiveJobForFile,
+  getActiveJobIdLocal,
+  registerActiveJob
+} from '../../../utils/pdfOptimizationScheduler'
 import { signSseTicket } from '../../../utils/sseTicket'
 import { logError } from '../../../utils/logger'
 
@@ -42,21 +48,43 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 400, statusMessage: 'Invalid file path' })
   }
 
+  // Mint a short-lived SSE ticket so the EventSource auth travels as a ~2min
+  // aud-scoped ticket rather than the long-lived session JWT in the URL.
+  const auth = event.context.auth!
+  const sseTicket = signSseTicket({ userId: auth.user.id, sid: auth.sessionId })
+
+  // Same-file dedup: if an optimization is already queued/running for this
+  // file (on any replica), attach the caller to it instead of starting a
+  // duplicate — checked before materializing so we don't download a blob
+  // just to attach.
+  const existingJobId = await getActiveJobForFile(fileUrl)
+  if (existingJobId) {
+    return { jobId: existingJobId, sseTicket, attached: true }
+  }
+
   const source = await materializePdfSource(fileUrl)
   if (!source) {
     throw createError({ statusCode: 422, statusMessage: 'PDF file not found in storage' })
   }
 
+  // Re-check after the async materialize: a concurrent same-file POST on this
+  // pod may have claimed the file meanwhile. From here to registerActiveJob
+  // there is no await, so the claim itself is race-free in-process.
+  const raceWinner = getActiveJobIdLocal(fileUrl)
+  if (raceWinner) {
+    await source.cleanup()
+    return { jobId: raceWinner, sseTicket, attached: true }
+  }
+
   const job = createJob(fileUrl, reportId)
+  registerActiveJob(fileUrl, job.id)
 
-  // Run the optimizer detached from the request lifetime. The SSE endpoint
+  // Run the optimizer detached from the request lifetime, throttled by the
+  // scheduler (bounded concurrency + FIFO queue). The SSE endpoint
   // (optimize-stream.get.ts) streams the job's events to the admin UI.
-  void runOptimization(job.id, source, fileUrl, preset, allowDropBookmarks, event, reportId)
-
-  // Mint a short-lived SSE ticket so the EventSource auth travels as a ~2min
-  // aud-scoped ticket rather than the long-lived session JWT in the URL.
-  const auth = event.context.auth!
-  const sseTicket = signSseTicket({ userId: auth.user.id, sid: auth.sessionId })
+  enqueue(job.id, fileUrl, () =>
+    runOptimization(job.id, source, fileUrl, preset, allowDropBookmarks, event, reportId)
+  )
 
   return { jobId: job.id, sseTicket }
 })

@@ -7,6 +7,13 @@ import {
   type ProgressEvent
 } from '~/server/utils/pdfOptimizer'
 import { createJob, getJob, pushEvent, updateJob } from '~/server/utils/pdfOptimizationJobs'
+import {
+  enqueue,
+  getActiveJobForFile,
+  getActiveJobIdLocal,
+  registerActiveJob,
+  __resetSchedulerForTests
+} from '~/server/utils/pdfOptimizationScheduler'
 import { tryBlobSource, blobKeyFromFileUrl, uploadBlob } from '~/server/utils/blobStorage'
 
 // Per CLAUDE.md: vi.mock factories must use `function` declarations (hoisted).
@@ -59,13 +66,20 @@ async function runOptimizeRoute(body: {
   preset?: 'screen' | 'ebook' | 'printer'
   reportId?: number
   allowDropBookmarks?: boolean
-}): Promise<{ jobId: string }> {
+}): Promise<{ jobId: string; attached?: boolean }> {
   if (!body?.fileUrl || typeof body.fileUrl !== 'string') {
     throw { statusCode: 400, statusMessage: 'fileUrl is required' }
   }
   if (!body.fileUrl.startsWith('/pdf/reports/')) {
     throw { statusCode: 400, statusMessage: 'Invalid file path' }
   }
+
+  // Same-file dedup, checked before materializing — mirrors the real route.
+  const existingJobId = await getActiveJobForFile(body.fileUrl)
+  if (existingJobId) {
+    return { jobId: existingJobId, attached: true }
+  }
+
   // Blob-first, disk fallback — same order as materializePdfSource.
   let pdfPath: string | null = null
   let blobKey: string | null = null
@@ -82,9 +96,15 @@ async function runOptimizeRoute(body: {
     throw { statusCode: 422, statusMessage: 'PDF file not found in storage' }
   }
 
-  const job = createJob(body.fileUrl, body.reportId ?? null)
+  const raceWinner = getActiveJobIdLocal(body.fileUrl)
+  if (raceWinner) {
+    return { jobId: raceWinner, attached: true }
+  }
 
-  void (async () => {
+  const job = createJob(body.fileUrl, body.reportId ?? null)
+  registerActiveJob(body.fileUrl, job.id)
+
+  enqueue(job.id, body.fileUrl, async () => {
     updateJob(job.id, { status: 'running' })
     try {
       const result = await (
@@ -107,7 +127,7 @@ async function runOptimizeRoute(body: {
         error: err instanceof Error ? err.message : String(err)
       })
     }
-  })()
+  })
 
   return { jobId: job.id }
 }
@@ -115,6 +135,7 @@ async function runOptimizeRoute(body: {
 describe('POST /api/admin/reports/optimize', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    __resetSchedulerForTests()
   })
 
   it('returns 400 when fileUrl is missing', async () => {
@@ -156,6 +177,7 @@ describe('POST /api/admin/reports/optimize', () => {
       skippedCompression: false,
       nativePages: 1,
       scannedPages: 0,
+      ocrFailedPages: 0,
       pageCount: 1
     })
 
@@ -189,6 +211,7 @@ describe('POST /api/admin/reports/optimize', () => {
       skippedCompression: true,
       nativePages: 1,
       scannedPages: 0,
+      ocrFailedPages: 0,
       pageCount: 1
     })
 
@@ -233,6 +256,7 @@ describe('POST /api/admin/reports/optimize', () => {
           skippedCompression: false,
           nativePages: 1,
           scannedPages: 1,
+          ocrFailedPages: 0,
           pageCount: 3
         }
       }
@@ -281,5 +305,57 @@ describe('POST /api/admin/reports/optimize', () => {
     const job = getJob(jobId)
     expect(job?.status).toBe('error')
     expect(job?.error).toMatch(/boom/)
+  })
+
+  it('attaches a second request for the same file to the existing job', async () => {
+    vi.mocked(tryBlobSource).mockResolvedValue(null)
+    vi.mocked(resolvePublicAsset).mockReturnValue('/abs/pdf/reports/dup.pdf')
+
+    let release!: () => void
+    vi.mocked(optimizeReportPdf).mockImplementation(
+      () =>
+        new Promise<OptimizeResult>((resolve) => {
+          release = () =>
+            resolve({
+              originalSize: 100,
+              optimizedSize: 50,
+              savedBytes: 50,
+              skippedCompression: false,
+              nativePages: 1,
+              scannedPages: 0,
+              ocrFailedPages: 0,
+              pageCount: 1
+            })
+        })
+    )
+
+    const first = await runOptimizeRoute({ fileUrl: '/pdf/reports/dup.pdf' })
+    expect(first.attached).toBeUndefined()
+
+    const second = await runOptimizeRoute({ fileUrl: '/pdf/reports/dup.pdf' })
+    expect(second).toEqual({ jobId: first.jobId, attached: true })
+
+    release()
+    for (let i = 0; i < 50; i++) {
+      const j = getJob(first.jobId)
+      if (j && j.status === 'success') break
+      await new Promise((r) => setTimeout(r, 5))
+    }
+
+    // Once the job finishes, the file is free again — a new request starts a
+    // fresh job instead of attaching to the finished one.
+    vi.mocked(optimizeReportPdf).mockResolvedValue({
+      originalSize: 100,
+      optimizedSize: 100,
+      savedBytes: 0,
+      skippedCompression: true,
+      nativePages: 1,
+      scannedPages: 0,
+      ocrFailedPages: 0,
+      pageCount: 1
+    })
+    const third = await runOptimizeRoute({ fileUrl: '/pdf/reports/dup.pdf' })
+    expect(third.jobId).not.toBe(first.jobId)
+    expect(third.attached).toBeUndefined()
   })
 })
