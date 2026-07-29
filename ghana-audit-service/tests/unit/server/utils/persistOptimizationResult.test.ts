@@ -92,9 +92,9 @@ describe('persistOptimizationResult', () => {
 
     expect(captured.sets[0].fileSize).toBeUndefined()
     expect(captured.sets[0].optimizedAt).toBeInstanceOf(Date)
-    expect((captured.sets[0].optimizationMeta as { skippedCompression: boolean }).skippedCompression).toBe(
-      true
-    )
+    expect(
+      (captured.sets[0].optimizationMeta as { skippedCompression: boolean }).skippedCompression
+    ).toBe(true)
   })
 
   it('never throws on database failure — logs and returns', async () => {

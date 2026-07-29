@@ -95,10 +95,7 @@ function ensureSweeper(): void {
   sweepTimer.unref?.()
 }
 
-function stallOf(
-  state: JobState,
-  now: number
-): { errorCode: 'TIMEOUT' | 'QUEUE_TIMEOUT' } | null {
+function stallOf(state: JobState, now: number): { errorCode: 'TIMEOUT' | 'QUEUE_TIMEOUT' } | null {
   if (state.status === 'running' && now - state.updatedAt > RUNNING_STALL_TIMEOUT_MS) {
     return { errorCode: 'TIMEOUT' }
   }

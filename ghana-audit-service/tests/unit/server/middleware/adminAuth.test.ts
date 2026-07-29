@@ -78,10 +78,7 @@ interface FakeH3Event {
   context: { auth?: { user: { id: number }; token: string; sessionId: string } }
 }
 
-function makeEvent(
-  path: string,
-  opts: { bearer?: string; ticket?: string } = {}
-): FakeH3Event {
+function makeEvent(path: string, opts: { bearer?: string; ticket?: string } = {}): FakeH3Event {
   return {
     path,
     headers: opts.bearer ? { Authorization: `Bearer ${opts.bearer}` } : {},

@@ -51,17 +51,12 @@ export async function persistOptimizationResult(
   try {
     const db = getDatabase()
     if (reportId) {
-      await db
-        .update(schema.auditReports)
-        .set(values)
-        .where(eq(schema.auditReports.id, reportId))
+      await db.update(schema.auditReports).set(values).where(eq(schema.auditReports.id, reportId))
     } else {
       await db
         .update(schema.auditReports)
         .set(values)
-        .where(
-          and(eq(schema.auditReports.fileUrl, fileUrl), isNull(schema.auditReports.deletedAt))
-        )
+        .where(and(eq(schema.auditReports.fileUrl, fileUrl), isNull(schema.auditReports.deletedAt)))
     }
   } catch (err) {
     logError('pdfOptimizer', err)

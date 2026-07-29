@@ -84,11 +84,11 @@ export function registerActiveJob(fileUrl: string, jobId: string): void {
   activeByFile.set(fileUrl, jobId)
   const redis = getRedis()
   if (!redis) return
-  void redis.set(ACTIVE_INDEX_PREFIX + fileUrl, jobId, 'EX', ACTIVE_INDEX_TTL_SEC, 'NX').catch(
-    () => {
+  void redis
+    .set(ACTIVE_INDEX_PREFIX + fileUrl, jobId, 'EX', ACTIVE_INDEX_TTL_SEC, 'NX')
+    .catch(() => {
       /* best-effort */
-    }
-  )
+    })
 }
 
 function releaseActiveJob(fileUrl: string, jobId: string): void {
