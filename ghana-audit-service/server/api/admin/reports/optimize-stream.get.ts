@@ -1,5 +1,6 @@
 import { requirePermission } from '../../../utils/adminHelpers'
 import {
+  effectiveJobState,
   getJob,
   getJobAcrossInstances,
   subscribe,
@@ -138,8 +139,11 @@ export default defineEventHandler(async (event) => {
             close()
             return
           }
-          flushFrom(state)
-          terminalFrom(state)
+          // A remote job whose producer pod died stops updating its mirror;
+          // the stall rules turn it terminal here instead of hanging.
+          const effective = effectiveJobState(state)
+          flushFrom(effective)
+          terminalFrom(effective)
         })
         .catch(() => {
           // Transient Redis error — keep polling; the TTL branch above ends

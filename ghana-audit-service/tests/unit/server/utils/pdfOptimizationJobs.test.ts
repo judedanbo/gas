@@ -2,10 +2,13 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { getRedis } from '~/server/utils/redis'
 import {
   createJob,
+  effectiveJobState,
   getJob,
   getJobAcrossInstances,
+  sweepStalledJobs,
   updateJob,
-  pushEvent
+  pushEvent,
+  type JobState
 } from '~/server/utils/pdfOptimizationJobs'
 
 // Per CLAUDE.md: vi.mock factories must use `function` declarations (hoisted).
@@ -99,5 +102,62 @@ describe('pdfOptimizationJobs', () => {
     const fake = makeFakeRedis()
     vi.mocked(getRedis).mockReturnValue(fake.client as never)
     await expect(getJobAcrossInstances('ghost')).resolves.toBeUndefined()
+  })
+
+  describe('watchdog', () => {
+    it('times out a running job with no recent activity', () => {
+      const job = createJob('/pdf/reports/stalled.pdf', 5)
+      updateJob(job.id, { status: 'running' })
+      const state = getJob(job.id)!
+      const now = state.updatedAt + 16 * 60_000
+
+      sweepStalledJobs(now)
+
+      expect(state.status).toBe('error')
+      expect(state.errorCode).toBe('TIMEOUT')
+      // Terminal event pushed so SSE subscribers are released.
+      expect(state.events.at(-1)?.event.phase).toBe('done')
+    })
+
+    it('times out a queued job by total wait, not inactivity', () => {
+      const job = createJob('/pdf/reports/queued-forever.pdf', 6)
+      const state = getJob(job.id)!
+      // 20 minutes queued: past the running-stall window but within the
+      // queue-wait cap — must NOT be swept.
+      sweepStalledJobs(state.startedAt + 20 * 60_000)
+      expect(state.status).toBe('queued')
+
+      sweepStalledJobs(state.startedAt + 31 * 60_000)
+      expect(state.status).toBe('error')
+      expect(state.errorCode).toBe('QUEUE_TIMEOUT')
+    })
+
+    it('leaves active jobs alone', () => {
+      const job = createJob('/pdf/reports/busy.pdf', 7)
+      updateJob(job.id, { status: 'running' })
+      const state = getJob(job.id)!
+      sweepStalledJobs(state.updatedAt + 60_000)
+      expect(state.status).toBe('running')
+    })
+
+    it('effectiveJobState turns a stalled deserialized state terminal without mutating it', () => {
+      const remote: JobState = {
+        id: 'dead-pod-job',
+        status: 'running',
+        fileUrl: '/pdf/reports/dead.pdf',
+        reportId: 8,
+        events: [],
+        nextSeq: 1,
+        startedAt: 0,
+        updatedAt: 0
+      }
+      const effective = effectiveJobState(remote, 16 * 60_000)
+      expect(effective.status).toBe('error')
+      expect(effective.errorCode).toBe('TIMEOUT')
+      expect(remote.status).toBe('running')
+
+      // Fresh state passes through untouched.
+      expect(effectiveJobState(remote, 60_000)).toBe(remote)
+    })
   })
 })
