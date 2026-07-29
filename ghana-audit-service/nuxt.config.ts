@@ -73,8 +73,11 @@ export default defineNuxtConfig({
       ]
     },
     workbox: {
-      navigateFallback: '/',
-      navigateFallbackDenylist: [/^\/api\//],
+      // No navigateFallback: pages are SSR/ISR, so '/' is never in the precache
+      // manifest and createHandlerBoundToURL('/') throws non-precached-url at
+      // service-worker evaluation, aborting the rest of sw.js. Navigations must
+      // go to the network on this site; only static assets are precached.
+      navigateFallback: null,
       globPatterns: ['**/*.{js,css,html,png,svg,ico,woff,woff2}'],
       // Some report cover images exceed workbox's 2 MiB default and would
       // abort the service-worker build; raise the precache size ceiling.
