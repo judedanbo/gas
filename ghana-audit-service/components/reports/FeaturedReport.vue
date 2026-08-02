@@ -7,8 +7,9 @@
       <!-- Thumbnail -->
       <div class="relative bg-gray-100 dark:bg-gray-700 overflow-hidden lg:col-span-2">
         <div class="aspect-[4/3] lg:aspect-auto lg:h-full w-full">
-          <img
-            :src="report.thumbnail || '/img/reports/default-cover.png'"
+          <UiBaseImage
+            :src="report.thumbnail"
+            fallback-src="/img/reports/default-cover.png"
             alt=""
             class="w-full h-full object-cover object-top transition-transform duration-300 group-hover:scale-[1.03]"
             loading="lazy"

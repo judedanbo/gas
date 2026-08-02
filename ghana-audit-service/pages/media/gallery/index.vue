@@ -61,13 +61,13 @@
                 <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-1 sm:gap-1.5 md:gap-2">
                   <!-- Featured large image -->
                   <div class="col-span-1 row-span-2 aspect-[3/4] sm:aspect-auto sm:min-h-[240px] md:min-h-[280px] overflow-hidden rounded-lg bg-gray-100 dark:bg-gray-700">
-                    <img
+                    <UiBaseImage
                       v-if="album.previewImages[0]"
                       :src="album.previewImages[0]"
                       :alt="album.title"
                       class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                       loading="lazy"
-                    >
+                    />
                   </div>
 
                   <!-- Smaller thumbnails -->
@@ -76,12 +76,12 @@
                     :key="i"
                     class="aspect-square overflow-hidden rounded-lg bg-gray-100 dark:bg-gray-700"
                   >
-                    <img
+                    <UiBaseImage
                       :src="url"
                       :alt="`${album.title} photo ${i + 2}`"
                       class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                       loading="lazy"
-                    >
+                    />
                   </div>
 
                   <!-- "+N more" card -->

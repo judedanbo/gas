@@ -50,7 +50,7 @@
           <div
             class="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-700 flex-shrink-0 overflow-hidden"
           >
-            <img
+            <UiBaseImage
               v-if="row.photo"
               :src="row.photo"
               :alt="row.translations?.en?.name"

@@ -6,12 +6,13 @@
     <article>
       <!-- Thumbnail or Date Badge -->
       <div class="aspect-video overflow-hidden relative">
-        <img
-          :src="event.thumbnail || '/img/events/default-cover.png'"
+        <UiBaseImage
+          :src="event.thumbnail"
+          fallback-src="/img/events/default-cover.png"
           :alt="event.title"
           class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
           loading="lazy"
-        >
+        />
         <div class="absolute top-3 right-3 bg-primary text-white px-3 py-1.5 rounded-lg text-center shadow-lg">
           <div class="text-lg font-bold leading-tight">{{ formatDay(event.startDate) }}</div>
           <div class="text-xs uppercase">{{ formatMonth(event.startDate) }}</div>

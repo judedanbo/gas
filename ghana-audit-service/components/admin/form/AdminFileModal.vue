@@ -45,7 +45,7 @@
           v-else
           class="border border-gray-200 dark:border-gray-700 rounded-lg p-4 flex items-center gap-4 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
         >
-          <img
+          <UiBaseImage
             v-if="cardThumbnail"
             :src="cardThumbnail"
             alt="Report thumbnail"
@@ -292,7 +292,7 @@
                   />
                   <p class="text-sm text-gray-500 dark:text-gray-400">Generating thumbnail...</p>
                 </div>
-                <img
+                <UiBaseImage
                   v-else-if="modalThumbnail"
                   :src="modalThumbnail"
                   alt="Report thumbnail"

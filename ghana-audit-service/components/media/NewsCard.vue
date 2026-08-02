@@ -2,8 +2,9 @@
   <article class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden transition-all hover:border-primary hover:shadow-lg">
     <!-- Thumbnail -->
     <div class="aspect-video bg-gray-100">
-      <NuxtImg
-        :src="article.thumbnail || '/img/news/default-cover.png'"
+      <UiBaseImage
+        :src="article.thumbnail"
+        fallback-src="/img/news/default-cover.png"
         :alt="article.title"
         class="w-full h-full object-cover"
         loading="lazy"

@@ -32,11 +32,12 @@
               class="group grid grid-cols-1 lg:grid-cols-2 gap-6 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden hover:border-primary dark:hover:border-primary hover:shadow-lg transition-all"
             >
               <div class="aspect-video lg:aspect-auto lg:min-h-[320px] overflow-hidden">
-                <img
-                  :src="featuredArticle.thumbnail || '/img/news/default-cover.png'"
+                <UiBaseImage
+                  :src="featuredArticle.thumbnail"
+                  fallback-src="/img/news/default-cover.png"
                   :alt="featuredArticle.title"
                   class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                >
+                />
               </div>
               <div class="p-6 lg:p-8 flex flex-col justify-center">
                 <div class="flex items-center gap-3 mb-3">

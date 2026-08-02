@@ -62,7 +62,7 @@
             <div class="lg:col-span-2">
               <!-- Featured Image -->
               <div v-if="article.thumbnail" class="mb-8 rounded-lg overflow-hidden">
-                <NuxtImg
+                <UiBaseImage
                   :src="article.thumbnail"
                   :alt="article.title"
                   class="w-full"
@@ -90,12 +90,12 @@
                       class="aspect-square rounded-lg overflow-hidden group relative"
                       @click="openGallery(idx)"
                     >
-                      <img
+                      <UiBaseImage
                         :src="img.url"
                         :alt="img.alt"
                         class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
                         loading="lazy"
-                      >
+                      />
                       <div class="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors"></div>
                     </button>
                   </div>
@@ -126,13 +126,13 @@
                     class="flex gap-3 group"
                   >
                     <div class="w-16 h-16 flex-shrink-0 rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-700">
-                      <img
+                      <UiBaseImage
                         v-if="related.thumbnail"
                         :src="related.thumbnail"
                         :alt="related.title"
                         class="w-full h-full object-cover"
                         loading="lazy"
-                      >
+                      />
                     </div>
                     <div class="flex-1 min-w-0">
                       <h4 class="text-sm font-medium text-gray-900 dark:text-white line-clamp-2 group-hover:text-primary transition-colors">
@@ -155,13 +155,13 @@
                     class="flex gap-3 group"
                   >
                     <div class="w-16 h-16 flex-shrink-0 rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-700">
-                      <img
+                      <UiBaseImage
                         v-if="other.thumbnail"
                         :src="other.thumbnail"
                         :alt="other.title"
                         class="w-full h-full object-cover"
                         loading="lazy"
-                      >
+                      />
                     </div>
                     <div class="flex-1 min-w-0">
                       <h4 class="text-sm font-medium text-gray-900 dark:text-white line-clamp-2 group-hover:text-primary transition-colors">
@@ -258,11 +258,11 @@
             </svg>
           </button>
           <div class="max-w-4xl max-h-[80vh] p-4" @click.stop>
-            <img
+            <UiBaseImage
               :src="article.images[galleryIndex].url"
               :alt="article.images[galleryIndex].alt"
               class="max-w-full max-h-[75vh] rounded-lg mx-auto"
-            >
+            />
             <div class="text-center mt-4 text-white">
               <p v-if="article.images[galleryIndex].caption" class="text-lg">{{ article.images[galleryIndex].caption }}</p>
               <p class="text-sm text-white/60 mt-1">{{ galleryIndex + 1 }} / {{ article.images.length }}</p>

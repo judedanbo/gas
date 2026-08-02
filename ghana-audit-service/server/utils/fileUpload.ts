@@ -59,9 +59,12 @@ export const uploadConfigs: Record<string, UploadConfig> = {
 }
 
 /**
- * Get upload base directory from environment or default
+ * Get upload base directory from environment or default.
+ *
+ * Exported so the /uploads/** serving routes resolve reads against exactly the
+ * directory writes went to, including a non-default UPLOAD_DIRECTORY.
  */
-function getUploadBaseDir(): string {
+export function getUploadBaseDir(): string {
   return process.env.UPLOAD_DIRECTORY || 'public/uploads'
 }
 

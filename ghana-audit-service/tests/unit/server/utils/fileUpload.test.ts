@@ -19,7 +19,10 @@ function makeFakeContainer() {
   const client = {
     getBlockBlobClient(key: string) {
       return {
-        async uploadData(data: unknown, options: { blobHTTPHeaders?: { blobContentType?: string } }) {
+        async uploadData(
+          data: unknown,
+          options: { blobHTTPHeaders?: { blobContentType?: string } }
+        ) {
           uploads.push({ key, data, contentType: options?.blobHTTPHeaders?.blobContentType })
         }
       }
@@ -84,6 +87,31 @@ describe('persistUpload', () => {
     expect(fake.uploads).toEqual([
       { key: 'uploads/publications/20260728-pub.pdf', data, contentType: 'application/pdf' }
     ])
+  })
+
+  it('writes image uploads to disk under the /uploads/images/ URL', async () => {
+    __setContainerClientForTests(null)
+    const baseDir = mkdtempSync(join(tmpdir(), 'gas-upload-'))
+    tmpDirs.push(baseDir)
+    const data = Buffer.from('image-bytes')
+
+    const url = await persistUpload(
+      { ...uploadConfigs.image, baseDir },
+      '20260114-abc.jpeg',
+      data,
+      'image/jpeg'
+    )
+
+    // Nothing baked sits behind this URL, so it is only reachable because
+    // server/routes/uploads/images/[name].get.ts serves it.
+    expect(url).toBe('/uploads/images/20260114-abc.jpeg')
+    const written = join(baseDir, 'images', '20260114-abc.jpeg')
+    expect(existsSync(written)).toBe(true)
+    expect(readFileSync(written)).toEqual(data)
+  })
+
+  it('image uploads are disk-backed, not blob-backed', () => {
+    expect(uploadConfigs.image.backend).toBeUndefined()
   })
 
   it('report and publication configs both use the blob backend', () => {

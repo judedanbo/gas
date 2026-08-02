@@ -22,7 +22,7 @@
       <div v-if="previewUrl || fileUrl" class="relative p-4">
         <!-- Image Preview -->
         <div v-if="isImage" class="flex items-center gap-4">
-          <img
+          <UiBaseImage
             :src="previewUrl || fileUrl"
             :alt="fileName || 'Preview'"
             class="w-20 h-20 object-cover rounded-lg"

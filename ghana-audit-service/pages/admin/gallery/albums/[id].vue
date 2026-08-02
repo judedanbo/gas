@@ -110,7 +110,7 @@
             :key="image.id"
             class="group relative aspect-square overflow-hidden rounded-lg bg-gray-100 dark:bg-gray-800"
           >
-            <img
+            <UiBaseImage
               :src="image.url"
               :alt="image.translations?.en?.alt || ''"
               class="h-full w-full object-cover"
@@ -253,7 +253,7 @@
             />
           </svg>
         </button>
-        <img
+        <UiBaseImage
           :src="viewingImage.url"
           :alt="viewingImage.translations?.en?.alt || ''"
           class="max-h-[80vh] max-w-full rounded-lg"

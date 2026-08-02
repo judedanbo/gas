@@ -46,10 +46,31 @@ spec:
               # busybox `cp -rn /src/. /dst/` is broken (copies nothing); use
               # find + per-file no-clobber. Verified in node:24-alpine.
               # pdf is runtime-write-only (no baked content), so it is not seeded.
+              #
+              # Failures are fatal on purpose. This used to run inside
+              # `( cd ... 2>/dev/null && ... )`, which swallowed every error: a
+              # copy that failed — e.g. the blobfuse share mounting with
+              # ownership this uid-1001 process cannot write to, since the
+              # dynamic my-blobstorage PVC sets no uid/gid mountOptions — left
+              # the pod Running against a half-populated share, so baked assets
+              # 404ed with nothing in the logs. Crash instead, visibly.
+              set -e
               for d in img images uploads; do
-                ( cd /app/.output/public/$d 2>/dev/null && find . -type f | while IFS= read -r f; do
-                    [ -e "/seed/$d/$f" ] || { mkdir -p "/seed/$d/$(dirname "$f")"; cp "/app/.output/public/$d/$f" "/seed/$d/$f"; }
-                  done )
+                src="/app/.output/public/$d"
+                if [ ! -d "$src" ]; then
+                  echo "seed-public: $src missing from the image" >&2
+                  exit 1
+                fi
+                cd "$src"
+                # Explicit if/fi, not `[ -e ... ] ||` — under `set -e` a false
+                # test as the last command in the loop body would abort the run.
+                find . -type f | while IFS= read -r f; do
+                  if [ ! -e "/seed/$d/$f" ]; then
+                    mkdir -p "/seed/$d/$(dirname "$f")"
+                    cp "$src/$f" "/seed/$d/$f"
+                  fi
+                done
+                echo "seed-public: $d -> $(find "/seed/$d" -type f | wc -l) file(s) on the share"
               done
           volumeMounts:
             - { name: public-files, mountPath: /seed/img, subPath: img }
