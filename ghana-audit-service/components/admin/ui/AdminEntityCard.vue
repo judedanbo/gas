@@ -16,7 +16,7 @@
       @keydown.enter="$emit('click')"
     >
       <div class="aspect-[3/2] w-full">
-        <img
+        <UiBaseImage
           :src="resolvedThumbnail"
           alt=""
           class="w-full h-full object-cover object-top transition-transform duration-300 group-hover:scale-[1.03]"

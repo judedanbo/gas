@@ -2,8 +2,9 @@
   <article class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden flex flex-col transition-all hover:border-primary hover:shadow-lg">
     <!-- Thumbnail -->
     <div class="aspect-video bg-gray-100">
-      <img
-        :src="publication.thumbnail || '/img/publications/default-cover.png'"
+      <UiBaseImage
+        :src="publication.thumbnail"
+        fallback-src="/img/publications/default-cover.png"
         :alt="publication.title"
         class="w-full h-full object-cover"
         loading="lazy"

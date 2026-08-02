@@ -58,7 +58,7 @@
       <template #[`cell-translations.en.name`]="{ row }">
         <div class="flex items-center gap-3">
           <div class="flex-shrink-0">
-            <img
+            <UiBaseImage
               v-if="row.photo"
               :src="row.photo"
               :alt="row.translations?.en?.name"

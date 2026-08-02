@@ -5,7 +5,7 @@
   >
     <!-- Thumbnail -->
     <button class="relative w-full aspect-video bg-gray-900 group" @click="$emit('play', video)">
-      <img
+      <UiBaseImage
         v-if="video.thumbnail"
         :src="video.thumbnail"
         :alt="video.title"

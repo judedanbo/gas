@@ -122,7 +122,7 @@
               >
                 <!-- Thumbnail -->
                 <div class="aspect-[4/3] w-full bg-gray-100 dark:bg-gray-700">
-                  <img
+                  <UiBaseImage
                     v-if="publication.thumbnail"
                     :src="publication.thumbnail"
                     :alt="publication.title"
@@ -227,7 +227,7 @@
               class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden transition-all hover:border-primary hover:shadow-lg group"
             >
               <div class="aspect-[16/9] w-full bg-gray-100 dark:bg-gray-700">
-                <img
+                <UiBaseImage
                   v-if="related.thumbnail"
                   :src="related.thumbnail"
                   :alt="related.title"

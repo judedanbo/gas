@@ -3,10 +3,11 @@
     <!-- Avatar Section -->
     <div :class="avatarContainerClasses">
       <div :class="avatarClasses">
-        <NuxtImg
+        <UiBaseImage
           v-if="image"
           :src="image"
           :alt="name"
+          fallback-icon="heroicons:user"
           class="w-full h-full object-cover"
           loading="lazy"
         />

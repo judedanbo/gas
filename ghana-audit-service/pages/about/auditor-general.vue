@@ -24,10 +24,11 @@
         <div v-else-if="message" class="max-w-4xl mx-auto">
           <!-- Author block -->
           <div class="flex flex-col sm:flex-row items-center gap-6 sm:gap-8 mb-10">
-            <img
+            <UiBaseImage
               v-if="message.photo"
               :src="message.photo"
               :alt="`${message.name}, ${message.title}`"
+              fallback-icon="heroicons:user"
               class="w-40 h-40 md:w-48 md:h-48 rounded-2xl object-cover shadow-lg flex-shrink-0"
             />
             <div class="text-center sm:text-left">

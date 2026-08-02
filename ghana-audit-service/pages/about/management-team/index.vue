@@ -172,7 +172,7 @@
               <div
                 class="w-[70px] h-[85px] mx-auto bg-gray-100 dark:bg-gray-700 rounded-md flex items-center justify-center mb-3 overflow-hidden"
               >
-                <img
+                <UiBaseImage
                   v-if="auditor.photo"
                   :src="auditor.photo"
                   :alt="auditor.name"

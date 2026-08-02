@@ -74,11 +74,11 @@
             <div class="lg:col-span-2">
               <!-- Thumbnail -->
               <div v-if="eventData.thumbnail" class="mb-8 rounded-lg overflow-hidden">
-                <img
+                <UiBaseImage
                   :src="eventData.thumbnail"
                   :alt="eventData.title"
                   class="w-full"
-                >
+                />
               </div>
 
               <!-- Event Description -->
@@ -99,12 +99,12 @@
                       class="aspect-square rounded-lg overflow-hidden group relative"
                       @click="openGallery(idx)"
                     >
-                      <img
+                      <UiBaseImage
                         :src="img.url"
                         :alt="img.alt"
                         class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
                         loading="lazy"
-                      >
+                      />
                       <div class="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors"></div>
                     </button>
                   </div>
@@ -228,11 +228,11 @@
             </svg>
           </button>
           <div class="max-w-4xl max-h-[80vh] p-4" @click.stop>
-            <img
+            <UiBaseImage
               :src="eventData.images[galleryIndex].url"
               :alt="eventData.images[galleryIndex].alt"
               class="max-w-full max-h-[75vh] rounded-lg mx-auto"
-            >
+            />
             <div class="text-center mt-4 text-white">
               <p v-if="eventData.images[galleryIndex].caption" class="text-lg">{{ eventData.images[galleryIndex].caption }}</p>
               <p class="text-sm text-white/60 mt-1">{{ galleryIndex + 1 }} / {{ eventData.images.length }}</p>

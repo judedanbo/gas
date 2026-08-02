@@ -9,12 +9,12 @@
         :aria-label="`View photo: ${image.caption || image.alt}`"
         @click="openLightbox(index)"
       >
-        <img
+        <UiBaseImage
           :src="image.url"
           :alt="image.alt"
           class="absolute inset-0 w-full h-full object-cover"
           loading="lazy"
-        >
+        />
 
         <!-- Overlay -->
         <div class="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
@@ -65,12 +65,12 @@
 
         <!-- Image Container -->
         <div class="max-w-4xl max-h-[80vh] p-4" @click.stop>
-          <img
+          <UiBaseImage
             v-if="currentImage"
             :src="currentImage.url"
             :alt="currentImage.alt"
             class="max-w-full max-h-[75vh] rounded-lg"
-          >
+          />
 
           <!-- Caption -->
           <div v-if="currentImage" class="text-center mt-4 text-white">

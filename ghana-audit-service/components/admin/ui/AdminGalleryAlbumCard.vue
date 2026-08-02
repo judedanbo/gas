@@ -11,7 +11,7 @@
       @keydown.enter="navigate"
     >
       <div class="relative aspect-[16/9] w-full overflow-hidden">
-        <img
+        <UiBaseImage
           v-if="coverUrl"
           :src="coverUrl"
           :alt="title"
@@ -54,7 +54,7 @@
           :key="idx"
           class="relative aspect-square overflow-hidden bg-gray-200 dark:bg-gray-600"
         >
-          <img
+          <UiBaseImage
             v-if="slot"
             :src="slot"
             :alt="`${title} thumbnail ${idx + 2}`"

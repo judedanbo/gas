@@ -5,9 +5,10 @@
         <div class="flex flex-col md:flex-row items-center gap-8 md:gap-12">
           <!-- Photo -->
           <div v-if="message.photo" class="flex-shrink-0">
-            <img
+            <UiBaseImage
               :src="message.photo"
               :alt="`${message.name}, ${message.title}`"
+              fallback-icon="heroicons:user"
               class="w-48 h-48 md:w-64 md:h-64 rounded-2xl object-cover shadow-lg"
             />
           </div>

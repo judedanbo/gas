@@ -85,8 +85,9 @@
               >
                 <!-- Report Cover Thumbnail -->
                 <div class="aspect-[4/3] w-full bg-gray-100 dark:bg-gray-700">
-                  <img
-                    :src="report.thumbnail || '/img/reports/default-cover.png'"
+                  <UiBaseImage
+                    :src="report.thumbnail"
+                    fallback-src="/img/reports/default-cover.png"
                     :alt="report.title"
                     class="w-full h-full object-cover object-top"
                   />

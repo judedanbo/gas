@@ -65,7 +65,7 @@
                 <div class="sm:w-48 sm:flex-shrink-0">
                   <NuxtLink :to="`/publications/press-statements/${statement.slug}`">
                     <div class="aspect-[16/9] sm:aspect-auto sm:h-full bg-gray-100 dark:bg-gray-700">
-                      <img
+                      <UiBaseImage
                         v-if="statement.thumbnail"
                         :src="statement.thumbnail"
                         :alt="statement.title"

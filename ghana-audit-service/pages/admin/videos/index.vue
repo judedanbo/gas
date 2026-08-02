@@ -44,7 +44,7 @@
       <template #[`cell-translations.en.title`]="{ row }">
         <div class="flex items-center gap-3">
           <div class="w-24 h-14 bg-gray-200 dark:bg-gray-700 rounded overflow-hidden flex-shrink-0">
-            <img
+            <UiBaseImage
               v-if="row.thumbnail"
               :src="row.thumbnail"
               :alt="row.translations?.en?.title"

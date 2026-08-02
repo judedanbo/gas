@@ -17,7 +17,14 @@ function mountCard(video: Video) {
   return mount(VideoCard, {
     props: { video },
     global: {
-      mocks: { $t: (key: string) => key }
+      mocks: { $t: (key: string) => key },
+      stubs: {
+        UiBaseImage: {
+          name: 'UiBaseImage',
+          props: ['src', 'alt'],
+          template: '<img :src="src" :alt="alt" />'
+        }
+      }
     }
   })
 }

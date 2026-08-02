@@ -53,7 +53,7 @@
             >
               <!-- Bulletin Cover -->
               <div class="aspect-[4/3] w-full bg-gray-100 dark:bg-gray-700">
-                <img
+                <UiBaseImage
                   v-if="bulletin.thumbnail"
                   :src="bulletin.thumbnail"
                   :alt="bulletin.title"

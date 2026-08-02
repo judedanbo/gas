@@ -9,7 +9,7 @@
   >
     <!-- Background image with Ken Burns -->
     <div class="absolute inset-0 overflow-hidden">
-      <NuxtImg
+      <UiBaseImage
         :src="slide.image"
         :alt="slide.imageAlt"
         :loading="isFirst ? 'eager' : 'lazy'"

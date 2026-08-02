@@ -46,7 +46,7 @@
             class="max-w-4xl mx-auto flex flex-col md:flex-row items-center md:items-start gap-8"
           >
             <div class="flex-shrink-0">
-              <img
+              <UiBaseImage
                 v-if="member.photo"
                 :src="member.photo"
                 :alt="member.name"
@@ -142,7 +142,7 @@
                         :to="`/about/board-members/${m.slug}`"
                         class="flex items-center gap-3 p-2 rounded-md no-underline transition-colors hover:bg-gray-100 dark:hover:bg-gray-700"
                       >
-                        <img
+                        <UiBaseImage
                           v-if="m.photo"
                           :src="m.photo"
                           :alt="m.name"
