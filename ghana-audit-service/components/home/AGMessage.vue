@@ -9,7 +9,7 @@
               :src="message.photo"
               :alt="`${message.name}, ${message.title}`"
               fallback-icon="heroicons:user"
-              class="w-48 h-48 md:w-64 md:h-64 rounded-2xl object-cover shadow-lg"
+              class="w-64 lg:w-80 aspect-[4/5] rounded-2xl object-contain bg-gray-100 dark:bg-gray-800 shadow-lg"
             />
           </div>
           <!-- Content -->

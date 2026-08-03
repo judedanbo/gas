@@ -29,7 +29,7 @@
               :src="message.photo"
               :alt="`${message.name}, ${message.title}`"
               fallback-icon="heroicons:user"
-              class="w-40 h-40 md:w-48 md:h-48 rounded-2xl object-cover shadow-lg flex-shrink-0"
+              class="w-56 md:w-72 aspect-[4/5] rounded-2xl object-contain bg-gray-100 dark:bg-gray-800 shadow-lg flex-shrink-0"
             />
             <div class="text-center sm:text-left">
               <h2 class="text-2xl md:text-3xl font-heading font-bold text-gray-900 dark:text-white">
