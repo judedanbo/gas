@@ -243,13 +243,17 @@
 <script setup lang="ts">
   import type { ManagementTeamMember } from '~/types'
   import { parseBioSections } from '~/utils/parseBioSections'
+  import { htmlToExcerpt } from '~/utils/htmlToPlainText'
 
+  // ProfileCard renders this as text, so it must be flattened — bios authored in the
+  // admin editor are HTML and would otherwise show their tags. Those bios also carry
+  // no "Career Background" heading, hence the fall back to the opening section.
   function getCareerBackground(bio?: string): string | undefined {
     if (!bio) return undefined
     const sections = parseBioSections(bio)
-    const content = sections.find((s) => s.heading === 'Career Background')?.content
-    if (!content) return undefined
-    return content.length > 200 ? content.slice(0, 196).trimEnd() + '...' : content
+    const content =
+      sections.find((s) => s.heading === 'Career Background')?.content || sections[0]?.content
+    return htmlToExcerpt(content, 200) || undefined
   }
 
   useHead({ title: 'Management Team' })

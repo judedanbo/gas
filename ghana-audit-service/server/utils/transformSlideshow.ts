@@ -1,5 +1,6 @@
 import type { HeroSlide } from '~/types'
 import type { SupportedLocale } from './locale'
+import { htmlToExcerpt } from '~/utils/htmlToPlainText'
 
 interface SlideshowNewsArticle {
   id: number
@@ -48,11 +49,6 @@ function formatDate(date: Date | string | null): string {
   return d.toISOString().split('T')[0]
 }
 
-function truncate(text: string, maxLength: number): string {
-  if (text.length <= maxLength) return text
-  return text.slice(0, maxLength).replace(/\s+\S*$/, '') + '…'
-}
-
 export function transformNewsToSlide(
   article: SlideshowNewsArticle,
   locale: SupportedLocale = 'en'
@@ -66,7 +62,7 @@ export function transformNewsToSlide(
     image: article.thumbnail || DEFAULT_IMAGES.news,
     imageAlt: translation.title,
     title: translation.title,
-    excerpt: truncate(translation.excerpt, 120),
+    excerpt: htmlToExcerpt(translation.excerpt, 120),
     linkUrl: `/media/news/${article.slug}`,
     linkLabel: 'slideshow.readMore',
     categoryLabel: 'slideshow.news',
@@ -81,7 +77,7 @@ export function transformEventToSlide(event: SlideshowEvent): HeroSlide {
     image: event.thumbnail || DEFAULT_IMAGES.event,
     imageAlt: event.title,
     title: event.title,
-    excerpt: truncate(event.description, 120),
+    excerpt: htmlToExcerpt(event.description, 120),
     linkUrl: `/events/${event.slug}`,
     linkLabel: 'slideshow.viewEvent',
     categoryLabel: 'slideshow.event',
@@ -124,7 +120,7 @@ export function transformReportToSlide(
     image: report.thumbnail || DEFAULT_IMAGES.report,
     imageAlt: translation.title,
     title: translation.title,
-    excerpt: truncate(translation.summary || '', 120),
+    excerpt: htmlToExcerpt(translation.summary, 120),
     linkUrl: `/reports/${report.slug}`,
     linkLabel: 'slideshow.viewReport',
     categoryLabel: 'slideshow.report',
