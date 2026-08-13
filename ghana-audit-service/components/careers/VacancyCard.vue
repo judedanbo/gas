@@ -44,7 +44,7 @@
     </div>
 
     <p class="text-sm text-gray-600 dark:text-gray-300 line-clamp-2 mb-4">
-      {{ getExcerpt(vacancy.description) }}
+      {{ htmlToExcerpt(vacancy.description, 150) }}
     </p>
 
     <NuxtLink
@@ -60,6 +60,7 @@
 </template>
 
 <script setup lang="ts">
+import { htmlToExcerpt } from '~/utils/htmlToPlainText'
 import type { Vacancy } from '~/types'
 
 interface Props {
@@ -77,8 +78,4 @@ function formatDate(dateStr: string): string {
   })
 }
 
-function getExcerpt(html: string): string {
-  const text = html.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim()
-  return text.length > 150 ? text.slice(0, 150) + '...' : text
-}
 </script>

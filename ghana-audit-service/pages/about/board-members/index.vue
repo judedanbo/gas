@@ -137,14 +137,15 @@
 <script setup lang="ts">
   import type { BoardMember } from '~/types'
   import { parseBioSections } from '~/utils/parseBioSections'
+  import { htmlToExcerpt } from '~/utils/htmlToPlainText'
 
+  // Flattened to text: ProfileCard interpolates this, and admin-authored bios are HTML.
   function getIntro(bio?: string): string | undefined {
     if (!bio) return undefined
     const sections = parseBioSections(bio)
     // Prefer the untitled preamble, else the first section's content
     const content = sections.find((s) => s.heading === null)?.content || sections[0]?.content
-    if (!content) return undefined
-    return content.length > 200 ? content.slice(0, 196).trimEnd() + '...' : content
+    return htmlToExcerpt(content, 200) || undefined
   }
 
   useHead({ title: 'Board Members' })

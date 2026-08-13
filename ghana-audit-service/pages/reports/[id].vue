@@ -196,6 +196,7 @@
 
 <script setup lang="ts">
   import type { AuditReport } from '~/types'
+  import { htmlToPlainText } from '~/utils/htmlToPlainText'
 
   const route = useRoute()
   const { getAuditCategoryVariant, getAuditCategoryLabel } = useCategoryBadge()
@@ -233,7 +234,7 @@
       const schemas = [
         getReportSchema({
           title: report.value.title,
-          summary: report.value.summary,
+          summary: htmlToPlainText(report.value.summary),
           publishedAt: report.value.publishedAt,
           category: getAuditCategoryLabel(report.value.category),
           fileUrl: report.value.fileUrl,
@@ -260,7 +261,10 @@
   useSeoMeta({
     title: () =>
       report.value ? `${report.value.title} | Ghana Audit Service` : 'Report | Ghana Audit Service',
-    description: () => report.value?.summary || 'Audit report from the Ghana Audit Service'
+    // Flattened: summaries are rich text, and markup in a meta description ships
+    // escaped tags straight into search results and link previews.
+    description: () =>
+      htmlToPlainText(report.value?.summary) || 'Audit report from the Ghana Audit Service'
   })
 
   function formatDate(dateStr: string): string {

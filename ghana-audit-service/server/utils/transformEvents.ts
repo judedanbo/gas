@@ -1,19 +1,7 @@
 import type { Event } from '~/types'
+import { htmlToPlainText } from '~/utils/htmlToPlainText'
 
 type SupportedLocale = 'en' | 'ak'
-
-function stripHtml(html: string): string {
-  return html
-    .replace(/<[^>]+>/g, '')
-    .replace(/&nbsp;/g, ' ')
-    .replace(/&amp;/g, '&')
-    .replace(/&lt;/g, '<')
-    .replace(/&gt;/g, '>')
-    .replace(/&quot;/g, '"')
-    .replace(/&#39;/g, "'")
-    .replace(/\s+/g, ' ')
-    .trim()
-}
 
 interface DbEvent {
   id: number
@@ -58,7 +46,7 @@ export function transformEvent(
     id: String(event.id),
     title: translation.title,
     slug: event.slug,
-    description: stripHtml(translation.description),
+    description: htmlToPlainText(translation.description),
     startDate: formatDate(event.startDate),
     endDate: event.endDate ? formatDate(event.endDate) : undefined,
     location: translation.location || undefined,
@@ -83,7 +71,7 @@ export function transformEventDetail(
     id: String(event.id),
     title: translation.title,
     slug: event.slug,
-    description: stripHtml(translation.description),
+    description: htmlToPlainText(translation.description),
     content: translation.description,
     startDate: formatDate(event.startDate),
     endDate: event.endDate ? formatDate(event.endDate) : undefined,

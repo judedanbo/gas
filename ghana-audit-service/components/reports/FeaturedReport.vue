@@ -59,10 +59,10 @@
 
         <!-- Summary -->
         <p
-          v-if="report.summary"
+          v-if="summaryText"
           class="text-base text-gray-600 dark:text-gray-300 leading-relaxed mb-6 line-clamp-3"
         >
-          {{ report.summary }}
+          {{ summaryText }}
         </p>
 
         <!-- Metadata -->
@@ -105,12 +105,17 @@
 
 <script setup lang="ts">
   import type { AuditReport } from '~/types'
+  import { htmlToPlainText } from '~/utils/htmlToPlainText'
 
   interface Props {
     report: AuditReport
   }
 
-  defineProps<Props>()
+  const props = defineProps<Props>()
+
+  // Report summaries are authored in the admin rich-text editor, so they arrive as
+  // HTML. This teaser is clamped plain text — flatten rather than render the markup.
+  const summaryText = computed(() => htmlToPlainText(props.report.summary))
 
   const { getAuditCategoryVariant, getAuditCategoryLabel } = useCategoryBadge()
   const { formatDateShort } = useLocaleDate()

@@ -1,4 +1,5 @@
 import type { NewsArticle } from '~/types'
+import { htmlToPlainText } from '~/utils/htmlToPlainText'
 
 type SupportedLocale = 'en' | 'ak'
 
@@ -27,19 +28,6 @@ interface NewsArticleWithTranslations extends DbNewsArticle {
   images?: ArticleImage[]
 }
 
-function stripHtml(html: string): string {
-  return html
-    .replace(/<[^>]+>/g, '')
-    .replace(/&nbsp;/g, ' ')
-    .replace(/&amp;/g, '&')
-    .replace(/&lt;/g, '<')
-    .replace(/&gt;/g, '>')
-    .replace(/&quot;/g, '"')
-    .replace(/&#39;/g, "'")
-    .replace(/\s+/g, ' ')
-    .trim()
-}
-
 function formatDate(date: Date | string | null): string {
   if (!date) return ''
   const d = date instanceof Date ? date : new Date(date)
@@ -66,7 +54,7 @@ export function transformNewsArticle(
     title: translation.title,
     slug: article.slug,
     content: translation.content,
-    excerpt: stripHtml(translation.excerpt),
+    excerpt: htmlToPlainText(translation.excerpt),
     publishedAt: formatDate(article.publishedAt),
     author: article.author || undefined,
     thumbnail: article.thumbnail || undefined,

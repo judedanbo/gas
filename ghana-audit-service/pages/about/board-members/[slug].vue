@@ -107,7 +107,17 @@
                   >
                     {{ section.heading }}
                   </h2>
-                  <div class="prose prose-gray dark:prose-invert max-w-none whitespace-pre-line">
+                  <!-- eslint-disable vue/no-v-html -- content sanitized via sanitizeHtml() (DOMPurify) -->
+                  <div
+                    v-if="section.isHtml"
+                    class="prose prose-gray dark:prose-invert max-w-none"
+                    v-html="sanitizeHtml(section.content)"
+                  ></div>
+                  <!-- eslint-enable vue/no-v-html -->
+                  <div
+                    v-else
+                    class="prose prose-gray dark:prose-invert max-w-none whitespace-pre-line"
+                  >
                     {{ section.content }}
                   </div>
                 </div>
@@ -184,6 +194,7 @@
 <script setup lang="ts">
   import type { BoardMember } from '~/types'
   import { parseBioSections } from '~/utils/parseBioSections'
+  import { sanitizeHtml } from '~/utils/sanitizeHtml'
 
   const route = useRoute()
 
