@@ -7,73 +7,103 @@
  * render through Vue interpolation, which escapes the markup — so without this the
  * reader sees literal `<p>` / `<strong>` tags instead of the prose.
  *
- * Shared by client components and the server-side `transform*` DTO shapers, so
- * an excerpt reads the same wherever it was built. Deliberately regex-based rather
- * than DOMPurify: the output is plain text that every consumer escapes on render,
- * and these run per-item on cached-but-hot list endpoints.
+ * Shared by client components and the server-side `transform*` DTO shapers, so an
+ * excerpt reads the same wherever it was built.
  *
- * Block-level boundaries become a space, which is the part hand-rolled strippers
- * kept getting wrong — deleting tags outright turns `<p>One</p><p>Two</p>` into
- * "OneTwo". Inline tags (`<strong>`, `<em>`, `<a>`) are removed without a
- * separator so mid-word emphasis like `end<em>ing</em>` survives intact.
+ * Deliberately parses rather than regex-strips. Hand-rolled `replace(/<[^>]*>/g, '')`
+ * filters — which this replaced in four places — are defeated by malformed markup
+ * such as `<<script>script>`, where removing the inner match reassembles a live tag.
+ * DOMPurify is already a dependency (see `sanitizeHtml.ts`) and works under SSR and
+ * in the browser, so the parse is the same one the browser would do.
  */
+import DOMPurify from 'isomorphic-dompurify'
 
-/** Closing block tags and `<br>` — the places where the browser would show a break. */
-const BLOCK_BOUNDARY =
-  /<\/(?:p|div|li|ul|ol|h[1-6]|tr|td|th|blockquote|section|article|header|footer|figcaption|figure|pre|address|dd|dt|dl|table|tbody|thead|tfoot)\s*>|<br\s*\/?>|<hr\s*\/?>/gi
+/**
+ * Elements the browser lays out as a break. Their boundaries become a space, because
+ * dropping tags outright turns `<p>One</p><p>Two</p>` into "OneTwo". Inline elements
+ * are deliberately absent so mid-word emphasis like `end<em>ing</em>` stays "ending".
+ */
+const BLOCK_ELEMENTS = new Set([
+  'ADDRESS',
+  'ARTICLE',
+  'ASIDE',
+  'BLOCKQUOTE',
+  'BR',
+  'DD',
+  'DIV',
+  'DL',
+  'DT',
+  'FIGCAPTION',
+  'FIGURE',
+  'FOOTER',
+  'H1',
+  'H2',
+  'H3',
+  'H4',
+  'H5',
+  'H6',
+  'HEADER',
+  'HR',
+  'LI',
+  'MAIN',
+  'NAV',
+  'OL',
+  'P',
+  'PRE',
+  'SECTION',
+  'TABLE',
+  'TBODY',
+  'TD',
+  'TFOOT',
+  'TH',
+  'THEAD',
+  'TR',
+  'UL'
+])
 
-/** Elements whose *content* is markup/scripting, not prose — drop them wholesale. */
-const NON_PROSE_ELEMENT = /<(script|style|template)\b[^>]*>[\s\S]*?<\/\1\s*>/gi
+const ELEMENT_NODE = 1
+const TEXT_NODE = 3
 
-/** Named/numeric entities that survive tag removal and must be decoded for display. */
-const ENTITIES: Record<string, string> = {
-  nbsp: ' ',
-  amp: '&',
-  lt: '<',
-  gt: '>',
-  quot: '"',
-  apos: "'",
-  ndash: '–',
-  mdash: '—',
-  hellip: '…',
-  lsquo: '‘',
-  rsquo: '’',
-  ldquo: '“',
-  rdquo: '”'
-}
+function collectText(node: Node, out: string[]): void {
+  if (node.nodeType === TEXT_NODE) {
+    out.push(node.nodeValue ?? '')
+    return
+  }
+  if (node.nodeType !== ELEMENT_NODE) return
 
-function decodeEntities(text: string): string {
-  return text.replace(/&(#x?[0-9a-f]+|[a-z]+);/gi, (match, entity: string) => {
-    if (entity.startsWith('#')) {
-      const codePoint =
-        entity[1]?.toLowerCase() === 'x'
-          ? Number.parseInt(entity.slice(2), 16)
-          : Number.parseInt(entity.slice(1), 10)
-      // Ignore anything outside the Unicode range or in the surrogate block —
-      // String.fromCodePoint throws on those, and a bad entity shouldn't 500 a page.
-      if (!Number.isFinite(codePoint) || codePoint <= 0 || codePoint > 0x10ffff) return match
-      if (codePoint >= 0xd800 && codePoint <= 0xdfff) return match
-      return String.fromCodePoint(codePoint)
-    }
-    const decoded = ENTITIES[entity.toLowerCase()]
-    return decoded === undefined ? match : decoded
-  })
+  const isBlock = BLOCK_ELEMENTS.has((node as Element).tagName)
+  if (isBlock) out.push(' ')
+  for (const child of Array.from(node.childNodes)) collectText(child, out)
+  if (isBlock) out.push(' ')
 }
 
 /**
  * Convert an HTML (or already-plain) string to single-spaced plain text.
+ * Entities are resolved by the parser, so `&amp;` arrives as a literal `&` and does
+ * not double-escape when Vue escapes the result on render.
  * Returns `''` for nullish input so callers can bind the result directly.
  */
 export function htmlToPlainText(input: string | null | undefined): string {
   if (!input) return ''
-  return decodeEntities(
-    input
-      .replace(NON_PROSE_ELEMENT, ' ')
-      .replace(BLOCK_BOUNDARY, ' ')
-      .replace(/<[^>]*>/g, '')
-  )
-    .replace(/\s+/g, ' ')
-    .trim()
+
+  // Plenty of stored content is already plain — a string with no `<` and no `&` has
+  // neither markup nor entities, so parsing it could only collapse whitespace. Skip
+  // the parse; these run per item on list endpoints.
+  if (!input.includes('<') && !input.includes('&')) {
+    return input.replace(/\s+/g, ' ').trim()
+  }
+
+  // Scripting and styling are dropped with their content by the html profile, so
+  // `<script>` bodies never surface as prose.
+  const fragment = DOMPurify.sanitize(input, {
+    USE_PROFILES: { html: true },
+    RETURN_DOM_FRAGMENT: true
+  })
+
+  const parts: string[] = []
+  for (const child of Array.from(fragment.childNodes)) collectText(child, parts)
+
+  return parts.join('').replace(/\s+/g, ' ').trim()
 }
 
 /**

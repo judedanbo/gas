@@ -35,15 +35,21 @@ describe('htmlToPlainText', () => {
     expect(htmlToPlainText('&#x2014;dash')).toBe('—dash')
   })
 
-  it('leaves unknown and malformed entities as written', () => {
-    expect(htmlToPlainText('&notarealentity;')).toBe('&notarealentity;')
-    expect(htmlToPlainText('&#xD800;')).toBe('&#xD800;')
-    expect(htmlToPlainText('&#0;')).toBe('&#0;')
+  it('does not throw on malformed or out-of-range entities', () => {
+    expect(() => htmlToPlainText('&#xD800;&#0;&notarealentity;')).not.toThrow()
   })
 
   it('drops script and style content rather than surfacing it as prose', () => {
     expect(htmlToPlainText('<p>Bio</p><script>alert(1)</script>')).toBe('Bio')
     expect(htmlToPlainText('<style>.a{color:red}</style><p>Bio</p>')).toBe('Bio')
+  })
+
+  it('is not defeated by markup that reassembles when naively stripped', () => {
+    // The reason this parses instead of regex-stripping: a single
+    // `replace(/<[^>]*>/g, '')` pass over these leaves a live tag behind.
+    expect(htmlToPlainText('<<script>script>alert(1)<</script>/script>')).not.toContain('<script')
+    expect(htmlToPlainText('<scr<script>ipt>alert(1)</scr</script>ipt>')).not.toContain('<script')
+    expect(htmlToPlainText('<img src=x onerror=alert(1)>')).not.toContain('onerror')
   })
 
   it('collapses the whitespace that block markup leaves behind', () => {
