@@ -26,13 +26,18 @@
     <!-- Content -->
     <div class="flex flex-col flex-grow p-4">
       <!-- Year -->
-      <span class="text-xs font-semibold text-primary dark:text-primary-light tracking-wide uppercase mb-1">
+      <span
+        class="text-xs font-semibold text-primary dark:text-primary-200 tracking-wide uppercase mb-1"
+      >
         {{ new Date(report.publishedAt).getUTCFullYear() }}
       </span>
 
       <!-- Title (clickable card target) -->
       <UiTooltip :text="report.title" position="bottom">
-        <h3 :id="`report-title-${report.id}`" class="text-base font-heading font-semibold leading-snug mb-3 line-clamp-2">
+        <h3
+          :id="`report-title-${report.id}`"
+          class="text-base font-heading font-semibold leading-snug mb-3 line-clamp-2"
+        >
           <NuxtLink
             :to="`/reports/${report.id}`"
             class="text-gray-900 dark:text-white no-underline transition-colors hover:text-primary after:absolute after:inset-0"
@@ -48,7 +53,10 @@
           <Icon name="heroicons:calendar" class="w-3.5 h-3.5" aria-hidden="true" />
           {{ formatDate(report.publishedAt) }}
         </span>
-        <span v-if="report.fileSize && report.fileSize !== 'N/A'" class="inline-flex items-center gap-1">
+        <span
+          v-if="report.fileSize && report.fileSize !== 'N/A'"
+          class="inline-flex items-center gap-1"
+        >
           <Icon name="heroicons:document-arrow-down" class="w-3.5 h-3.5" aria-hidden="true" />
           {{ report.fileSize }}
         </span>

@@ -11,9 +11,9 @@
         <NuxtLink
           v-if="!item.children"
           :to="item.href"
-          class="flex items-center gap-1 px-4 py-2 text-base font-medium text-gray-700 dark:text-gray-200 no-underline rounded-md transition-all hover:text-primary dark:hover:text-primary-light hover:bg-gray-50 dark:hover:bg-gray-700"
+          class="flex items-center gap-1 px-4 py-2 text-base font-medium text-gray-700 dark:text-gray-200 no-underline rounded-md transition-all hover:text-primary dark:hover:text-primary-200 hover:bg-gray-50 dark:hover:bg-gray-700"
           :class="{
-            'text-primary dark:text-primary-light bg-gray-50 dark:bg-gray-700': isActive(item.href)
+            'text-primary dark:text-primary-200 bg-gray-50 dark:bg-gray-700': isActive(item.href)
           }"
         >
           {{ item.label }}
@@ -22,9 +22,9 @@
         <NuxtLink
           v-else
           :to="item.href"
-          class="flex items-center gap-1 px-4 py-2 text-base font-medium text-gray-700 dark:text-gray-200 no-underline rounded-md transition-all hover:text-primary dark:hover:text-primary-light hover:bg-gray-50 dark:hover:bg-gray-700"
+          class="flex items-center gap-1 px-4 py-2 text-base font-medium text-gray-700 dark:text-gray-200 no-underline rounded-md transition-all hover:text-primary dark:hover:text-primary-200 hover:bg-gray-50 dark:hover:bg-gray-700"
           :class="{
-            'text-primary dark:text-primary-light bg-gray-50 dark:bg-gray-700':
+            'text-primary dark:text-primary-200 bg-gray-50 dark:bg-gray-700':
               isActive(item.href) || isChildActive(item)
           }"
         >
@@ -58,7 +58,7 @@
                     <Icon
                       v-if="child.icon"
                       :name="child.icon"
-                      class="w-5 h-5 flex-shrink-0 mt-0.5 text-primary dark:text-primary-light"
+                      class="w-5 h-5 flex-shrink-0 mt-0.5 text-primary dark:text-primary-200"
                       aria-hidden="true"
                     />
                     <span class="flex flex-col gap-1">
@@ -84,7 +84,7 @@
                     <Icon
                       v-if="child.icon"
                       :name="child.icon"
-                      class="w-5 h-5 flex-shrink-0 mt-0.5 text-primary dark:text-primary-light"
+                      class="w-5 h-5 flex-shrink-0 mt-0.5 text-primary dark:text-primary-200"
                       aria-hidden="true"
                     />
                     <span class="flex flex-col gap-1">

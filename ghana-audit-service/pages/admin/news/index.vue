@@ -81,7 +81,11 @@
       @clear-filters="clearFilters"
     >
       <template #filters>
-        <select v-model="filters.isPublished" class="form-input text-sm">
+        <select
+          v-model="filters.isPublished"
+          class="form-input text-sm"
+          aria-label="Filter by status"
+        >
           <option value="">All Status</option>
           <option value="true">Published</option>
           <option value="false">Draft</option>

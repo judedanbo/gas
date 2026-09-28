@@ -84,7 +84,7 @@
               >
                 <Icon
                   :name="dag.icon || 'heroicons:building-library'"
-                  class="w-8 h-8 mx-auto mb-2 text-primary dark:text-primary-light"
+                  class="w-8 h-8 mx-auto mb-2 text-primary dark:text-primary-200"
                   aria-hidden="true"
                 />
                 <span class="font-semibold block text-sm text-gray-900 dark:text-white">DAG</span>
@@ -188,7 +188,7 @@
             </template>
             <template #description>
               <p class="text-xs text-gray-400 dark:text-gray-500 mb-1">{{ auditor.title }}</p>
-              <p class="text-xs text-primary dark:text-primary-light font-semibold m-0">
+              <p class="text-xs text-primary dark:text-primary-200 font-semibold m-0">
                 {{ auditor.officeName }}
               </p>
             </template>
@@ -221,7 +221,9 @@
     <section class="section bg-gradient-to-br from-primary to-primary-dark">
       <div class="container">
         <div class="text-center max-w-[600px] mx-auto">
-          <h2 class="text-2xl md:text-3xl font-heading font-bold text-white mb-4">Contact Our Leadership</h2>
+          <h2 class="text-2xl md:text-3xl font-heading font-bold text-white mb-4">
+            Contact Our Leadership
+          </h2>
           <p class="text-white/90 leading-relaxed mb-8">
             For official inquiries or to reach our management team, please contact our Corporate
             Affairs unit.

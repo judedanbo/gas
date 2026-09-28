@@ -34,7 +34,7 @@
           >
             <Icon
               name="heroicons:clipboard-document-list"
-              class="w-10 h-10 text-primary dark:text-primary-light mb-4 mx-auto"
+              class="w-10 h-10 text-primary dark:text-primary-200 mb-4 mx-auto"
               aria-hidden="true"
             />
             <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">
@@ -132,7 +132,7 @@
 <script setup lang="ts">
   // SEO
   useSeoMeta({
-    title: 'Auditing Guidelines | Ghana Audit Service',
+    title: 'Auditing Guidelines',
     description:
       'Standards and procedures for auditing public sector entities in Ghana, aligned with ISSAI and international best practices.'
   })

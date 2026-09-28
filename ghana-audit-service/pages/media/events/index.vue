@@ -108,7 +108,7 @@
 
   // SEO
   useSeoMeta({
-    title: 'Events | Ghana Audit Service',
+    title: 'Events',
     description: 'Upcoming and past events from the Ghana Audit Service.'
   })
 

@@ -1,50 +1,38 @@
 <template>
-  <div class="fixed inset-0 z-modal">
+  <div
+    class="fixed inset-0 z-modal"
+    role="dialog"
+    aria-modal="true"
+    :aria-label="$t('common.menu')"
+    @keydown.esc="$emit('close')"
+  >
     <div class="absolute inset-0 bg-black/50" @click="$emit('close')"></div>
     <nav
-      class="absolute top-0 right-0 bottom-0 w-full max-w-[320px] bg-white dark:bg-gray-800 flex flex-col overflow-y-auto"
-      role="navigation"
-      aria-label="Mobile navigation"
+      ref="panelRef"
+      tabindex="-1"
+      class="absolute top-0 right-0 bottom-0 w-full max-w-[320px] bg-white dark:bg-gray-800 flex flex-col overflow-y-auto focus:outline-none"
+      :aria-label="$t('common.mobileNavigation')"
     >
       <div
         class="flex justify-between items-center px-6 py-4 border-b border-gray-200 dark:border-gray-700"
       >
         <span class="text-lg font-semibold dark:text-white">{{ $t('common.menu') }}</span>
         <button
-          class="bg-transparent border-none text-xl cursor-pointer text-gray-600 dark:text-gray-300 p-2"
+          type="button"
+          class="touch-target bg-transparent border-none cursor-pointer text-gray-600 dark:text-gray-300 p-2 rounded flex items-center justify-center hover:bg-gray-100 dark:hover:bg-gray-700"
           :aria-label="$t('common.closeMenu')"
           @click="$emit('close')"
         >
-          ✕
+          <Icon name="heroicons:x-mark" class="w-6 h-6" aria-hidden="true" />
         </button>
       </div>
 
-      <!-- Language Switcher -->
+      <!-- Language + accessibility controls -->
       <div
-        class="px-6 py-3 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900"
+        class="px-6 py-3 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 flex flex-wrap items-center justify-between gap-3"
       >
-        <div class="flex items-center gap-2">
-          <Icon
-            name="heroicons:language"
-            class="w-5 h-5 text-gray-500 dark:text-gray-400"
-            aria-hidden="true"
-          />
-          <div class="flex gap-2">
-            <button
-              v-for="loc in availableLocales"
-              :key="loc.code"
-              class="px-3 py-1 text-sm rounded-md transition-colors"
-              :class="
-                locale === loc.code
-                  ? 'bg-primary text-white'
-                  : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600'
-              "
-              @click="switchLocale(loc.code)"
-            >
-              {{ loc.name }}
-            </button>
-          </div>
-        </div>
+        <CommonLanguageSwitcher variant="default" />
+        <CommonAccessibilityControls variant="default" class="flex" />
       </div>
 
       <ul class="list-none m-0 p-0 flex-1">
@@ -74,17 +62,18 @@
                 {{ item.label }}
               </NuxtLink>
               <button
-                class="px-4 py-4 text-gray-600 dark:text-gray-300 bg-transparent border-none cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700"
+                type="button"
+                class="touch-target px-4 py-4 text-gray-600 dark:text-gray-300 bg-transparent border-none cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center justify-center"
                 :aria-expanded="openAccordion === item.label"
-                :aria-label="`Toggle ${item.label} submenu`"
+                :aria-label="$t('common.toggleSubmenu', { item: item.label })"
                 @click="toggleAccordion(item.label)"
               >
-                <span
-                  class="text-[10px] transition-transform inline-block"
+                <Icon
+                  name="heroicons:chevron-down"
+                  class="w-4 h-4 transition-transform"
                   :class="{ 'rotate-180': openAccordion === item.label }"
-                >
-                  ▼
-                </span>
+                  aria-hidden="true"
+                />
               </button>
             </div>
 
@@ -101,7 +90,7 @@
                   <NuxtLink
                     v-if="!child.isExternal"
                     :to="child.href"
-                    class="flex items-center gap-3 px-6 py-3 pl-8 text-sm text-gray-600 dark:text-gray-300 no-underline hover:text-primary dark:hover:text-primary-light"
+                    class="flex items-center gap-3 px-6 py-3 pl-8 text-sm text-gray-600 dark:text-gray-300 no-underline hover:text-primary dark:hover:text-primary-200"
                     @click="$emit('close')"
                   >
                     <Icon
@@ -117,7 +106,7 @@
                     :href="child.href"
                     target="_blank"
                     rel="noopener noreferrer"
-                    class="flex items-center gap-3 px-6 py-3 pl-8 text-sm text-gray-600 dark:text-gray-300 no-underline hover:text-primary dark:hover:text-primary-light"
+                    class="flex items-center gap-3 px-6 py-3 pl-8 text-sm text-gray-600 dark:text-gray-300 no-underline hover:text-primary dark:hover:text-primary-200"
                     @click="$emit('close')"
                   >
                     <Icon
@@ -181,16 +170,19 @@
     close: []
   }>()
 
-  const { t, locale, setLocale } = useI18n()
+  const { t } = useI18n()
 
-  const availableLocales = [
-    { code: 'en', name: 'English' },
-    { code: 'ak', name: 'Akan' }
-  ] as const
+  // Dialog behaviour: trap focus while open, restore it to the toggle on close,
+  // and keep the page behind from scrolling.
+  const panelRef = ref<HTMLElement | null>(null)
+  useFocusTrap(panelRef)
 
-  const switchLocale = async (code: 'en' | 'ak') => {
-    await setLocale(code)
-  }
+  onMounted(() => {
+    document.body.style.overflow = 'hidden'
+  })
+  onBeforeUnmount(() => {
+    document.body.style.overflow = ''
+  })
 
   const openAccordion = ref<string | null>(null)
 
@@ -343,6 +335,6 @@
   .accordion-enter-to,
   .accordion-leave-from {
     @apply opacity-100;
-    max-height: 500px;
+    max-height: 100vh;
   }
 </style>

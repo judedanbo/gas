@@ -100,7 +100,7 @@
               <div class="text-center mb-6">
                 <Icon
                   name="heroicons:chart-bar"
-                  class="w-12 h-12 text-primary dark:text-primary-light mb-4 mx-auto"
+                  class="w-12 h-12 text-primary dark:text-primary-200 mb-4 mx-auto"
                   aria-hidden="true"
                 />
                 <h3 class="text-xl font-semibold text-gray-900 dark:text-white">
@@ -176,7 +176,9 @@
                 aria-hidden="true"
               />
             </div>
-            <h4 class="text-sm font-semibold text-gray-900 dark:text-white mb-2">{{ objective.title }}</h4>
+            <h4 class="text-sm font-semibold text-gray-900 dark:text-white mb-2">
+              {{ objective.title }}
+            </h4>
             <p class="text-sm text-gray-600 dark:text-gray-400">{{ objective.description }}</p>
           </div>
         </div>
@@ -205,7 +207,7 @@
 <script setup lang="ts">
   // SEO
   useSeoMeta({
-    title: 'PFM Strategy 2022-2026 | Ghana Audit Service',
+    title: 'PFM Strategy 2022-2026',
     description:
       "Ghana Audit Service's Public Financial Management Strategy for strengthening accountability and transparency in public resource management."
   })

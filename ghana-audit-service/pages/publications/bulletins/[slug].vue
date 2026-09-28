@@ -69,7 +69,11 @@
             <div class="lg:col-span-2">
               <template v-if="publication.fileUrl">
                 <ClientOnly>
-                  <ReportsPdfReader :file-url="publication.fileUrl" :title="publication.title" viewer-title="Bulletin Viewer" />
+                  <ReportsPdfReader
+                    :file-url="publication.fileUrl"
+                    :title="publication.title"
+                    viewer-title="Bulletin Viewer"
+                  />
                   <template #fallback>
                     <div
                       class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-8 min-h-[70vh] flex items-center justify-center"
@@ -90,7 +94,9 @@
                     class="w-12 h-12 text-gray-300 dark:text-gray-600 mb-4 mx-auto"
                     aria-hidden="true"
                   />
-                  <p class="text-gray-600 dark:text-gray-400">PDF download will be available soon.</p>
+                  <p class="text-gray-600 dark:text-gray-400">
+                    PDF download will be available soon.
+                  </p>
                 </div>
               </div>
             </div>
@@ -155,7 +161,9 @@
                     <dl class="space-y-2 text-sm">
                       <div class="flex justify-between">
                         <dt class="text-gray-500 dark:text-gray-400">Type:</dt>
-                        <dd class="text-gray-900 dark:text-white font-medium">Quarterly Bulletin</dd>
+                        <dd class="text-gray-900 dark:text-white font-medium">
+                          Quarterly Bulletin
+                        </dd>
                       </div>
                       <div class="flex justify-between">
                         <dt class="text-gray-500 dark:text-gray-400">Period:</dt>
@@ -289,10 +297,7 @@
   })
 
   useSeoMeta({
-    title: () =>
-      publication.value
-        ? `${publication.value.title} Bulletin | Ghana Audit Service`
-        : 'Bulletin | Ghana Audit Service',
+    title: () => (publication.value ? `${publication.value.title} Bulletin` : 'Bulletin'),
     description: () =>
       publication.value?.excerpt || 'Quarterly bulletin from the Ghana Audit Service'
   })

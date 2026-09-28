@@ -1,8 +1,14 @@
 <template>
-  <nav class="py-4 bg-gray-50 dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700" aria-label="Breadcrumb">
+  <nav
+    class="py-4 bg-gray-50 dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700"
+    aria-label="Breadcrumb"
+  >
     <ol class="flex items-center flex-wrap gap-2 list-none m-0 max-w-7xl mx-auto px-4">
       <li class="flex items-center gap-2">
-        <NuxtLink to="/" class="flex items-center gap-1 text-gray-600 dark:text-gray-300 no-underline text-sm transition-colors hover:text-primary dark:hover:text-primary-light">
+        <NuxtLink
+          to="/"
+          class="flex items-center gap-1 text-gray-600 dark:text-gray-300 no-underline text-sm transition-colors hover:text-primary dark:hover:text-primary-200"
+        >
           <span class="text-base">🏠</span>
           <span>Home</span>
         </NuxtLink>
@@ -12,7 +18,7 @@
         <NuxtLink
           v-if="index < crumbs.length - 1"
           :to="crumb.path"
-          class="flex items-center gap-1 text-gray-600 dark:text-gray-300 no-underline text-sm transition-colors hover:text-primary dark:hover:text-primary-light"
+          class="flex items-center gap-1 text-gray-600 dark:text-gray-300 no-underline text-sm transition-colors hover:text-primary dark:hover:text-primary-200"
         >
           {{ crumb.label }}
         </NuxtLink>
@@ -25,12 +31,12 @@
 </template>
 
 <script setup lang="ts">
-interface BreadcrumbItem {
-  label: string
-  path: string
-}
+  interface BreadcrumbItem {
+    label: string
+    path: string
+  }
 
-defineProps<{
-  crumbs: BreadcrumbItem[]
-}>()
+  defineProps<{
+    crumbs: BreadcrumbItem[]
+  }>()
 </script>

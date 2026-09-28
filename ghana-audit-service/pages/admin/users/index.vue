@@ -62,13 +62,13 @@
       @clear-filters="clearFilters"
     >
       <template #filters>
-        <select v-model="filters.role" class="form-input text-sm">
+        <select v-model="filters.role" class="form-input text-sm" aria-label="Filter by role">
           <option value="">All Roles</option>
           <option value="admin">Admin</option>
           <option value="editor">Editor</option>
           <option value="viewer">Viewer</option>
         </select>
-        <select v-model="filters.status" class="form-input text-sm">
+        <select v-model="filters.status" class="form-input text-sm" aria-label="Filter by status">
           <option value="">All Status</option>
           <option value="pending">Pending</option>
           <option value="active">Active</option>

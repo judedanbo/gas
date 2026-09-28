@@ -3,12 +3,8 @@
     <!-- Page Header -->
     <div class="page-header">
       <div class="container">
-        <h1 class="text-4xl md:text-5xl font-heading font-bold mb-4">
-          CitizensEye
-        </h1>
-        <p class="page-subtitle">
-          Citizen Engagement Platform for Public Accountability
-        </p>
+        <h1 class="text-4xl md:text-5xl font-heading font-bold mb-4">CitizensEye</h1>
+        <p class="page-subtitle">Citizen Engagement Platform for Public Accountability</p>
       </div>
     </div>
 
@@ -20,14 +16,20 @@
       <div class="container">
         <div class="lg:grid lg:grid-cols-2 lg:gap-12 items-center">
           <div>
-            <h2 class="text-3xl md:text-4xl font-heading font-bold text-gray-900 dark:text-white mb-6">
+            <h2
+              class="text-3xl md:text-4xl font-heading font-bold text-gray-900 dark:text-white mb-6"
+            >
               Be Part of the Fight Against Financial Irregularities
             </h2>
             <p class="text-lg text-gray-600 dark:text-gray-400 mb-6">
-              CitizensEye is the Ghana Audit Service's citizen engagement platform that empowers you to report financial irregularities, mismanagement of public funds, and other concerns affecting public accountability.
+              CitizensEye is the Ghana Audit Service's citizen engagement platform that empowers you
+              to report financial irregularities, mismanagement of public funds, and other concerns
+              affecting public accountability.
             </p>
             <p class="text-gray-600 dark:text-gray-400 mb-8">
-              Your voice matters in protecting Ghana's public resources. With CitizensEye, you can securely submit reports, upload evidence, and track the progress of your submissions - all while maintaining your anonymity if you choose.
+              Your voice matters in protecting Ghana's public resources. With CitizensEye, you can
+              securely submit reports, upload evidence, and track the progress of your submissions -
+              all while maintaining your anonymity if you choose.
             </p>
             <div class="flex flex-wrap gap-4">
               <a
@@ -39,17 +41,18 @@
                 Launch CitizensEye App
                 <span aria-hidden="true">→</span>
               </a>
-              <a
-                href="#features"
-                class="btn-outline"
-              >
-                Learn More
-              </a>
+              <a href="#features" class="btn-outline"> Learn More </a>
             </div>
           </div>
           <div class="mt-10 lg:mt-0">
-            <div class="bg-gradient-to-br from-primary/10 to-accent/10 dark:from-primary/20 dark:to-accent/20 rounded-2xl p-8 text-center">
-              <Icon name="heroicons:eye" class="w-20 h-20 text-primary dark:text-primary-light mb-4 mx-auto" aria-hidden="true" />
+            <div
+              class="bg-gradient-to-br from-primary/10 to-accent/10 dark:from-primary/20 dark:to-accent/20 rounded-2xl p-8 text-center"
+            >
+              <Icon
+                name="heroicons:eye"
+                class="w-20 h-20 text-primary dark:text-primary-200 mb-4 mx-auto"
+                aria-hidden="true"
+              />
               <p class="text-xl font-semibold text-gray-900 dark:text-white mb-2">CitizensEye</p>
               <p class="text-gray-600 dark:text-gray-400">Protecting the Public Purse</p>
             </div>
@@ -73,8 +76,14 @@
             :key="feature.title"
             class="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700 hover:shadow-lg transition-shadow"
           >
-            <Icon :name="feature.icon" class="w-10 h-10 text-primary dark:text-primary-light mb-4" aria-hidden="true" />
-            <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">{{ feature.title }}</h3>
+            <Icon
+              :name="feature.icon"
+              class="w-10 h-10 text-primary dark:text-primary-200 mb-4"
+              aria-hidden="true"
+            />
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+              {{ feature.title }}
+            </h3>
             <p class="text-gray-600 dark:text-gray-400">{{ feature.description }}</p>
           </div>
         </div>
@@ -91,16 +100,20 @@
         />
 
         <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mt-10">
-          <div
-            v-for="(step, index) in steps"
-            :key="step.title"
-            class="text-center"
-          >
-            <div class="w-16 h-16 mx-auto mb-4 bg-primary text-white rounded-full flex items-center justify-center text-2xl font-bold">
+          <div v-for="(step, index) in steps" :key="step.title" class="text-center">
+            <div
+              class="w-16 h-16 mx-auto mb-4 bg-primary text-white rounded-full flex items-center justify-center text-2xl font-bold"
+            >
               {{ index + 1 }}
             </div>
-            <Icon :name="step.icon" class="w-10 h-10 text-primary dark:text-primary-light mb-4 mx-auto" aria-hidden="true" />
-            <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">{{ step.title }}</h3>
+            <Icon
+              :name="step.icon"
+              class="w-10 h-10 text-primary dark:text-primary-200 mb-4 mx-auto"
+              aria-hidden="true"
+            />
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+              {{ step.title }}
+            </h3>
             <p class="text-gray-600 dark:text-gray-400">{{ step.description }}</p>
           </div>
         </div>
@@ -118,28 +131,52 @@
 
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-10">
           <!-- For Citizens -->
-          <div class="bg-white dark:bg-gray-800 rounded-xl p-8 border border-gray-200 dark:border-gray-700">
+          <div
+            class="bg-white dark:bg-gray-800 rounded-xl p-8 border border-gray-200 dark:border-gray-700"
+          >
             <div class="flex items-center gap-3 mb-6">
-              <Icon name="heroicons:user-group" class="w-8 h-8 text-primary dark:text-primary-light" aria-hidden="true" />
+              <Icon
+                name="heroicons:user-group"
+                class="w-8 h-8 text-primary dark:text-primary-200"
+                aria-hidden="true"
+              />
               <h3 class="text-xl font-semibold text-gray-900 dark:text-white">For Citizens</h3>
             </div>
             <ul class="space-y-4">
               <li v-for="benefit in citizenBenefits" :key="benefit" class="flex items-start gap-3">
-                <Icon name="heroicons:check" class="w-5 h-5 text-primary dark:text-primary-light flex-shrink-0 mt-1" aria-hidden="true" />
+                <Icon
+                  name="heroicons:check"
+                  class="w-5 h-5 text-primary dark:text-primary-200 flex-shrink-0 mt-1"
+                  aria-hidden="true"
+                />
                 <span class="text-gray-600 dark:text-gray-400">{{ benefit }}</span>
               </li>
             </ul>
           </div>
 
           <!-- For Government -->
-          <div class="bg-white dark:bg-gray-800 rounded-xl p-8 border border-gray-200 dark:border-gray-700">
+          <div
+            class="bg-white dark:bg-gray-800 rounded-xl p-8 border border-gray-200 dark:border-gray-700"
+          >
             <div class="flex items-center gap-3 mb-6">
-              <Icon name="heroicons:building-library" class="w-8 h-8 text-primary dark:text-primary-light" aria-hidden="true" />
+              <Icon
+                name="heroicons:building-library"
+                class="w-8 h-8 text-primary dark:text-primary-200"
+                aria-hidden="true"
+              />
               <h3 class="text-xl font-semibold text-gray-900 dark:text-white">For Government</h3>
             </div>
             <ul class="space-y-4">
-              <li v-for="benefit in governmentBenefits" :key="benefit" class="flex items-start gap-3">
-                <Icon name="heroicons:check" class="w-5 h-5 text-primary dark:text-primary-light flex-shrink-0 mt-1" aria-hidden="true" />
+              <li
+                v-for="benefit in governmentBenefits"
+                :key="benefit"
+                class="flex items-start gap-3"
+              >
+                <Icon
+                  name="heroicons:check"
+                  class="w-5 h-5 text-primary dark:text-primary-200 flex-shrink-0 mt-1"
+                  aria-hidden="true"
+                />
                 <span class="text-gray-600 dark:text-gray-400">{{ benefit }}</span>
               </li>
             </ul>
@@ -163,7 +200,11 @@
             :key="item.title"
             class="bg-gray-50 dark:bg-gray-700 rounded-lg p-5 border border-gray-200 dark:border-gray-600"
           >
-            <Icon :name="item.icon" class="w-6 h-6 text-primary dark:text-primary-light mb-2" aria-hidden="true" />
+            <Icon
+              :name="item.icon"
+              class="w-6 h-6 text-primary dark:text-primary-200 mb-2"
+              aria-hidden="true"
+            />
             <h4 class="text-sm font-medium text-gray-900 dark:text-white">{{ item.title }}</h4>
           </div>
         </div>
@@ -199,7 +240,8 @@
           Ready to Make a Difference?
         </h2>
         <p class="text-xl text-white/90 mb-8 max-w-2xl mx-auto">
-          Join thousands of Ghanaians who are helping to protect public resources. Your report could make a real difference.
+          Join thousands of Ghanaians who are helping to protect public resources. Your report could
+          make a real difference.
         </p>
         <div class="flex flex-wrap justify-center gap-4">
           <a
@@ -224,140 +266,149 @@
     <!-- Quick Links -->
     <section class="section-sm bg-gray-50 dark:bg-gray-900">
       <div class="container flex flex-wrap justify-center gap-4">
-        <NuxtLink to="/citizenseye/privacy" class="btn-outline">
-          Privacy Notice
-        </NuxtLink>
-        <NuxtLink to="/contact" class="btn-outline">
-          Contact Us
-        </NuxtLink>
-        <NuxtLink to="/about" class="btn-outline">
-          About GAS
-        </NuxtLink>
+        <NuxtLink to="/citizenseye/privacy" class="btn-outline"> Privacy Notice </NuxtLink>
+        <NuxtLink to="/contact" class="btn-outline"> Contact Us </NuxtLink>
+        <NuxtLink to="/about" class="btn-outline"> About GAS </NuxtLink>
       </div>
     </section>
   </div>
 </template>
 
 <script setup lang="ts">
-// SEO
-useSeoMeta({
-  title: 'CitizensEye - Citizen Engagement Platform | Ghana Audit Service',
-  description: 'CitizensEye is the Ghana Audit Service citizen engagement platform for reporting financial irregularities and promoting public accountability.'
-})
+  // SEO
+  useSeoMeta({
+    title: 'CitizensEye - Citizen Engagement Platform',
+    description:
+      'CitizensEye is the Ghana Audit Service citizen engagement platform for reporting financial irregularities and promoting public accountability.'
+  })
 
-// External app URL
-const appUrl = 'https://www.appsheet.com/start/5b1b9364-12e7-4613-a082-26cebb71f29f'
+  // External app URL
+  const appUrl = 'https://www.appsheet.com/start/5b1b9364-12e7-4613-a082-26cebb71f29f'
 
-// Features
-const features = [
-  {
-    icon: 'heroicons:pencil-square',
-    title: 'Report Irregularities',
-    description: 'Submit detailed reports about financial misconduct, fraud, or misuse of public funds you have witnessed or are aware of.'
-  },
-  {
-    icon: 'heroicons:chart-bar',
-    title: 'Track Your Reports',
-    description: 'Monitor the status of your submissions and receive updates as they are reviewed and acted upon.'
-  },
-  {
-    icon: 'heroicons:lock-closed',
-    title: 'Anonymous Reporting',
-    description: 'Choose to remain anonymous when submitting sensitive reports. Your identity is protected.'
-  },
-  {
-    icon: 'heroicons:paper-clip',
-    title: 'Upload Evidence',
-    description: 'Attach documents, photos, or other evidence to support your report and help investigators.'
-  },
-  {
-    icon: 'heroicons:map-pin',
-    title: 'Location Tagging',
-    description: 'Tag the location of incidents to help auditors identify and investigate specific areas.'
-  },
-  {
-    icon: 'heroicons:bell',
-    title: 'Real-time Updates',
-    description: 'Receive notifications about the progress of your report and any actions taken.'
-  }
-]
+  // Features
+  const features = [
+    {
+      icon: 'heroicons:pencil-square',
+      title: 'Report Irregularities',
+      description:
+        'Submit detailed reports about financial misconduct, fraud, or misuse of public funds you have witnessed or are aware of.'
+    },
+    {
+      icon: 'heroicons:chart-bar',
+      title: 'Track Your Reports',
+      description:
+        'Monitor the status of your submissions and receive updates as they are reviewed and acted upon.'
+    },
+    {
+      icon: 'heroicons:lock-closed',
+      title: 'Anonymous Reporting',
+      description:
+        'Choose to remain anonymous when submitting sensitive reports. Your identity is protected.'
+    },
+    {
+      icon: 'heroicons:paper-clip',
+      title: 'Upload Evidence',
+      description:
+        'Attach documents, photos, or other evidence to support your report and help investigators.'
+    },
+    {
+      icon: 'heroicons:map-pin',
+      title: 'Location Tagging',
+      description:
+        'Tag the location of incidents to help auditors identify and investigate specific areas.'
+    },
+    {
+      icon: 'heroicons:bell',
+      title: 'Real-time Updates',
+      description: 'Receive notifications about the progress of your report and any actions taken.'
+    }
+  ]
 
-// Steps
-const steps = [
-  {
-    icon: 'heroicons:device-phone-mobile',
-    title: 'Access the App',
-    description: 'Click the "Launch CitizensEye App" button to open the platform in your browser. No download required.'
-  },
-  {
-    icon: 'heroicons:pencil',
-    title: 'Submit Your Report',
-    description: 'Fill out the report form with details about the irregularity. Add evidence and location if available.'
-  },
-  {
-    icon: 'heroicons:eye',
-    title: 'Track Progress',
-    description: 'Use your report reference number to track the status of your submission and any actions taken.'
-  }
-]
+  // Steps
+  const steps = [
+    {
+      icon: 'heroicons:device-phone-mobile',
+      title: 'Access the App',
+      description:
+        'Click the "Launch CitizensEye App" button to open the platform in your browser. No download required.'
+    },
+    {
+      icon: 'heroicons:pencil',
+      title: 'Submit Your Report',
+      description:
+        'Fill out the report form with details about the irregularity. Add evidence and location if available.'
+    },
+    {
+      icon: 'heroicons:eye',
+      title: 'Track Progress',
+      description:
+        'Use your report reference number to track the status of your submission and any actions taken.'
+    }
+  ]
 
-// Benefits for citizens
-const citizenBenefits = [
-  'Safe and secure platform for reporting concerns',
-  'Option to remain anonymous for sensitive reports',
-  'Easy-to-use interface accessible from any device',
-  'Track the progress of your submissions',
-  'Contribute to national accountability efforts',
-  'Make your voice heard in protecting public resources'
-]
+  // Benefits for citizens
+  const citizenBenefits = [
+    'Safe and secure platform for reporting concerns',
+    'Option to remain anonymous for sensitive reports',
+    'Easy-to-use interface accessible from any device',
+    'Track the progress of your submissions',
+    'Contribute to national accountability efforts',
+    'Make your voice heard in protecting public resources'
+  ]
 
-// Benefits for government
-const governmentBenefits = [
-  'Direct channel for citizen feedback and reports',
-  'Early detection of financial irregularities',
-  'Evidence-based audit planning and prioritization',
-  'Enhanced public trust through transparency',
-  'Improved accountability in public institutions',
-  'Support for anti-corruption initiatives'
-]
+  // Benefits for government
+  const governmentBenefits = [
+    'Direct channel for citizen feedback and reports',
+    'Early detection of financial irregularities',
+    'Evidence-based audit planning and prioritization',
+    'Enhanced public trust through transparency',
+    'Improved accountability in public institutions',
+    'Support for anti-corruption initiatives'
+  ]
 
-// Reportable items
-const reportableItems = [
-  { icon: 'heroicons:currency-dollar', title: 'Financial Fraud' },
-  { icon: 'heroicons:clipboard-document-list', title: 'Procurement Irregularities' },
-  { icon: 'heroicons:user', title: 'Ghost Workers' },
-  { icon: 'heroicons:building-office', title: 'Abandoned Projects' },
-  { icon: 'heroicons:chart-bar', title: 'Misuse of Public Funds' },
-  { icon: 'heroicons:pencil-square', title: 'Contract Violations' },
-  { icon: 'heroicons:user-group', title: 'Conflict of Interest' },
-  { icon: 'heroicons:exclamation-triangle', title: 'Other Irregularities' }
-]
+  // Reportable items
+  const reportableItems = [
+    { icon: 'heroicons:currency-dollar', title: 'Financial Fraud' },
+    { icon: 'heroicons:clipboard-document-list', title: 'Procurement Irregularities' },
+    { icon: 'heroicons:user', title: 'Ghost Workers' },
+    { icon: 'heroicons:building-office', title: 'Abandoned Projects' },
+    { icon: 'heroicons:chart-bar', title: 'Misuse of Public Funds' },
+    { icon: 'heroicons:pencil-square', title: 'Contract Violations' },
+    { icon: 'heroicons:user-group', title: 'Conflict of Interest' },
+    { icon: 'heroicons:exclamation-triangle', title: 'Other Irregularities' }
+  ]
 
-// FAQs
-const faqs = [
-  {
-    question: 'What is CitizensEye?',
-    answer: 'CitizensEye is a citizen engagement platform developed by the Ghana Audit Service that allows members of the public to report financial irregularities, fraud, and misuse of public funds. It serves as a direct channel for citizens to contribute to public accountability efforts in Ghana.'
-  },
-  {
-    question: 'How do I submit a report?',
-    answer: 'To submit a report, click the "Launch CitizensEye App" button, which will open the platform in your browser. Follow the on-screen instructions to fill out the report form with details about the irregularity you wish to report. You can attach evidence and tag locations to support your submission.'
-  },
-  {
-    question: 'Is my identity protected?',
-    answer: 'Yes, CitizensEye offers anonymous reporting options. You can choose not to provide your personal information when submitting a report. Even if you do provide contact details, your identity is kept confidential and protected in accordance with our privacy policy.'
-  },
-  {
-    question: 'What happens after I submit a report?',
-    answer: 'After submission, your report is reviewed by our team and assigned to the appropriate audit unit for investigation. You will receive a reference number to track your report\'s progress. Depending on the nature of the report, it may be included in scheduled audits or trigger a special investigation.'
-  },
-  {
-    question: 'What types of issues can I report?',
-    answer: 'You can report various financial and administrative irregularities including: financial fraud, procurement irregularities, ghost workers, abandoned projects, misuse of public funds, contract violations, conflicts of interest, and other concerns affecting public accountability.'
-  },
-  {
-    question: 'How do I track my report?',
-    answer: 'When you submit a report, you receive a unique reference number. You can use this number in the CitizensEye app to check the status of your report, view any updates, and see what actions have been taken. If you provided contact information, you may also receive email or SMS updates.'
-  }
-]
+  // FAQs
+  const faqs = [
+    {
+      question: 'What is CitizensEye?',
+      answer:
+        'CitizensEye is a citizen engagement platform developed by the Ghana Audit Service that allows members of the public to report financial irregularities, fraud, and misuse of public funds. It serves as a direct channel for citizens to contribute to public accountability efforts in Ghana.'
+    },
+    {
+      question: 'How do I submit a report?',
+      answer:
+        'To submit a report, click the "Launch CitizensEye App" button, which will open the platform in your browser. Follow the on-screen instructions to fill out the report form with details about the irregularity you wish to report. You can attach evidence and tag locations to support your submission.'
+    },
+    {
+      question: 'Is my identity protected?',
+      answer:
+        'Yes, CitizensEye offers anonymous reporting options. You can choose not to provide your personal information when submitting a report. Even if you do provide contact details, your identity is kept confidential and protected in accordance with our privacy policy.'
+    },
+    {
+      question: 'What happens after I submit a report?',
+      answer:
+        "After submission, your report is reviewed by our team and assigned to the appropriate audit unit for investigation. You will receive a reference number to track your report's progress. Depending on the nature of the report, it may be included in scheduled audits or trigger a special investigation."
+    },
+    {
+      question: 'What types of issues can I report?',
+      answer:
+        'You can report various financial and administrative irregularities including: financial fraud, procurement irregularities, ghost workers, abandoned projects, misuse of public funds, contract violations, conflicts of interest, and other concerns affecting public accountability.'
+    },
+    {
+      question: 'How do I track my report?',
+      answer:
+        'When you submit a report, you receive a unique reference number. You can use this number in the CitizensEye app to check the status of your report, view any updates, and see what actions have been taken. If you provided contact information, you may also receive email or SMS updates.'
+    }
+  ]
 </script>

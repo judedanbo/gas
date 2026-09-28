@@ -29,9 +29,9 @@
               services to audit staff across the country.
             </p>
             <p class="text-gray-600 dark:text-gray-400 leading-relaxed">
-              In addition, several specialized units operate directly under the
-              Auditor-General's Office, providing legal, public affairs, parliamentary liaison,
-              internal audit, and quality assurance services.
+              In addition, several specialized units operate directly under the Auditor-General's
+              Office, providing legal, public affairs, parliamentary liaison, internal audit, and
+              quality assurance services.
             </p>
           </div>
           <UiStatGrid :stats="overviewStats" :columns="3" variant="card" />
@@ -59,13 +59,13 @@
             </p>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
-                <h4 class="text-sm text-primary dark:text-primary-light font-semibold mb-2">
+                <h4 class="text-sm text-primary dark:text-primary-200 font-semibold mb-2">
                   Key Functions
                 </h4>
                 <UiCheckList :items="dept.functions" icon="bullet" spacing="sm" />
               </div>
               <div>
-                <h4 class="text-sm text-primary dark:text-primary-light font-semibold mb-2">
+                <h4 class="text-sm text-primary dark:text-primary-200 font-semibold mb-2">
                   Entities Audited
                 </h4>
                 <div class="flex flex-wrap gap-2">
@@ -250,12 +250,7 @@
         'Tertiary institution audits',
         'Statutory institution audits'
       ],
-      entities: [
-        'Public Boards',
-        'Corporations',
-        'Bank of Ghana',
-        'Statutory Institutions'
-      ]
+      entities: ['Public Boards', 'Corporations', 'Bank of Ghana', 'Statutory Institutions']
     },
     {
       name: 'Educational Institutions & District Assemblies – Southern Zone (EIDA-South)',
@@ -307,12 +302,7 @@
         'Information Technology audits',
         'Value-for-money assessments of government programs'
       ],
-      entities: [
-        'Government Programs',
-        'Public Office Activities',
-        'Special Funds',
-        'IT Systems'
-      ]
+      entities: ['Government Programs', 'Public Office Activities', 'Special Funds', 'IT Systems']
     }
   ]
 

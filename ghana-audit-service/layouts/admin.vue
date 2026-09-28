@@ -17,7 +17,7 @@
       />
 
       <!-- Page Content -->
-      <main class="p-4 lg:p-6">
+      <main id="main-content" tabindex="-1" class="p-4 lg:p-6 focus:outline-none">
         <slot />
       </main>
     </div>

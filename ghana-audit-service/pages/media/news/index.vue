@@ -42,9 +42,13 @@
               <div class="p-6 lg:p-8 flex flex-col justify-center">
                 <div class="flex items-center gap-3 mb-3">
                   <UiBadge variant="accent" size="sm">Latest</UiBadge>
-                  <time class="text-sm text-gray-500 dark:text-gray-400">{{ formatDate(featuredArticle.publishedAt) }}</time>
+                  <time class="text-sm text-gray-500 dark:text-gray-400">{{
+                    formatDate(featuredArticle.publishedAt)
+                  }}</time>
                 </div>
-                <h2 class="text-2xl lg:text-3xl font-heading font-bold text-gray-900 dark:text-white mb-3 group-hover:text-primary transition-colors">
+                <h2
+                  class="text-2xl lg:text-3xl font-heading font-bold text-gray-900 dark:text-white mb-3 group-hover:text-primary transition-colors"
+                >
                   {{ featuredArticle.title }}
                 </h2>
                 <p class="text-gray-600 dark:text-gray-300 line-clamp-3 mb-4">
@@ -52,8 +56,18 @@
                 </p>
                 <span class="text-primary font-medium inline-flex items-center gap-1">
                   Read Full Story
-                  <svg class="w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                  <svg
+                    class="w-4 h-4 group-hover:translate-x-1 transition-transform"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M9 5l7 7-7 7"
+                    />
                   </svg>
                 </span>
               </div>
@@ -63,8 +77,18 @@
           <!-- Search & Filter Bar -->
           <div class="flex flex-col sm:flex-row gap-3 mb-6">
             <div class="relative flex-1">
-              <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              <svg
+                class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                />
               </svg>
               <input
                 v-model="searchInput"
@@ -72,14 +96,19 @@
                 placeholder="Search articles..."
                 class="w-full pl-10 pr-4 py-2.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
                 @input="onSearchInput"
-              >
+              />
               <button
                 v-if="searchInput"
                 class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
                 @click="clearSearch"
               >
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M6 18L18 6M6 6l12 12"
+                  />
                 </svg>
               </button>
             </div>
@@ -119,23 +148,30 @@
             v-if="filteredArticles.length === 0"
             class="text-center py-12 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700"
           >
-            <Icon name="heroicons:magnifying-glass" class="w-10 h-10 text-gray-400 mx-auto mb-4" aria-hidden="true" />
-            <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">No articles found</h3>
-            <p class="text-gray-600 dark:text-gray-400 mb-4">Try adjusting your search or filter.</p>
+            <Icon
+              name="heroicons:magnifying-glass"
+              class="w-10 h-10 text-gray-400 mx-auto mb-4"
+              aria-hidden="true"
+            />
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+              No articles found
+            </h3>
+            <p class="text-gray-600 dark:text-gray-400 mb-4">
+              Try adjusting your search or filter.
+            </p>
             <button class="btn-outline btn-sm" @click="clearFilters">Clear Filters</button>
           </div>
 
           <!-- News Grid -->
           <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <MediaNewsCard
-              v-for="article in gridArticles"
-              :key="article.id"
-              :article="article"
-            />
+            <MediaNewsCard v-for="article in gridArticles" :key="article.id" :article="article" />
           </div>
 
           <!-- Pagination -->
-          <div v-if="!searchQuery && !selectedYear && meta.lastPage > 1" class="mt-8 flex justify-center gap-2">
+          <div
+            v-if="!searchQuery && !selectedYear && meta.lastPage > 1"
+            class="mt-8 flex justify-center gap-2"
+          >
             <button
               :disabled="meta.page === 1"
               class="btn-outline btn-sm"
@@ -161,113 +197,109 @@
 </template>
 
 <script setup lang="ts">
-import type { NewsArticle, PaginatedResponse } from '~/types'
+  import type { NewsArticle, PaginatedResponse } from '~/types'
 
-useSeoMeta({
-  title: 'News | Ghana Audit Service',
-  description: 'Latest news and announcements from the Ghana Audit Service.'
-})
-
-const news = ref<NewsArticle[]>([])
-const loading = ref(true)
-const searchInput = ref('')
-const searchQuery = ref('')
-const selectedYear = ref<number | null>(null)
-let searchTimeout: ReturnType<typeof setTimeout>
-
-const meta = ref({
-  total: 0,
-  page: 1,
-  perPage: 12,
-  lastPage: 1
-})
-
-const availableYears = computed(() => {
-  const years = new Set(news.value.map(a => new Date(a.publishedAt).getFullYear()))
-  return [...years].sort((a, b) => b - a)
-})
-
-const filteredArticles = computed(() => {
-  let result = news.value
-
-  if (searchQuery.value) {
-    const q = searchQuery.value.toLowerCase()
-    result = result.filter(
-      a =>
-        a.title.toLowerCase().includes(q) ||
-        a.excerpt.toLowerCase().includes(q)
-    )
-  }
-
-  if (selectedYear.value) {
-    result = result.filter(
-      a => new Date(a.publishedAt).getFullYear() === selectedYear.value
-    )
-  }
-
-  return result
-})
-
-const featuredArticle = computed(() => news.value[0] || null)
-
-const gridArticles = computed(() => {
-  if (searchQuery.value || selectedYear.value) return filteredArticles.value
-  return filteredArticles.value.slice(1)
-})
-
-function onSearchInput() {
-  clearTimeout(searchTimeout)
-  searchTimeout = setTimeout(() => {
-    searchQuery.value = searchInput.value.trim()
-  }, 300)
-}
-
-function clearSearch() {
-  searchInput.value = ''
-  searchQuery.value = ''
-}
-
-function selectYear(year: number | null) {
-  selectedYear.value = year
-}
-
-function clearFilters() {
-  searchInput.value = ''
-  searchQuery.value = ''
-  selectedYear.value = null
-}
-
-async function fetchNews(page = 1) {
-  loading.value = true
-  try {
-    const response = await $fetch<PaginatedResponse<NewsArticle>>('/api/news', {
-      query: { page, perPage: meta.value.perPage }
-    })
-    news.value = response.data
-    meta.value = response.meta
-  } catch {
-    // fetch failed — page shows empty state
-  } finally {
-    loading.value = false
-  }
-}
-
-function goToPage(page: number) {
-  meta.value.page = page
-  fetchNews(page)
-  window.scrollTo({ top: 0, behavior: 'smooth' })
-}
-
-onMounted(() => {
-  fetchNews()
-})
-
-function formatDate(dateStr: string): string {
-  const date = new Date(dateStr)
-  return date.toLocaleDateString('en-GB', {
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric'
+  useSeoMeta({
+    title: 'News',
+    description: 'Latest news and announcements from the Ghana Audit Service.'
   })
-}
+
+  const news = ref<NewsArticle[]>([])
+  const loading = ref(true)
+  const searchInput = ref('')
+  const searchQuery = ref('')
+  const selectedYear = ref<number | null>(null)
+  let searchTimeout: ReturnType<typeof setTimeout>
+
+  const meta = ref({
+    total: 0,
+    page: 1,
+    perPage: 12,
+    lastPage: 1
+  })
+
+  const availableYears = computed(() => {
+    const years = new Set(news.value.map((a) => new Date(a.publishedAt).getFullYear()))
+    return [...years].sort((a, b) => b - a)
+  })
+
+  const filteredArticles = computed(() => {
+    let result = news.value
+
+    if (searchQuery.value) {
+      const q = searchQuery.value.toLowerCase()
+      result = result.filter(
+        (a) => a.title.toLowerCase().includes(q) || a.excerpt.toLowerCase().includes(q)
+      )
+    }
+
+    if (selectedYear.value) {
+      result = result.filter((a) => new Date(a.publishedAt).getFullYear() === selectedYear.value)
+    }
+
+    return result
+  })
+
+  const featuredArticle = computed(() => news.value[0] || null)
+
+  const gridArticles = computed(() => {
+    if (searchQuery.value || selectedYear.value) return filteredArticles.value
+    return filteredArticles.value.slice(1)
+  })
+
+  function onSearchInput() {
+    clearTimeout(searchTimeout)
+    searchTimeout = setTimeout(() => {
+      searchQuery.value = searchInput.value.trim()
+    }, 300)
+  }
+
+  function clearSearch() {
+    searchInput.value = ''
+    searchQuery.value = ''
+  }
+
+  function selectYear(year: number | null) {
+    selectedYear.value = year
+  }
+
+  function clearFilters() {
+    searchInput.value = ''
+    searchQuery.value = ''
+    selectedYear.value = null
+  }
+
+  async function fetchNews(page = 1) {
+    loading.value = true
+    try {
+      const response = await $fetch<PaginatedResponse<NewsArticle>>('/api/news', {
+        query: { page, perPage: meta.value.perPage }
+      })
+      news.value = response.data
+      meta.value = response.meta
+    } catch {
+      // fetch failed — page shows empty state
+    } finally {
+      loading.value = false
+    }
+  }
+
+  function goToPage(page: number) {
+    meta.value.page = page
+    fetchNews(page)
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+
+  onMounted(() => {
+    fetchNews()
+  })
+
+  function formatDate(dateStr: string): string {
+    const date = new Date(dateStr)
+    return date.toLocaleDateString('en-GB', {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric'
+    })
+  }
 </script>

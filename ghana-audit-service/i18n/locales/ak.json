@@ -29,7 +29,15 @@
     "allCategories": "Nkyekyɛmu Nyinaa",
     "allYears": "Mfeɛ Nyinaa",
     "category": "Nkyekyɛmu",
-    "year": "Afe"
+    "year": "Afe",
+    "language": "Kasa",
+    "close": "To mu",
+    "dismiss": "Dismiss notification",
+    "openSearch": "Open search (Ctrl+K)",
+    "openMenu": "Bue menu no",
+    "mobileNavigation": "Mobile navigation",
+    "citizensEyeApp": "CitizensEye App",
+    "toggleSubmenu": "Toggle {item} submenu"
   },
   "nav": {
     "theService": "Dwumadie No",
@@ -126,7 +134,16 @@
     "textSize": "Nkyerɛwde Kɛse",
     "increase": "Ma Ɛnyɛ Kɛse",
     "decrease": "Ma Ɛnyɛ Ketewa",
-    "reset": "San Hyɛ"
+    "reset": "San Hyɛ",
+    "controls": "Accessibility controls",
+    "skipToContent": "Fa kɔ nsɛm titiriw no so",
+    "switchToDark": "Switch to dark mode",
+    "switchToLight": "Switch to light mode",
+    "enableHighContrast": "Enable high contrast mode",
+    "disableHighContrast": "Disable high contrast mode",
+    "decreaseText": "Decrease text size, currently {percent}%",
+    "increaseText": "Increase text size, currently {percent}%",
+    "textSizeStatus": "Text size: {percent}%"
   },
   "search": {
     "title": "Hwehwɛ Nsɛm",

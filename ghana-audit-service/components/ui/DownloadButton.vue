@@ -29,9 +29,9 @@
       secondary:
         'bg-secondary text-white hover:bg-secondary-dark hover:text-white focus:ring-secondary dark:bg-secondary dark:hover:bg-secondary-light dark:text-white dark:hover:text-white',
       outline:
-        'border-2 border-primary text-primary hover:bg-primary hover:text-white focus:ring-primary dark:border-primary-light dark:text-primary-light dark:hover:bg-primary-light dark:hover:text-white',
+        'border-2 border-primary text-primary hover:bg-primary hover:text-white focus:ring-primary dark:border-primary-light dark:text-primary-200 dark:hover:bg-primary-light dark:hover:text-white',
       ghost:
-        'text-primary hover:bg-primary/10 hover:text-primary-dark focus:ring-primary dark:text-primary-light dark:hover:bg-primary/20 dark:hover:text-white'
+        'text-primary hover:bg-primary/10 hover:text-primary-dark focus:ring-primary dark:text-primary-200 dark:hover:bg-primary/20 dark:hover:text-white'
     }
 
     const sizes = {

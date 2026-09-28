@@ -91,19 +91,27 @@
       @clear-filters="clearFilters"
     >
       <template #filters>
-        <select v-model="filters.category" class="form-input text-sm">
+        <select
+          v-model="filters.category"
+          class="form-input text-sm"
+          aria-label="Filter by category"
+        >
           <option value="">All Categories</option>
           <option v-for="cat in categories" :key="cat.value" :value="cat.value">
             {{ cat.label }}
           </option>
         </select>
-        <select v-model="filters.year" class="form-input text-sm">
+        <select v-model="filters.year" class="form-input text-sm" aria-label="Filter by year">
           <option value="">All Years</option>
           <option v-for="year in years" :key="year" :value="year">
             {{ year }}
           </option>
         </select>
-        <select v-model="filters.isPublished" class="form-input text-sm">
+        <select
+          v-model="filters.isPublished"
+          class="form-input text-sm"
+          aria-label="Filter by status"
+        >
           <option value="">All Status</option>
           <option value="true">Published</option>
           <option value="false">Draft</option>

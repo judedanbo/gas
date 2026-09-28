@@ -48,28 +48,28 @@
       <div class="flex gap-2 flex-wrap">
         <NuxtLink
           to="/reports?category=financial"
-          class="inline-block px-3 py-1 text-sm text-primary dark:text-primary-light bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-full no-underline transition-all hover:bg-primary hover:text-white hover:border-primary"
+          class="inline-block px-3 py-1 text-sm text-primary dark:text-primary-200 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-full no-underline transition-all hover:bg-primary hover:text-white hover:border-primary"
           @click="$emit('close')"
         >
           Financial Reports
         </NuxtLink>
         <NuxtLink
           to="/reports?category=performance"
-          class="inline-block px-3 py-1 text-sm text-primary dark:text-primary-light bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-full no-underline transition-all hover:bg-primary hover:text-white hover:border-primary"
+          class="inline-block px-3 py-1 text-sm text-primary dark:text-primary-200 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-full no-underline transition-all hover:bg-primary hover:text-white hover:border-primary"
           @click="$emit('close')"
         >
           Performance Audits
         </NuxtLink>
         <NuxtLink
           to="/publications/press-statements"
-          class="inline-block px-3 py-1 text-sm text-primary dark:text-primary-light bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-full no-underline transition-all hover:bg-primary hover:text-white hover:border-primary"
+          class="inline-block px-3 py-1 text-sm text-primary dark:text-primary-200 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-full no-underline transition-all hover:bg-primary hover:text-white hover:border-primary"
           @click="$emit('close')"
         >
           Press Statements
         </NuxtLink>
         <NuxtLink
           to="/careers"
-          class="inline-block px-3 py-1 text-sm text-primary dark:text-primary-light bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-full no-underline transition-all hover:bg-primary hover:text-white hover:border-primary"
+          class="inline-block px-3 py-1 text-sm text-primary dark:text-primary-200 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-full no-underline transition-all hover:bg-primary hover:text-white hover:border-primary"
           @click="$emit('close')"
         >
           Job Vacancies

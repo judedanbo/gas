@@ -44,9 +44,9 @@
       secondary: 'bg-secondary text-white hover:bg-secondary-dark focus:ring-secondary',
       accent: 'bg-accent text-gray-900 hover:bg-accent-dark focus:ring-accent',
       outline:
-        'border-2 border-primary text-primary dark:text-primary-light hover:bg-primary hover:text-white focus:ring-primary',
+        'border-2 border-primary text-primary dark:text-primary-200 hover:bg-primary hover:text-white focus:ring-primary',
       ghost:
-        'text-primary dark:text-primary-light hover:bg-primary/10 dark:hover:bg-primary/20 focus:ring-primary'
+        'text-primary dark:text-primary-200 hover:bg-primary/10 dark:hover:bg-primary/20 focus:ring-primary'
     }
 
     const sizes = {

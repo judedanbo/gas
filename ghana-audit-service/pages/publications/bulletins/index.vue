@@ -35,7 +35,7 @@
           >
             <Icon
               name="heroicons:newspaper"
-              class="w-10 h-10 text-primary dark:text-primary-light mb-4 mx-auto"
+              class="w-10 h-10 text-primary dark:text-primary-200 mb-4 mx-auto"
               aria-hidden="true"
             />
             <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">
@@ -140,7 +140,7 @@
 <script setup lang="ts">
   // SEO
   useSeoMeta({
-    title: 'Quarterly Bulletins | Ghana Audit Service',
+    title: 'Quarterly Bulletins',
     description:
       'Quarterly updates on audit activities, capacity building initiatives, and stakeholder engagements from the Ghana Audit Service.'
   })

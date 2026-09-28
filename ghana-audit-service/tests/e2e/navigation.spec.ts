@@ -29,7 +29,10 @@ test.describe('Navigation', () => {
     await page.goto('/')
 
     // Click on Reports link
-    await page.getByRole('link', { name: /reports/i }).first().click()
+    await page
+      .getByRole('link', { name: /reports/i })
+      .first()
+      .click()
 
     // Should be on reports page
     await expect(page).toHaveURL(/\/reports/)
@@ -57,8 +60,8 @@ test.describe('Navigation', () => {
 
     await menuButton.click()
 
-    // Mobile menu should be visible
-    await expect(page.locator('[data-testid="mobile-menu"]')).toBeVisible()
+    // Mobile menu is a dialog labelled "Menu"
+    await expect(page.getByRole('dialog', { name: /menu/i })).toBeVisible()
   })
 })
 

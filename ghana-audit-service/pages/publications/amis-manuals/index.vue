@@ -58,7 +58,7 @@
                   class="flex items-start gap-2 text-sm text-gray-600 dark:text-gray-400"
                 >
                   <svg
-                    class="w-5 h-5 text-primary dark:text-primary-light flex-shrink-0 mt-0.5"
+                    class="w-5 h-5 text-primary dark:text-primary-200 flex-shrink-0 mt-0.5"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -106,7 +106,7 @@
           >
             <Icon
               name="heroicons:globe-americas"
-              class="w-8 h-8 text-primary dark:text-primary-light mb-2 mx-auto"
+              class="w-8 h-8 text-primary dark:text-primary-200 mb-2 mx-auto"
               aria-hidden="true"
             />
             <h4 class="text-sm font-semibold text-gray-900 dark:text-white">INTOSAI</h4>
@@ -119,7 +119,7 @@
           >
             <Icon
               name="heroicons:clipboard-document-list"
-              class="w-8 h-8 text-primary dark:text-primary-light mb-2 mx-auto"
+              class="w-8 h-8 text-primary dark:text-primary-200 mb-2 mx-auto"
               aria-hidden="true"
             />
             <h4 class="text-sm font-semibold text-gray-900 dark:text-white">ISSAI</h4>
@@ -132,7 +132,7 @@
           >
             <Icon
               name="heroicons:globe-alt"
-              class="w-8 h-8 text-primary dark:text-primary-light mb-2 mx-auto"
+              class="w-8 h-8 text-primary dark:text-primary-200 mb-2 mx-auto"
               aria-hidden="true"
             />
             <h4 class="text-sm font-semibold text-gray-900 dark:text-white">AFROSAI-E</h4>
@@ -166,7 +166,7 @@
 <script setup lang="ts">
   // SEO
   useSeoMeta({
-    title: 'AMIS Audit Manuals | Ghana Audit Service',
+    title: 'AMIS Audit Manuals',
     description:
       'Download comprehensive audit methodology guides for Financial, Compliance, IT, and Performance audits from the Ghana Audit Service.'
   })

@@ -12,11 +12,12 @@
     <p
       class="mt-3 text-center text-3xl font-bold tabular-nums text-gray-900 dark:text-white"
       role="timer"
-      aria-live="assertive"
-      aria-atomic="true"
+      aria-live="off"
     >
       {{ formattedCountdown }}
     </p>
+    <!-- Announce at a few thresholds instead of every second -->
+    <p class="sr-only" aria-live="polite" aria-atomic="true">{{ announcement }}</p>
     <p class="mt-3 text-sm text-gray-600 dark:text-gray-400">
       Choose "Stay signed in" to continue your session.
     </p>
@@ -39,6 +40,17 @@
     useSessionTimeout()
 
   const busy = ref(false)
+
+  const ANNOUNCE_AT = [60, 30, 10]
+  const announcement = ref('')
+  watch(secondsRemaining, (s) => {
+    if (ANNOUNCE_AT.includes(s)) {
+      announcement.value = `Your session will expire in ${s} seconds. Choose "Stay signed in" to continue.`
+    }
+  })
+  watch(showWarning, (visible) => {
+    if (!visible) announcement.value = ''
+  })
 
   const formattedCountdown = computed(() => {
     const total = Math.max(0, secondsRemaining.value)

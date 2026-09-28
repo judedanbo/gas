@@ -99,7 +99,7 @@
         <div class="container text-center py-12">
           <Icon
             name="heroicons:user-group"
-            class="w-16 h-16 text-primary dark:text-primary-light mb-4 mx-auto"
+            class="w-16 h-16 text-primary dark:text-primary-200 mb-4 mx-auto"
             aria-hidden="true"
           />
           <p class="text-gray-600 dark:text-gray-400">

@@ -97,7 +97,7 @@
       publication.value = await $fetch<Publication>(`/api/publications/${slug}`)
 
       useSeoMeta({
-        title: `${publication.value.title} | Ghana Audit Service`,
+        title: `${publication.value.title}`,
         description: publication.value.excerpt || `AMIS manual from the Ghana Audit Service`
       })
     } catch {

@@ -32,7 +32,7 @@
           >
             <Icon
               :name="category.icon"
-              class="w-10 h-10 text-primary dark:text-primary-light mb-4"
+              class="w-10 h-10 text-primary dark:text-primary-200 mb-4"
               aria-hidden="true"
             />
             <h3
@@ -44,7 +44,7 @@
               {{ category.description }}
             </p>
             <span
-              class="text-primary dark:text-primary-light font-medium text-sm inline-flex items-center gap-1"
+              class="text-primary dark:text-primary-200 font-medium text-sm inline-flex items-center gap-1"
             >
               View Publications
               <svg
@@ -195,7 +195,7 @@
 
   // SEO
   useSeoMeta({
-    title: 'Publications | Ghana Audit Service',
+    title: 'Publications',
     description:
       'Access official documents, press statements, audit manuals, and guidelines from the Ghana Audit Service.'
   })

@@ -1,6 +1,8 @@
 import { test, expect } from '@playwright/test'
 
-test.describe('Newsletter Subscription', () => {
+// The footer newsletter form is currently disabled (see `<!-- <CommonNewsletterSubscription /> -->`
+// in components/common/AppFooter.vue). Re-enable this suite when the form returns.
+test.describe.skip('Newsletter Subscription', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/')
     // Scroll to footer where newsletter form is located

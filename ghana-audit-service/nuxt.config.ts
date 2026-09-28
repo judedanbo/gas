@@ -188,8 +188,8 @@ export default defineNuxtConfig({
   // i18n Configuration
   i18n: {
     locales: [
-      { code: 'en', name: 'English', file: 'en.json', iso: 'en-GH' },
-      { code: 'ak', name: 'Akan', file: 'ak.json', iso: 'ak-GH' }
+      { code: 'en', name: 'English', file: 'en.json', language: 'en-GH' },
+      { code: 'ak', name: 'Akan', file: 'ak.json', language: 'ak-GH' }
     ],
     defaultLocale: 'en',
     bundle: {
@@ -250,7 +250,6 @@ export default defineNuxtConfig({
         // Open Graph
         { property: 'og:type', content: 'website' },
         { property: 'og:site_name', content: 'Ghana Audit Service' },
-        { property: 'og:locale', content: 'en_GH' },
         // Twitter
         { name: 'twitter:card', content: 'summary_large_image' }
       ],
@@ -284,7 +283,13 @@ export default defineNuxtConfig({
       siteUrl: 'https://audit.gov.gh',
       siteName: 'Ghana Audit Service',
       contactEmail: 'info@audit.gov.gh',
-      contactPhone: '+233 (302) 664929'
+      contactPhone: '+233 (302) 664929',
+      // Social profiles — links are hidden until a URL is configured
+      // (NUXT_PUBLIC_SOCIAL_FACEBOOK_URL etc.)
+      socialFacebookUrl: '',
+      socialTwitterUrl: '',
+      socialLinkedinUrl: '',
+      socialYoutubeUrl: ''
     }
   },
 

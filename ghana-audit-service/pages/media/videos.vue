@@ -133,7 +133,7 @@
   import { applyLiveStatus, extractVideoId } from '~/utils/liveVideos'
 
   useSeoMeta({
-    title: 'Videos | Ghana Audit Service',
+    title: 'Videos',
     description: 'Video content, documentaries, and recordings from the Ghana Audit Service.'
   })
 
