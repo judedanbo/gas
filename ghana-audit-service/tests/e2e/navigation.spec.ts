@@ -10,16 +10,20 @@ test.describe('Navigation', () => {
     // Check header is visible
     await expect(page.locator('header')).toBeVisible()
 
-    // Check main navigation links
-    await expect(page.getByRole('link', { name: /about/i })).toBeVisible()
-    await expect(page.getByRole('link', { name: /reports/i })).toBeVisible()
+    // Check main navigation links (scoped to the header: the footer repeats them)
+    const mainNav = page.getByRole('navigation', { name: 'Main navigation' })
+    await expect(mainNav.getByRole('link', { name: /about/i })).toBeVisible()
+    await expect(mainNav.getByRole('link', { name: /reports/i })).toBeVisible()
   })
 
   test('should navigate to About page', async ({ page }) => {
     await page.goto('/')
 
     // Click on About link
-    await page.getByRole('link', { name: /about/i }).first().click()
+    await page
+      .getByRole('navigation', { name: 'Main navigation' })
+      .getByRole('link', { name: /about/i })
+      .click()
 
     // Should be on about page
     await expect(page).toHaveURL(/\/about/)
@@ -54,8 +58,11 @@ test.describe('Navigation', () => {
     await page.setViewportSize({ width: 375, height: 667 })
     await page.goto('/')
 
+    // Wait for hydration so the toggle's click handler is attached
+    await page.waitForLoadState('networkidle')
+
     // Find and click mobile menu button
-    const menuButton = page.getByRole('button', { name: /menu/i })
+    const menuButton = page.getByRole('button', { name: /open menu/i })
     await expect(menuButton).toBeVisible()
 
     await menuButton.click()
@@ -75,8 +82,8 @@ test.describe('Footer', () => {
     // Check footer is visible
     await expect(page.locator('footer')).toBeVisible()
 
-    // Check contact info exists
-    await expect(page.getByText(/info@audit\.gov\.gh/i)).toBeVisible()
+    // Check contact info exists (the header top bar repeats the address, so scope to the footer)
+    await expect(page.locator('footer').getByText(/info@audit\.gov\.gh/i)).toBeVisible()
   })
 
   test('should have working social links', async ({ page }) => {

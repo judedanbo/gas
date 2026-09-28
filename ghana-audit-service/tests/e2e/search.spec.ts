@@ -14,6 +14,8 @@ test.describe('Search Functionality', () => {
 
   test('should perform search with query', async ({ page }) => {
     await page.goto('/search')
+    // Wait for hydration: typing before Vue takes over is reset by v-model
+    await page.waitForLoadState('networkidle')
 
     // Find search input
     const searchInput = page.getByRole('searchbox').or(page.getByPlaceholder(/search/i))
@@ -21,13 +23,17 @@ test.describe('Search Functionality', () => {
     // Type search query
     await searchInput.fill('audit report')
 
+    // Start listening before submitting, otherwise a fast response can arrive
+    // before the listener is registered and the wait never resolves
+    const searchResponse = page.waitForResponse(
+      (response) => response.url().includes('/api/search') && response.status() === 200
+    )
+
     // Submit search (press Enter or click button)
     await searchInput.press('Enter')
 
     // Wait for results or no results message
-    await page.waitForResponse(response =>
-      response.url().includes('/api/search') && response.status() === 200
-    )
+    await searchResponse
   })
 
   test('should show no results for empty search', async ({ page }) => {
@@ -58,8 +64,8 @@ test.describe('Search Functionality', () => {
       await filterSelect.selectOption({ label: 'Audit Reports' })
 
       // Wait for filtered results
-      await page.waitForResponse(response =>
-        response.url().includes('/api/search') && response.status() === 200
+      await page.waitForResponse(
+        (response) => response.url().includes('/api/search') && response.status() === 200
       )
     }
   })
@@ -88,11 +94,10 @@ test.describe('Search Results', () => {
     await page.waitForLoadState('networkidle')
 
     // Check for results container
-    const resultsContainer = page.locator('[data-testid="search-results"]').or(
-      page.locator('.search-results')
-    ).or(
-      page.locator('main')
-    )
+    const resultsContainer = page
+      .locator('[data-testid="search-results"]')
+      .or(page.locator('.search-results'))
+      .or(page.locator('main'))
 
     await expect(resultsContainer).toBeVisible()
   })
@@ -104,19 +109,18 @@ test.describe('Search Results', () => {
     await page.waitForLoadState('networkidle')
 
     // Look for pagination controls
-    const pagination = page.locator('[data-testid="pagination"]').or(
-      page.locator('.pagination')
-    ).or(
-      page.getByRole('navigation', { name: /pagination/i })
-    )
+    const pagination = page
+      .locator('[data-testid="pagination"]')
+      .or(page.locator('.pagination'))
+      .or(page.getByRole('navigation', { name: /pagination/i }))
 
     // If pagination exists, test it
     if (await pagination.isVisible()) {
-      const nextButton = pagination.getByRole('button', { name: /next/i }).or(
-        pagination.locator('button:has-text("Next")')
-      )
+      const nextButton = pagination
+        .getByRole('button', { name: /next/i })
+        .or(pagination.locator('button:has-text("Next")'))
 
-      if (await nextButton.isVisible() && await nextButton.isEnabled()) {
+      if ((await nextButton.isVisible()) && (await nextButton.isEnabled())) {
         await nextButton.click()
         await expect(page).toHaveURL(/page=2/)
       }

@@ -197,11 +197,12 @@ export default defineNuxtConfig({
     },
     langDir: 'locales',
     strategy: 'prefix_except_default',
-    detectBrowserLanguage: {
-      useCookie: true,
-      cookieKey: 'gas_locale',
-      redirectOn: 'root'
-    },
+    // Locale comes from the URL prefix only. Cookie/Accept-Language detection is
+    // deliberately off: most public pages are ISR-cached (see routeRules), and
+    // the detection result of whoever triggered the cached render (including its
+    // Set-Cookie and root redirect) was being served to every later visitor —
+    // English visitors received `gas_locale=ak` and were bounced off /ak.
+    detectBrowserLanguage: false,
     // SEO - hreflang tags
     baseUrl: 'https://audit.gov.gh'
   },
