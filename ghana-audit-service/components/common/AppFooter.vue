@@ -13,7 +13,9 @@
                 aria-hidden="true"
               />
               <div>
-                <span class="block font-heading text-xl font-bold text-primary dark:text-accent">Audit Service</span>
+                <span class="block font-heading text-xl font-bold text-primary dark:text-accent"
+                  >Audit Service</span
+                >
                 <span class="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide"
                   >Good Governance & Accountability</span
                 >
@@ -23,39 +25,19 @@
               The Audit Service has a constitutional mandate to audit all public accounts and report
               to Parliament, ensuring accountability in the use of public resources.
             </p>
-            <!-- Social Media Links -->
-            <div class="flex gap-3">
+            <!-- Social Media Links (only rendered when configured) -->
+            <div v-if="socialLinks.length" class="flex gap-3">
               <a
-                href="#"
+                v-for="social in socialLinks"
+                :key="social.name"
+                :href="social.url"
+                target="_blank"
+                rel="noopener noreferrer"
                 class="w-10 h-10 flex items-center justify-center bg-gray-200 dark:bg-gray-800 text-gray-600 dark:text-white rounded-full hover:bg-primary hover:text-white hover:-translate-y-0.5 transition-all"
-                aria-label="Facebook"
-                title="Facebook"
+                :aria-label="`${social.name} (opens in a new tab)`"
+                :title="social.name"
               >
-                <Icon name="simple-icons:facebook" class="w-5 h-5" aria-hidden="true" />
-              </a>
-              <a
-                href="#"
-                class="w-10 h-10 flex items-center justify-center bg-gray-200 dark:bg-gray-800 text-gray-600 dark:text-white rounded-full hover:bg-primary hover:text-white hover:-translate-y-0.5 transition-all"
-                aria-label="Twitter"
-                title="Twitter"
-              >
-                <Icon name="simple-icons:x" class="w-5 h-5" aria-hidden="true" />
-              </a>
-              <a
-                href="#"
-                class="w-10 h-10 flex items-center justify-center bg-gray-200 dark:bg-gray-800 text-gray-600 dark:text-white rounded-full hover:bg-primary hover:text-white hover:-translate-y-0.5 transition-all"
-                aria-label="LinkedIn"
-                title="LinkedIn"
-              >
-                <Icon name="simple-icons:linkedin" class="w-5 h-5" aria-hidden="true" />
-              </a>
-              <a
-                href="#"
-                class="w-10 h-10 flex items-center justify-center bg-gray-200 dark:bg-gray-800 text-gray-600 dark:text-white rounded-full hover:bg-primary hover:text-white hover:-translate-y-0.5 transition-all"
-                aria-label="YouTube"
-                title="YouTube"
-              >
-                <Icon name="simple-icons:youtube" class="w-5 h-5" aria-hidden="true" />
+                <Icon :name="social.icon" class="w-5 h-5" aria-hidden="true" />
               </a>
             </div>
           </div>
@@ -172,9 +154,8 @@
                   aria-hidden="true"
                 />
                 <div class="flex flex-col gap-1 text-sm text-gray-600 dark:text-gray-400">
-                  <p class="m-0">Ministries Block 'O'</p>
-                  <p class="m-0">1 Old Race Course Drive</p>
-                  <p class="m-0">P.O. Box M96, Ministries Accra</p>
+                  <p v-for="line in contact.addressLines" :key="line" class="m-0">{{ line }}</p>
+                  <p class="m-0">{{ contact.postalLines.join(', ') }}</p>
                 </div>
               </div>
               <div class="flex gap-3">
@@ -184,14 +165,12 @@
                   aria-hidden="true"
                 />
                 <div class="flex flex-col gap-1 text-sm">
-                  <a href="tel:+233302664929" class="text-gray-600 dark:text-gray-400 no-underline hover:text-primary dark:hover:text-accent"
-                    >+233 (302) 664929</a
-                  >
-                  <a href="tel:+233302664920" class="text-gray-600 dark:text-gray-400 no-underline hover:text-primary dark:hover:text-accent"
-                    >+233 (302) 664920</a
-                  >
-                  <a href="tel:+233302753600" class="text-gray-600 dark:text-gray-400 no-underline hover:text-primary dark:hover:text-accent"
-                    >+233 (302) 753600</a
+                  <a
+                    v-for="phone in contact.phones"
+                    :key="phone.href"
+                    :href="phone.href"
+                    class="text-gray-600 dark:text-gray-400 no-underline hover:text-primary dark:hover:text-accent"
+                    >{{ phone.display }}</a
                   >
                 </div>
               </div>
@@ -203,9 +182,9 @@
                 />
                 <div class="flex flex-col gap-1 text-sm">
                   <a
-                    href="mailto:info@audit.gov.gh"
+                    :href="contact.emailHref"
                     class="text-gray-600 dark:text-gray-400 no-underline hover:text-primary dark:hover:text-accent"
-                    >info@audit.gov.gh</a
+                    >{{ contact.email }}</a
                   >
                 </div>
               </div>
@@ -216,7 +195,7 @@
                   aria-hidden="true"
                 />
                 <div class="flex flex-col gap-1 text-sm text-gray-600 dark:text-gray-400">
-                  <p class="m-0">Digital Address: GA-110-8787</p>
+                  <p class="m-0">Digital Address: {{ contact.digitalAddress }}</p>
                 </div>
               </div>
             </div>
@@ -232,7 +211,9 @@
     <div class="bg-gray-200/50 dark:bg-black/20 py-4 border-t border-gray-200 dark:border-gray-800">
       <div class="container">
         <div class="flex flex-col md:flex-row items-start md:items-center gap-4 flex-wrap">
-          <span class="text-sm text-gray-600 dark:text-gray-500 font-medium">{{ $t('footer.affiliations') }}:</span>
+          <span class="text-sm text-gray-600 dark:text-gray-500 font-medium"
+            >{{ $t('footer.affiliations') }}:</span
+          >
           <div class="flex gap-2 md:gap-4 flex-wrap">
             <a
               v-for="affiliation in affiliations"
@@ -254,7 +235,9 @@
     <div class="bg-gray-50 dark:bg-black/10 py-4 border-t border-gray-200 dark:border-gray-800">
       <div class="container">
         <div class="flex flex-col md:flex-row items-start md:items-center gap-4 flex-wrap">
-          <span class="text-sm text-gray-600 dark:text-gray-500 font-medium">{{ $t('footer.relatedLinks') }}:</span>
+          <span class="text-sm text-gray-600 dark:text-gray-500 font-medium"
+            >{{ $t('footer.relatedLinks') }}:</span
+          >
           <div class="flex gap-2 md:gap-4 flex-wrap">
             <a
               v-for="link in relatedLinks"
@@ -302,6 +285,8 @@
 </template>
 
 <script setup lang="ts">
+  const { contact, socialLinks } = useSiteContact()
+
   // useState serializes the server-computed year into the payload, so the
   // client shows the same year as the ISR-cached HTML even across a year
   // rollover (where a fresh client-side Date would mismatch during hydration).

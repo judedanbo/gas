@@ -71,7 +71,9 @@
               <ClientOnly>
                 <ReportsPdfReader :file-url="report.fileUrl" :title="report.title" />
                 <template #fallback>
-                  <div class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-8 min-h-[70vh] flex items-center justify-center">
+                  <div
+                    class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-8 min-h-[70vh] flex items-center justify-center"
+                  >
                     <UiLoadingSpinner />
                   </div>
                 </template>
@@ -94,66 +96,68 @@
                 </div>
 
                 <div class="p-6">
-                <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-                  Download Report
-                </h3>
-                <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
-                  Access the full report in PDF format.
-                </p>
+                  <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                    Download Report
+                  </h3>
+                  <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                    Access the full report in PDF format.
+                  </p>
 
-                <a :href="report.fileUrl" class="btn-primary w-full justify-center mb-4" download>
-                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                      d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                    />
-                  </svg>
-                  Download PDF ({{ report.fileSize }})
-                </a>
+                  <a :href="report.fileUrl" class="btn-primary w-full justify-center mb-4" download>
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                      />
+                    </svg>
+                    Download PDF ({{ report.fileSize }})
+                  </a>
 
-                <div class="border-t border-gray-200 dark:border-gray-700 pt-4 mt-4">
-                  <h4 class="text-sm font-semibold text-gray-900 dark:text-white mb-2">
-                    Report Details
-                  </h4>
-                  <dl class="space-y-2 text-sm">
-                    <div class="flex justify-between">
-                      <dt class="text-gray-500 dark:text-gray-400">Category:</dt>
-                      <dd class="text-gray-900 dark:text-white font-medium">
-                        {{ getAuditCategoryLabel(report.category) }}
-                      </dd>
-                    </div>
-                    <div class="flex justify-between">
-                      <dt class="text-gray-500 dark:text-gray-400">Year:</dt>
-                      <dd class="text-gray-900 dark:text-white font-medium">{{ new Date(report.publishedAt).getFullYear() }}</dd>
-                    </div>
-                    <div class="flex justify-between">
-                      <dt class="text-gray-500 dark:text-gray-400">Published:</dt>
-                      <dd class="text-gray-900 dark:text-white font-medium">
-                        {{ formatDate(report.publishedAt) }}
-                      </dd>
-                    </div>
-                    <div class="flex justify-between">
-                      <dt class="text-gray-500 dark:text-gray-400">File Size:</dt>
-                      <dd class="text-gray-900 dark:text-white font-medium">
-                        {{ report.fileSize }}
-                      </dd>
-                    </div>
-                  </dl>
-                </div>
+                  <div class="border-t border-gray-200 dark:border-gray-700 pt-4 mt-4">
+                    <h4 class="text-sm font-semibold text-gray-900 dark:text-white mb-2">
+                      Report Details
+                    </h4>
+                    <dl class="space-y-2 text-sm">
+                      <div class="flex justify-between">
+                        <dt class="text-gray-500 dark:text-gray-400">Category:</dt>
+                        <dd class="text-gray-900 dark:text-white font-medium">
+                          {{ getAuditCategoryLabel(report.category) }}
+                        </dd>
+                      </div>
+                      <div class="flex justify-between">
+                        <dt class="text-gray-500 dark:text-gray-400">Year:</dt>
+                        <dd class="text-gray-900 dark:text-white font-medium">
+                          {{ new Date(report.publishedAt).getFullYear() }}
+                        </dd>
+                      </div>
+                      <div class="flex justify-between">
+                        <dt class="text-gray-500 dark:text-gray-400">Published:</dt>
+                        <dd class="text-gray-900 dark:text-white font-medium">
+                          {{ formatDate(report.publishedAt) }}
+                        </dd>
+                      </div>
+                      <div class="flex justify-between">
+                        <dt class="text-gray-500 dark:text-gray-400">File Size:</dt>
+                        <dd class="text-gray-900 dark:text-white font-medium">
+                          {{ report.fileSize }}
+                        </dd>
+                      </div>
+                    </dl>
+                  </div>
 
-                <NuxtLink to="/reports" class="btn-outline w-full justify-center mt-4">
-                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                      d="M10 19l-7-7m0 0l7-7m-7 7h18"
-                    />
-                  </svg>
-                  Back to Reports
-                </NuxtLink>
+                  <NuxtLink to="/reports" class="btn-outline w-full justify-center mt-4">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M10 19l-7-7m0 0l7-7m-7 7h18"
+                      />
+                    </svg>
+                    Back to Reports
+                  </NuxtLink>
                 </div>
               </div>
             </div>
@@ -259,8 +263,7 @@
   })
 
   useSeoMeta({
-    title: () =>
-      report.value ? `${report.value.title} | Ghana Audit Service` : 'Report | Ghana Audit Service',
+    title: () => (report.value ? `${report.value.title}` : 'Report'),
     // Flattened: summaries are rich text, and markup in a meta description ships
     // escaped tags straight into search results and link previews.
     description: () =>

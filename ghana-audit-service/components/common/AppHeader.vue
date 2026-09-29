@@ -22,89 +22,11 @@
 
           <!-- Right: Accessibility + Language + CitizensEye -->
           <div class="flex items-center gap-2 md:gap-3">
-            <!-- Accessibility Controls -->
-            <div
-              class="hidden lg:flex items-center gap-0.5"
-              role="group"
-              aria-label="Accessibility controls"
-            >
-              <button
-                class="touch-target-area p-2 text-white/80 hover:text-white hover:bg-white/10 rounded transition-colors flex items-center justify-center"
-                :aria-pressed="isDark"
-                title="Toggle dark mode"
-                :aria-label="isDark ? 'Switch to light mode' : 'Switch to dark mode'"
-                @click="toggleDarkMode"
-              >
-                <ClientOnly>
-                  <Icon
-                    :name="isDark ? 'heroicons:sun' : 'heroicons:moon'"
-                    class="w-4 h-4"
-                    aria-hidden="true"
-                  />
-                  <template #fallback>
-                    <span class="w-4 h-4 inline-block"></span>
-                  </template>
-                </ClientOnly>
-              </button>
-              <button
-                class="touch-target-area p-2 text-white/80 hover:text-white hover:bg-white/10 rounded transition-colors flex items-center justify-center"
-                :class="{ 'bg-white/20 text-white': highContrast }"
-                :aria-pressed="highContrast"
-                title="Toggle high contrast mode"
-                :aria-label="
-                  highContrast ? 'Disable high contrast mode' : 'Enable high contrast mode'
-                "
-                @click="toggleHighContrast"
-              >
-                <span class="text-sm" aria-hidden="true">◐</span>
-              </button>
-              <button
-                class="touch-target-area p-2 text-white/80 hover:text-white hover:bg-white/10 rounded transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center"
-                :disabled="!canDecreaseText"
-                title="Decrease text size"
-                :aria-label="`Decrease text size, currently ${textScalePercent}%`"
-                @click="decreaseTextSize"
-              >
-                <span class="text-xs font-bold" aria-hidden="true">A-</span>
-              </button>
-              <span
-                class="text-xs text-white/70 min-w-[3.5ch] text-center tabular-nums px-1"
-                aria-live="polite"
-                aria-atomic="true"
-                :aria-label="`Text size: ${textScalePercent}%`"
-                role="status"
-              >
-                {{ textScalePercent }}%
-              </span>
-              <button
-                class="touch-target-area p-2 text-white/80 hover:text-white hover:bg-white/10 rounded transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center"
-                :disabled="!canIncreaseText"
-                title="Increase text size"
-                :aria-label="`Increase text size, currently ${textScalePercent}%`"
-                @click="increaseTextSize"
-              >
-                <span class="text-xs font-bold" aria-hidden="true">A+</span>
-              </button>
-            </div>
+            <!-- Accessibility Controls (desktop; also available inside the mobile menu) -->
+            <CommonAccessibilityControls variant="on-brand" class="hidden lg:flex" />
 
             <!-- Language Switcher -->
-            <!-- <div class="hidden lg:flex items-center">
-              <select
-                v-model="currentLocale"
-                class="bg-white/10 border border-white/30 rounded px-2 py-0.5 text-xs text-white cursor-pointer hover:bg-white/20 focus:outline-none focus:border-white"
-                aria-label="Select language"
-                @change="switchLocale"
-              >
-                <option
-                  v-for="loc in availableLocales"
-                  :key="loc.code"
-                  :value="loc.code"
-                  class="text-gray-900"
-                >
-                  {{ loc.name }}
-                </option>
-              </select>
-            </div> -->
+            <CommonLanguageSwitcher variant="on-brand" />
 
             <!-- CitizensEye App -->
             <a
@@ -113,7 +35,7 @@
               rel="noopener noreferrer"
               class="bg-accent text-gray-900 px-3 md:px-4 py-1 rounded-full font-semibold no-underline hover:bg-accent-dark transition-colors text-xs md:text-sm"
             >
-              CitizensEye App
+              {{ $t('common.citizensEyeApp') }}
             </a>
           </div>
         </div>
@@ -128,7 +50,7 @@
           <NuxtLink
             to="/"
             class="flex items-center gap-3 no-underline text-gray-900 dark:text-white hover:no-underline"
-            aria-label="Audit Service - Home"
+            :aria-label="`${$t('home.title')} - ${$t('common.home')}`"
           >
             <img
               src="/images/logo-no-bg.png"
@@ -137,7 +59,7 @@
             />
             <div class="flex flex-col">
               <span
-                class="font-heading text-xl md:text-xl font-bold text-primary dark:text-primary-light leading-tight"
+                class="font-heading text-xl md:text-xl font-bold text-primary dark:text-primary-200 leading-tight"
                 >Audit Service</span
               >
               <span
@@ -153,7 +75,7 @@
           <!-- Search Button -->
           <button
             class="touch-target bg-transparent border-none p-2 cursor-pointer text-gray-600 dark:text-gray-300 hover:text-primary transition-colors flex items-center justify-center"
-            aria-label="Open search (Ctrl+K)"
+            :aria-label="$t('common.openSearch')"
             aria-haspopup="dialog"
             @click="openSearch"
           >
@@ -164,7 +86,7 @@
           <button
             class="lg:hidden touch-target bg-transparent border-none p-2 cursor-pointer flex items-center justify-center"
             :aria-expanded="isMobileMenuOpen"
-            :aria-label="isMobileMenuOpen ? 'Close menu' : 'Open menu'"
+            :aria-label="isMobileMenuOpen ? $t('common.closeMenu') : $t('common.openMenu')"
             @click="toggleMobileMenu"
           >
             <span
@@ -198,45 +120,6 @@
   const isScrolled = ref(false)
   const isSearchPaletteOpen = useState('searchPalette', () => false)
   const isMobileMenuOpen = ref(false)
-
-  // Color mode (dark mode)
-  const colorMode = useColorMode()
-
-  // SSR renders colorMode.value as 'system' while the client resolves it to
-  // dark/light before hydration, so bind dark-mode UI through a mounted gate
-  // to keep the first client render identical to the server HTML.
-  const mounted = ref(false)
-  const isDark = computed(() => mounted.value && colorMode.value === 'dark')
-
-  function toggleDarkMode() {
-    colorMode.preference = colorMode.value === 'dark' ? 'light' : 'dark'
-  }
-
-  // Accessibility
-  const {
-    highContrast,
-    textScalePercent,
-    canIncreaseText,
-    canDecreaseText,
-    toggleHighContrast,
-    increaseTextSize,
-    decreaseTextSize
-  } = useAccessibility()
-
-  // i18n
-  // const { locale, locales, setLocale } = useI18n()
-
-  // const currentLocale = ref(locale.value)
-  // const availableLocales = computed(() =>
-  //   (locales.value as Array<{ code: string; name: string }>).map((l) => ({
-  //     code: l.code,
-  //     name: l.name
-  //   }))
-  // )
-
-  // function switchLocale() {
-  //   setLocale(currentLocale.value)
-  // }
 
   // Handle scroll effect
   const handleScroll = () => {
@@ -273,7 +156,6 @@
   )
 
   onMounted(() => {
-    mounted.value = true
     window.addEventListener('scroll', handleScroll)
   })
 

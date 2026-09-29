@@ -6,8 +6,8 @@
         { label: 'Management Team', path: '/about/management-team' },
         {
           label: member?.name || 'Profile',
-          path: `/about/management-team/${route.params.slug}`,
-        },
+          path: `/about/management-team/${route.params.slug}`
+        }
       ]"
     />
 
@@ -15,9 +15,7 @@
     <div v-if="pending" class="section">
       <div class="container">
         <div class="flex justify-center py-12" role="status">
-          <div
-            class="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"
-          ></div>
+          <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
           <span class="sr-only">Loading profile...</span>
         </div>
       </div>
@@ -28,18 +26,14 @@
       <div class="container text-center py-12">
         <Icon
           name="heroicons:user"
-          class="w-16 h-16 text-primary dark:text-primary-light mb-4 mx-auto"
+          class="w-16 h-16 text-primary dark:text-primary-200 mb-4 mx-auto"
           aria-hidden="true"
         />
-        <h1 class="text-2xl font-bold text-gray-900 dark:text-white mb-2">
-          Member Not Found
-        </h1>
+        <h1 class="text-2xl font-bold text-gray-900 dark:text-white mb-2">Member Not Found</h1>
         <p class="text-gray-600 dark:text-gray-400 mb-6">
           The team member you're looking for doesn't exist or has been removed.
         </p>
-        <NuxtLink to="/about/management-team" class="btn-primary">
-          View Management Team
-        </NuxtLink>
+        <NuxtLink to="/about/management-team" class="btn-primary"> View Management Team </NuxtLink>
       </div>
     </div>
 
@@ -58,34 +52,21 @@
                 :alt="member.name"
                 class="w-48 h-56 object-cover rounded-lg shadow-lg"
               />
-              <div
-                v-else
-                class="w-48 h-56 bg-white/10 rounded-lg flex items-center justify-center"
-              >
-                <Icon
-                  name="heroicons:user"
-                  class="w-20 h-20 text-white/50"
-                  aria-hidden="true"
-                />
+              <div v-else class="w-48 h-56 bg-white/10 rounded-lg flex items-center justify-center">
+                <Icon name="heroicons:user" class="w-20 h-20 text-white/50" aria-hidden="true" />
               </div>
             </div>
             <div>
               <UiBadge
-                :variant="
-                  member.role === 'auditor-general' ? 'accent' : 'primary'
-                "
+                :variant="member.role === 'auditor-general' ? 'accent' : 'primary'"
                 size="lg"
                 class="mb-3"
               >
                 {{
-                  member.role === 'auditor-general'
-                    ? 'Auditor-General'
-                    : 'Deputy Auditor-General'
+                  member.role === 'auditor-general' ? 'Auditor-General' : 'Deputy Auditor-General'
                 }}
               </UiBadge>
-              <h1
-                class="text-3xl md:text-4xl font-heading font-bold text-white mb-2"
-              >
+              <h1 class="text-3xl md:text-4xl font-heading font-bold text-white mb-2">
                 {{ member.name }}
               </h1>
               <p class="text-xl text-white/90 mb-4">{{ member.title }}</p>
@@ -158,21 +139,14 @@
                   to="/about/management-team"
                   class="btn-outline inline-flex items-center gap-2"
                 >
-                  <Icon
-                    name="heroicons:arrow-left"
-                    class="w-5 h-5"
-                    aria-hidden="true"
-                  />
+                  <Icon name="heroicons:arrow-left" class="w-5 h-5" aria-hidden="true" />
                   Back to Management Team
                 </NuxtLink>
               </div>
             </div>
 
             <!-- Team Sidebar -->
-            <aside
-              v-if="otherMembers.length > 0"
-              class="lg:w-72 flex-shrink-0"
-            >
+            <aside v-if="otherMembers.length > 0" class="lg:w-72 flex-shrink-0">
               <div
                 class="lg:sticky lg:top-24 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-5"
               >
@@ -210,14 +184,8 @@
                           >
                             {{ m.name }}
                           </p>
-                          <p
-                            class="text-xs text-gray-500 dark:text-gray-400 truncate m-0"
-                          >
-                            {{
-                              m.role === 'auditor-general'
-                                ? 'Auditor-General'
-                                : 'DAG'
-                            }}
+                          <p class="text-xs text-gray-500 dark:text-gray-400 truncate m-0">
+                            {{ m.role === 'auditor-general' ? 'Auditor-General' : 'DAG' }}
                           </p>
                         </div>
                       </NuxtLink>
@@ -243,13 +211,10 @@
   const {
     data: member,
     pending,
-    error,
-  } = await useFetch<ManagementTeamMember>(
-    `/api/management-team/${route.params.slug}`
-  )
+    error
+  } = await useFetch<ManagementTeamMember>(`/api/management-team/${route.params.slug}`)
 
-  const { data: allMembers } =
-    await useFetch<ManagementTeamMember[]>('/api/management-team')
+  const { data: allMembers } = await useFetch<ManagementTeamMember[]>('/api/management-team')
 
   const otherMembers = computed(() =>
     (allMembers.value || []).filter((m) => m.slug !== route.params.slug)
@@ -261,13 +226,10 @@
   })
 
   useSeoMeta({
-    title: () =>
-      member.value
-        ? `${member.value.name} - ${member.value.title} | Ghana Audit Service`
-        : 'Team Member | Ghana Audit Service',
+    title: () => (member.value ? `${member.value.name} - ${member.value.title}` : 'Team Member'),
     description: () =>
       member.value
         ? `Profile of ${member.value.name}, ${member.value.title} at the Ghana Audit Service.`
-        : 'Management team member profile at the Ghana Audit Service.',
+        : 'Management team member profile at the Ghana Audit Service.'
   })
 </script>

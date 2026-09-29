@@ -26,7 +26,7 @@
       <div class="container text-center py-12">
         <Icon
           name="heroicons:user"
-          class="w-16 h-16 text-primary dark:text-primary-light mb-4 mx-auto"
+          class="w-16 h-16 text-primary dark:text-primary-200 mb-4 mx-auto"
           aria-hidden="true"
         />
         <h1 class="text-2xl font-bold text-gray-900 dark:text-white mb-2">Member Not Found</h1>
@@ -218,8 +218,8 @@
   useSeoMeta({
     title: () =>
       member.value
-        ? `${member.value.name}${member.value.title ? ` - ${member.value.title}` : ''} | Ghana Audit Service`
-        : 'Board Member | Ghana Audit Service',
+        ? `${member.value.name}${member.value.title ? ` - ${member.value.title}` : ''}`
+        : 'Board Member',
     description: () =>
       member.value
         ? `Profile of ${member.value.name}, board member at the Ghana Audit Service.`

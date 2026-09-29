@@ -12,7 +12,7 @@
       @clear-filters="clearFilters"
     >
       <template #filters>
-        <select v-model="filters.action" class="form-input text-sm">
+        <select v-model="filters.action" class="form-input text-sm" aria-label="Filter by action">
           <option value="">All Actions</option>
           <option value="create">Create</option>
           <option value="update">Update</option>
@@ -20,7 +20,11 @@
           <option value="login">Login</option>
           <option value="logout">Logout</option>
         </select>
-        <select v-model="filters.entityType" class="form-input text-sm">
+        <select
+          v-model="filters.entityType"
+          class="form-input text-sm"
+          aria-label="Filter by record type"
+        >
           <option value="">All Types</option>
           <option value="reports">Reports</option>
           <option value="publications">Publications</option>
@@ -234,8 +238,7 @@
               <p class="text-sm text-gray-500 mb-2">Changes</p>
               <pre
                 class="bg-gray-100 dark:bg-gray-900 rounded-lg p-4 text-sm overflow-x-auto text-gray-800 dark:text-gray-200"
-                >{{ JSON.stringify(selectedLog.changes, null, 2) }}</pre
-              >
+                >{{ JSON.stringify(selectedLog.changes, null, 2) }}</pre>
             </div>
             <div v-if="selectedLog.userAgent">
               <p class="text-sm text-gray-500 mb-2">User Agent</p>

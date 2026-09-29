@@ -21,7 +21,7 @@
       <h3 :class="nameClasses">{{ name }}</h3>
 
       <!-- Title/Position -->
-      <p v-if="title" class="text-primary dark:text-primary-light font-semibold mb-1">
+      <p v-if="title" class="text-primary dark:text-primary-200 font-semibold mb-1">
         {{ title }}
       </p>
 

@@ -35,7 +35,7 @@
               Assemblies, public boards, corporations, and other public institutions.
             </p>
             <div class="mt-8 pt-8 border-t border-gray-200 dark:border-gray-700">
-              <UiStatGrid :stats="overviewStats" :columns="4" variant="transparent" />
+              <UiStatGrid :stats="overviewStats" :columns="4" />
             </div>
           </div>
           <div class="flex justify-center">
@@ -44,7 +44,7 @@
             >
               <Icon
                 name="heroicons:building-library"
-                class="w-16 h-16 text-primary dark:text-primary-light"
+                class="w-16 h-16 text-primary dark:text-primary-200"
                 aria-hidden="true"
               />
               <span class="text-gray-400 dark:text-gray-500 text-sm">GAS Headquarters</span>

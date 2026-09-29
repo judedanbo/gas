@@ -72,7 +72,7 @@
           >
             <Icon
               name="heroicons:clipboard-document-list"
-              class="w-10 h-10 text-primary dark:text-primary-light mb-4 mx-auto"
+              class="w-10 h-10 text-primary dark:text-primary-200 mb-4 mx-auto"
               aria-hidden="true"
             />
             <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">
@@ -112,22 +112,24 @@
           <div
             class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6"
           >
-            <h3 class="text-base font-semibold text-gray-900 dark:text-white mb-3">How to Participate</h3>
+            <h3 class="text-base font-semibold text-gray-900 dark:text-white mb-3">
+              How to Participate
+            </h3>
             <ul class="space-y-2 text-sm text-gray-600 dark:text-gray-400">
               <li class="flex items-start gap-2">
-                <span class="text-primary dark:text-primary-light">1.</span>
+                <span class="text-primary dark:text-primary-200">1.</span>
                 Download the tender document
               </li>
               <li class="flex items-start gap-2">
-                <span class="text-primary dark:text-primary-light">2.</span>
+                <span class="text-primary dark:text-primary-200">2.</span>
                 Review all requirements carefully
               </li>
               <li class="flex items-start gap-2">
-                <span class="text-primary dark:text-primary-light">3.</span>
+                <span class="text-primary dark:text-primary-200">3.</span>
                 Prepare your bid/proposal
               </li>
               <li class="flex items-start gap-2">
-                <span class="text-primary dark:text-primary-light">4.</span>
+                <span class="text-primary dark:text-primary-200">4.</span>
                 Submit before the deadline
               </li>
             </ul>
@@ -136,16 +138,16 @@
           <div
             class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6"
           >
-            <h3 class="text-base font-semibold text-gray-900 dark:text-white mb-3">Contact Procurement</h3>
+            <h3 class="text-base font-semibold text-gray-900 dark:text-white mb-3">
+              Contact Procurement
+            </h3>
             <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
               For inquiries about specific tenders or procurement processes:
             </p>
             <div class="space-y-2 text-sm">
               <p class="flex items-center gap-2">
                 <span class="text-gray-400">Email:</span>
-                <a
-                  href="mailto:procurement@audit.gov.gh"
-                  class="text-primary dark:text-primary-light"
+                <a href="mailto:procurement@audit.gov.gh" class="text-primary dark:text-primary-200"
                   >procurement@audit.gov.gh</a
                 >
               </p>
@@ -183,7 +185,7 @@
 
   // SEO
   useSeoMeta({
-    title: 'Tenders & Procurement | Ghana Audit Service',
+    title: 'Tenders & Procurement',
     description:
       'View current procurement opportunities and tender notices from the Ghana Audit Service.'
   })

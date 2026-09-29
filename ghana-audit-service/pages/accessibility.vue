@@ -3,21 +3,13 @@
     <!-- Page Header -->
     <div class="page-header">
       <div class="container">
-        <h1 class="text-4xl md:text-5xl font-heading font-bold mb-4">
-          Accessibility Statement
-        </h1>
-        <p class="page-subtitle">
-          Our commitment to making this website accessible to all users.
-        </p>
+        <h1 class="text-4xl md:text-5xl font-heading font-bold mb-4">Accessibility Statement</h1>
+        <p class="page-subtitle">Our commitment to making this website accessible to all users.</p>
       </div>
     </div>
 
     <!-- Breadcrumb -->
-    <CommonBreadcrumb
-      :crumbs="[
-        { label: 'Accessibility', path: '/accessibility' }
-      ]"
-    />
+    <CommonBreadcrumb :crumbs="[{ label: 'Accessibility', path: '/accessibility' }]" />
 
     <!-- Content -->
     <section class="section">
@@ -25,12 +17,16 @@
         <div class="max-w-3xl mx-auto prose prose-lg dark:prose-invert">
           <h2>Our Commitment</h2>
           <p>
-            The Ghana Audit Service is committed to ensuring digital accessibility for people with disabilities. We are continually improving the user experience for everyone and applying the relevant accessibility standards.
+            The Ghana Audit Service is committed to ensuring digital accessibility for people with
+            disabilities. We are continually improving the user experience for everyone and applying
+            the relevant accessibility standards.
           </p>
 
           <h2>Conformance Status</h2>
           <p>
-            We aim to conform to the Web Content Accessibility Guidelines (WCAG) 2.1 Level AA standards. These guidelines explain how to make web content more accessible for people with disabilities and more user-friendly for everyone.
+            We aim to conform to the Web Content Accessibility Guidelines (WCAG) 2.1 Level AA
+            standards. These guidelines explain how to make web content more accessible for people
+            with disabilities and more user-friendly for everyone.
           </p>
 
           <h2>Accessibility Features</h2>
@@ -68,16 +64,15 @@
           </ul>
 
           <h2>Known Limitations</h2>
-          <p>
-            While we strive to ensure accessibility, some content may have limitations:
-          </p>
+          <p>While we strive to ensure accessibility, some content may have limitations:</p>
           <ul>
             <li>Older PDF documents may not be fully accessible</li>
             <li>Some third-party content may not meet accessibility standards</li>
             <li>Complex data visualizations may have limited descriptions</li>
           </ul>
           <p>
-            We are working to address these limitations and improve accessibility across all content.
+            We are working to address these limitations and improve accessibility across all
+            content.
           </p>
 
           <h2>Assistive Technologies</h2>
@@ -92,9 +87,7 @@
           </ul>
 
           <h2>Browser Compatibility</h2>
-          <p>
-            This website is designed to work with recent versions of major browsers including:
-          </p>
+          <p>This website is designed to work with recent versions of major browsers including:</p>
           <ul>
             <li>Google Chrome</li>
             <li>Mozilla Firefox</li>
@@ -104,20 +97,20 @@
 
           <h2>Feedback</h2>
           <p>
-            We welcome your feedback on the accessibility of the Ghana Audit Service website. If you encounter accessibility barriers or have suggestions for improvement, please contact us:
+            We welcome your feedback on the accessibility of the Ghana Audit Service website. If you
+            encounter accessibility barriers or have suggestions for improvement, please contact us:
           </p>
           <ul>
             <li>Email: <a href="mailto:info@audit.gov.gh">info@audit.gov.gh</a></li>
             <li>Phone: +233 (302) 664928/9</li>
             <li>Address: No. 12 Starlets 91 Road, Opposite African Union, Accra</li>
           </ul>
-          <p>
-            We try to respond to accessibility feedback within 5 business days.
-          </p>
+          <p>We try to respond to accessibility feedback within 5 business days.</p>
 
           <h2>Enforcement Procedure</h2>
           <p>
-            If you are not satisfied with our response to your accessibility concern, you may contact the National Communications Authority (NCA) of Ghana for further assistance.
+            If you are not satisfied with our response to your accessibility concern, you may
+            contact the National Communications Authority (NCA) of Ghana for further assistance.
           </p>
 
           <h2>Technical Specifications</h2>
@@ -132,9 +125,7 @@
           </ul>
 
           <h2>Assessment Methods</h2>
-          <p>
-            The Ghana Audit Service assesses accessibility through:
-          </p>
+          <p>The Ghana Audit Service assesses accessibility through:</p>
           <ul>
             <li>Self-evaluation using automated testing tools</li>
             <li>Manual testing with assistive technologies</li>
@@ -151,10 +142,11 @@
 </template>
 
 <script setup lang="ts">
-useSeoMeta({
-  title: 'Accessibility Statement | Ghana Audit Service',
-  description: 'Learn about our commitment to making the Ghana Audit Service website accessible to all users.'
-})
+  useSeoMeta({
+    title: 'Accessibility Statement',
+    description:
+      'Learn about our commitment to making the Ghana Audit Service website accessible to all users.'
+  })
 </script>
 
 <!-- Styles handled by @tailwindcss/typography plugin -->

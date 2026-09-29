@@ -30,12 +30,21 @@
                 <div
                   class="w-12 h-12 bg-primary/10 dark:bg-primary/20 rounded-lg flex items-center justify-center flex-shrink-0"
                 >
-                  <Icon name="heroicons:phone" class="w-6 h-6 text-primary dark:text-primary-light" aria-hidden="true" />
+                  <Icon
+                    name="heroicons:phone"
+                    class="w-6 h-6 text-primary dark:text-primary-200"
+                    aria-hidden="true"
+                  />
                 </div>
                 <div>
                   <h3 class="text-base font-semibold text-gray-900 dark:text-white mb-1">Phone</h3>
-                  <p class="text-gray-600 dark:text-gray-400">+233 (302) 664929</p>
-                  <p class="text-gray-600 dark:text-gray-400">+233 (302) 664928</p>
+                  <p v-for="phone in contact.phones" :key="phone.href">
+                    <a
+                      :href="phone.href"
+                      class="text-gray-600 dark:text-gray-400 hover:text-primary dark:hover:text-primary-200"
+                      >{{ phone.display }}</a
+                    >
+                  </p>
                 </div>
               </div>
 
@@ -44,14 +53,18 @@
                 <div
                   class="w-12 h-12 bg-primary/10 dark:bg-primary/20 rounded-lg flex items-center justify-center flex-shrink-0"
                 >
-                  <Icon name="heroicons:envelope" class="w-6 h-6 text-primary dark:text-primary-light" aria-hidden="true" />
+                  <Icon
+                    name="heroicons:envelope"
+                    class="w-6 h-6 text-primary dark:text-primary-200"
+                    aria-hidden="true"
+                  />
                 </div>
                 <div>
                   <h3 class="text-base font-semibold text-gray-900 dark:text-white mb-1">Email</h3>
                   <a
-                    href="mailto:info@audit.gov.gh"
-                    class="text-primary dark:text-primary-light hover:text-primary-dark dark:hover:text-primary"
-                    >info@audit.gov.gh</a
+                    :href="contact.emailHref"
+                    class="text-primary dark:text-primary-200 hover:text-primary-dark dark:hover:text-white"
+                    >{{ contact.email }}</a
                   >
                 </div>
               </div>
@@ -61,14 +74,23 @@
                 <div
                   class="w-12 h-12 bg-primary/10 dark:bg-primary/20 rounded-lg flex items-center justify-center flex-shrink-0"
                 >
-                  <Icon name="heroicons:map-pin" class="w-6 h-6 text-primary dark:text-primary-light" aria-hidden="true" />
+                  <Icon
+                    name="heroicons:map-pin"
+                    class="w-6 h-6 text-primary dark:text-primary-200"
+                    aria-hidden="true"
+                  />
                 </div>
                 <div>
-                  <h3 class="text-base font-semibold text-gray-900 dark:text-white mb-1">Physical Address</h3>
+                  <h3 class="text-base font-semibold text-gray-900 dark:text-white mb-1">
+                    Physical Address
+                  </h3>
                   <p class="text-gray-600 dark:text-gray-400">
-                    No. 12 Starlets 91 Road<br />
-                    Opposite African Union<br />
-                    Accra, Ghana
+                    <template v-for="(line, i) in contact.addressLines" :key="line">
+                      {{ line }}<br v-if="i < contact.addressLines.length - 1" />
+                    </template>
+                  </p>
+                  <p class="text-gray-500 dark:text-gray-400 text-sm">
+                    Digital Address: {{ contact.digitalAddress }}
                   </p>
                 </div>
               </div>
@@ -78,13 +100,20 @@
                 <div
                   class="w-12 h-12 bg-primary/10 dark:bg-primary/20 rounded-lg flex items-center justify-center flex-shrink-0"
                 >
-                  <Icon name="heroicons:envelope" class="w-6 h-6 text-primary dark:text-primary-light" aria-hidden="true" />
+                  <Icon
+                    name="heroicons:envelope"
+                    class="w-6 h-6 text-primary dark:text-primary-200"
+                    aria-hidden="true"
+                  />
                 </div>
                 <div>
-                  <h3 class="text-base font-semibold text-gray-900 dark:text-white mb-1">Postal Address</h3>
+                  <h3 class="text-base font-semibold text-gray-900 dark:text-white mb-1">
+                    Postal Address
+                  </h3>
                   <p class="text-gray-600 dark:text-gray-400">
-                    P.O. Box MB 96<br />
-                    Accra, Ghana
+                    <template v-for="(line, i) in contact.postalLines" :key="line">
+                      {{ line }}<br v-if="i < contact.postalLines.length - 1" />
+                    </template>
                   </p>
                 </div>
               </div>
@@ -94,11 +123,17 @@
                 <div
                   class="w-12 h-12 bg-primary/10 dark:bg-primary/20 rounded-lg flex items-center justify-center flex-shrink-0"
                 >
-                  <Icon name="heroicons:clock" class="w-6 h-6 text-primary dark:text-primary-light" aria-hidden="true" />
+                  <Icon
+                    name="heroicons:clock"
+                    class="w-6 h-6 text-primary dark:text-primary-200"
+                    aria-hidden="true"
+                  />
                 </div>
                 <div>
-                  <h3 class="text-base font-semibold text-gray-900 dark:text-white mb-1">Working Hours</h3>
-                  <p class="text-gray-600 dark:text-gray-400">Monday - Friday: 8:00 AM - 5:00 PM</p>
+                  <h3 class="text-base font-semibold text-gray-900 dark:text-white mb-1">
+                    Working Hours
+                  </h3>
+                  <p class="text-gray-600 dark:text-gray-400">{{ contact.workingHours }}</p>
                   <p class="text-gray-500 dark:text-gray-400 text-sm">
                     Closed on weekends and public holidays
                   </p>
@@ -134,7 +169,9 @@
                     :class="{ 'border-red-500': errors.name }"
                     placeholder="Enter your full name"
                   />
-                  <p v-if="errors.name" class="text-red-500 text-sm mt-1">{{ errors.name }}</p>
+                  <p v-if="errors.name" class="text-error dark:text-error-light text-sm mt-1">
+                    {{ errors.name }}
+                  </p>
                 </div>
 
                 <!-- Email -->
@@ -154,7 +191,9 @@
                     :class="{ 'border-red-500': errors.email }"
                     placeholder="Enter your email"
                   />
-                  <p v-if="errors.email" class="text-red-500 text-sm mt-1">{{ errors.email }}</p>
+                  <p v-if="errors.email" class="text-error dark:text-error-light text-sm mt-1">
+                    {{ errors.email }}
+                  </p>
                 </div>
 
                 <!-- Phone -->
@@ -198,7 +237,7 @@
                     <option value="media">Media/Press</option>
                     <option value="other">Other</option>
                   </select>
-                  <p v-if="errors.subject" class="text-red-500 text-sm mt-1">
+                  <p v-if="errors.subject" class="text-error dark:text-error-light text-sm mt-1">
                     {{ errors.subject }}
                   </p>
                 </div>
@@ -220,7 +259,7 @@
                     :class="{ 'border-red-500': errors.message }"
                     placeholder="Enter your message"
                   ></textarea>
-                  <p v-if="errors.message" class="text-red-500 text-sm mt-1">
+                  <p v-if="errors.message" class="text-error dark:text-error-light text-sm mt-1">
                     {{ errors.message }}
                   </p>
                 </div>
@@ -273,15 +312,23 @@
             class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden"
           >
             <!-- Region Header with Regional Office -->
-            <div class="bg-primary/5 dark:bg-primary/10 border-b border-gray-200 dark:border-gray-700">
+            <div
+              class="bg-primary/5 dark:bg-primary/10 border-b border-gray-200 dark:border-gray-700"
+            >
               <button
                 class="w-full flex items-center justify-between p-5 text-left"
                 :aria-expanded="isRegionExpanded(group.region)"
                 @click="toggleRegion(group.region)"
               >
                 <div class="flex items-center gap-3">
-                  <div class="w-10 h-10 rounded-lg bg-primary/10 dark:bg-primary/20 flex items-center justify-center flex-shrink-0">
-                    <Icon name="heroicons:map-pin" class="w-5 h-5 text-primary dark:text-primary-light" aria-hidden="true" />
+                  <div
+                    class="w-10 h-10 rounded-lg bg-primary/10 dark:bg-primary/20 flex items-center justify-center flex-shrink-0"
+                  >
+                    <Icon
+                      name="heroicons:map-pin"
+                      class="w-5 h-5 text-primary dark:text-primary-200"
+                      aria-hidden="true"
+                    />
                   </div>
                   <div>
                     <h3 class="text-lg font-heading font-bold text-gray-900 dark:text-white">
@@ -289,7 +336,11 @@
                     </h3>
                     <p class="text-sm text-gray-500 dark:text-gray-400">
                       {{ group.districtOffices.length + (group.regionalOffice ? 1 : 0) }}
-                      {{ group.districtOffices.length + (group.regionalOffice ? 1 : 0) === 1 ? 'office' : 'offices' }}
+                      {{
+                        group.districtOffices.length + (group.regionalOffice ? 1 : 0) === 1
+                          ? 'office'
+                          : 'offices'
+                      }}
                     </p>
                   </div>
                 </div>
@@ -300,39 +351,63 @@
                   stroke="currentColor"
                   viewBox="0 0 24 24"
                 >
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M19 9l-7 7-7-7"
+                  />
                 </svg>
               </button>
 
               <!-- Regional Office (always visible as the prominent card) -->
               <div v-if="group.regionalOffice" class="px-5 pb-5">
-                <div class="bg-white dark:bg-gray-900 rounded-lg border-2 border-primary/30 dark:border-primary/40 p-5 shadow-sm">
+                <div
+                  class="bg-white dark:bg-gray-900 rounded-lg border-2 border-primary/30 dark:border-primary/40 p-5 shadow-sm"
+                >
                   <div class="flex items-start justify-between gap-4">
                     <div class="flex-1">
                       <div class="flex items-center gap-2 mb-2">
-                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary-light">
+                        <span
+                          class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary-200"
+                        >
                           Regional Office
                         </span>
                       </div>
                       <h4 class="text-base font-semibold text-gray-900 dark:text-white mb-3">
                         {{ group.regionalOffice.name }}
                       </h4>
-                      <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2 text-sm text-gray-600 dark:text-gray-400">
+                      <div
+                        class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2 text-sm text-gray-600 dark:text-gray-400"
+                      >
                         <p class="flex items-start gap-2">
-                          <Icon name="heroicons:map-pin" class="w-4 h-4 text-gray-400 mt-0.5 flex-shrink-0" aria-hidden="true" />
+                          <Icon
+                            name="heroicons:map-pin"
+                            class="w-4 h-4 text-gray-400 mt-0.5 flex-shrink-0"
+                            aria-hidden="true"
+                          />
                           <span>{{ group.regionalOffice.address }}</span>
                         </p>
                         <div class="space-y-2">
                           <p v-if="group.regionalOffice.phone" class="flex items-center gap-2">
-                            <Icon name="heroicons:phone" class="w-4 h-4 text-gray-400 flex-shrink-0" aria-hidden="true" />
+                            <Icon
+                              name="heroicons:phone"
+                              class="w-4 h-4 text-gray-400 flex-shrink-0"
+                              aria-hidden="true"
+                            />
                             <span>{{ group.regionalOffice.phone }}</span>
                           </p>
                           <p v-if="group.regionalOffice.email" class="flex items-center gap-2">
-                            <Icon name="heroicons:envelope" class="w-4 h-4 text-gray-400 flex-shrink-0" aria-hidden="true" />
+                            <Icon
+                              name="heroicons:envelope"
+                              class="w-4 h-4 text-gray-400 flex-shrink-0"
+                              aria-hidden="true"
+                            />
                             <a
                               :href="`mailto:${group.regionalOffice.email}`"
-                              class="text-primary dark:text-primary-light hover:text-primary-dark dark:hover:text-primary"
-                            >{{ group.regionalOffice.email }}</a>
+                              class="text-primary dark:text-primary-200 hover:text-primary-dark dark:hover:text-primary"
+                              >{{ group.regionalOffice.email }}</a
+                            >
                           </p>
                         </div>
                       </div>
@@ -348,7 +423,9 @@
               v-show="isRegionExpanded(group.region)"
               class="p-5"
             >
-              <p class="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-3">
+              <p
+                class="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-3"
+              >
                 District Offices
               </p>
               <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -362,19 +439,32 @@
                   </h5>
                   <div class="space-y-1.5 text-xs text-gray-600 dark:text-gray-400">
                     <p class="flex items-start gap-1.5">
-                      <Icon name="heroicons:map-pin" class="w-3.5 h-3.5 text-gray-400 mt-0.5 flex-shrink-0" aria-hidden="true" />
+                      <Icon
+                        name="heroicons:map-pin"
+                        class="w-3.5 h-3.5 text-gray-400 mt-0.5 flex-shrink-0"
+                        aria-hidden="true"
+                      />
                       <span>{{ office.address }}</span>
                     </p>
                     <p v-if="office.phone" class="flex items-center gap-1.5">
-                      <Icon name="heroicons:phone" class="w-3.5 h-3.5 text-gray-400 flex-shrink-0" aria-hidden="true" />
+                      <Icon
+                        name="heroicons:phone"
+                        class="w-3.5 h-3.5 text-gray-400 flex-shrink-0"
+                        aria-hidden="true"
+                      />
                       <span>{{ office.phone }}</span>
                     </p>
                     <p v-if="office.email" class="flex items-center gap-1.5">
-                      <Icon name="heroicons:envelope" class="w-3.5 h-3.5 text-gray-400 flex-shrink-0" aria-hidden="true" />
+                      <Icon
+                        name="heroicons:envelope"
+                        class="w-3.5 h-3.5 text-gray-400 flex-shrink-0"
+                        aria-hidden="true"
+                      />
                       <a
                         :href="`mailto:${office.email}`"
-                        class="text-primary dark:text-primary-light hover:text-primary-dark dark:hover:text-primary"
-                      >{{ office.email }}</a>
+                        class="text-primary dark:text-primary-200 hover:text-primary-dark dark:hover:text-primary"
+                        >{{ office.email }}</a
+                      >
                     </p>
                   </div>
                 </div>
@@ -388,7 +478,7 @@
               class="px-5 py-3 border-t border-gray-100 dark:border-gray-700/50"
             >
               <button
-                class="text-sm text-primary dark:text-primary-light hover:underline"
+                class="text-sm text-primary dark:text-primary-200 hover:underline"
                 @click="toggleRegion(group.region)"
               >
                 View {{ group.districtOffices.length }} district
@@ -441,10 +531,12 @@
 
   // SEO
   useSeoMeta({
-    title: 'Contact Us | Ghana Audit Service',
+    title: 'Contact Us',
     description:
       'Contact the Ghana Audit Service. Find our office locations, phone numbers, and email addresses, or send us a message.'
   })
+
+  const { contact } = useSiteContact()
 
   // Form state
   const form = reactive<ContactFormData>({

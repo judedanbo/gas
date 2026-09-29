@@ -3,27 +3,28 @@
     <Transition name="palette">
       <div
         v-if="isOpen"
-        class="fixed inset-0 z-50 flex items-start justify-center pt-[15vh] px-4"
+        class="fixed inset-0 z-modal flex items-start justify-center pt-[15vh] px-4"
         role="dialog"
         aria-modal="true"
         :aria-label="$t('common.search')"
         @keydown.esc.stop="close"
       >
         <!-- Backdrop -->
-        <div
-          class="absolute inset-0 bg-black/50 backdrop-blur-sm"
-          @click="close"
-        />
+        <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" @click="close" />
 
         <!-- Palette -->
         <div
-          class="relative w-full max-w-xl bg-white dark:bg-gray-800 rounded-xl shadow-2xl border border-gray-200 dark:border-gray-700 overflow-hidden"
+          ref="paletteRef"
+          tabindex="-1"
+          class="relative w-full max-w-xl bg-white dark:bg-gray-800 rounded-xl shadow-2xl border border-gray-200 dark:border-gray-700 overflow-hidden focus:outline-none"
           @keydown.arrow-down.prevent="moveHighlight(1)"
           @keydown.arrow-up.prevent="moveHighlight(-1)"
           @keydown.enter.prevent="selectHighlighted"
         >
           <!-- Search Input -->
-          <div class="flex items-center gap-3 px-4 py-3 border-b border-gray-200 dark:border-gray-700">
+          <div
+            class="flex items-center gap-3 px-4 py-3 border-b border-gray-200 dark:border-gray-700"
+          >
             <Icon
               name="heroicons:magnifying-glass"
               class="w-5 h-5 text-gray-400 dark:text-gray-500 flex-shrink-0"
@@ -56,7 +57,9 @@
           >
             <!-- Loading -->
             <div v-if="loading" class="flex items-center justify-center py-8">
-              <div class="animate-spin rounded-full h-6 w-6 border-2 border-primary border-t-transparent" />
+              <div
+                class="animate-spin rounded-full h-6 w-6 border-2 border-primary border-t-transparent"
+              />
               <span class="sr-only">{{ $t('common.loading') }}</span>
             </div>
 
@@ -72,7 +75,10 @@
               />
               <p>{{ $t('search.commandPalette.hint') }}</p>
               <p class="mt-1 text-xs text-gray-400 dark:text-gray-500">
-                <kbd class="px-1.5 py-0.5 bg-gray-100 dark:bg-gray-700 rounded text-xs border border-gray-200 dark:border-gray-600">Ctrl+K</kbd>
+                <kbd
+                  class="px-1.5 py-0.5 bg-gray-100 dark:bg-gray-700 rounded text-xs border border-gray-200 dark:border-gray-600"
+                  >Ctrl+K</kbd
+                >
                 {{ $t('search.commandPalette.shortcutHint') }}
               </p>
             </div>
@@ -92,11 +98,10 @@
 
             <!-- Results List -->
             <template v-else>
-              <div
-                v-for="(group, groupIndex) in groupedResults"
-                :key="group.type"
-              >
-                <div class="px-4 pt-3 pb-1 text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500">
+              <div v-for="(group, groupIndex) in groupedResults" :key="group.type">
+                <div
+                  class="px-4 pt-3 pb-1 text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500"
+                >
                   {{ $t(`searchTypes.${group.type}`) }}
                 </div>
                 <div
@@ -106,9 +111,11 @@
                   role="option"
                   :aria-selected="highlightIndex === flatIndex(groupIndex, resultIndex)"
                   class="flex items-center gap-3 px-4 py-2.5 cursor-pointer transition-colors"
-                  :class="highlightIndex === flatIndex(groupIndex, resultIndex)
-                    ? 'bg-primary/10 dark:bg-primary/20 border-l-2 border-primary'
-                    : 'border-l-2 border-transparent hover:bg-gray-50 dark:hover:bg-gray-700/50'"
+                  :class="
+                    highlightIndex === flatIndex(groupIndex, resultIndex)
+                      ? 'bg-primary/10 dark:bg-primary/20 border-l-2 border-primary'
+                      : 'border-l-2 border-transparent hover:bg-gray-50 dark:hover:bg-gray-700/50'
+                  "
                   @click="navigateToResult(result)"
                   @mouseenter="highlightIndex = flatIndex(groupIndex, resultIndex)"
                 >
@@ -120,17 +127,20 @@
                       {{ result.excerpt }}
                     </p>
                   </div>
-                  <span v-if="result.publishedAt" class="text-xs text-gray-400 dark:text-gray-500 flex-shrink-0">
+                  <span
+                    v-if="result.publishedAt"
+                    class="text-xs text-gray-400 dark:text-gray-500 flex-shrink-0"
+                  >
                     {{ formatDateShort(result.publishedAt) }}
                   </span>
                 </div>
               </div>
-
-              <!-- Live region for screen readers -->
-              <div class="sr-only" aria-live="polite" aria-atomic="true">
-                {{ $t('search.commandPalette.resultsFound', { count: meta.total }) }}
-              </div>
             </template>
+          </div>
+
+          <!-- Live region for screen readers (always rendered so "no results" is announced too) -->
+          <div class="sr-only" aria-live="polite" aria-atomic="true">
+            {{ liveRegionText }}
           </div>
 
           <!-- Footer -->
@@ -140,14 +150,29 @@
           >
             <NuxtLink
               :to="viewAllLink"
-              class="text-primary dark:text-primary-light hover:underline font-medium"
+              class="text-primary dark:text-primary-200 hover:underline font-medium"
               @click="close"
             >
               {{ $t('search.commandPalette.viewAll', { count: meta.total }) }}
             </NuxtLink>
             <div class="flex items-center gap-2 text-gray-400 dark:text-gray-500">
-              <span><kbd class="px-1 py-0.5 bg-gray-100 dark:bg-gray-700 rounded border border-gray-200 dark:border-gray-600">&uarr;</kbd><kbd class="px-1 py-0.5 bg-gray-100 dark:bg-gray-700 rounded border border-gray-200 dark:border-gray-600">&darr;</kbd> {{ $t('search.commandPalette.navigate') }}</span>
-              <span><kbd class="px-1 py-0.5 bg-gray-100 dark:bg-gray-700 rounded border border-gray-200 dark:border-gray-600">&crarr;</kbd> {{ $t('search.commandPalette.select') }}</span>
+              <span
+                ><kbd
+                  class="px-1 py-0.5 bg-gray-100 dark:bg-gray-700 rounded border border-gray-200 dark:border-gray-600"
+                  >&uarr;</kbd
+                ><kbd
+                  class="px-1 py-0.5 bg-gray-100 dark:bg-gray-700 rounded border border-gray-200 dark:border-gray-600"
+                  >&darr;</kbd
+                >
+                {{ $t('search.commandPalette.navigate') }}</span
+              >
+              <span
+                ><kbd
+                  class="px-1 py-0.5 bg-gray-100 dark:bg-gray-700 rounded border border-gray-200 dark:border-gray-600"
+                  >&crarr;</kbd
+                >
+                {{ $t('search.commandPalette.select') }}</span
+              >
             </div>
           </div>
         </div>
@@ -157,138 +182,153 @@
 </template>
 
 <script setup lang="ts">
-import type { SearchResult } from '~/types'
+  import type { SearchResult } from '~/types'
 
-const router = useRouter()
-const localePath = useLocalePath()
-const { formatDateShort } = useLocaleDate()
-const { results, loading, meta, search, clearResults } = useSearch()
+  const router = useRouter()
+  const { t } = useI18n()
+  const localePath = useLocalePath()
+  const { formatDateShort } = useLocaleDate()
+  const { results, loading, meta, search, clearResults } = useSearch()
 
-const isOpen = useState('searchPalette', () => false)
-const query = ref('')
-const highlightIndex = ref(-1)
-const inputRef = ref<HTMLInputElement | null>(null)
+  const isOpen = useState('searchPalette', () => false)
+  const query = ref('')
+  const highlightIndex = ref(-1)
+  const inputRef = ref<HTMLInputElement | null>(null)
+  const paletteRef = ref<HTMLElement | null>(null)
 
-let debounceTimer: ReturnType<typeof setTimeout> | undefined
+  // Keep keyboard focus inside the palette while open; return it to the
+  // trigger button when closed.
+  useFocusTrap(paletteRef, { active: isOpen, initialFocus: () => inputRef.value })
 
-interface ResultGroup {
-  type: string
-  items: SearchResult[]
-}
-
-const groupedResults = computed<ResultGroup[]>(() => {
-  const groups = new Map<string, SearchResult[]>()
-  const maxResults = 8
-  let count = 0
-  for (const result of results.value) {
-    if (count >= maxResults) break
-    const existing = groups.get(result.type)
-    if (existing) {
-      existing.push(result)
-    } else {
-      groups.set(result.type, [result])
+  const liveRegionText = computed(() => {
+    if (loading.value) return ''
+    const q = query.value.trim()
+    if (q.length < 2) return ''
+    if (results.value.length === 0) {
+      return t('search.commandPalette.noResults', { query: q })
     }
-    count++
+    return t('search.commandPalette.resultsFound', { count: meta.value.total })
+  })
+
+  let debounceTimer: ReturnType<typeof setTimeout> | undefined
+
+  interface ResultGroup {
+    type: string
+    items: SearchResult[]
   }
-  return Array.from(groups, ([type, items]) => ({ type, items }))
-})
 
-const flatResults = computed(() => groupedResults.value.flatMap(g => g.items))
+  const groupedResults = computed<ResultGroup[]>(() => {
+    const groups = new Map<string, SearchResult[]>()
+    const maxResults = 8
+    let count = 0
+    for (const result of results.value) {
+      if (count >= maxResults) break
+      const existing = groups.get(result.type)
+      if (existing) {
+        existing.push(result)
+      } else {
+        groups.set(result.type, [result])
+      }
+      count++
+    }
+    return Array.from(groups, ([type, items]) => ({ type, items }))
+  })
 
-function flatIndex(groupIndex: number, resultIndex: number): number {
-  let idx = 0
-  for (let i = 0; i < groupIndex; i++) {
-    idx += groupedResults.value[i].items.length
+  const flatResults = computed(() => groupedResults.value.flatMap((g) => g.items))
+
+  function flatIndex(groupIndex: number, resultIndex: number): number {
+    let idx = 0
+    for (let i = 0; i < groupIndex; i++) {
+      idx += groupedResults.value[i].items.length
+    }
+    return idx + resultIndex
   }
-  return idx + resultIndex
-}
 
-const highlightedId = computed(() =>
-  highlightIndex.value >= 0 ? `search-result-${highlightIndex.value}` : undefined
-)
+  const highlightedId = computed(() =>
+    highlightIndex.value >= 0 ? `search-result-${highlightIndex.value}` : undefined
+  )
 
-const viewAllLink = computed(() => ({
-  path: localePath('/search'),
-  query: { q: query.value }
-}))
+  const viewAllLink = computed(() => ({
+    path: localePath('/search'),
+    query: { q: query.value }
+  }))
 
-function debouncedSearch() {
-  clearTimeout(debounceTimer)
-  highlightIndex.value = -1
-  const q = query.value.trim()
-  if (q.length < 2) {
-    clearResults()
-    return
+  function debouncedSearch() {
+    clearTimeout(debounceTimer)
+    highlightIndex.value = -1
+    const q = query.value.trim()
+    if (q.length < 2) {
+      clearResults()
+      return
+    }
+    debounceTimer = setTimeout(() => {
+      search({ query: q, perPage: 10 })
+    }, 300)
   }
-  debounceTimer = setTimeout(() => {
-    search({ query: q, perPage: 10 })
-  }, 300)
-}
 
-watch(query, debouncedSearch)
+  watch(query, debouncedSearch)
 
-function moveHighlight(delta: number) {
-  const total = flatResults.value.length
-  if (total === 0) return
-  highlightIndex.value = (highlightIndex.value + delta + total) % total
-}
+  function moveHighlight(delta: number) {
+    const total = flatResults.value.length
+    if (total === 0) return
+    highlightIndex.value = (highlightIndex.value + delta + total) % total
+  }
 
-function selectHighlighted() {
-  const result = flatResults.value[highlightIndex.value]
-  if (result) {
-    navigateToResult(result)
-  } else if (query.value.trim()) {
-    router.push(viewAllLink.value)
+  function selectHighlighted() {
+    const result = flatResults.value[highlightIndex.value]
+    if (result) {
+      navigateToResult(result)
+    } else if (query.value.trim()) {
+      router.push(viewAllLink.value)
+      close()
+    }
+  }
+
+  function navigateToResult(result: SearchResult) {
+    router.push(localePath(result.url))
     close()
   }
-}
 
-function navigateToResult(result: SearchResult) {
-  router.push(localePath(result.url))
-  close()
-}
-
-function close() {
-  isOpen.value = false
-}
-
-watch(isOpen, (open) => {
-  if (open) {
-    document.body.style.overflow = 'hidden'
-    nextTick(() => inputRef.value?.focus())
-  } else {
-    document.body.style.overflow = ''
-    query.value = ''
-    highlightIndex.value = -1
-    clearResults()
-    clearTimeout(debounceTimer)
+  function close() {
+    isOpen.value = false
   }
-})
 
-onUnmounted(() => {
-  document.body.style.overflow = ''
-  clearTimeout(debounceTimer)
-})
+  watch(isOpen, (open) => {
+    if (open) {
+      document.body.style.overflow = 'hidden'
+    } else {
+      document.body.style.overflow = ''
+      query.value = ''
+      highlightIndex.value = -1
+      clearResults()
+      clearTimeout(debounceTimer)
+    }
+  })
+
+  onUnmounted(() => {
+    document.body.style.overflow = ''
+    clearTimeout(debounceTimer)
+  })
 </script>
 
 <style scoped>
-.palette-enter-active,
-.palette-leave-active {
-  transition: opacity 0.15s ease;
-}
+  .palette-enter-active,
+  .palette-leave-active {
+    transition: opacity 0.15s ease;
+  }
 
-.palette-enter-from,
-.palette-leave-to {
-  opacity: 0;
-}
+  .palette-enter-from,
+  .palette-leave-to {
+    opacity: 0;
+  }
 
-.palette-enter-active > div:last-child,
-.palette-leave-active > div:last-child {
-  transition: transform 0.15s ease;
-}
+  .palette-enter-active > div:last-child,
+  .palette-leave-active > div:last-child {
+    transition: transform 0.15s ease;
+  }
 
-.palette-enter-from > div:last-child,
-.palette-leave-to > div:last-child {
-  transform: scale(0.95) translateY(-10px);
-}
+  .palette-enter-from > div:last-child,
+  .palette-leave-to > div:last-child {
+    transform: scale(0.95) translateY(-10px);
+  }
 </style>

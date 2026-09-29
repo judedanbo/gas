@@ -1,5 +1,9 @@
 <template>
-  <div class="min-h-screen flex items-center justify-center bg-gray-100 dark:bg-gray-900 px-4">
+  <div
+    id="main-content"
+    tabindex="-1"
+    class="min-h-screen flex items-center justify-center bg-gray-100 dark:bg-gray-900 px-4 focus:outline-none"
+  >
     <div class="w-full max-w-md">
       <!-- Logo -->
       <div class="text-center mb-8">
@@ -35,6 +39,7 @@
           <!-- Error Alert -->
           <div
             v-if="error"
+            role="alert"
             class="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg"
           >
             <div class="flex items-center gap-2 text-red-700 dark:text-red-400">

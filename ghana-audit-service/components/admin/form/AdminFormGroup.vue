@@ -6,7 +6,7 @@
       <span v-if="hint" class="text-xs text-gray-400 font-normal ml-1">({{ hint }})</span>
     </label>
     <slot />
-    <p v-if="error" class="mt-1 text-sm text-red-500">
+    <p v-if="error" class="mt-1 text-sm text-error dark:text-error-light">
       {{ error }}
     </p>
     <p v-else-if="helpText" class="mt-1 text-sm text-gray-500 dark:text-gray-400">

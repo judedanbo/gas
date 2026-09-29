@@ -1,5 +1,9 @@
 <template>
-  <div class="min-h-screen flex items-center justify-center bg-gray-100 dark:bg-gray-900 px-4">
+  <div
+    id="main-content"
+    tabindex="-1"
+    class="min-h-screen flex items-center justify-center bg-gray-100 dark:bg-gray-900 px-4 focus:outline-none"
+  >
     <div class="w-full max-w-md">
       <!-- Logo -->
       <div class="text-center mb-8">

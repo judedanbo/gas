@@ -29,10 +29,12 @@
           >
             <Icon
               :name="benefit.icon"
-              class="w-10 h-10 text-primary dark:text-primary-light mb-4"
+              class="w-10 h-10 text-primary dark:text-primary-200 mb-4"
               aria-hidden="true"
             />
-            <h3 class="text-base font-semibold text-gray-900 dark:text-white mb-2">{{ benefit.title }}</h3>
+            <h3 class="text-base font-semibold text-gray-900 dark:text-white mb-2">
+              {{ benefit.title }}
+            </h3>
             <p class="text-sm text-gray-600 dark:text-gray-400">{{ benefit.description }}</p>
           </div>
         </div>
@@ -68,15 +70,12 @@
               No open positions right now
             </h3>
             <p class="text-gray-500 dark:text-gray-400 mb-6 max-w-md mx-auto">
-              We don't have any vacancies at the moment, but new opportunities are posted regularly. Subscribe to stay notified or contact us for general inquiries.
+              We don't have any vacancies at the moment, but new opportunities are posted regularly.
+              Subscribe to stay notified or contact us for general inquiries.
             </p>
             <div class="flex flex-wrap justify-center gap-3">
-              <NuxtLink to="/contact" class="btn-primary btn-sm">
-                Contact HR
-              </NuxtLink>
-              <NuxtLink to="/" class="btn-outline btn-sm">
-                Back to Home
-              </NuxtLink>
+              <NuxtLink to="/contact" class="btn-primary btn-sm"> Contact HR </NuxtLink>
+              <NuxtLink to="/" class="btn-outline btn-sm"> Back to Home </NuxtLink>
             </div>
           </div>
 
@@ -131,7 +130,9 @@
                 {{ index + 1 }}
               </div>
               <div>
-                <h4 class="text-base font-semibold text-gray-900 dark:text-white mb-1">{{ step.title }}</h4>
+                <h4 class="text-base font-semibold text-gray-900 dark:text-white mb-1">
+                  {{ step.title }}
+                </h4>
                 <p class="text-gray-600 dark:text-gray-400 text-sm">{{ step.description }}</p>
               </div>
             </div>
@@ -159,7 +160,7 @@
 
   // SEO
   useSeoMeta({
-    title: 'Career Opportunities | Ghana Audit Service',
+    title: 'Career Opportunities',
     description:
       'Join the Ghana Audit Service. Explore current job vacancies and career opportunities in public sector auditing.'
   })

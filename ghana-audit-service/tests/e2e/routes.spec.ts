@@ -41,7 +41,10 @@ const dynamicRoutes = [
   { path: '/reports/1', name: 'Report Detail' },
   { path: '/media/news/world-bank-mou-2024', name: 'News Article' },
   { path: '/careers/senior-auditor-financial', name: 'Career Detail' },
-  { path: '/publications/press-statements/gas-2023-annual-report-release', name: 'Press Statement Detail' },
+  {
+    path: '/publications/press-statements/gas-2023-annual-report-release',
+    name: 'Press Statement Detail'
+  },
   { path: '/publications/bulletins/quarterly-bulletin-q1-2024', name: 'Bulletin Detail' },
   { path: '/publications/guidelines/auditing-guidelines-public-sector', name: 'Guideline Detail' },
   { path: '/publications/amis-manuals/financial-audit-manual', name: 'AMIS Manual Detail' }
@@ -59,9 +62,10 @@ test.describe('Static Routes Rendering', () => {
       const body = await page.locator('body')
       await expect(body).not.toBeEmpty()
 
-      // Should not show error page
+      // Should not show the error page (a bare "500" substring would also match
+      // Tailwind classes such as `text-gray-500`, so look for the error-page copy)
       const pageContent = await page.content()
-      expect(pageContent).not.toContain('500')
+      expect(pageContent).not.toMatch(/Error Code:\s*5\d\d/i)
       expect(pageContent).not.toContain('Internal Server Error')
 
       // Should have header (layout loaded)
@@ -85,9 +89,10 @@ test.describe('Dynamic Routes Rendering', () => {
       const body = await page.locator('body')
       await expect(body).not.toBeEmpty()
 
-      // Should not show error page
+      // Should not show the error page (a bare "500" substring would also match
+      // Tailwind classes such as `text-gray-500`, so look for the error-page copy)
       const pageContent = await page.content()
-      expect(pageContent).not.toContain('500')
+      expect(pageContent).not.toMatch(/Error Code:\s*5\d\d/i)
       expect(pageContent).not.toContain('Internal Server Error')
 
       // Should have header (layout loaded)
@@ -120,7 +125,9 @@ test.describe('404 Error Handling', () => {
   })
 
   test('should handle non-existent news slug', async ({ page }) => {
-    const response = await page.goto('/media/news/non-existent-article', { waitUntil: 'domcontentloaded' })
+    const response = await page.goto('/media/news/non-existent-article', {
+      waitUntil: 'domcontentloaded'
+    })
 
     // Should return 404 or handle gracefully
     const status = response?.status()
@@ -161,7 +168,9 @@ test.describe('Page Content Verification', () => {
     await page.goto('/search')
 
     // Should have search input
-    const searchInput = page.locator('input[type="search"], input[type="text"], input[placeholder*="earch"]').first()
+    const searchInput = page
+      .locator('input[type="search"], input[type="text"], input[placeholder*="earch"]')
+      .first()
     await expect(searchInput).toBeVisible()
   })
 })

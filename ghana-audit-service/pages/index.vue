@@ -77,7 +77,6 @@
 
   // Page meta
   useHead({
-    title: 'Home',
     script: [
       {
         type: 'application/ld+json',
@@ -87,7 +86,7 @@
   })
 
   useSeoMeta({
-    title: 'Ghana Audit Service - Protecting the Public Purse',
+    title: 'Protecting the Public Purse',
     description:
       'The Ghana Audit Service has a constitutional mandate to audit public accounts and protect the public purse of Ghana through accountability and transparency.',
     ogTitle: 'Ghana Audit Service',

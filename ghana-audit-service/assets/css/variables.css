@@ -188,6 +188,8 @@
   --gas-primary: 0 107 63;
   --gas-primary-dark: 0 77 44;
   --gas-primary-light: 0 139 82;
+  /* Light tint for text/links on dark surfaces (#7FD7AE, ~8.4:1 on gray-800) */
+  --gas-primary-200: 127 215 174;
 
   /* Secondary (Ghana Red: #CE1126) */
   --gas-secondary: 206 17 38;

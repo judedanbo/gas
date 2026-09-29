@@ -34,7 +34,7 @@
             aria-hidden="true"
           />
           <span
-            class="text-xs font-semibold text-primary dark:text-primary-light tracking-wider uppercase"
+            class="text-xs font-semibold text-primary dark:text-primary-200 tracking-wider uppercase"
           >
             {{ $t('reports.featured.eyebrow') }}
           </span>
@@ -51,7 +51,7 @@
         >
           <NuxtLink
             :to="`/reports/${report.id}`"
-            class="text-gray-900 dark:text-white no-underline transition-colors hover:text-primary dark:hover:text-primary-light focus:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded"
+            class="text-gray-900 dark:text-white no-underline transition-colors hover:text-primary dark:hover:text-primary-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded"
           >
             {{ report.title }}
           </NuxtLink>

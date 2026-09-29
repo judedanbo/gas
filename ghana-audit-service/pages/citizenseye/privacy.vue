@@ -254,7 +254,7 @@
 <script setup lang="ts">
   // SEO
   useSeoMeta({
-    title: 'CitizensEye Privacy Notice | Ghana Audit Service',
+    title: 'CitizensEye Privacy Notice',
     description:
       'Learn how the Ghana Audit Service collects, uses, and protects your information when you use the CitizensEye citizen engagement platform.'
   })

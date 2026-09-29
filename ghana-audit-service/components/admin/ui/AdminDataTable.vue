@@ -6,12 +6,13 @@
         <thead class="bg-gray-50 dark:bg-gray-700">
           <tr>
             <!-- Checkbox column -->
-            <th v-if="selectable" class="w-12 px-4 py-3">
+            <th v-if="selectable" scope="col" class="w-12 px-4 py-3">
               <input
                 type="checkbox"
                 class="form-checkbox rounded"
                 :checked="allSelected"
                 :indeterminate="someSelected && !allSelected"
+                aria-label="Select all rows on this page"
                 @change="toggleAll"
               />
             </th>
@@ -19,24 +20,33 @@
             <th
               v-for="column in columns"
               :key="column.key"
+              scope="col"
+              :aria-sort="ariaSort(column)"
               :class="[
                 'px-4 py-3 text-left text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider',
-                column.sortable ? 'cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600' : '',
                 column.align === 'center' ? 'text-center' : '',
                 column.align === 'right' ? 'text-right' : ''
               ]"
               :style="column.width ? { width: column.width } : undefined"
-              @click="column.sortable && handleSort(column.key)"
             >
-              <div
-                class="flex items-center gap-1"
+              <component
+                :is="column.sortable ? 'button' : 'div'"
+                :type="column.sortable ? 'button' : undefined"
+                class="flex items-center gap-1 w-full uppercase tracking-wider"
                 :class="{
                   'justify-center': column.align === 'center',
-                  'justify-end': column.align === 'right'
+                  'justify-end': column.align === 'right',
+                  'cursor-pointer rounded hover:text-gray-900 dark:hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-primary':
+                    column.sortable
                 }"
+                @click="column.sortable && handleSort(column.key)"
               >
                 <span>{{ column.label }}</span>
-                <span v-if="column.sortable && sortKey === column.key" class="text-primary">
+                <span
+                  v-if="column.sortable && sortKey === column.key"
+                  class="text-primary dark:text-primary-200"
+                  aria-hidden="true"
+                >
                   <svg
                     v-if="sortDirection === 'asc'"
                     class="w-4 h-4"
@@ -60,11 +70,12 @@
                     />
                   </svg>
                 </span>
-              </div>
+              </component>
             </th>
             <!-- Actions column -->
             <th
               v-if="$slots.actions"
+              scope="col"
               class="w-24 px-4 py-3 text-right text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider"
             >
               Actions
@@ -76,8 +87,13 @@
           <!-- Loading state -->
           <tr v-if="loading">
             <td :colspan="totalColumns" class="px-4 py-12 text-center">
-              <div class="flex flex-col items-center gap-2">
-                <svg class="w-8 h-8 text-primary animate-spin" fill="none" viewBox="0 0 24 24">
+              <div class="flex flex-col items-center gap-2" role="status">
+                <svg
+                  class="w-8 h-8 text-primary animate-spin"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  aria-hidden="true"
+                >
                   <circle
                     class="opacity-25"
                     cx="12"
@@ -133,6 +149,7 @@
                 type="checkbox"
                 class="form-checkbox rounded"
                 :checked="selectedIds.includes(row.id)"
+                :aria-label="`Select row ${row.id}`"
                 @click.stop
                 @change="toggleRow(row.id)"
               />
@@ -228,12 +245,20 @@
     return selectedIds.value.length > 0
   })
 
+  const slots = useSlots()
+
   const totalColumns = computed(() => {
     let count = props.columns.length
     if (props.selectable) count++
-    // Check if actions slot is used
-    return count + 1 // +1 for actions column
+    if (slots.actions) count++
+    return count
   })
+
+  function ariaSort(column: Column): 'ascending' | 'descending' | 'none' | undefined {
+    if (!column.sortable) return undefined
+    if (sortKey.value !== column.key) return 'none'
+    return sortDirection.value === 'asc' ? 'ascending' : 'descending'
+  }
 
   const startItem = computed(() => {
     if (!props.meta) return 0

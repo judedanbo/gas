@@ -29,7 +29,15 @@
     "allCategories": "All Categories",
     "allYears": "All Years",
     "category": "Category",
-    "year": "Year"
+    "year": "Year",
+    "language": "Language",
+    "close": "Close",
+    "dismiss": "Dismiss notification",
+    "openSearch": "Open search (Ctrl+K)",
+    "openMenu": "Open menu",
+    "mobileNavigation": "Mobile navigation",
+    "citizensEyeApp": "CitizensEye App",
+    "toggleSubmenu": "Toggle {item} submenu"
   },
   "nav": {
     "theService": "The Service",
@@ -126,7 +134,16 @@
     "textSize": "Text Size",
     "increase": "Increase",
     "decrease": "Decrease",
-    "reset": "Reset"
+    "reset": "Reset",
+    "controls": "Accessibility controls",
+    "skipToContent": "Skip to main content",
+    "switchToDark": "Switch to dark mode",
+    "switchToLight": "Switch to light mode",
+    "enableHighContrast": "Enable high contrast mode",
+    "disableHighContrast": "Disable high contrast mode",
+    "decreaseText": "Decrease text size, currently {percent}%",
+    "increaseText": "Increase text size, currently {percent}%",
+    "textSizeStatus": "Text size: {percent}%"
   },
   "search": {
     "title": "Search Results",

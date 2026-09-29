@@ -188,8 +188,8 @@ export default defineNuxtConfig({
   // i18n Configuration
   i18n: {
     locales: [
-      { code: 'en', name: 'English', file: 'en.json', iso: 'en-GH' },
-      { code: 'ak', name: 'Akan', file: 'ak.json', iso: 'ak-GH' }
+      { code: 'en', name: 'English', file: 'en.json', language: 'en-GH' },
+      { code: 'ak', name: 'Akan', file: 'ak.json', language: 'ak-GH' }
     ],
     defaultLocale: 'en',
     bundle: {
@@ -197,11 +197,12 @@ export default defineNuxtConfig({
     },
     langDir: 'locales',
     strategy: 'prefix_except_default',
-    detectBrowserLanguage: {
-      useCookie: true,
-      cookieKey: 'gas_locale',
-      redirectOn: 'root'
-    },
+    // Locale comes from the URL prefix only. Cookie/Accept-Language detection is
+    // deliberately off: most public pages are ISR-cached (see routeRules), and
+    // the detection result of whoever triggered the cached render (including its
+    // Set-Cookie and root redirect) was being served to every later visitor —
+    // English visitors received `gas_locale=ak` and were bounced off /ak.
+    detectBrowserLanguage: false,
     // SEO - hreflang tags
     baseUrl: 'https://audit.gov.gh'
   },
@@ -250,7 +251,6 @@ export default defineNuxtConfig({
         // Open Graph
         { property: 'og:type', content: 'website' },
         { property: 'og:site_name', content: 'Ghana Audit Service' },
-        { property: 'og:locale', content: 'en_GH' },
         // Twitter
         { name: 'twitter:card', content: 'summary_large_image' }
       ],
@@ -284,7 +284,13 @@ export default defineNuxtConfig({
       siteUrl: 'https://audit.gov.gh',
       siteName: 'Ghana Audit Service',
       contactEmail: 'info@audit.gov.gh',
-      contactPhone: '+233 (302) 664929'
+      contactPhone: '+233 (302) 664929',
+      // Social profiles — links are hidden until a URL is configured
+      // (NUXT_PUBLIC_SOCIAL_FACEBOOK_URL etc.)
+      socialFacebookUrl: '',
+      socialTwitterUrl: '',
+      socialLinkedinUrl: '',
+      socialYoutubeUrl: ''
     }
   },
 

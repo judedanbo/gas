@@ -41,15 +41,14 @@
               No press statements yet
             </h3>
             <p class="text-gray-500 dark:text-gray-400 mb-6 max-w-md mx-auto">
-              Official press statements and releases from the Auditor-General will be published here. Browse our other publications or contact us for media inquiries.
+              Official press statements and releases from the Auditor-General will be published
+              here. Browse our other publications or contact us for media inquiries.
             </p>
             <div class="flex flex-wrap justify-center gap-3">
               <NuxtLink to="/publications" class="btn-primary btn-sm">
                 Browse Publications
               </NuxtLink>
-              <NuxtLink to="/contact" class="btn-outline btn-sm">
-                Media Inquiries
-              </NuxtLink>
+              <NuxtLink to="/contact" class="btn-outline btn-sm"> Media Inquiries </NuxtLink>
             </div>
           </div>
 
@@ -64,7 +63,9 @@
                 <!-- Thumbnail -->
                 <div class="sm:w-48 sm:flex-shrink-0">
                   <NuxtLink :to="`/publications/press-statements/${statement.slug}`">
-                    <div class="aspect-[16/9] sm:aspect-auto sm:h-full bg-gray-100 dark:bg-gray-700">
+                    <div
+                      class="aspect-[16/9] sm:aspect-auto sm:h-full bg-gray-100 dark:bg-gray-700"
+                    >
                       <UiBaseImage
                         v-if="statement.thumbnail"
                         :src="statement.thumbnail"
@@ -183,7 +184,7 @@
 <script setup lang="ts">
   // SEO
   useSeoMeta({
-    title: 'Press Statements | Ghana Audit Service',
+    title: 'Press Statements',
     description: 'Official announcements and press releases from the Auditor-General of Ghana.'
   })
 

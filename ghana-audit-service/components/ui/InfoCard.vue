@@ -119,7 +119,7 @@
   })
 
   const titleClasses = computed(() => {
-    return 'text-lg font-semibold text-primary dark:text-primary-light mb-2'
+    return 'text-lg font-semibold text-primary dark:text-primary-200 mb-2'
   })
 
   const descriptionClasses = computed(() => {

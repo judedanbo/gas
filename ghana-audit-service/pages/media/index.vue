@@ -21,10 +21,12 @@
             :to="category.path"
             class="group bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-8 text-center transition-all hover:border-primary hover:shadow-lg no-underline"
           >
-            <div class="w-14 h-14 mx-auto mb-4 bg-primary/10 dark:bg-primary/20 rounded-xl flex items-center justify-center">
+            <div
+              class="w-14 h-14 mx-auto mb-4 bg-primary/10 dark:bg-primary/20 rounded-xl flex items-center justify-center"
+            >
               <Icon
                 :name="category.icon"
-                class="w-7 h-7 text-primary dark:text-primary-light"
+                class="w-7 h-7 text-primary dark:text-primary-200"
                 aria-hidden="true"
               />
             </div>
@@ -66,8 +68,8 @@
       </div>
     </section>
 
-    <!-- Social Media -->
-    <section class="section">
+    <!-- Social Media (only when profiles are configured) -->
+    <section v-if="socialLinks.length" class="section">
       <div class="container text-center max-w-2xl mx-auto">
         <UiSectionHeader
           title="Connect With Us"
@@ -83,7 +85,7 @@
             target="_blank"
             rel="noopener noreferrer"
             class="w-12 h-12 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center text-2xl hover:bg-primary hover:text-white transition-colors"
-            :aria-label="social.name"
+            :aria-label="`${social.name} (opens in a new tab)`"
           >
             <Icon :name="social.icon" class="w-6 h-6" aria-hidden="true" />
           </a>
@@ -98,7 +100,7 @@
 
   // SEO
   useSeoMeta({
-    title: 'Media Centre | Ghana Audit Service',
+    title: 'Media Centre',
     description: 'News, events, photos, and videos from the Ghana Audit Service.'
   })
 
@@ -129,12 +131,7 @@
     }
   ]
 
-  const socialLinks = [
-    { name: 'Facebook', icon: 'heroicons:globe-alt', url: '#' },
-    { name: 'Twitter', icon: 'heroicons:chat-bubble-left', url: '#' },
-    { name: 'LinkedIn', icon: 'heroicons:briefcase', url: '#' },
-    { name: 'YouTube', icon: 'heroicons:play-circle', url: '#' }
-  ]
+  const { socialLinks } = useSiteContact()
 
   // Fetch latest news
   const news = ref<NewsArticle[]>([])

@@ -45,11 +45,7 @@
       <section class="bg-gradient-to-br from-primary to-primary-dark text-white py-12">
         <div class="container">
           <div class="max-w-4xl">
-            <UiBadge
-              :variant="getPublicationTypeVariant('press-statement')"
-              size="md"
-              class="mb-4"
-            >
+            <UiBadge :variant="getPublicationTypeVariant('press-statement')" size="md" class="mb-4">
               Press Statement
             </UiBadge>
 
@@ -74,7 +70,11 @@
             <div class="lg:col-span-2">
               <template v-if="publication.fileUrl">
                 <ClientOnly>
-                  <ReportsPdfReader :file-url="publication.fileUrl" :title="publication.title" viewer-title="Press Statement Viewer" />
+                  <ReportsPdfReader
+                    :file-url="publication.fileUrl"
+                    :title="publication.title"
+                    viewer-title="Press Statement Viewer"
+                  />
                   <template #fallback>
                     <div
                       class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-8 min-h-[70vh] flex items-center justify-center"
@@ -304,12 +304,8 @@
   })
 
   useSeoMeta({
-    title: () =>
-      publication.value
-        ? `${publication.value.title} | Ghana Audit Service`
-        : 'Press Statement | Ghana Audit Service',
-    description: () =>
-      publication.value?.excerpt || 'Press statement from the Ghana Audit Service'
+    title: () => (publication.value ? `${publication.value.title}` : 'Press Statement'),
+    description: () => publication.value?.excerpt || 'Press statement from the Ghana Audit Service'
   })
 
   function formatDate(dateStr: string): string {

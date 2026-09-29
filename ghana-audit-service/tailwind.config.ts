@@ -24,7 +24,8 @@ export default {
         primary: {
           DEFAULT: 'rgb(var(--gas-primary) / <alpha-value>)',
           dark: 'rgb(var(--gas-primary-dark) / <alpha-value>)',
-          light: 'rgb(var(--gas-primary-light) / <alpha-value>)'
+          light: 'rgb(var(--gas-primary-light) / <alpha-value>)',
+          200: 'rgb(var(--gas-primary-200) / <alpha-value>)'
         },
 
         // Secondary (Red)

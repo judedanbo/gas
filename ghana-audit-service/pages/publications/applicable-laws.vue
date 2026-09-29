@@ -136,7 +136,9 @@
               :key="law.title"
               class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-6"
             >
-              <h4 class="text-sm font-semibold text-gray-900 dark:text-white mb-2">{{ law.title }}</h4>
+              <h4 class="text-sm font-semibold text-gray-900 dark:text-white mb-2">
+                {{ law.title }}
+              </h4>
               <p class="text-sm text-gray-600 dark:text-gray-400">{{ law.description }}</p>
             </div>
           </div>
@@ -180,7 +182,9 @@
               </div>
 
               <div class="flex-grow">
-                <h4 class="text-sm font-semibold text-gray-900 dark:text-white">{{ publication.title }}</h4>
+                <h4 class="text-sm font-semibold text-gray-900 dark:text-white">
+                  {{ publication.title }}
+                </h4>
                 <p v-if="publication.excerpt" class="text-sm text-gray-600 dark:text-gray-400">
                   {{ publication.excerpt }}
                 </p>
@@ -222,7 +226,7 @@
 <script setup lang="ts">
   // SEO
   useSeoMeta({
-    title: 'Applicable Laws | Ghana Audit Service',
+    title: 'Applicable Laws',
     description:
       'Constitutional provisions and legislation governing the Ghana Audit Service, including the Audit Service Act, 2000 (Act 584).'
   })

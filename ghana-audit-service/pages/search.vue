@@ -51,12 +51,14 @@
         <div class="lg:grid lg:grid-cols-4 lg:gap-8">
           <!-- Filters Sidebar -->
           <aside class="lg:col-span-1 mb-6 lg:mb-0">
-            <div class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-5 sticky top-24">
+            <div
+              class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-5 sticky top-24"
+            >
               <div class="flex items-center justify-between mb-4">
                 <h2 class="text-base font-semibold text-gray-900 dark:text-white">Filters</h2>
                 <button
                   v-if="hasActiveFilters"
-                  class="text-sm text-primary dark:text-primary-light hover:text-primary-dark"
+                  class="text-sm text-primary dark:text-primary-200 hover:text-primary-dark"
                   @click="clearFilters"
                 >
                   Clear all
@@ -65,7 +67,9 @@
 
               <!-- Type Filter -->
               <div class="mb-6">
-                <h3 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Content Type</h3>
+                <h3 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+                  Content Type
+                </h3>
                 <div class="space-y-2">
                   <label
                     v-for="type in typeFilters"
@@ -80,7 +84,11 @@
                     />
                     <span class="text-sm text-gray-600 dark:text-gray-400">
                       {{ type.label }}
-                      <span v-if="meta.typeCounts?.[type.value]" class="text-gray-400 dark:text-gray-500">({{ meta.typeCounts[type.value] }})</span>
+                      <span
+                        v-if="meta.typeCounts?.[type.value]"
+                        class="text-gray-400 dark:text-gray-500"
+                        >({{ meta.typeCounts[type.value] }})</span
+                      >
                     </span>
                   </label>
                 </div>
@@ -88,7 +96,9 @@
 
               <!-- Date Range Filter -->
               <div class="mb-6">
-                <h3 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Date Range</h3>
+                <h3 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+                  Date Range
+                </h3>
                 <div class="space-y-3">
                   <UiDateTimePicker
                     v-model="dateFrom"
@@ -170,10 +180,12 @@
               >
                 <Icon
                   name="heroicons:magnifying-glass"
-                  class="w-10 h-10 text-primary dark:text-primary-light mb-4 mx-auto"
+                  class="w-10 h-10 text-primary dark:text-primary-200 mb-4 mx-auto"
                   aria-hidden="true"
                 />
-                <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">Start your search</h3>
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                  Start your search
+                </h3>
                 <p class="text-gray-600 dark:text-gray-400 mb-4">
                   Search for audit reports, publications, news articles, and more.
                 </p>
@@ -181,7 +193,7 @@
                   <button
                     v-for="suggestion in searchSuggestions"
                     :key="suggestion"
-                    class="px-3 py-1 text-sm text-primary dark:text-primary-light bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-full hover:bg-primary hover:text-white hover:border-primary transition-colors"
+                    class="px-3 py-1 text-sm text-primary dark:text-primary-200 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-full hover:bg-primary hover:text-white hover:border-primary transition-colors"
                     @click="searchFor(suggestion)"
                   >
                     {{ suggestion }}
@@ -196,23 +208,23 @@
               >
                 <Icon
                   name="heroicons:inbox"
-                  class="w-10 h-10 text-primary dark:text-primary-light mb-4 mx-auto"
+                  class="w-10 h-10 text-primary dark:text-primary-200 mb-4 mx-auto"
                   aria-hidden="true"
                 />
-                <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">No results found</h3>
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                  No results found
+                </h3>
                 <p class="text-gray-600 dark:text-gray-400 mb-4">
                   We couldn't find any content matching "{{ searchQuery }}".
                 </p>
-                <p class="text-sm text-gray-500 dark:text-gray-400">Try different keywords or remove some filters.</p>
+                <p class="text-sm text-gray-500 dark:text-gray-400">
+                  Try different keywords or remove some filters.
+                </p>
               </div>
 
               <!-- Results List -->
               <div v-else class="space-y-4">
-                <SearchResultCard
-                  v-for="result in results"
-                  :key="result.id"
-                  :result="result"
-                />
+                <SearchResultCard v-for="result in results" :key="result.id" :result="result" />
               </div>
 
               <!-- Pagination -->
@@ -269,7 +281,7 @@
 <script setup lang="ts">
   // SEO
   useSeoMeta({
-    title: 'Search Results | Ghana Audit Service',
+    title: 'Search Results',
     description:
       'Search for audit reports, publications, news, and other content from the Ghana Audit Service.'
   })
@@ -288,7 +300,9 @@
 
   function formatFilterDate(iso: string): string {
     const d = new Date(iso + 'T00:00:00')
-    return isNaN(d.getTime()) ? iso : d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
+    return isNaN(d.getTime())
+      ? iso
+      : d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
   }
 
   // Search suggestions

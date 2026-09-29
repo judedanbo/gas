@@ -4,7 +4,9 @@
 
     <div class="page-header">
       <div class="container">
-        <h1 class="text-4xl md:text-5xl font-heading font-bold mb-4">{{ $t('advertisement.title') }}</h1>
+        <h1 class="text-4xl md:text-5xl font-heading font-bold mb-4">
+          {{ $t('advertisement.title') }}
+        </h1>
         <p class="page-subtitle">{{ $t('advertisement.subtitle') }}</p>
       </div>
     </div>
@@ -23,7 +25,7 @@
             >
               <Icon
                 :name="category.icon"
-                class="w-7 h-7 text-primary dark:text-primary-light"
+                class="w-7 h-7 text-primary dark:text-primary-200"
                 aria-hidden="true"
               />
             </div>
@@ -43,25 +45,25 @@
 </template>
 
 <script setup lang="ts">
-const { t } = useI18n()
+  const { t } = useI18n()
 
-useSeoMeta({
-  title: `${t('advertisement.title')} | Ghana Audit Service`,
-  description: t('advertisement.subtitle'),
-})
+  useSeoMeta({
+    title: `${t('advertisement.title')}`,
+    description: t('advertisement.subtitle')
+  })
 
-const categories = computed(() => [
-  {
-    title: t('advertisement.vacancies'),
-    description: t('advertisement.vacanciesDescription'),
-    icon: 'heroicons:briefcase',
-    path: '/careers',
-  },
-  {
-    title: t('advertisement.tenders'),
-    description: t('advertisement.tendersDescription'),
-    icon: 'heroicons:pencil-square',
-    path: '/careers/tenders',
-  },
-])
+  const categories = computed(() => [
+    {
+      title: t('advertisement.vacancies'),
+      description: t('advertisement.vacanciesDescription'),
+      icon: 'heroicons:briefcase',
+      path: '/careers'
+    },
+    {
+      title: t('advertisement.tenders'),
+      description: t('advertisement.tendersDescription'),
+      icon: 'heroicons:pencil-square',
+      path: '/careers/tenders'
+    }
+  ])
 </script>

@@ -3,8 +3,8 @@
     <Transition name="modal">
       <div
         v-if="modelValue"
-        class="fixed inset-0 z-50 flex items-center justify-center p-4"
-        @keydown.esc="close"
+        class="fixed inset-0 z-modal flex items-center justify-center p-4"
+        @keydown.esc.stop="close"
       >
         <!-- Backdrop -->
         <div
@@ -18,7 +18,9 @@
           :class="modalClasses"
           role="dialog"
           aria-modal="true"
-          :aria-labelledby="title ? 'modal-title' : undefined"
+          tabindex="-1"
+          :aria-labelledby="title ? titleId : undefined"
+          :aria-describedby="$slots.default ? bodyId : undefined"
         >
           <!-- Header -->
           <div
@@ -28,7 +30,7 @@
             <slot name="header">
               <h2
                 v-if="title"
-                id="modal-title"
+                :id="titleId"
                 class="text-xl font-semibold text-gray-900 dark:text-white"
               >
                 {{ title }}
@@ -37,23 +39,17 @@
             <button
               v-if="showClose"
               type="button"
-              class="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-              aria-label="Close modal"
+              class="p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+              :aria-label="$t('common.close')"
               @click="close"
             >
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M6 18L18 6M6 6l12 12"
-                />
-              </svg>
+              <Icon name="heroicons:x-mark" class="w-5 h-5" aria-hidden="true" />
             </button>
           </div>
 
           <!-- Body -->
           <div
+            :id="bodyId"
             class="px-6 py-4 overflow-y-auto text-gray-700 dark:text-gray-300"
             :style="{ maxHeight: maxHeight }"
           >
@@ -95,10 +91,15 @@
     'update:modelValue': [value: boolean]
   }>()
 
+  // Unique ids so several modals on one page never share `aria-labelledby` targets
+  const uid = useId()
+  const titleId = `${uid}-title`
+  const bodyId = `${uid}-body`
+
   const modalRef = ref<HTMLElement | null>(null)
 
   const modalClasses = computed(() => {
-    const base = 'relative bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full'
+    const base = 'relative bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full focus:outline-none'
 
     const sizes = {
       sm: 'max-w-sm',
@@ -115,23 +116,23 @@
     emit('update:modelValue', false)
   }
 
-  // Focus trap
+  // Trap keyboard focus inside the dialog while open and return it to the
+  // opener on close (WAI-ARIA dialog pattern).
+  const isOpen = computed(() => props.modelValue)
+  useFocusTrap(modalRef, { active: isOpen })
+
+  // Prevent the page behind from scrolling
   watch(
     () => props.modelValue,
-    (isOpen) => {
-      if (isOpen) {
-        document.body.style.overflow = 'hidden'
-        nextTick(() => {
-          modalRef.value?.focus()
-        })
-      } else {
-        document.body.style.overflow = ''
-      }
-    }
+    (open) => {
+      if (typeof document === 'undefined') return
+      document.body.style.overflow = open ? 'hidden' : ''
+    },
+    { immediate: true }
   )
 
   onUnmounted(() => {
-    document.body.style.overflow = ''
+    if (typeof document !== 'undefined') document.body.style.overflow = ''
   })
 </script>
 

@@ -1,5 +1,6 @@
 <template>
   <div class="min-h-screen bg-gray-50 flex flex-col">
+    <a href="#main-content" class="skip-link">{{ $t('accessibility.skipToContent') }}</a>
     <!-- Header -->
     <header class="bg-white border-b border-gray-200 py-4">
       <div class="container">
@@ -16,7 +17,11 @@
     </header>
 
     <!-- Error Content -->
-    <main class="flex-1 flex items-center justify-center py-16">
+    <main
+      id="main-content"
+      tabindex="-1"
+      class="flex-1 flex items-center justify-center py-16 focus:outline-none"
+    >
       <div class="container">
         <div class="max-w-xl mx-auto text-center">
           <!-- Error Icon -->

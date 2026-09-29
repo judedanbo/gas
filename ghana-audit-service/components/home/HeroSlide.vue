@@ -36,12 +36,12 @@
           </span>
 
           <!-- Title -->
-          <h2
-            class="mb-2 text-2xl font-bold leading-tight text-white sm:text-3xl md:text-4xl lg:text-5xl"
-            style="font-family: 'Plus Jakarta Sans', sans-serif"
+          <component
+            :is="isFirst ? 'h1' : 'h2'"
+            class="mb-2 font-heading text-2xl font-bold leading-tight tracking-tight text-white sm:text-3xl md:text-4xl lg:text-5xl"
           >
             {{ slide.title }}
-          </h2>
+          </component>
 
           <!-- Excerpt -->
           <p

@@ -144,7 +144,7 @@
 
   // SEO
   useSeoMeta({
-    title: "Auditor-General's Reports | Ghana Audit Service",
+    title: "Auditor-General's Reports",
     description:
       'Access comprehensive audit reports on public accounts, ministries, departments, and agencies across Ghana.'
   })

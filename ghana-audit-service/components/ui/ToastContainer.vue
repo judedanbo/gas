@@ -1,6 +1,6 @@
 <template>
   <Teleport to="body">
-    <div class="fixed top-4 right-4 z-50 flex flex-col gap-3">
+    <div class="fixed top-4 right-4 z-tooltip flex flex-col gap-3 max-w-[calc(100vw-2rem)]">
       <TransitionGroup name="toast-slide">
         <div
           v-for="toast in toasts"
@@ -8,8 +8,8 @@
           role="alert"
           :class="[
             'flex items-start gap-3 rounded-lg border-l-4 bg-white p-4 shadow-lg dark:bg-gray-800',
-            'min-w-[320px] max-w-[420px]',
-            borderColorMap[toast.type],
+            'w-[min(420px,100%)]',
+            borderColorMap[toast.type]
           ]"
         >
           <!-- Icon -->
@@ -90,7 +90,7 @@
             type="button"
             class="flex-shrink-0 rounded-md p-1 text-gray-400 hover:text-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 dark:hover:text-gray-300"
             :class="focusRingColorMap[toast.type]"
-            aria-label="Dismiss notification"
+            :aria-label="$t('common.dismiss')"
             @click="dismiss(toast.id)"
           >
             <svg
@@ -121,21 +121,21 @@
     success: 'border-green-500',
     error: 'border-red-500',
     warning: 'border-amber-500',
-    info: 'border-blue-500',
+    info: 'border-blue-500'
   }
 
   const iconColorMap: Record<string, string> = {
     success: 'text-green-500',
     error: 'text-red-500',
     warning: 'text-amber-500',
-    info: 'text-blue-500',
+    info: 'text-blue-500'
   }
 
   const focusRingColorMap: Record<string, string> = {
     success: 'focus:ring-green-500',
     error: 'focus:ring-red-500',
     warning: 'focus:ring-amber-500',
-    info: 'focus:ring-blue-500',
+    info: 'focus:ring-blue-500'
   }
 </script>
 
