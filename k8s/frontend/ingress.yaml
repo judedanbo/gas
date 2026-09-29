@@ -12,7 +12,11 @@ metadata:
     # server/utils/fileUpload.ts) plus multipart overhead, so oversize files
     # get the app's friendly validation error instead of a raw nginx 413.
     nginx.ingress.kubernetes.io/proxy-body-size: "105m"
-    # nginx.ingress.kubernetes.io/proxy-read-timeout: "60"
+    # The controller buffers the whole upload before handing it to the pod, so
+    # the read timeout has to cover the app streaming a 100MB PDF on to Azure
+    # Blob (the default 60s is tight under the pod's CPU limit).
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "300"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "300"
     # nginx.ingress.kubernetes.io/ssl-redirect: "true"
 spec:
   ingressClassName: nginx
