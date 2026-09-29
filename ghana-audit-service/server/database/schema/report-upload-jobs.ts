@@ -1,0 +1,87 @@
+import {
+  mysqlTable,
+  int,
+  bigint,
+  varchar,
+  datetime,
+  json,
+  mysqlEnum,
+  index
+} from 'drizzle-orm/mysql-core'
+import { sql } from 'drizzle-orm'
+import { users } from './users'
+import { auditReports, type ReportOptimizationMeta } from './audit-reports'
+
+/**
+ * Lifecycle of a background A-G report upload. The browser only transfers
+ * the bytes; everything after that (storing to Blob, thumbnailing,
+ * optimizing, patching the report row) runs server-side and is tracked here.
+ *
+ * Rows live in MySQL rather than the in-process/Redis optimization job
+ * mirror so progress survives admin logouts, session expiry, other tabs,
+ * and pod restarts — the dashboard polls this table.
+ */
+export const REPORT_UPLOAD_JOB_STATUSES = [
+  'queued',
+  'storing',
+  'thumbnail',
+  'optimizing',
+  'completed',
+  'failed'
+] as const
+
+export type ReportUploadJobStatus = (typeof REPORT_UPLOAD_JOB_STATUSES)[number]
+
+export const reportUploadJobs = mysqlTable(
+  'report_upload_jobs',
+  {
+    id: varchar('id', { length: 36 }).primaryKey(),
+    userId: int('user_id').references(() => users.id, { onDelete: 'set null' }),
+    reportId: int('report_id').references(() => auditReports.id, { onDelete: 'set null' }),
+    status: mysqlEnum('status', REPORT_UPLOAD_JOB_STATUSES).notNull().default('queued'),
+    /** Coarse 0–100 across the whole pipeline (see reportUploadJobs.ts). */
+    progress: int('progress').notNull().default(0),
+    /** Optimizer phase while status = optimizing ('waiting' before a slot frees). */
+    phase: varchar('phase', { length: 32 }),
+    page: int('page').notNull().default(0),
+    totalPages: int('total_pages').notNull().default(0),
+    originalName: varchar('original_name', { length: 255 }).notNull(),
+    filename: varchar('filename', { length: 255 }).notNull(),
+    fileUrl: varchar('file_url', { length: 500 }).notNull(),
+    mimeType: varchar('mime_type', { length: 100 }).notNull(),
+    /** Bytes received from the browser. */
+    size: bigint('size', { mode: 'number', unsigned: true }).notNull(),
+    /** Bytes in storage once the pipeline finished (post-optimization). */
+    finalSize: bigint('final_size', { mode: 'number', unsigned: true }),
+    preset: mysqlEnum('preset', ['screen', 'ebook', 'printer']).notNull().default('ebook'),
+    thumbnailUrl: varchar('thumbnail_url', { length: 500 }),
+    /** In-process optimization job id (pdfOptimizationJobs) for SSE attach. */
+    optimizationJobId: varchar('optimization_job_id', { length: 36 }),
+    optimizationStatus: mysqlEnum('optimization_status', ['pending', 'success', 'error'])
+      .notNull()
+      .default('pending'),
+    optimizationResult: json('optimization_result').$type<ReportOptimizationMeta>(),
+    /** Safe, admin-facing summary — never internals or file paths. */
+    error: varchar('error', { length: 255 }),
+    errorCode: varchar('error_code', { length: 50 }),
+    dismissedAt: datetime('dismissed_at'),
+    createdAt: datetime('created_at')
+      .notNull()
+      .default(sql`(CURRENT_TIMESTAMP)`),
+    /** Written explicitly on every mutation and by the pipeline heartbeat. */
+    updatedAt: datetime('updated_at')
+      .notNull()
+      .default(sql`(CURRENT_TIMESTAMP)`),
+    completedAt: datetime('completed_at')
+  },
+  (table) => [
+    index('idx_report_upload_jobs_status').on(table.status),
+    index('idx_report_upload_jobs_user').on(table.userId),
+    index('idx_report_upload_jobs_report').on(table.reportId),
+    index('idx_report_upload_jobs_file_url').on(table.fileUrl),
+    index('idx_report_upload_jobs_created').on(table.createdAt)
+  ]
+)
+
+export type ReportUploadJob = typeof reportUploadJobs.$inferSelect
+export type NewReportUploadJob = typeof reportUploadJobs.$inferInsert

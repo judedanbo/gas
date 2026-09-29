@@ -14,6 +14,10 @@ import { fileSizeToBytes } from '../../../utils/fileSize'
 import { materializePdfSource } from '../../../utils/pdfSource'
 import { generateThumbnailFromPdf } from '../../../utils/generateThumbnail'
 import { safeError } from '../../../utils/errors'
+import {
+  resolveUploadJobForSave,
+  linkSavedReportToUploadJob
+} from '../../../utils/reportUploadLink'
 
 export default defineEventHandler(async (event) => {
   const method = event.method
@@ -216,9 +220,22 @@ async function handleCreate(event: H3Event) {
     throw createValidationError({ slug: 'A report with this slug already exists' })
   }
 
-  // Auto-generate thumbnail from PDF if none was provided
-  let thumbnail = input.thumbnail || null
-  if (!thumbnail && input.fileUrl) {
+  // A background upload job for this file (create flow) may already hold
+  // the thumbnail, final size and optimization snapshot — or still be
+  // producing them, in which case the pipeline patches the row when done.
+  const uploadJob = await resolveUploadJobForSave(input.uploadJobId, input.fileUrl)
+  let thumbnail = input.thumbnail || uploadJob.thumbnailUrl || null
+  const fileSize = uploadJob.finalSize ?? input.fileSize
+  let optimizedAt = input.optimizedAt ? new Date(input.optimizedAt) : null
+  let optimizationMeta = input.optimizationMeta ?? null
+  if (!optimizedAt && uploadJob.optimizationMeta) {
+    optimizedAt = uploadJob.optimizedAt
+    optimizationMeta = uploadJob.optimizationMeta
+  }
+
+  // Auto-generate thumbnail from PDF if none was provided and no upload job
+  // is about to deliver one.
+  if (!thumbnail && input.fileUrl && !uploadJob.pending) {
     const source = await materializePdfSource(input.fileUrl)
     if (source) {
       try {
@@ -245,11 +262,11 @@ async function handleCreate(event: H3Event) {
         input.category,
         new Date(input.publishedAt),
         input.fileUrl,
-        input.fileSize,
+        fileSize,
         thumbnail,
         input.isPublished,
-        input.optimizedAt ? new Date(input.optimizedAt) : null,
-        input.optimizationMeta ? JSON.stringify(input.optimizationMeta) : null,
+        optimizedAt,
+        optimizationMeta ? JSON.stringify(optimizationMeta) : null,
         user.id,
         user.id
       ]
@@ -269,6 +286,10 @@ async function handleCreate(event: H3Event) {
     }
 
     await connection.commit()
+
+    // Link the upload job to the new row (and apply its outputs if it
+    // finished while we were saving).
+    await linkSavedReportToUploadJob(input.uploadJobId, reportId, input.fileUrl)
 
     // Fetch the created report
     const [report] = await db

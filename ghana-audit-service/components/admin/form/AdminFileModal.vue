@@ -85,10 +85,12 @@
           <AdminFormAdminFileUpload
             :model-value="''"
             :type="resource === 'reports' ? 'report' : 'publication'"
+            :preset="optimizePreset"
             label="Upload PDF"
             required
             @update:model-value="handleUploadComplete"
             @file-info="handleUploadFileInfo"
+            @upload-job="handleUploadJob"
           />
           <button
             v-if="modalFileUrl && isReplacing"
@@ -125,7 +127,33 @@
           </p>
         </div>
 
-        <!-- Optimization progress / result panel (reports only) -->
+        <!-- Background upload job (reports only): store → thumbnail → optimize
+             runs server-side; this follows it by polling. -->
+        <div
+          v-if="
+            resource === 'reports' &&
+            modalFileUrl &&
+            followedJob &&
+            optimization.status.value === 'idle'
+          "
+          class="bg-gray-50 dark:bg-gray-700/30 rounded-lg p-4"
+        >
+          <AdminUiAdminUploadJobProgress :job="followedJob" />
+          <p v-if="followedJob.active" class="text-xs text-gray-500 mt-2">
+            You can confirm now — processing continues in the background.
+          </p>
+          <button
+            v-if="followedJob.status === 'completed' && followedJob.errorCode === 'HAS_BOOKMARKS'"
+            type="button"
+            class="btn btn-ghost text-sm mt-2"
+            @click="retryWithBookmarksDropped"
+          >
+            Optimize anyway (drops bookmarks)
+          </button>
+        </div>
+
+        <!-- Optimization progress / result panel (reports only; explicit
+             retry from this modal) -->
         <div
           v-if="resource === 'reports' && modalFileUrl && optimization.status.value !== 'idle'"
           class="bg-gray-50 dark:bg-gray-700/30 rounded-lg p-4"
@@ -337,7 +365,10 @@
                   <button
                     type="button"
                     class="btn btn-ghost text-sm w-full"
-                    :disabled="thumbnailGenerating"
+                    :disabled="thumbnailGenerating || fileNotYetStored"
+                    :title="
+                      fileNotYetStored ? 'Available once the file is saved to storage' : undefined
+                    "
                     @click="generateThumbnail"
                   >
                     {{ modalThumbnail ? 'Regenerate from PDF' : 'Generate from PDF' }}
@@ -394,7 +425,7 @@
   import { useOptimizePreset } from '~/composables/useReportOptimization'
   import { formatBytes } from '~/utils/formatBytes'
   import { optimizationPhaseLabel } from '~/utils/reportOptimizationUi'
-  import type { ReportOptimizationMeta } from '~/types/admin'
+  import type { ReportOptimizationMeta, ReportUploadJob } from '~/types/admin'
 
   export interface OptimizationSnapshot {
     optimizedAt: string
@@ -410,6 +441,8 @@
     error?: string
     required?: boolean
     reportId?: number | null
+    /** Background upload job for the committed fileUrl (re-followed on open). */
+    uploadJobId?: string | null
   }
 
   const props = withDefaults(defineProps<Props>(), {
@@ -419,7 +452,8 @@
     thumbnail: null,
     error: undefined,
     required: false,
-    reportId: null
+    reportId: null,
+    uploadJobId: null
   })
 
   const emit = defineEmits<{
@@ -430,10 +464,16 @@
     // send with its POST (a saved report gets this persisted server-side
     // instead). null when no optimization finished for the confirmed file.
     'update:optimization': [snapshot: OptimizationSnapshot | null]
+    // Id of the background upload job that produced the confirmed file
+    // (null for publications / files without a job). Sent with the save so
+    // the server links the report to the job.
+    'update:uploadJob': [jobId: string | null]
   }>()
 
   const api = useAdminApi()
   const optimization = useReportOptimization()
+  // Follows the server-side upload pipeline for the file in the modal.
+  const uploadJob = useReportUploadJob()
 
   // Modal state
   const isOpen = ref(false)
@@ -459,6 +499,34 @@
 
   const displayFilename = computed(() => extractFilename(cardFileUrl.value))
 
+  // The followed job, but only while it is the file currently in the modal
+  // (a replacement upload starts a new job).
+  const followedJob = computed<ReportUploadJob | null>(() => {
+    const job = uploadJob.job.value
+    return job && job.fileUrl === modalFileUrl.value ? job : null
+  })
+
+  // Until the pipeline has stored the bytes, server-side thumbnail
+  // regeneration would find nothing to render.
+  const fileNotYetStored = computed(() => {
+    const job = followedJob.value
+    return Boolean(job && (job.status === 'queued' || job.status === 'storing'))
+  })
+
+  // Mirror pipeline outputs into the modal as they arrive: the generated
+  // cover (unless the admin picked a custom one) and the post-optimization
+  // size.
+  watch(uploadJob.job, (job) => {
+    if (!job || job.fileUrl !== modalFileUrl.value) return
+    if (job.thumbnailUrl && thumbnailSource.value !== 'custom' && !modalThumbnail.value) {
+      modalThumbnail.value = job.thumbnailUrl
+      thumbnailSource.value = 'generated'
+    }
+    if (job.status === 'completed' && job.finalSize) {
+      modalFileSize.value = job.finalSize
+    }
+  })
+
   function extractFilename(url: string | null): string {
     if (!url) return ''
     return url.split('/').pop() || url
@@ -473,6 +541,12 @@
     isReplacing.value = false
     isUploadingCustomThumbnail.value = false
     optimization.reset()
+    uploadJob.reset()
+    // Re-follow the job behind the committed file so reopening the modal
+    // shows where the pipeline is (it may still be optimizing).
+    if (props.resource === 'reports' && props.uploadJobId && props.fileUrl) {
+      uploadJob.follow(props.uploadJobId)
+    }
     isOpen.value = true
   }
 
@@ -482,16 +556,19 @@
     thumbnailError.value = null
     modalThumbnail.value = null
     thumbnailSource.value = null
+    optimization.reset()
 
-    // Reports kick off the optimization pipeline in the background — the
-    // admin can keep working (and even confirm/save) while it runs; the
-    // server persists the result when the job finishes. The cover (page 1)
-    // is preserved byte-for-byte, so thumbnailing immediately is safe.
-    if (props.resource === 'reports') {
-      void runOptimization()
+    // Reports: the server pipeline (store → thumbnail → optimize) took over
+    // the moment the bytes landed; handleUploadJob follows it. The admin can
+    // confirm/save at any point — the server patches the row when done.
+    // Publications still thumbnail synchronously here.
+    if (props.resource !== 'reports') {
+      generateThumbnail()
     }
+  }
 
-    generateThumbnail()
+  function handleUploadJob(job: ReportUploadJob) {
+    uploadJob.follow(job)
   }
 
   async function runOptimization(opts?: { allowDropBookmarks?: boolean }) {
@@ -544,24 +621,41 @@
   }
 
   function optimizationSnapshot(): OptimizationSnapshot | null {
+    if (props.resource !== 'reports') return null
+
+    // Explicit retry from this modal (bookmark drop) — freshest result wins.
     const r = optimization.result.value
-    if (props.resource !== 'reports' || optimization.status.value !== 'success' || !r) {
-      return null
-    }
-    return {
-      optimizedAt: new Date().toISOString(),
-      meta: {
-        preset: optimizePreset.value,
-        originalSize: r.originalSize,
-        optimizedSize: r.optimizedSize,
-        savedBytes: r.savedBytes,
-        pageCount: r.pageCount ?? optimization.totalPages.value,
-        nativePages: r.nativePages,
-        scannedPages: r.scannedPages,
-        ocrFailedPages: r.ocrFailedPages ?? 0,
-        skippedCompression: r.skippedCompression
+    if (optimization.status.value === 'success' && r) {
+      return {
+        optimizedAt: new Date().toISOString(),
+        meta: {
+          preset: optimizePreset.value,
+          originalSize: r.originalSize,
+          optimizedSize: r.optimizedSize,
+          savedBytes: r.savedBytes,
+          pageCount: r.pageCount ?? optimization.totalPages.value,
+          nativePages: r.nativePages,
+          scannedPages: r.scannedPages,
+          ocrFailedPages: r.ocrFailedPages ?? 0,
+          skippedCompression: r.skippedCompression
+        }
       }
     }
+
+    // Background pipeline finished while the modal was open.
+    const job = followedJob.value
+    if (
+      job &&
+      job.status === 'completed' &&
+      job.optimizationStatus === 'success' &&
+      job.optimizationResult
+    ) {
+      return {
+        optimizedAt: job.completedAt ?? new Date().toISOString(),
+        meta: job.optimizationResult
+      }
+    }
+    return null
   }
 
   function handleConfirm() {
@@ -569,10 +663,14 @@
     emit('update:fileSize', modalFileSize.value || undefined)
     emit('update:thumbnail', modalThumbnail.value || '')
     emit('update:optimization', optimizationSnapshot())
+    emit('update:uploadJob', followedJob.value?.id ?? null)
+    // The page follows the job from here (create/edit pages poll it).
+    uploadJob.stop()
     isOpen.value = false
   }
 
   function handleCancel() {
+    uploadJob.stop()
     isOpen.value = false
   }
 </script>

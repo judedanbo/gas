@@ -1,4 +1,25 @@
-import type { PaginatedResponse, UploadResponse } from '~/types/admin'
+import type { PaginatedResponse, ReportUploadResponse, UploadResponse } from '~/types/admin'
+
+export interface UploadOptions {
+  /** Byte-transfer progress, 0–1. */
+  onProgress?: (fraction: number) => void
+}
+
+export interface ReportUploadOptions extends UploadOptions {
+  preset?: 'screen' | 'ebook' | 'printer'
+  allowDropBookmarks?: boolean
+}
+
+/**
+ * Error shape thrown by the XHR upload path, aligned with ofetch's
+ * FetchError so existing `error.data?.message || error.message` handling
+ * and the 401 redirect keep working.
+ */
+export interface UploadRequestError extends Error {
+  statusCode: number
+  statusMessage?: string
+  data?: { message?: string; statusMessage?: string; [key: string]: unknown }
+}
 
 interface FetchOptions {
   method?: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE'
@@ -92,32 +113,103 @@ export function useAdminApi() {
     return request<T>(endpoint, { method: 'DELETE' })
   }
 
-  // File upload
+  // Multipart POST over XMLHttpRequest — the only browser API that reports
+  // upload (request body) progress, which $fetch cannot. Report PDFs run to
+  // 100MB, so the admin needs to see the transfer moving.
+  function xhrUpload<T>(url: string, formData: FormData, opts: UploadOptions = {}): Promise<T> {
+    return new Promise<T>((resolve, reject) => {
+      const xhr = new XMLHttpRequest()
+      xhr.open('POST', url)
+      xhr.responseType = 'text'
+      if (token.value) {
+        xhr.setRequestHeader('Authorization', `Bearer ${token.value}`)
+      }
+
+      if (opts.onProgress && xhr.upload) {
+        xhr.upload.addEventListener('progress', (e) => {
+          if (e.lengthComputable && e.total > 0) {
+            opts.onProgress?.(Math.min(1, e.loaded / e.total))
+          }
+        })
+      }
+
+      const fail = (statusCode: number, message: string, data?: UploadRequestError['data']) => {
+        const err = new Error(message) as UploadRequestError
+        err.statusCode = statusCode
+        err.statusMessage = data?.statusMessage ?? message
+        err.data = data
+        reject(err)
+      }
+
+      xhr.addEventListener('load', () => {
+        let parsed: unknown
+        try {
+          parsed = xhr.responseText ? JSON.parse(xhr.responseText) : null
+        } catch {
+          parsed = null
+        }
+        if (xhr.status >= 200 && xhr.status < 300) {
+          resolve(parsed as T)
+          return
+        }
+        const data = (parsed ?? {}) as NonNullable<UploadRequestError['data']>
+        fail(
+          xhr.status,
+          data.message || data.statusMessage || `Upload failed (${xhr.status})`,
+          data
+        )
+      })
+      xhr.addEventListener('error', () => fail(0, 'Network error during upload'))
+      xhr.addEventListener('abort', () => fail(0, 'Upload cancelled'))
+      xhr.addEventListener('timeout', () => fail(0, 'Upload timed out'))
+
+      xhr.send(formData)
+    })
+  }
+
+  async function handleUploadError(error: unknown): Promise<never> {
+    const fetchError = error as { statusCode?: number }
+    if (fetchError.statusCode === 401) {
+      clearAuth()
+      await router.push({ path: '/admin/login', query: { reason: 'expired' } })
+    }
+    throw error
+  }
+
+  // File upload (synchronous server-side persistence; images, thumbnails,
+  // publications).
   async function upload(
     file: File,
-    type: 'report' | 'publication' | 'image' | 'thumbnail'
+    type: 'report' | 'publication' | 'image' | 'thumbnail',
+    opts: UploadOptions = {}
   ): Promise<UploadResponse> {
     const formData = new FormData()
     formData.append('file', file)
-
-    const headers: Record<string, string> = {}
-    if (token.value) {
-      headers['Authorization'] = `Bearer ${token.value}`
-    }
-
     try {
-      return await $fetch<UploadResponse>(`/api/admin/upload?type=${type}`, {
-        method: 'POST',
-        body: formData,
-        headers
-      })
+      return await xhrUpload<UploadResponse>(`/api/admin/upload?type=${type}`, formData, opts)
     } catch (error: unknown) {
-      const fetchError = error as { statusCode?: number }
-      if (fetchError.statusCode === 401) {
-        clearAuth()
-        await router.push({ path: '/admin/login', query: { reason: 'expired' } })
-      }
-      throw error
+      return handleUploadError(error)
+    }
+  }
+
+  // A-G report upload: the request ends when the bytes land; storing,
+  // thumbnailing and optimization continue as a server-side job that the
+  // response identifies (see useReportUploadJobs for following it).
+  async function uploadReport(
+    file: File,
+    opts: ReportUploadOptions = {}
+  ): Promise<ReportUploadResponse> {
+    const formData = new FormData()
+    formData.append('file', file)
+    const params = new URLSearchParams()
+    if (opts.preset) params.set('preset', opts.preset)
+    if (opts.allowDropBookmarks) params.set('allowDropBookmarks', 'true')
+    const qs = params.toString()
+    const url = `/api/admin/reports/upload${qs ? `?${qs}` : ''}`
+    try {
+      return await xhrUpload<ReportUploadResponse>(url, formData, opts)
+    } catch (error: unknown) {
+      return handleUploadError(error)
     }
   }
 
@@ -129,6 +221,7 @@ export function useAdminApi() {
     put,
     patch,
     del,
-    upload
+    upload,
+    uploadReport
   }
 }

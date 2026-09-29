@@ -55,12 +55,18 @@
               :file-size="form.fileSize"
               :thumbnail="form.thumbnail"
               :error="errors.fileUrl"
+              :upload-job-id="form.uploadJobId"
               required
               @update:file-url="form.fileUrl = $event"
               @update:file-size="form.fileSize = $event"
               @update:thumbnail="form.thumbnail = $event"
               @update:optimization="handleOptimizationSnapshot"
+              @update:upload-job="form.uploadJobId = $event"
             />
+            <!-- Server-side upload pipeline for the attached file; keeps
+                 updating after the modal closes, and survives leaving the
+                 page (see the dashboard). -->
+            <AdminUiAdminUploadJobProgress v-if="pageJob" :job="pageJob" class="mt-4" />
           </div>
         </div>
 
@@ -189,13 +195,14 @@
 </template>
 
 <script setup lang="ts">
-  import type { AdminAuditReport, ReportInput } from '~/types/admin'
+  import type { AdminAuditReport, ReportInput, ReportUploadJob } from '~/types/admin'
 
   definePageMeta({
     layout: 'admin'
   })
 
   const router = useRouter()
+  const route = useRoute()
   const { create, saving, error, fieldErrors } = useAdminCrud<AdminAuditReport>('reports')
   const { errors, validate, setErrors, rules } = useFormValidation()
 
@@ -224,8 +231,62 @@
     publishedAt: '',
     optimizedAt: null,
     optimizationMeta: null,
+    uploadJobId: null,
     translations: {
       en: { title: '', summary: '' }
+    }
+  })
+
+  // Follow the background upload job behind form.fileUrl so the form picks
+  // up the generated cover / final size / optimization snapshot even after
+  // the upload modal is closed.
+  const uploadFollower = useReportUploadJob()
+  const pageJob = computed<ReportUploadJob | null>(() => {
+    const job = uploadFollower.job.value
+    return job && job.fileUrl === form.fileUrl ? job : null
+  })
+  watch(
+    () => form.uploadJobId,
+    (id) => {
+      if (id) uploadFollower.follow(id)
+      else uploadFollower.reset()
+    }
+  )
+  watch(uploadFollower.job, (job) => {
+    if (!job || job.fileUrl !== form.fileUrl) return
+    if (job.thumbnailUrl && !form.thumbnail) form.thumbnail = job.thumbnailUrl
+    if (job.status === 'completed') {
+      if (job.finalSize) form.fileSize = job.finalSize
+      if (!form.optimizedAt && job.optimizationStatus === 'success' && job.optimizationResult) {
+        form.optimizedAt = job.completedAt ?? new Date().toISOString()
+        form.optimizationMeta = job.optimizationResult
+      }
+    }
+  })
+
+  // Resume from the dashboard: /admin/reports/create?uploadJobId=… pre-fills
+  // the file from a background upload (finished or still running) — e.g.
+  // after signing out mid-upload and coming back.
+  onMounted(async () => {
+    const raw = route.query.uploadJobId
+    const jobId = typeof raw === 'string' ? raw : null
+    if (!jobId) return
+    try {
+      const { get } = useAdminApi()
+      const job = await get<ReportUploadJob>(`reports/upload-jobs/${jobId}`)
+      if (job.status === 'failed') return
+      form.fileUrl = job.fileUrl
+      form.fileSize = job.finalSize ?? job.size
+      form.thumbnail = job.thumbnailUrl ?? ''
+      form.uploadJobId = job.id
+      if (!form.translations.en?.title) {
+        form.translations.en = {
+          ...form.translations.en,
+          title: job.originalName.replace(/\.pdf$/i, '')
+        }
+      }
+    } catch {
+      // Job gone (pruned) — start with an empty form.
     }
   })
 

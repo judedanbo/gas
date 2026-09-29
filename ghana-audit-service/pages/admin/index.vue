@@ -38,6 +38,11 @@
       />
     </div>
 
+    <!-- Background report uploads (persisted server-side; polls for progress) -->
+    <div class="mb-8">
+      <AdminUiAdminUploadJobsPanel />
+    </div>
+
     <!-- Quick Actions + Recent Activity -->
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
       <!-- Quick Actions -->

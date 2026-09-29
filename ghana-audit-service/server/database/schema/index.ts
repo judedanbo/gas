@@ -12,6 +12,7 @@ export * from './sessions'
 
 // Content Tables
 export * from './audit-reports'
+export * from './report-upload-jobs'
 export * from './publications'
 export * from './news'
 export * from './events'

@@ -131,6 +131,10 @@ export const auditReportSchema = z.object({
     })
     .optional()
     .nullable(),
+  // Background upload job that produced fileUrl (see reports/upload.post.ts).
+  // Lets the server link the saved report to the job and pull the job's
+  // thumbnail/size/optimization outputs, whichever side finishes first.
+  uploadJobId: z.string().uuid().optional().nullable(),
   translations: translationsSchema({
     title: z.string().min(1).max(500),
     summary: z.string().optional().nullable()

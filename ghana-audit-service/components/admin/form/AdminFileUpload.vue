@@ -136,8 +136,10 @@
             </svg>
           </div>
 
-          <p class="text-sm text-gray-600 dark:text-gray-400">
-            <span v-if="uploading">Uploading...</span>
+          <p class="text-sm text-gray-600 dark:text-gray-400" aria-live="polite">
+            <span v-if="uploading">
+              Uploading{{ uploadProgress !== null ? ` ${uploadProgress}%` : '...' }}
+            </span>
             <span v-else>
               <span class="text-primary font-medium">Click to upload</span>
               or drag and drop
@@ -146,6 +148,20 @@
           <p class="text-xs text-gray-500 mt-1">
             {{ acceptLabel }} (max {{ formatFileSize(maxSize) }})
           </p>
+          <div
+            v-if="uploading && uploadProgress !== null"
+            class="mt-3 w-full bg-gray-200 dark:bg-gray-600 rounded-full h-2 overflow-hidden"
+            role="progressbar"
+            aria-label="Upload progress"
+            :aria-valuenow="uploadProgress"
+            aria-valuemin="0"
+            aria-valuemax="100"
+          >
+            <div
+              class="h-2 bg-primary transition-all duration-200"
+              :style="{ width: `${uploadProgress}%` }"
+            />
+          </div>
         </label>
       </div>
     </div>
@@ -153,6 +169,8 @@
 </template>
 
 <script setup lang="ts">
+  import type { ReportUploadJob, UploadResponse } from '~/types/admin'
+
   interface Props {
     modelValue?: string | null
     label?: string
@@ -161,6 +179,8 @@
     required?: boolean
     error?: string
     helpText?: string
+    /** Compression preset for background report uploads (type = report). */
+    preset?: 'screen' | 'ebook' | 'printer'
   }
 
   const props = withDefaults(defineProps<Props>(), {
@@ -170,7 +190,8 @@
     id: undefined,
     required: false,
     error: undefined,
-    helpText: undefined
+    helpText: undefined,
+    preset: 'ebook'
   })
 
   // Generate a unique ID if not provided
@@ -184,12 +205,17 @@
   const emit = defineEmits<{
     'update:modelValue': [value: string]
     'file-info': [info: { filename: string; size: number; mimeType: string }]
+    // Report uploads hand off to a server-side job once the bytes land
+    // (store → thumbnail → optimize); the parent follows it by id.
+    'upload-job': [job: ReportUploadJob]
   }>()
 
   const api = useAdminApi()
 
   const isDragging = ref(false)
   const uploading = ref(false)
+  // Byte-transfer progress (0–100) while the request body is being sent.
+  const uploadProgress = ref<number | null>(null)
   const uploadError = ref<string | null>(null)
   const previewUrl = ref<string | null>(null)
   const fileName = ref<string | null>(null)
@@ -262,9 +288,21 @@
     }
 
     uploading.value = true
+    uploadProgress.value = 0
 
     try {
-      const response = await api.upload(file, props.type)
+      const onProgress = (fraction: number) => {
+        uploadProgress.value = Math.round(fraction * 100)
+      }
+      let response: UploadResponse
+      let job: ReportUploadJob | null = null
+      if (props.type === 'report') {
+        const reportResponse = await api.uploadReport(file, { preset: props.preset, onProgress })
+        job = reportResponse.job
+        response = reportResponse
+      } else {
+        response = await api.upload(file, props.type, { onProgress })
+      }
 
       // Set preview
       if (isImage.value) {
@@ -281,11 +319,13 @@
         size: response.size,
         mimeType: response.mimeType
       })
+      if (job) emit('upload-job', job)
     } catch (e: unknown) {
       const error = e as { data?: { message?: string }; message?: string }
       uploadError.value = error.data?.message || error.message || 'Upload failed'
     } finally {
       uploading.value = false
+      uploadProgress.value = null
     }
   }
 
