@@ -5,6 +5,7 @@ import {
   isBlobStorageConfigured,
   getContainerClient,
   uploadBlob,
+  uploadBlobFromFile,
   downloadBlob,
   blobExists,
   tryBlobSource,
@@ -100,7 +101,10 @@ function makeFakeContainer(opts: { existingKeys?: string[]; download?: unknown }
   const client = {
     getBlockBlobClient(key: string) {
       return {
-        async uploadData(data: unknown, options: { blobHTTPHeaders?: { blobContentType?: string } }) {
+        async uploadData(
+          data: unknown,
+          options: { blobHTTPHeaders?: { blobContentType?: string } }
+        ) {
           uploads.push({ key, data, contentType: options?.blobHTTPHeaders?.blobContentType })
         }
       }
@@ -143,7 +147,38 @@ describe('blob upload/download/exists wrappers', () => {
 
   it('uploadBlob throws when blob storage is unconfigured', async () => {
     __setContainerClientForTests(null)
-    await expect(uploadBlob('pdf/reports/x.pdf', Buffer.from('x'), 'application/pdf')).rejects.toThrow()
+    await expect(
+      uploadBlob('pdf/reports/x.pdf', Buffer.from('x'), 'application/pdf')
+    ).rejects.toThrow()
+  })
+
+  it('uploadBlobFromFile streams the file at the path to the keyed block blob', async () => {
+    const calls: Array<{ key: string; filePath: string; contentType?: string }> = []
+    __setContainerClientForTests({
+      getBlockBlobClient(key: string) {
+        return {
+          async uploadFile(
+            filePath: string,
+            options: { blobHTTPHeaders?: { blobContentType?: string } }
+          ) {
+            calls.push({ key, filePath, contentType: options?.blobHTTPHeaders?.blobContentType })
+          }
+        }
+      }
+    } as never)
+
+    await uploadBlobFromFile('pdf/reports/x.pdf', '/tmp/spool-1', 'application/pdf')
+
+    expect(calls).toEqual([
+      { key: 'pdf/reports/x.pdf', filePath: '/tmp/spool-1', contentType: 'application/pdf' }
+    ])
+  })
+
+  it('uploadBlobFromFile throws when blob storage is unconfigured', async () => {
+    __setContainerClientForTests(null)
+    await expect(
+      uploadBlobFromFile('pdf/reports/x.pdf', '/tmp/spool-1', 'application/pdf')
+    ).rejects.toThrow()
   })
 
   it('downloadBlob returns the stream and metadata for an existing blob', async () => {

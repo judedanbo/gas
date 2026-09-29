@@ -51,6 +51,7 @@ Tests run with `happy-dom` and `@nuxt/test-utils`; layout under `tests/unit/`, `
 ## Architecture
 
 ### Tech stack
+
 - **Nuxt 3** + Vue 3 Composition API (`<script setup lang="ts">` everywhere), strict TypeScript.
 - **Nitro** server (`server/`) for API routes and middleware.
 - **Drizzle ORM** + **mysql2** pool against **MySQL 8** (despite `better-sqlite3` lingering in `package.json`, the live config is MySQL — see `drizzle.config.ts` and `server/database/index.ts`).
@@ -64,6 +65,7 @@ Tests run with `happy-dom` and `@nuxt/test-utils`; layout under `tests/unit/`, `
 - **Redis**: `ioredis` — used for rate limiting and analytics hot counters. Optional; falls back to in-process if `REDIS_URL` is unset.
 
 ### Directory map
+
 - `pages/` — file-based routing. `pages/admin/` holds the admin SPA-within-a-site; everything else is public.
 - `layouts/` — `default.vue`, `minimal.vue` (and admin layouts under `components/admin/layout/`).
 - `components/`
@@ -93,25 +95,30 @@ Tests run with `happy-dom` and `@nuxt/test-utils`; layout under `tests/unit/`, `
 - `public/` — static assets including PWA icons.
 
 ### Auth flow (two layers — keep them in sync)
+
 1. **Server gate** (`server/middleware/adminAuth.ts`): every `/api/admin/**` request must carry a valid JWT for an active, non-deleted user. Handlers read `event.context.auth.user`.
 2. **Client guard** (`middleware/admin-auth.global.ts` + `useAdminAuth`): protects `/admin/**` pages and steers redirects.
 
 If you add a new admin endpoint, **don't bypass the server middleware** — it's pathname-driven (`/api/admin/`). New admin pages need only live under `pages/admin/`; the global middleware picks them up automatically.
 
 ### Nitro route rules (`nuxt.config.ts`)
+
 - Public API responses are cached at the edge with stale-while-revalidate (5 min for `reports`/`news`/`publications`/`events`, longer for `team` and `regional-offices`). When you change a transform or response shape, remember consumers may receive stale data for up to ~10 min.
 - `/api/admin/**` has `cache: false` — admin always sees fresh data.
 - `/admin/**` and `/ak/admin/**` set `X-Robots-Tag: noindex, nofollow` and are excluded from prerender.
 - Strict global security headers (CSP, HSTS, X-Frame-Options, Permissions-Policy) are applied to every route — be deliberate if a feature needs to relax them.
 
 ### Component & composable conventions
+
 - Auto-import prefix matches the folder: `components/common/AppHeader.vue` → `<CommonAppHeader />`, `components/ui/BaseCard.vue` → `<UiBaseCard />`, `components/admin/form/Input.vue` → `<AdminFormInput />`. Use the prefixed name; don't add manual imports.
 - Props/emits are typed with `defineProps<T>()` / `defineEmits<T>()`.
 - Data fetching lives in composables that return reactive state (`{ items, loading, error, fetch* }`). Page components should call composables, not `$fetch` directly, so caching/error UX stays consistent.
 - `useAdminCrud` is the generic CRUD hook for admin list/detail/edit pages — prefer extending it over hand-rolling per-entity hooks.
 
 ### Styling
+
 Tailwind config (`tailwind.config.ts`) defines:
+
 - `primary` / `ghana-green` `#006B3F`
 - `secondary` / `ghana-red` `#CE1126`
 - `accent` / `ghana-gold` `#FCD116`
@@ -119,29 +126,36 @@ Tailwind config (`tailwind.config.ts`) defines:
 Typography: Open Sans (body), Plus Jakarta Sans (headings) via `@nuxtjs/google-fonts` variable fonts. Dark mode is class-based with no suffix (`classSuffix: ''`).
 
 ### i18n
+
 - `defaultLocale: 'en'`, strategy `prefix_except_default`. English routes have no prefix; Akan routes are under `/ak/`.
 - Use `$t('key')` in templates or `useI18n()` in script.
 - **Always update both `i18n/locales/en.json` and `i18n/locales/ak.json` together** — missing Akan keys fall back to keys, not English copy.
 
 ### Environment
+
 Local dev reads `ghana-audit-service/.env` (see `.env.example`). When running via root `docker-compose.yml`, the container env is templated from the root `.env` — they're separate files.
 
 Required for the server to function:
+
 - `DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD`, `DB_NAME` (defaults to `localhost:3306` / `root` / `ghana_audit_service` if unset — fine for local Docker, dangerous in prod).
 - `JWT_SECRET` (admin auth will be unsafe with the placeholder).
 - `NUXT_API_SECRET` and the `NUXT_PUBLIC_*` vars for site identity.
 
 Optional:
+
 - `REDIS_URL` — enables shared rate limiting and analytics buffering. Without it, both degrade to in-process fallbacks.
 - `AZURE_STORAGE_CONNECTION_STRING` + `AZURE_BLOB_CONTAINER` — store report/publication PDFs in private Blob instead of the container image. Both unset → on-disk `public/pdf` fallback (legacy/local). Both set → uploads + downloads use Blob.
+- `UPLOAD_TMP_DIR` — where admin uploads are spooled while streaming in (default: OS temp dir). Uploads never buffer whole files in memory; see `utils/fileUpload.ts`.
 - `ANALYTICS_IP_SALT` — salt for hashing IPs in analytics (raw IPs are never stored).
 - `ANALYTICS_RETENTION_DAYS` — days to keep raw `request_events` (default 30).
 - `ANALYTICS_GEOIP_DB_PATH`, `ANALYTICS_ASN_DB_PATH` — paths to MaxMind GeoLite2 mmdb files for geo enrichment.
 
 ### Pre-commit
+
 Husky + lint-staged: `*.{js,ts,vue}` → `eslint --fix` + `prettier --write`; `*.{json,css,md,yml,yaml}` → `prettier --write`. Don't `--no-verify` unless explicitly asked.
 
 ### Gotchas
+
 - **MySQL 8 `ONLY_FULL_GROUP_BY`**: All non-aggregated SELECT columns must be in GROUP BY or wrapped in an aggregate (`MAX`, `ANY_VALUE`). This includes columns from LEFT JOIN subqueries even when they're functionally determined. Always verify raw SQL queries.
 - **Drizzle `.select()` aliases aren't emitted in SQL**: `.select({ myAlias: sql`...` })` maps `myAlias` as a JS key only — don't reference it in `.orderBy(sql`myAlias`)`. Instead, store the expression in a variable and embed it in both `.select()` and `.orderBy()`.
 - **`DUAL` is a MySQL reserved word**: Don't use it as a table alias in `sql` template literals — Drizzle won't backtick-quote it. Use `_stub` or similar.
