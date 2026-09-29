@@ -14,7 +14,7 @@ import {
   registerActiveJob,
   __resetSchedulerForTests
 } from '~/server/utils/pdfOptimizationScheduler'
-import { tryBlobSource, blobKeyFromFileUrl, uploadBlob } from '~/server/utils/blobStorage'
+import { tryBlobSource, blobKeyFromFileUrl, uploadBlobFromFile } from '~/server/utils/blobStorage'
 
 // Per CLAUDE.md: vi.mock factories must use `function` declarations (hoisted).
 vi.mock('~/server/utils/publicFiles', () => ({
@@ -24,7 +24,7 @@ vi.mock('~/server/utils/publicFiles', () => ({
 vi.mock('~/server/utils/blobStorage', () => ({
   tryBlobSource: vi.fn(async () => null),
   blobKeyFromFileUrl: vi.fn((url: string) => url.replace(/^\/+/, '')),
-  uploadBlob: vi.fn(async () => undefined)
+  uploadBlobFromFile: vi.fn(async () => undefined)
 }))
 
 vi.mock('~/server/utils/pdfOptimizer', async () => {
@@ -118,7 +118,9 @@ async function runOptimizeRoute(body: {
         onProgress: (e: ProgressEvent) => pushEvent(job.id, e)
       })
       if (blobKey && !result.skippedCompression) {
-        await uploadBlob(blobKey, Buffer.from('optimized'), 'application/pdf')
+        // Streams the optimized temp file back to Blob by path — never a
+        // whole-file Buffer (PDFs run to 100MB on a 512Mi pod).
+        await uploadBlobFromFile(blobKey, pdfPath as string, 'application/pdf')
       }
       updateJob(job.id, { status: 'success', result })
     } catch (err) {
@@ -190,9 +192,9 @@ describe('POST /api/admin/reports/optimize', () => {
     }
 
     expect(getJob(jobId)?.status).toBe('success')
-    expect(vi.mocked(uploadBlob)).toHaveBeenCalledWith(
+    expect(vi.mocked(uploadBlobFromFile)).toHaveBeenCalledWith(
       'pdf/reports/blob-only.pdf',
-      expect.anything(),
+      '/tmp/gas-optimize-test.pdf',
       'application/pdf'
     )
   })
@@ -224,7 +226,7 @@ describe('POST /api/admin/reports/optimize', () => {
     }
 
     expect(getJob(jobId)?.status).toBe('success')
-    expect(vi.mocked(uploadBlob)).not.toHaveBeenCalled()
+    expect(vi.mocked(uploadBlobFromFile)).not.toHaveBeenCalled()
   })
 
   it('starts an optimization job and threads progress events through the store', async () => {
