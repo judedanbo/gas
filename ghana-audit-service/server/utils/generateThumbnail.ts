@@ -1,10 +1,10 @@
 import { execFileSync } from 'node:child_process'
 import { existsSync, mkdirSync, unlinkSync } from 'node:fs'
-import { readFile, copyFile, unlink } from 'node:fs/promises'
+import { copyFile, unlink } from 'node:fs/promises'
 import { join } from 'node:path'
 import { tmpdir } from 'node:os'
 import { randomUUID } from 'node:crypto'
-import { isBlobStorageConfigured, uploadBlob } from './blobStorage'
+import { isBlobStorageConfigured, uploadBlobFromFile } from './blobStorage'
 
 const THUMBNAIL_WIDTH = 600
 const THUMBNAIL_DIR = 'public/uploads/thumbnails'
@@ -54,7 +54,7 @@ export async function generateThumbnailFromPdf(pdfPath: string): Promise<string 
 
   try {
     if (isBlobStorageConfigured()) {
-      await uploadBlob(`uploads/thumbnails/${finalName}`, await readFile(tempJpg), 'image/jpeg')
+      await uploadBlobFromFile(`uploads/thumbnails/${finalName}`, tempJpg, 'image/jpeg')
     } else {
       const uploadDir = join(process.cwd(), THUMBNAIL_DIR)
       ensureDir(uploadDir)

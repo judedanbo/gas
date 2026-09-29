@@ -3,7 +3,7 @@ import { writeFileSync, existsSync, mkdtempSync, rmSync, readdirSync } from 'nod
 import { join } from 'node:path'
 import { tmpdir } from 'node:os'
 import { execFileSync } from 'node:child_process'
-import { isBlobStorageConfigured, uploadBlob } from '~/server/utils/blobStorage'
+import { isBlobStorageConfigured, uploadBlobFromFile } from '~/server/utils/blobStorage'
 import { generateThumbnailFromPdf } from '~/server/utils/generateThumbnail'
 
 // Per CLAUDE.md: vi.mock factories must use `function` declarations (hoisted).
@@ -21,7 +21,7 @@ vi.mock('node:child_process', async (importOriginal) => {
 
 vi.mock('~/server/utils/blobStorage', () => ({
   isBlobStorageConfigured: vi.fn(() => false),
-  uploadBlob: vi.fn(async () => undefined)
+  uploadBlobFromFile: vi.fn(async () => undefined)
 }))
 
 // The pdftoppm mock writes the expected output file next to the prefix it is
@@ -68,9 +68,10 @@ describe('generateThumbnailFromPdf', () => {
     const url = await generateThumbnailFromPdf(pdfPath)
 
     expect(url).toMatch(/^\/uploads\/thumbnails\/\d{8}-[0-9a-f-]+\.jpg$/)
-    expect(vi.mocked(uploadBlob)).toHaveBeenCalledWith(
+    // Uploaded by temp-file path (streamed), not as an in-memory Buffer.
+    expect(vi.mocked(uploadBlobFromFile)).toHaveBeenCalledWith(
       `uploads/thumbnails/${url!.split('/').pop()}`,
-      expect.anything(),
+      expect.stringMatching(/\.jpg$/),
       'image/jpeg'
     )
     // The tmpdir render must not linger after upload.
@@ -89,12 +90,12 @@ describe('generateThumbnailFromPdf', () => {
     expect(existsSync(join(workDir, 'public/uploads/thumbnails', url!.split('/').pop()!))).toBe(
       true
     )
-    expect(vi.mocked(uploadBlob)).not.toHaveBeenCalled()
+    expect(vi.mocked(uploadBlobFromFile)).not.toHaveBeenCalled()
   })
 
   it('returns null when the Blob upload fails', async () => {
     vi.mocked(isBlobStorageConfigured).mockReturnValue(true)
-    vi.mocked(uploadBlob).mockRejectedValue(new Error('azure down'))
+    vi.mocked(uploadBlobFromFile).mockRejectedValue(new Error('azure down'))
     mockPdftoppmSuccess()
 
     await expect(generateThumbnailFromPdf(pdfPath)).resolves.toBeNull()

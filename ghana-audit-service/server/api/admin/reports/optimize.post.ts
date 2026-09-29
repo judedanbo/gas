@@ -1,9 +1,8 @@
 import { statSync } from 'node:fs'
-import { readFile } from 'node:fs/promises'
 import { requirePermission } from '../../../utils/adminHelpers'
 import { persistOptimizationResult } from '../../../utils/persistOptimizationResult'
 import { materializePdfSource, type LocalPdfSource } from '../../../utils/pdfSource'
-import { uploadBlob } from '../../../utils/blobStorage'
+import { uploadBlobFromFile } from '../../../utils/blobStorage'
 import { logAuditAction } from '../../../utils/auditLogger'
 import {
   optimizeReportPdf,
@@ -109,9 +108,11 @@ async function runOptimization(
     // Blob-backed file: pdfPath is a temp download, so push the optimized
     // bytes back to the same key. Must happen before the DB fileSize update
     // and the success event — if the upload fails, Blob still holds the
-    // original and the error path reports honestly.
+    // original and the error path reports honestly. Streamed from disk in
+    // blocks rather than read into a Buffer: PDFs run to 100MB and the pod
+    // memory limit is 512Mi.
     if (blobKey && !result.skippedCompression) {
-      await uploadBlob(blobKey, await readFile(pdfPath), 'application/pdf')
+      await uploadBlobFromFile(blobKey, pdfPath, 'application/pdf')
     }
 
     // Persist size + optimization metadata on the report row — by reportId

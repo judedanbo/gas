@@ -5,6 +5,7 @@ import {
   isBlobStorageConfigured,
   getContainerClient,
   uploadBlob,
+  uploadBlobFromFile,
   downloadBlob,
   blobExists,
   tryBlobSource,
@@ -96,12 +97,16 @@ describe('blob storage configuration', () => {
 // Minimal fake ContainerClient capturing uploads and serving canned downloads.
 function makeFakeContainer(opts: { existingKeys?: string[]; download?: unknown } = {}) {
   const uploads: Array<{ key: string; data: unknown; contentType?: string }> = []
+  const fileUploads: Array<{ key: string; filePath: string; contentType?: string }> = []
   const existing = new Set(opts.existingKeys ?? [])
   const client = {
     getBlockBlobClient(key: string) {
       return {
         async uploadData(data: unknown, options: { blobHTTPHeaders?: { blobContentType?: string } }) {
           uploads.push({ key, data, contentType: options?.blobHTTPHeaders?.blobContentType })
+        },
+        async uploadFile(filePath: string, options: { blobHTTPHeaders?: { blobContentType?: string } }) {
+          fileUploads.push({ key, filePath, contentType: options?.blobHTTPHeaders?.blobContentType })
         }
       }
     },
@@ -121,7 +126,7 @@ function makeFakeContainer(opts: { existingKeys?: string[]; download?: unknown }
       }
     }
   }
-  return { client, uploads }
+  return { client, uploads, fileUploads }
 }
 
 describe('blob upload/download/exists wrappers', () => {
@@ -144,6 +149,25 @@ describe('blob upload/download/exists wrappers', () => {
   it('uploadBlob throws when blob storage is unconfigured', async () => {
     __setContainerClientForTests(null)
     await expect(uploadBlob('pdf/reports/x.pdf', Buffer.from('x'), 'application/pdf')).rejects.toThrow()
+  })
+
+  it('uploadBlobFromFile streams the file by path via the SDK uploadFile, never uploadData', async () => {
+    const fake = makeFakeContainer()
+    __setContainerClientForTests(fake.client as never)
+
+    await uploadBlobFromFile('pdf/reports/big.pdf', '/tmp/big.pdf', 'application/pdf')
+
+    expect(fake.fileUploads).toEqual([
+      { key: 'pdf/reports/big.pdf', filePath: '/tmp/big.pdf', contentType: 'application/pdf' }
+    ])
+    expect(fake.uploads).toEqual([])
+  })
+
+  it('uploadBlobFromFile throws when blob storage is unconfigured', async () => {
+    __setContainerClientForTests(null)
+    await expect(
+      uploadBlobFromFile('pdf/reports/big.pdf', '/tmp/big.pdf', 'application/pdf')
+    ).rejects.toThrow()
   })
 
   it('downloadBlob returns the stream and metadata for an existing blob', async () => {

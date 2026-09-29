@@ -88,6 +88,27 @@ export async function uploadBlob(key: string, data: Buffer, contentType: string)
 }
 
 /**
+ * Upload the file at `filePath` to `key` with the given content type. Unlike
+ * uploadBlob() this never holds the whole file in memory: the SDK's
+ * uploadFile() reads it in blocks, which matters for report PDFs (up to
+ * 100MB) on a pod capped at 512Mi. Throws when Blob storage is unconfigured —
+ * same contract as uploadBlob().
+ */
+export async function uploadBlobFromFile(
+  key: string,
+  filePath: string,
+  contentType: string
+): Promise<void> {
+  const client = getContainerClient()
+  if (!client) {
+    throw new Error('Blob storage is not configured (AZURE_STORAGE_CONNECTION_STRING / AZURE_BLOB_CONTAINER)')
+  }
+  await client.getBlockBlobClient(key).uploadFile(filePath, {
+    blobHTTPHeaders: { blobContentType: contentType }
+  })
+}
+
+/**
  * Open a readable stream for `key`. Returns null when Blob storage is
  * unconfigured (caller falls back to disk) or the blob does not exist (404).
  */
