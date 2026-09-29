@@ -102,11 +102,21 @@ function makeFakeContainer(opts: { existingKeys?: string[]; download?: unknown }
   const client = {
     getBlockBlobClient(key: string) {
       return {
-        async uploadData(data: unknown, options: { blobHTTPHeaders?: { blobContentType?: string } }) {
+        async uploadData(
+          data: unknown,
+          options: { blobHTTPHeaders?: { blobContentType?: string } }
+        ) {
           uploads.push({ key, data, contentType: options?.blobHTTPHeaders?.blobContentType })
         },
-        async uploadFile(filePath: string, options: { blobHTTPHeaders?: { blobContentType?: string } }) {
-          fileUploads.push({ key, filePath, contentType: options?.blobHTTPHeaders?.blobContentType })
+        async uploadFile(
+          filePath: string,
+          options: { blobHTTPHeaders?: { blobContentType?: string } }
+        ) {
+          fileUploads.push({
+            key,
+            filePath,
+            contentType: options?.blobHTTPHeaders?.blobContentType
+          })
         }
       }
     },
@@ -148,7 +158,9 @@ describe('blob upload/download/exists wrappers', () => {
 
   it('uploadBlob throws when blob storage is unconfigured', async () => {
     __setContainerClientForTests(null)
-    await expect(uploadBlob('pdf/reports/x.pdf', Buffer.from('x'), 'application/pdf')).rejects.toThrow()
+    await expect(
+      uploadBlob('pdf/reports/x.pdf', Buffer.from('x'), 'application/pdf')
+    ).rejects.toThrow()
   })
 
   it('uploadBlobFromFile streams the file by path via the SDK uploadFile, never uploadData', async () => {

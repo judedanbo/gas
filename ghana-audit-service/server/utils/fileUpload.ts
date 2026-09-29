@@ -1,9 +1,13 @@
 import { randomUUID } from 'crypto'
-import { existsSync, mkdirSync } from 'fs'
-import { writeFile } from 'fs/promises'
+import { createWriteStream, existsSync, mkdirSync } from 'fs'
+import { copyFile, unlink } from 'fs/promises'
+import { tmpdir } from 'os'
 import { join, extname } from 'path'
-import type { H3Event, MultiPartData } from 'h3'
-import { blobKeyFromFileUrl, getContainerClient, uploadBlob } from './blobStorage'
+import type { Readable } from 'stream'
+import { pipeline } from 'stream/promises'
+import Busboy from 'busboy'
+import { createError, type H3Error, type H3Event } from 'h3'
+import { blobKeyFromFileUrl, getContainerClient, uploadBlobFromFile } from './blobStorage'
 
 export interface UploadConfig {
   allowedTypes: string[]
@@ -25,6 +29,17 @@ export interface UploadResult {
   originalName: string
   size: number
   mimeType: string
+}
+
+/**
+ * A multipart file part that has been streamed to a temporary file on disk.
+ * The caller owns `tempPath` and must remove it when done.
+ */
+export interface ReceivedFile {
+  tempPath: string
+  originalName: string
+  mimeType: string
+  size: number
 }
 
 export const uploadConfigs: Record<string, UploadConfig> = {
@@ -69,6 +84,15 @@ export function getUploadBaseDir(): string {
 }
 
 /**
+ * Directory that in-flight uploads are spooled to before they are persisted.
+ * Defaults to the OS temp dir; override with UPLOAD_TMP_DIR (e.g. to point at a
+ * dedicated volume when the container root filesystem is read-only).
+ */
+function getUploadTempDir(): string {
+  return process.env.UPLOAD_TMP_DIR || tmpdir()
+}
+
+/**
  * Ensure upload directory exists
  */
 function ensureDirectoryExists(dir: string): void {
@@ -101,46 +125,167 @@ function getExtensionFromMime(mimeType: string): string {
   return mimeToExt[mimeType] || ''
 }
 
-/**
- * Validate file against config
- */
-function validateFile(
-  file: MultiPartData,
-  config: UploadConfig
-): { valid: boolean; error?: string } {
-  if (!file.data || file.data.length === 0) {
-    return { valid: false, error: 'File is empty' }
+async function removeQuietly(path: string): Promise<void> {
+  try {
+    await unlink(path)
+  } catch {
+    // Already gone (never created, or cleaned up on the error path).
   }
-
-  if (file.data.length > config.maxSize) {
-    const maxMB = config.maxSize / (1024 * 1024)
-    return { valid: false, error: `File exceeds maximum size of ${maxMB}MB` }
-  }
-
-  const mimeType = file.type || 'application/octet-stream'
-  if (!config.allowedTypes.includes(mimeType)) {
-    return {
-      valid: false,
-      error: `File type ${mimeType} is not allowed. Allowed types: ${config.allowedTypes.join(', ')}`
-    }
-  }
-
-  return { valid: true }
 }
 
 /**
- * Persist validated file bytes and return the public-facing URL.
+ * Stream the `file` part of a multipart/form-data request to a temporary file,
+ * enforcing the config's size and MIME limits as the bytes arrive.
  *
- * For `backend: 'blob'` configs the bytes go to Azure Blob Storage when a
- * container client is available; otherwise (no Azure config, or 'disk' backend)
- * they are written to the local filesystem. The returned URL is identical
- * either way, so the DB `fileUrl` contract and the `/api/downloads/**`
+ * This deliberately does NOT use h3's readMultipartFormData(): that helper
+ * buffers the whole body and then parses it byte-by-byte into a plain JS
+ * array (roughly 8 bytes of heap per byte of upload, plus copies), which
+ * exhausts the pod's memory on large report PDFs and crashes the server —
+ * surfacing to the browser as a 502 from the ingress. Streaming keeps memory
+ * flat regardless of file size.
+ *
+ * `request` is the raw Node request (or any Readable emitting the multipart
+ * body); `headers` must carry the multipart content-type with its boundary.
+ * Resolves with the spooled file; rejects with a client-facing 400 H3 error for
+ * missing/oversize/disallowed files or a malformed body, and a 500 when the
+ * spool file itself cannot be written.
+ */
+export async function receiveMultipartFile(
+  request: Readable,
+  headers: Record<string, string | string[] | undefined>,
+  config: UploadConfig
+): Promise<ReceivedFile> {
+  const contentType = headers['content-type']
+  if (typeof contentType !== 'string' || !contentType.startsWith('multipart/form-data')) {
+    throw createError({ statusCode: 400, statusMessage: 'No file uploaded' })
+  }
+
+  let parser: ReturnType<typeof Busboy>
+  try {
+    parser = Busboy({
+      headers,
+      // Browsers send filenames as UTF-8; busboy's default (latin1) mangles
+      // non-ASCII names, which h3 previously re-decoded for us.
+      defParamCharset: 'utf8',
+      limits: { files: 1, fileSize: config.maxSize, fields: 20, fieldSize: 64 * 1024 }
+    })
+  } catch (error) {
+    throw createError({
+      statusCode: 400,
+      statusMessage: 'Malformed upload',
+      data: { error: error instanceof Error ? error.message : String(error) }
+    })
+  }
+
+  const tempDir = getUploadTempDir()
+  ensureDirectoryExists(tempDir)
+  const tempPath = join(tempDir, `gas-upload-${randomUUID()}`)
+
+  // Mutable holder rather than bare `let`s: TS narrows closure-assigned lets
+  // to their initialiser at the read sites below.
+  const state = {
+    received: null as ReceivedFile | null,
+    rejection: null as H3Error | null,
+    spool: null as Promise<void> | null
+  }
+
+  parser.on('file', (name, stream, info) => {
+    if (name !== 'file' || state.received) {
+      // Not the field we want (or a second file): drain so busboy can proceed.
+      stream.resume()
+      return
+    }
+
+    const mimeType = info.mimeType || 'application/octet-stream'
+    if (!config.allowedTypes.includes(mimeType)) {
+      state.rejection = createError({
+        statusCode: 400,
+        statusMessage: `File type ${mimeType} is not allowed. Allowed types: ${config.allowedTypes.join(', ')}`
+      })
+      stream.resume()
+      return
+    }
+
+    const received: ReceivedFile = {
+      tempPath,
+      originalName: info.filename || `upload${getExtensionFromMime(mimeType)}`,
+      mimeType,
+      size: 0
+    }
+    state.received = received
+
+    stream.on('data', (chunk: Buffer) => {
+      received.size += chunk.length
+    })
+    stream.on('limit', () => {
+      const maxMB = config.maxSize / (1024 * 1024)
+      state.rejection = createError({
+        statusCode: 400,
+        statusMessage: `File exceeds maximum size of ${maxMB}MB`
+      })
+    })
+
+    state.spool = pipeline(stream, createWriteStream(tempPath))
+  })
+
+  try {
+    await pipeline(request, parser)
+  } catch (error) {
+    // The spool pipeline is torn down with the request; swallow its rejection
+    // so it doesn't surface as an unhandled promise.
+    await state.spool?.catch(() => undefined)
+    await removeQuietly(tempPath)
+    throw createError({
+      statusCode: 400,
+      statusMessage: 'Malformed upload',
+      data: { error: error instanceof Error ? error.message : String(error) }
+    })
+  }
+
+  try {
+    await state.spool
+  } catch (error) {
+    await removeQuietly(tempPath)
+    throw createError({
+      statusCode: 500,
+      statusMessage: 'Failed to save file',
+      data: { error: error instanceof Error ? error.message : String(error) }
+    })
+  }
+
+  if (state.rejection) {
+    await removeQuietly(tempPath)
+    throw state.rejection
+  }
+
+  if (!state.received) {
+    await removeQuietly(tempPath)
+    throw createError({ statusCode: 400, statusMessage: 'No file found in request' })
+  }
+
+  if (state.received.size === 0) {
+    await removeQuietly(tempPath)
+    throw createError({ statusCode: 400, statusMessage: 'File is empty' })
+  }
+
+  return state.received
+}
+
+/**
+ * Persist a spooled upload from `sourcePath` and return the public-facing URL.
+ *
+ * For `backend: 'blob'` configs the file is streamed to Azure Blob Storage when
+ * a container client is available; otherwise (no Azure config, or 'disk'
+ * backend) it is copied into the local upload directory. The returned URL is
+ * identical either way, so the DB `fileUrl` contract and the `/api/downloads/**`
  * indirection are unchanged regardless of backend.
+ *
+ * The source file is left in place; the caller removes it.
  */
 export async function persistUpload(
   config: UploadConfig,
   filename: string,
-  data: Buffer,
+  sourcePath: string,
   mimeType: string
 ): Promise<string> {
   const urlBase = config.urlBase || '/uploads'
@@ -151,14 +296,16 @@ export async function persistUpload(
     if (!key) {
       throw new Error(`Could not derive a blob key from "${urlPath}"`)
     }
-    await uploadBlob(key, data, mimeType)
+    await uploadBlobFromFile(key, sourcePath, mimeType)
     return urlPath
   }
 
   const baseDir = config.baseDir || getUploadBaseDir()
   const uploadDir = join(baseDir, config.directory)
   ensureDirectoryExists(uploadDir)
-  await writeFile(join(uploadDir, filename), data)
+  // copyFile rather than rename: the spool dir and the upload dir are usually
+  // different filesystems (tmpfs / Azure Files mount), where rename fails.
+  await copyFile(sourcePath, join(uploadDir, filename))
   return urlPath
 }
 
@@ -177,56 +324,33 @@ export async function handleFileUpload(
     })
   }
 
-  // Parse multipart form data
-  const formData = await readMultipartFormData(event)
-  if (!formData || formData.length === 0) {
-    throw createError({
-      statusCode: 400,
-      statusMessage: 'No file uploaded'
-    })
-  }
+  const req = event.node.req
+  const received = await receiveMultipartFile(req, req.headers, config)
 
-  // Find the file field
-  const file = formData.find((part) => part.name === 'file')
-  if (!file || !file.data) {
-    throw createError({
-      statusCode: 400,
-      statusMessage: 'No file found in request'
-    })
-  }
-
-  // Validate file
-  const validation = validateFile(file, config)
-  if (!validation.valid) {
-    throw createError({
-      statusCode: 400,
-      statusMessage: validation.error
-    })
-  }
-
-  // Generate filename
-  const originalName = file.filename || `upload${getExtensionFromMime(file.type || '')}`
-  const filename = generateFilename(originalName)
-  const mimeType = file.type || 'application/octet-stream'
-
-  // Persist to the configured backend (Blob for reports, disk otherwise)
-  let url: string
   try {
-    url = await persistUpload(config, filename, file.data, mimeType)
-  } catch (error) {
-    throw createError({
-      statusCode: 500,
-      statusMessage: 'Failed to save file',
-      data: { error: error instanceof Error ? error.message : String(error) }
-    })
-  }
+    const filename = generateFilename(received.originalName)
 
-  return {
-    url,
-    filename,
-    originalName,
-    size: file.data.length,
-    mimeType
+    // Persist to the configured backend (Blob for reports, disk otherwise)
+    let url: string
+    try {
+      url = await persistUpload(config, filename, received.tempPath, received.mimeType)
+    } catch (error) {
+      throw createError({
+        statusCode: 500,
+        statusMessage: 'Failed to save file',
+        data: { error: error instanceof Error ? error.message : String(error) }
+      })
+    }
+
+    return {
+      url,
+      filename,
+      originalName: received.originalName,
+      size: received.size,
+      mimeType: received.mimeType
+    }
+  } finally {
+    await removeQuietly(received.tempPath)
   }
 }
 

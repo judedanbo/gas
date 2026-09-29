@@ -25,8 +25,7 @@ let initialised = false
  */
 export function isBlobStorageConfigured(): boolean {
   return Boolean(
-    process.env.AZURE_STORAGE_CONNECTION_STRING?.trim() &&
-      process.env.AZURE_BLOB_CONTAINER?.trim()
+    process.env.AZURE_STORAGE_CONNECTION_STRING?.trim() && process.env.AZURE_BLOB_CONTAINER?.trim()
   )
 }
 
@@ -80,7 +79,9 @@ export interface BlobDownload {
 export async function uploadBlob(key: string, data: Buffer, contentType: string): Promise<void> {
   const client = getContainerClient()
   if (!client) {
-    throw new Error('Blob storage is not configured (AZURE_STORAGE_CONNECTION_STRING / AZURE_BLOB_CONTAINER)')
+    throw new Error(
+      'Blob storage is not configured (AZURE_STORAGE_CONNECTION_STRING / AZURE_BLOB_CONTAINER)'
+    )
   }
   await client.getBlockBlobClient(key).uploadData(data, {
     blobHTTPHeaders: { blobContentType: contentType }
@@ -88,11 +89,10 @@ export async function uploadBlob(key: string, data: Buffer, contentType: string)
 }
 
 /**
- * Upload the file at `filePath` to `key` with the given content type. Unlike
- * uploadBlob() this never holds the whole file in memory: the SDK's
- * uploadFile() reads it in blocks, which matters for report PDFs (up to
- * 100MB) on a pod capped at 512Mi. Throws when Blob storage is unconfigured —
- * same contract as uploadBlob().
+ * Upload a file from disk to `key` with the given content type. The SDK streams
+ * the file in blocks, so memory stays flat regardless of file size — this is
+ * the path admin uploads take (see server/utils/fileUpload.ts). Throws if Blob
+ * storage is unconfigured, like uploadBlob().
  */
 export async function uploadBlobFromFile(
   key: string,
@@ -101,7 +101,9 @@ export async function uploadBlobFromFile(
 ): Promise<void> {
   const client = getContainerClient()
   if (!client) {
-    throw new Error('Blob storage is not configured (AZURE_STORAGE_CONNECTION_STRING / AZURE_BLOB_CONTAINER)')
+    throw new Error(
+      'Blob storage is not configured (AZURE_STORAGE_CONNECTION_STRING / AZURE_BLOB_CONTAINER)'
+    )
   }
   await client.getBlockBlobClient(key).uploadFile(filePath, {
     blobHTTPHeaders: { blobContentType: contentType }
@@ -138,7 +140,9 @@ export async function downloadBlob(key: string): Promise<BlobDownload | null> {
  * unsafe (traversal), or the blob is missing. Download endpoints call this
  * first and fall back to the on-disk asset when it returns null.
  */
-export async function tryBlobSource(fileUrl: string | null | undefined): Promise<BlobDownload | null> {
+export async function tryBlobSource(
+  fileUrl: string | null | undefined
+): Promise<BlobDownload | null> {
   const key = blobKeyFromFileUrl(fileUrl)
   if (!key) return null
   return downloadBlob(key)
