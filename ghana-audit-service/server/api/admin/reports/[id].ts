@@ -8,6 +8,10 @@ import { materializePdfSource } from '../../../utils/pdfSource'
 import { fileSizeToBytes } from '../../../utils/fileSize'
 import { generateThumbnailFromPdf } from '../../../utils/generateThumbnail'
 import { safeError } from '../../../utils/errors'
+import {
+  resolveUploadJobForSave,
+  linkSavedReportToUploadJob
+} from '../../../utils/reportUploadLink'
 
 export default defineEventHandler(async (event) => {
   const method = event.method
@@ -132,10 +136,22 @@ async function handleUpdate(event: H3Event, id: number) {
     }
   }
 
-  // Auto-generate thumbnail if none was provided and the PDF changed or had no thumbnail
-  let thumbnail = input.thumbnail || null
+  // A background upload job for a replaced file may already hold the
+  // thumbnail and final size — or still be producing them (the pipeline
+  // patches the row once linked below).
   const fileUrlChanged = input.fileUrl !== existingReport.fileUrl
-  if (!thumbnail && input.fileUrl && (fileUrlChanged || !existingReport.thumbnail)) {
+  const uploadJob = await resolveUploadJobForSave(input.uploadJobId, input.fileUrl)
+  let thumbnail = input.thumbnail || uploadJob.thumbnailUrl || null
+  const fileSize = uploadJob.finalSize ?? input.fileSize
+
+  // Auto-generate thumbnail if none was provided and the PDF changed or had
+  // no thumbnail — unless an upload job is about to deliver one.
+  if (
+    !thumbnail &&
+    input.fileUrl &&
+    (fileUrlChanged || !existingReport.thumbnail) &&
+    !uploadJob.pending
+  ) {
     const source = await materializePdfSource(input.fileUrl)
     if (source) {
       try {
@@ -164,7 +180,7 @@ async function handleUpdate(event: H3Event, id: number) {
         input.category,
         new Date(input.publishedAt),
         input.fileUrl,
-        input.fileSize,
+        fileSize,
         thumbnail,
         input.isPublished,
         user.id,
@@ -194,6 +210,8 @@ async function handleUpdate(event: H3Event, id: number) {
     }
 
     await connection.commit()
+
+    await linkSavedReportToUploadJob(input.uploadJobId, id, input.fileUrl)
 
     // Fetch updated report
     const [updatedReport] = await db

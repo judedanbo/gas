@@ -104,7 +104,7 @@ function ensureDirectoryExists(dir: string): void {
 /**
  * Generate a unique filename
  */
-function generateFilename(originalName: string): string {
+export function generateFilename(originalName: string): string {
   const ext = extname(originalName).toLowerCase()
   const uuid = randomUUID()
   const date = new Date().toISOString().slice(0, 10).replace(/-/g, '')
@@ -123,6 +123,16 @@ function getExtensionFromMime(mimeType: string): string {
     'image/gif': '.gif'
   }
   return mimeToExt[mimeType] || ''
+}
+
+/**
+ * Public URL a persisted upload is served under. Deterministic from the
+ * config + filename, so callers can hand the URL to the client before the
+ * bytes have actually landed (background report uploads).
+ */
+export function uploadUrlFor(config: UploadConfig, filename: string): string {
+  const urlBase = config.urlBase || '/uploads'
+  return `${urlBase}/${config.directory}/${filename}`
 }
 
 async function removeQuietly(path: string): Promise<void> {
@@ -288,8 +298,7 @@ export async function persistUpload(
   sourcePath: string,
   mimeType: string
 ): Promise<string> {
-  const urlBase = config.urlBase || '/uploads'
-  const urlPath = `${urlBase}/${config.directory}/${filename}`
+  const urlPath = uploadUrlFor(config, filename)
 
   if (config.backend === 'blob' && getContainerClient()) {
     const key = blobKeyFromFileUrl(urlPath)

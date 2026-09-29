@@ -5,13 +5,7 @@
  * CRUD depth, modules scope which areas. Admins implicitly have all modules.
  */
 export type ModuleKey =
-  | 'reports'
-  | 'content'
-  | 'careers'
-  | 'organization'
-  | 'media'
-  | 'analytics'
-  | 'communications'
+  'reports' | 'content' | 'careers' | 'organization' | 'media' | 'analytics' | 'communications'
 
 export const ALL_MODULES: ModuleKey[] = [
   'reports',
@@ -129,22 +123,52 @@ export interface UploadResponse {
   url: string
 }
 
+// Mirrors ReportUploadJobDTO in server/utils/reportUploadJobs.ts — the
+// persistent record of a background A-G report upload (store → thumbnail →
+// optimize). Polled by the dashboard and the upload modal.
+export type ReportUploadJobStatus =
+  'queued' | 'storing' | 'thumbnail' | 'optimizing' | 'completed' | 'failed'
+
+export interface ReportUploadJob {
+  id: string
+  status: ReportUploadJobStatus
+  active: boolean
+  progress: number
+  phase: string | null
+  page: number
+  totalPages: number
+  originalName: string
+  filename: string
+  fileUrl: string
+  mimeType: string
+  size: number
+  finalSize: number | null
+  preset: 'screen' | 'ebook' | 'printer'
+  thumbnailUrl: string | null
+  optimizationJobId: string | null
+  optimizationStatus: 'pending' | 'success' | 'error'
+  optimizationResult: ReportOptimizationMeta | null
+  error: string | null
+  errorCode: string | null
+  reportId: number | null
+  reportTitle: string | null
+  user: { id: number; name: string } | null
+  dismissedAt: string | null
+  createdAt: string
+  updatedAt: string
+  completedAt: string | null
+}
+
+export interface ReportUploadResponse extends UploadResponse {
+  jobId: string
+  job: ReportUploadJob
+}
+
 // Content type categories
 export type AuditCategory =
-  | 'financial'
-  | 'compliance'
-  | 'it'
-  | 'performance'
-  | 'technical'
-  | 'follow-up'
-  | 'special'
+  'financial' | 'compliance' | 'it' | 'performance' | 'technical' | 'follow-up' | 'special'
 export type PublicationType =
-  | 'press-statement'
-  | 'bulletin'
-  | 'guideline'
-  | 'manual'
-  | 'strategy'
-  | 'law'
+  'press-statement' | 'bulletin' | 'guideline' | 'manual' | 'strategy' | 'law'
 export type VacancyType = 'full-time' | 'part-time' | 'contract'
 export type TenderStatus = 'open' | 'closed' | 'awarded' | 'cancelled'
 export type SubmissionStatus = 'pending' | 'read' | 'responded' | 'archived'
@@ -511,6 +535,9 @@ export interface ReportInput {
   // emit); the update endpoint ignores these fields.
   optimizedAt?: string | null
   optimizationMeta?: ReportOptimizationMeta | null
+  // Background upload job that produced fileUrl; lets the server link the
+  // saved report to it and pull the job's outputs.
+  uploadJobId?: string | null
   translations: Translations<{
     title: string
     summary?: string | null

@@ -145,11 +145,15 @@
                 :thumbnail="form.thumbnail"
                 :error="errors.fileUrl"
                 :report-id="id"
+                :upload-job-id="form.uploadJobId"
                 required
                 @update:file-url="form.fileUrl = $event"
                 @update:file-size="form.fileSize = $event"
                 @update:thumbnail="form.thumbnail = $event"
+                @update:upload-job="form.uploadJobId = $event"
               />
+              <!-- Server-side pipeline for a replacement upload -->
+              <AdminUiAdminUploadJobProgress v-if="pageJob" :job="pageJob" class="mt-4" />
               <div
                 v-if="optimization.status.value !== 'idle'"
                 class="mt-4 bg-gray-50 dark:bg-gray-700/30 rounded-lg p-3 text-sm"
@@ -505,7 +509,7 @@
   import { useOptimizePreset } from '~/composables/useReportOptimization'
   import { formatBytes } from '~/utils/formatBytes'
   import { optimizationPhaseLabel } from '~/utils/reportOptimizationUi'
-  import type { AdminAuditReport, ReportInput } from '~/types/admin'
+  import type { AdminAuditReport, ReportInput, ReportUploadJob } from '~/types/admin'
 
   definePageMeta({
     layout: 'admin'
@@ -577,8 +581,33 @@
     thumbnail: '',
     isPublished: false,
     publishedAt: '',
+    uploadJobId: null,
     translations: {
       en: { title: '', summary: '' }
+    }
+  })
+
+  // Follow the background upload job behind a replacement file so the form
+  // picks up its cover / final size after the modal closes, and the row is
+  // refreshed once the pipeline has patched it (after save).
+  const uploadFollower = useReportUploadJob()
+  const pageJob = computed<ReportUploadJob | null>(() => {
+    const job = uploadFollower.job.value
+    return job && job.fileUrl === form.fileUrl ? job : null
+  })
+  watch(
+    () => form.uploadJobId,
+    (jobId) => {
+      if (jobId) uploadFollower.follow(jobId)
+      else uploadFollower.reset()
+    }
+  )
+  watch(uploadFollower.job, async (job) => {
+    if (!job || job.fileUrl !== form.fileUrl) return
+    if (job.thumbnailUrl && !form.thumbnail) form.thumbnail = job.thumbnailUrl
+    if (job.status === 'completed') {
+      if (job.finalSize) form.fileSize = job.finalSize
+      if (currentItem.value?.fileUrl === job.fileUrl) await fetchOne(id)
     }
   })
 
@@ -858,6 +887,7 @@
       form.isPublished = currentItem.value.isPublished
       form.publishedAt = currentItem.value.publishedAt || ''
       form.translations = currentItem.value.translations || { en: { title: '', summary: '' } }
+      form.uploadJobId = null
       nextTick(() => markSaved())
     }
   }
