@@ -9,14 +9,19 @@ export const OPTIMIZATION_ERROR_MESSAGES: Record<string, string> = {
   TIMEOUT:
     'Optimization took too long and was stopped. The original file is unchanged — you can retry.',
   QUEUE_TIMEOUT:
-    'Optimization waited too long behind other jobs. The original file is unchanged — try again shortly.'
+    'Optimization waited too long behind other jobs. The original file is unchanged — try again shortly.',
+  INSPECT_FAILED:
+    'The PDF could not be read — it may be damaged or password-protected. The original file is unchanged.'
 }
 
 export function optimizationErrorMessage(code: string | null | undefined): string {
-  return (
-    (code ? OPTIMIZATION_ERROR_MESSAGES[code] : undefined) ??
-    'Optimization failed. The original file is unchanged.'
-  )
+  const known = code ? OPTIMIZATION_ERROR_MESSAGES[code] : undefined
+  if (known) return known
+  // Name the failing step (a fixed code, never internals) so a report from an
+  // admin can be matched to the server log line.
+  return code
+    ? `Optimization failed (${code}). The original file is unchanged.`
+    : 'Optimization failed. The original file is unchanged.'
 }
 
 export const OPTIMIZATION_PHASE_LABELS: Record<OptimizationPhase, string> = {
