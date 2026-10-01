@@ -14,12 +14,22 @@ import { formatBytes } from '~/utils/formatBytes'
 const UPLOAD_ERROR_MESSAGES: Record<string, string> = {
   STALLED:
     'The upload stopped responding and was abandoned (the server may have restarted). Please upload the file again.',
+  INTERRUPTED:
+    'The server restarted before the file was saved to storage. Please upload the file again.',
+  RESUME_FAILED:
+    'The server restarted during processing, and the saved file could not be found to finish it. Please upload the file again.',
   STORE_FAILED: 'The file could not be saved to storage. Please try again.',
   PIPELINE_FAILED: 'The upload could not be processed. Please try again.'
 }
 
+/** Waiting for another server to pick the job up after a restart. */
+function isAwaitingResume(job: ReportUploadJob): boolean {
+  return job.active && Boolean(job.interruptedAt)
+}
+
 /** Short status line for the current stage. */
 export function uploadJobStageLabel(job: ReportUploadJob): string {
+  if (isAwaitingResume(job)) return 'Server restarted — resuming shortly…'
   switch (job.status) {
     case 'queued':
       return 'Queued…'
@@ -43,8 +53,18 @@ export function uploadJobStageLabel(job: ReportUploadJob): string {
 
 /** Page x of N while inside the per-page optimizer phases, else null. */
 export function uploadJobPageLabel(job: ReportUploadJob): string | null {
-  if (job.status !== 'optimizing') return null
+  if (job.status !== 'optimizing' || isAwaitingResume(job)) return null
   return optimizationPageLabel(job.phase as OptimizationPhase | null, job.page, job.totalPages)
+}
+
+/**
+ * Explains why a running upload's progress went backwards: its previous run
+ * was cut short by a server restart and this one started the remaining
+ * steps over. Null otherwise.
+ */
+export function uploadJobResumeNote(job: ReportUploadJob): string | null {
+  if (!job.active || isAwaitingResume(job) || (job.attempts ?? 1) <= 1) return null
+  return 'Picked up again after a server restart — remaining steps restarted.'
 }
 
 /**

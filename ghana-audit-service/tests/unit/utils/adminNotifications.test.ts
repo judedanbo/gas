@@ -97,6 +97,20 @@ describe('uploadJobToNotification', () => {
     expect(n.actions).toEqual([])
   })
 
+  it('shows an interrupted upload as still running, resuming after the restart', () => {
+    const waiting = uploadJobToNotification(job({ interruptedAt: '2026-09-29T12:00:00.000Z' }))
+    expect(waiting).toMatchObject({
+      status: 'running',
+      progressLabel: 'Server restarted — resuming shortly…',
+      progressDetail: null
+    })
+
+    const resumed = uploadJobToNotification(job({ attempts: 2 }))
+    expect(resumed.notes).toEqual([
+      expect.objectContaining({ tone: 'muted', text: expect.stringMatching(/server restart/) })
+    ])
+  })
+
   it('offers to create a report from a finished, unattached upload', () => {
     const n = uploadJobToNotification(
       job({
@@ -224,6 +238,25 @@ describe('optimizationStatusToPatch', () => {
     expect(failed.status).toBe('error')
     expect(failed.title).toBe('Optimization failed')
     expect(failed.notes[0].text).toMatch(/took too long/)
+  })
+
+  it('reads a server restart as an interruption to run again, not a failure', () => {
+    const interrupted = optimizationStatusToPatch(
+      status({ status: 'error', active: false, errorCode: 'INTERRUPTED' }),
+      42
+    )
+    expect(interrupted).toMatchObject({
+      status: 'warning',
+      title: 'Optimization interrupted',
+      progress: null,
+      actions: [{ label: 'Open report', to: '/admin/reports/42/edit' }]
+    })
+    expect(interrupted.notes).toEqual([
+      {
+        text: expect.stringMatching(/interrupted by a server restart.*run optimization again/),
+        tone: 'warning'
+      }
+    ])
   })
 })
 

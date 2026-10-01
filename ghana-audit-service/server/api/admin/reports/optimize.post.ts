@@ -1,14 +1,13 @@
+import type { H3Event } from 'h3'
 import { requirePermission } from '../../../utils/adminHelpers'
+import { auditActorFromEvent } from '../../../utils/auditLogger'
 import { materializePdfSource } from '../../../utils/pdfSource'
 import type { CompressionPreset } from '../../../utils/pdfOptimizer'
-import { createJob } from '../../../utils/pdfOptimizationJobs'
-import { runReportOptimization } from '../../../utils/runReportOptimization'
 import {
-  enqueue,
-  getActiveJobForFile,
-  getActiveJobIdLocal,
-  registerActiveJob
-} from '../../../utils/pdfOptimizationScheduler'
+  isAcceptingOptimizations,
+  startExplicitOptimization
+} from '../../../utils/explicitOptimizations'
+import { getActiveJobForFile, getActiveJobIdLocal } from '../../../utils/pdfOptimizationScheduler'
 import { signSseTicket } from '../../../utils/sseTicket'
 
 const ALLOWED_PRESETS: CompressionPreset[] = ['screen', 'ebook', 'printer']
@@ -20,8 +19,22 @@ interface OptimizeBody {
   allowDropBookmarks?: boolean
 }
 
+/** This pod is shutting down; the retry reaches a live replica. */
+function serverRestarting(event: H3Event) {
+  setResponseHeader(event, 'Retry-After', 5)
+  return createError({
+    statusCode: 503,
+    statusMessage: 'The server is restarting. Please try again in a moment.',
+    data: { code: 'SERVER_RESTARTING' }
+  })
+}
+
 export default defineEventHandler(async (event) => {
   requirePermission(event, 'update')
+
+  // A pod that is shutting down must not start an optimization it would only
+  // interrupt (see explicitOptimizations.ts).
+  if (!isAcceptingOptimizations()) throw serverRestarting(event)
 
   const body = await readBody<OptimizeBody>(event)
   const fileUrl = body?.fileUrl
@@ -58,31 +71,30 @@ export default defineEventHandler(async (event) => {
   }
 
   // Re-check after the async materialize: a concurrent same-file POST on this
-  // pod may have claimed the file meanwhile. From here to registerActiveJob
-  // there is no await, so the claim itself is race-free in-process.
+  // pod may have claimed the file meanwhile. From here to the start there is
+  // no await, so the claim itself is race-free in-process.
   const raceWinner = getActiveJobIdLocal(fileUrl)
   if (raceWinner) {
     await source.cleanup()
     return { jobId: raceWinner, sseTicket, attached: true }
   }
 
-  const job = createJob(fileUrl, reportId)
-  registerActiveJob(fileUrl, job.id)
-
   // Run the optimizer detached from the request lifetime, throttled by the
   // scheduler (bounded concurrency + FIFO queue). The SSE endpoint
   // (optimize-stream.get.ts) streams the job's events to the admin UI.
-  enqueue(job.id, fileUrl, () =>
-    runReportOptimization({
-      jobId: job.id,
-      source,
-      fileUrl,
-      preset,
-      allowDropBookmarks,
-      event,
-      reportId
-    })
-  )
+  const job = startExplicitOptimization({
+    source,
+    fileUrl,
+    preset,
+    allowDropBookmarks,
+    actor: auditActorFromEvent(event),
+    reportId
+  })
+  if (!job) {
+    // The pod started shutting down while the PDF was being fetched.
+    await source.cleanup()
+    throw serverRestarting(event)
+  }
 
   return { jobId: job.id, sseTicket }
 })
