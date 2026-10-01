@@ -84,6 +84,11 @@ describe('uploadJobErrorMessage', () => {
       )
     ).toMatch(/bookmarks/)
     expect(
+      uploadJobErrorMessage(
+        job({ status: 'completed', optimizationStatus: 'error', errorCode: 'INTERRUPTED' })
+      )
+    ).toMatch(/server restarted before optimization/)
+    expect(
       uploadJobErrorMessage(job({ status: 'completed', optimizationStatus: 'success' }))
     ).toBeNull()
     expect(uploadJobErrorMessage(job({ status: 'optimizing' }))).toBeNull()

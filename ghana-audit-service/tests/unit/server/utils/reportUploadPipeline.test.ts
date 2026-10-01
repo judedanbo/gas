@@ -1,6 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import type { H3Event } from 'h3'
-import { runReportUploadPipeline } from '~/server/utils/reportUploadPipeline'
+import {
+  __resetReportUploadPipelinesForTests,
+  runReportUploadPipeline,
+  startReportUploadPipeline,
+  stopReportUploadPipelines
+} from '~/server/utils/reportUploadPipeline'
 import { persistUpload } from '~/server/utils/fileUpload'
 import { generateThumbnailFromPdf } from '~/server/utils/generateThumbnail'
 import { runReportOptimization } from '~/server/utils/runReportOptimization'
@@ -121,6 +126,7 @@ beforeEach(() => {
   store.rows.clear()
   store.statuses.length = 0
   __resetSchedulerForTests()
+  __resetReportUploadPipelinesForTests()
   vi.mocked(persistUpload).mockResolvedValue('/pdf/reports/20260929-x.pdf')
   vi.mocked(generateThumbnailFromPdf).mockResolvedValue('/uploads/thumbnails/cover.jpg')
   vi.mocked(runReportOptimization).mockImplementation(async ({ jobId }) => {
@@ -145,8 +151,11 @@ describe('runReportUploadPipeline', () => {
       '/tmp/spool.pdf',
       'application/pdf'
     )
-    // Thumbnail is rendered from the spooled copy, not re-downloaded.
-    expect(generateThumbnailFromPdf).toHaveBeenCalledWith('/tmp/spool.pdf')
+    // Thumbnail is rendered from the spooled copy, not re-downloaded, and can
+    // be killed on shutdown.
+    expect(generateThumbnailFromPdf).toHaveBeenCalledWith('/tmp/spool.pdf', {
+      signal: expect.any(AbortSignal)
+    })
 
     const final = store.rows.get(job.id)!
     expect(final.status).toBe('completed')
@@ -223,5 +232,100 @@ describe('runReportUploadPipeline', () => {
   it('is a no-op for an unknown job id', async () => {
     await runReportUploadPipeline('missing', '/tmp/spool.pdf', { preset: 'ebook', event })
     expect(persistUpload).not.toHaveBeenCalled()
+  })
+})
+
+describe('stopReportUploadPipelines (server shutdown)', () => {
+  function start(jobId: string): void {
+    startReportUploadPipeline(jobId, '/tmp/spool.pdf', { preset: 'ebook', event })
+  }
+
+  // How a killed pdftoppm looks to the pipeline: the render only ends when
+  // its signal aborts, and yields no thumbnail.
+  function renderUntilAborted(_path: string, opts?: { signal?: AbortSignal }) {
+    return new Promise<string | null>((resolve) => {
+      if (opts?.signal?.aborted) resolve(null)
+      else opts?.signal?.addEventListener('abort', () => resolve(null))
+    })
+  }
+
+  it('kills the cover render and completes without optimizing', async () => {
+    const job = seedJob()
+    vi.mocked(generateThumbnailFromPdf).mockImplementation(renderUntilAborted)
+
+    start(job.id)
+    await vi.waitFor(() => expect(generateThumbnailFromPdf).toHaveBeenCalled())
+    await stopReportUploadPipelines()
+
+    // Resolves only once the run has recorded its outcome.
+    expect(store.statuses).toEqual(['storing', 'thumbnail', 'completed'])
+    const final = store.rows.get(job.id)!
+    expect(final.optimizationStatus).toBe('error')
+    expect(final.errorCode).toBe('INTERRUPTED')
+    expect(final.thumbnailUrl).toBeNull()
+    expect(final.finalSize).toBe(5000)
+    expect(final.completedAt).toBeInstanceOf(Date)
+    expect(runReportOptimization).not.toHaveBeenCalled()
+    expect(applyUploadJobToReport).toHaveBeenCalledWith(
+      expect.objectContaining({ id: job.id, status: 'completed' })
+    )
+  })
+
+  it('keeps a cover that finished rendering as shutdown began', async () => {
+    const job = seedJob()
+    let stopping: Promise<void> | undefined
+    vi.mocked(generateThumbnailFromPdf).mockImplementation(async () => {
+      stopping = stopReportUploadPipelines()
+      return '/uploads/thumbnails/cover.jpg'
+    })
+
+    start(job.id)
+    await vi.waitFor(() => expect(stopping).toBeDefined())
+    await stopping
+
+    const final = store.rows.get(job.id)!
+    expect(final.status).toBe('completed')
+    expect(final.thumbnailUrl).toBe('/uploads/thumbnails/cover.jpg')
+    expect(final.errorCode).toBe('INTERRUPTED')
+    expect(runReportOptimization).not.toHaveBeenCalled()
+  })
+
+  it('still completes a run whose storing finishes during the grace period', async () => {
+    const job = seedJob()
+    let finishStoring!: () => void
+    vi.mocked(persistUpload).mockImplementation(
+      () =>
+        new Promise<string>((resolve) => {
+          finishStoring = () => resolve(job.fileUrl)
+        })
+    )
+    vi.mocked(generateThumbnailFromPdf).mockImplementation(renderUntilAborted)
+
+    start(job.id)
+    await vi.waitFor(() => expect(persistUpload).toHaveBeenCalled())
+    const stopping = stopReportUploadPipelines()
+    finishStoring()
+    await stopping
+
+    expect(store.statuses).toEqual(['storing', 'thumbnail', 'completed'])
+    expect(store.rows.get(job.id)!.errorCode).toBe('INTERRUPTED')
+    expect(runReportOptimization).not.toHaveBeenCalled()
+  })
+
+  it('stops waiting after the grace period for an optimization already under way', async () => {
+    const job = seedJob()
+    vi.mocked(runReportOptimization).mockImplementation(() => new Promise(() => {}))
+
+    start(job.id)
+    await vi.waitFor(() => expect(runReportOptimization).toHaveBeenCalled())
+    await stopReportUploadPipelines(20)
+
+    // Left for the stall watchdog, as before.
+    expect(store.rows.get(job.id)!.status).toBe('optimizing')
+  })
+
+  it('returns at once when no upload is running', async () => {
+    // A minute-long grace would time the test out if it were waited on.
+    await expect(stopReportUploadPipelines(60_000)).resolves.toBeUndefined()
   })
 })

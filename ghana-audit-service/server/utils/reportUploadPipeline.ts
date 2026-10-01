@@ -32,6 +32,14 @@ export interface ReportUploadPipelineOptions {
 // second (phase changes flush immediately so the label never lags).
 const PROGRESS_WRITE_INTERVAL_MS = 1_000
 
+// How long shutdown waits for interrupted runs to record their outcome. Short:
+// it comes out of the pod's termination grace period.
+const SHUTDOWN_GRACE_MS = 5_000
+
+// Aborted once, when the server shuts down (plugins/stopReportUploadPipelines.ts).
+let shutdown = new AbortController()
+const inFlight = new Set<Promise<void>>()
+
 /**
  * Kick off the pipeline detached from the request lifetime. The caller has
  * already persisted the job row and returned its id to the browser; from
@@ -42,9 +50,40 @@ export function startReportUploadPipeline(
   tempPath: string,
   opts: ReportUploadPipelineOptions
 ): void {
-  void runReportUploadPipeline(jobId, tempPath, opts).catch((err) => {
-    logError('reportUpload', err)
-  })
+  const run: Promise<void> = runReportUploadPipeline(jobId, tempPath, opts)
+    .catch((err) => {
+      logError('reportUpload', err)
+    })
+    .finally(() => {
+      inFlight.delete(run)
+    })
+  inFlight.add(run)
+}
+
+/**
+ * Server shutdown: abort every in-flight run — a cover render is killed and
+ * no run starts the optimizer — then wait up to `graceMs` for them to record
+ * their outcome. A run inside a stage that cannot be interrupted (storing, or
+ * an optimization already under way) may outlast the wait; the stall watchdog
+ * fails its job later, as before.
+ */
+export async function stopReportUploadPipelines(graceMs = SHUTDOWN_GRACE_MS): Promise<void> {
+  shutdown.abort()
+  if (inFlight.size === 0) return
+  let timer: ReturnType<typeof setTimeout> | undefined
+  await Promise.race([
+    Promise.allSettled(inFlight),
+    new Promise<void>((resolve) => {
+      timer = setTimeout(resolve, graceMs)
+    })
+  ])
+  clearTimeout(timer)
+}
+
+/** Test helper: re-arm the shutdown signal and forget tracked runs. */
+export function __resetReportUploadPipelinesForTests(): void {
+  shutdown = new AbortController()
+  inFlight.clear()
 }
 
 /**
@@ -54,13 +93,16 @@ export function startReportUploadPipeline(
  * 100MB report is never re-downloaded from Blob. Optimization failure is not
  * an upload failure: the original is already in storage, the job completes
  * with optimizationStatus = 'error' and the admin can retry from the edit
- * page. Only a storage failure marks the job failed.
+ * page. Only a storage failure marks the job failed. Server shutdown is
+ * treated the same way: the cover render is killed, the optimizer is not
+ * started, and the job completes with errorCode INTERRUPTED.
  */
 export async function runReportUploadPipeline(
   jobId: string,
   tempPath: string,
   opts: ReportUploadPipelineOptions
 ): Promise<void> {
+  const { signal } = shutdown
   const job = await getUploadJob(jobId)
   if (!job) {
     await unlink(tempPath).catch(() => {})
@@ -90,11 +132,11 @@ export async function runReportUploadPipeline(
     // 2. Thumbnail from the cover page. The optimizer preserves page 1
     //    byte-for-byte, so rendering it before optimization is safe and gets
     //    the cover onto the form sooner. Non-fatal: the admin can upload a
-    //    custom image.
+    //    custom image. Shutdown kills the render (null, like any failure).
     await updateUploadJob(jobId, { status: 'thumbnail', progress: STAGE_PROGRESS.thumbnail })
     let thumbnailUrl: string | null = null
     try {
-      thumbnailUrl = await generateThumbnailFromPdf(tempPath)
+      thumbnailUrl = await generateThumbnailFromPdf(tempPath, { signal })
     } catch (err) {
       logError('reportUpload', err)
     }
@@ -102,14 +144,24 @@ export async function runReportUploadPipeline(
     // 3. Optimize through the shared scheduler so background uploads and
     //    explicit "Optimize" clicks share the same concurrency cap and
     //    per-file dedup. The in-process job id is stored so the edit page's
-    //    SSE/poll attach keeps working for uploads too.
-    await updateUploadJob(jobId, {
-      status: 'optimizing',
-      phase: 'waiting',
-      progress: STAGE_PROGRESS.optimizingStart,
-      thumbnailUrl
-    })
-    const outcome = await optimizeInPlace(job, tempPath, opts)
+    //    SSE/poll attach keeps working for uploads too. Once the server is
+    //    shutting down the optimizer could not finish, so it is not started.
+    let outcome: OptimizeOutcome
+    if (signal.aborted) {
+      outcome = {
+        status: 'error',
+        error: 'Optimization was skipped because the server shut down',
+        errorCode: 'INTERRUPTED'
+      }
+    } else {
+      await updateUploadJob(jobId, {
+        status: 'optimizing',
+        phase: 'waiting',
+        progress: STAGE_PROGRESS.optimizingStart,
+        thumbnailUrl
+      })
+      outcome = await optimizeInPlace(job, tempPath, opts)
+    }
 
     const finalSize =
       outcome.status === 'success' && outcome.result && !outcome.result.skippedCompression
@@ -121,6 +173,8 @@ export async function runReportUploadPipeline(
       status: 'completed',
       progress: STAGE_PROGRESS.completed,
       phase: null,
+      // Repeated here: an interrupted run never wrote the optimizing patch.
+      thumbnailUrl,
       finalSize,
       optimizationStatus: outcome.status,
       optimizationResult:
