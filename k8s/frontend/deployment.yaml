@@ -142,22 +142,41 @@ spec:
                 mountPath: /app/.output/public/pdf,
                 subPath: pdf,
               }
+          # Sized for A-G report optimization, which runs inside this container
+          # (measured on a 60 MB / 40-page scan; see k8s/README.md): the server
+          # idles at ~200 MiB, and one optimization keeps ~2 cores busy while it
+          # OCRs and peaks at ~330 MiB for the whole container. At the previous
+          # 500m/512Mi a run was CPU-throttled for its full ~4 min, and two at
+          # once came within 22 MiB of an OOM kill, which restarts the container
+          # and kills every in-flight upload. Change these together with
+          # PDF_OPTIMIZATION_MAX_CONCURRENT (gas-config).
           resources:
             requests:
-              cpu: 100m
-              memory: 256Mi
-            limits:
-              cpu: 500m
+              cpu: 250m
               memory: 512Mi
+            limits:
+              cpu: "2"
+              memory: 1Gi
+          # Probes hit dedicated endpoints, never an SSR page. Report
+          # optimization runs Ghostscript/Tesseract inside this container on
+          # the same CPU quota, and a probe that renders `/` (full SSR + DB
+          # queries) can time out while they run; a failed liveness probe
+          # restarts the container and kills every in-flight upload with it.
+          #   /healthz (startup + liveness): event loop only, no I/O, so a
+          #     database or Redis outage never restarts pods.
+          #   /readyz (readiness): also needs the MySQL pool, so a rollout
+          #     whose new pods cannot reach the DB stalls instead of
+          #     replacing healthy pods. Failing it never restarts anything.
+          # See server/utils/healthProbes.ts.
           startupProbe:
             httpGet:
-              path: /
+              path: /healthz
               port: 3000
             failureThreshold: 30
             periodSeconds: 2
           readinessProbe:
             httpGet:
-              path: /
+              path: /readyz
               port: 3000
             initialDelaySeconds: 0
             periodSeconds: 10
@@ -165,7 +184,7 @@ spec:
             failureThreshold: 3
           livenessProbe:
             httpGet:
-              path: /
+              path: /healthz
               port: 3000
             initialDelaySeconds: 0
             periodSeconds: 30
