@@ -1,0 +1,10 @@
+# cert-manager for the `website` AKS cluster, installed from the upstream
+# static manifest (CRDs included; no Helm). To upgrade: download the new
+# release's cert-manager.yaml, replace the vendored file, update the resource
+# name below, re-render and apply. The ClusterIssuer is applied separately
+# (see ../README.md) because its CRD must exist first.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - cert-manager-v1.21.2.yaml
