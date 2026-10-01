@@ -132,6 +132,37 @@ describe('pdfOptimizationJobs', () => {
       expect(state.errorCode).toBe('QUEUE_TIMEOUT')
     })
 
+    it('keeps a swept queued job that the scheduler runs later, through to its real outcome', () => {
+      vi.useFakeTimers()
+      try {
+        const MIN = 60_000
+        const job = createJob('/pdf/reports/waited-long.pdf', 9)
+
+        // Waited 31 min behind other optimizations: the watchdog gives up...
+        vi.advanceTimersByTime(31 * MIN)
+        sweepStalledJobs(Date.now())
+        expect(getJob(job.id)?.errorCode).toBe('QUEUE_TIMEOUT')
+
+        // ...but the scheduler still runs it once a slot frees.
+        vi.advanceTimersByTime(9 * MIN)
+        updateJob(job.id, { status: 'running' })
+
+        // Past the wipe the sweep armed: it must not be dropped mid-run, or
+        // the upload pipeline reads getJob() === undefined as a failure.
+        vi.advanceTimersByTime(30 * MIN)
+        expect(getJob(job.id)?.status).toBe('running')
+
+        updateJob(job.id, { status: 'success' })
+        expect(getJob(job.id)?.status).toBe('success')
+
+        // Finished jobs are still wiped one TTL after their final state.
+        vi.advanceTimersByTime(30 * MIN)
+        expect(getJob(job.id)).toBeUndefined()
+      } finally {
+        vi.useRealTimers()
+      }
+    })
+
     it('leaves active jobs alone', () => {
       const job = createJob('/pdf/reports/busy.pdf', 7)
       updateJob(job.id, { status: 'running' })
