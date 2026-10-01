@@ -30,15 +30,30 @@ per-IP rate limiter count every visitor sharing a node as one client. With
 and the original source IP is kept; nginx passes it on in `X-Forwarded-For`,
 which the app trusts from peers in `TRUSTED_PROXIES` (`config/configmap.yaml`).
 
-On an existing cluster, switch it in place (the load balancer is reprogrammed;
+Check an existing cluster first. The plain-manifest install
+(`kubectl apply -f .../deploy/static/provider/cloud/deploy.yaml`) already sets
+`Local`; the Helm chart does not:
+
+```bash
+kubectl get svc ingress-nginx-controller -n ingress-nginx \
+  -o jsonpath='{.spec.externalTrafficPolicy}{"\n"}'   # want: Local
+```
+
+If it prints `Cluster`, switch it in place (the load balancer is reprogrammed;
 expect a few seconds of disruption):
 
 ```bash
+# Installed with kubectl / plain manifests:
+kubectl patch svc ingress-nginx-controller -n ingress-nginx \
+  -p '{"spec":{"externalTrafficPolicy":"Local"}}'
+
+# Installed with Helm (a kubectl patch would be reverted on the next upgrade):
 helm upgrade ingress-nginx ingress-nginx/ingress-nginx -n ingress-nginx --reuse-values \
   --set controller.service.externalTrafficPolicy=Local
-kubectl get svc ingress-nginx-controller -n ingress-nginx \
-  -o jsonpath='{.spec.externalTrafficPolicy}'   # → Local
 ```
+
+If you later re-apply the controller manifest, keep `externalTrafficPolicy: Local`
+in it, or the re-apply will undo the patch.
 
 Then confirm `TRUSTED_PROXIES` covers the controller pods' IPs
 (`kubectl get pods -n ingress-nginx -o wide`). The default `10.244.0.0/16` is
