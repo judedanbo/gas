@@ -1,9 +1,14 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
 import { resolve, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { pageCacheRule } from './server/utils/pageCache'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const isDev = process.env.NODE_ENV !== 'production'
+
+// Route rule for a cached public page (see "Page caching" in routeRules). Off in
+// dev, like the public API caches, so SSR changes show up on reload.
+const cachedPage = (ttlSeconds: number) => (isDev ? {} : pageCacheRule(ttlSeconds))
 
 export default defineNuxtConfig({
   compatibilityDate: '2025-07-15',
@@ -73,7 +78,7 @@ export default defineNuxtConfig({
       ]
     },
     workbox: {
-      // No navigateFallback: pages are SSR/ISR, so '/' is never in the precache
+      // No navigateFallback: pages are server-rendered, so '/' is never in the precache
       // manifest and createHandlerBoundToURL('/') throws non-precached-url at
       // service-worker evaluation, aborting the rest of sw.js. Navigations must
       // go to the network on this site; only static assets are precached.
@@ -198,10 +203,12 @@ export default defineNuxtConfig({
     langDir: 'locales',
     strategy: 'prefix_except_default',
     // Locale comes from the URL prefix only. Cookie/Accept-Language detection is
-    // deliberately off: most public pages are ISR-cached (see routeRules), and
-    // the detection result of whoever triggered the cached render (including its
-    // Set-Cookie and root redirect) was being served to every later visitor —
-    // English visitors received `gas_locale=ak` and were bounced off /ak.
+    // deliberately off: most public pages are cached (see routeRules) and one
+    // render is replayed to every visitor, so the detection result of whoever
+    // triggered it (its Set-Cookie and root redirect) would be served to all of
+    // them — English visitors received `gas_locale=ak` and were bounced off /ak.
+    // (server/plugins/pageCache.ts also refuses to cache a render that sets a
+    // cookie, but a redirect would still be shared.)
     detectBrowserLanguage: false,
     // SEO - hreflang tags
     baseUrl: 'https://audit.gov.gh'
@@ -311,6 +318,17 @@ export default defineNuxtConfig({
     // becomes '../server/public/pdf/**' and is discarded without effect.
     ignore: [resolve(__dirname, 'public/pdf') + '/**'],
     compressPublicAssets: true,
+    // Route-rule caches (public pages and APIs, see routeRules) live in process
+    // memory, keyed by full URL including the query string. Unbounded, every
+    // crawled page and every unique `?query` would stay resident until the pod
+    // hits its 512Mi limit (the app alone sits around 300–400 MB RSS, and a
+    // cached page is 150–300 KB, mostly inlined CSS). This evicts the least
+    // recently used entries past 32 MB — roughly 150 pages, well above the hot
+    // set. Raise it with the pod's memory limit. Production only: dev and
+    // prerender keep Nitro's fs cache.
+    storage: {
+      cache: { driver: 'lru-cache', max: 1000, maxSize: 32 * 1024 * 1024 }
+    },
     experimental: {
       // Enable Nitro tasks (server/tasks/**) so the analytics rollup +
       // retention jobs can run on the schedule below.
@@ -333,16 +351,17 @@ export default defineNuxtConfig({
     },
     prerender: {
       // Only fully static pages are prerendered at build time. DB-backed pages
-      // moved to ISR (see routeRules) so `nuxt build` needs no MySQL and the
-      // crawler can't wander into data routes (e.g. /publications/[slug]) and
-      // fail. crawlLinks is off to keep prerendering to this explicit list.
+      // render at runtime instead (cached, see routeRules) so `nuxt build`
+      // needs no MySQL and the crawler can't wander into data routes (e.g.
+      // /publications/[slug]) and fail. crawlLinks is off to keep prerendering
+      // to this explicit list.
       crawlLinks: false,
       routes: [
         '/about',
         // '/about/the-service' and '/about/past-auditors-general' are NOT
         // prerendered: they now render DB-backed site statistics (useSiteStats),
-        // so they must render at runtime where MySQL exists. See their ISR
-        // routeRules below.
+        // so they must render at runtime where MySQL exists. See their cached
+        // page routeRules below.
         '/about/departmental-profile',
         '/privacy-policy',
         '/terms',
@@ -353,69 +372,83 @@ export default defineNuxtConfig({
     },
     // Route rules
     routeRules: {
-      // ── Page rendering (ISR) ──────────────────────────────────────────
-      // DB-backed content pages render on demand and are cached + revalidated
-      // (incremental static regeneration). Unlike build-time prerender, the
-      // first request happens at runtime where MySQL exists — so `nuxt build`
-      // needs no database, and content refreshes every TTL instead of being
-      // frozen at deploy. TTLs are seconds; tune to how often each changes.
-      '/': { isr: 600 },
-      '/reports': { isr: 600 },
-      '/reports/**': { isr: 600 },
-      '/publications': { isr: 600 },
-      '/publications/**': { isr: 3600 },
-      '/media': { isr: 600 },
-      '/media/**': { isr: 600 },
-      '/careers': { isr: 600 },
-      '/careers/**': { isr: 600 },
-      '/contact': { isr: 3600 },
-      // DB-backed site statistics (useSiteStats) — regenerate at runtime so
-      // admin edits appear; these were removed from prerender.routes above.
-      '/about/the-service': { isr: 3600 },
-      '/about/auditor-general': { isr: 3600 },
-      '/about/past-auditors-general': { isr: 3600 },
-      '/about/management-team': { isr: 3600 },
-      '/about/management-team/**': { isr: 3600 },
-      '/about/board-members': { isr: 3600 },
-      '/about/board-members/**': { isr: 3600 },
+      // ── Page caching ──────────────────────────────────────────────────
+      // DB-backed content pages render on demand at runtime (where MySQL
+      // exists, so `nuxt build` needs no database) and are then served from an
+      // in-process cache, stale-while-revalidate: each pod renders a given URL
+      // at most once per TTL, after which the next request gets the stale copy
+      // while a background render refreshes it — admin edits show up within
+      // about one TTL. TTLs are seconds; tune to how often each page changes.
+      //
+      // cachedPage() emits a Nitro `cache` rule. Don't use `isr` here: only the
+      // Vercel/Netlify presets cache on it, so on our node-server build it
+      // rendered every request (full SSR + MySQL queries per page view).
+      //
+      // A cached render sees no request headers or cookies, and its response
+      // is replayed to every visitor, so server/plugins/pageCache.ts gives each
+      // response a fresh CSP nonce, keeps it out of shared caches, and won't
+      // store a render that set a cookie or hit a failed data fetch
+      // (plugins/page-cache.server.ts). See server/utils/pageCache.ts.
+      '/': cachedPage(600),
+      '/reports': cachedPage(600),
+      '/reports/**': cachedPage(600),
+      '/publications': cachedPage(600),
+      '/publications/**': cachedPage(3600),
+      '/media': cachedPage(600),
+      '/media/**': cachedPage(600),
+      '/careers': cachedPage(600),
+      '/careers/**': cachedPage(600),
+      '/contact': cachedPage(3600),
+      // DB-backed site statistics (useSiteStats) — render at runtime so admin
+      // edits appear; these were removed from prerender.routes above.
+      '/about/the-service': cachedPage(3600),
+      '/about/auditor-general': cachedPage(3600),
+      '/about/past-auditors-general': cachedPage(3600),
+      '/about/management-team': cachedPage(3600),
+      '/about/management-team/**': cachedPage(3600),
+      '/about/board-members': cachedPage(3600),
+      '/about/board-members/**': cachedPage(3600),
       // Akan locale variants (i18n prefix_except_default) — mirror the TTLs above.
-      '/ak': { isr: 600 },
-      '/ak/reports': { isr: 600 },
-      '/ak/reports/**': { isr: 600 },
-      '/ak/publications': { isr: 600 },
-      '/ak/publications/**': { isr: 3600 },
-      '/ak/media': { isr: 600 },
-      '/ak/media/**': { isr: 600 },
-      '/ak/careers': { isr: 600 },
-      '/ak/careers/**': { isr: 600 },
-      '/ak/contact': { isr: 3600 },
-      '/ak/about/the-service': { isr: 3600 },
-      '/ak/about/auditor-general': { isr: 3600 },
-      '/ak/about/past-auditors-general': { isr: 3600 },
-      '/ak/about/management-team': { isr: 3600 },
-      '/ak/about/management-team/**': { isr: 3600 },
-      '/ak/about/board-members': { isr: 3600 },
-      '/ak/about/board-members/**': { isr: 3600 },
+      '/ak': cachedPage(600),
+      '/ak/reports': cachedPage(600),
+      '/ak/reports/**': cachedPage(600),
+      '/ak/publications': cachedPage(600),
+      '/ak/publications/**': cachedPage(3600),
+      '/ak/media': cachedPage(600),
+      '/ak/media/**': cachedPage(600),
+      '/ak/careers': cachedPage(600),
+      '/ak/careers/**': cachedPage(600),
+      '/ak/contact': cachedPage(3600),
+      '/ak/about/the-service': cachedPage(3600),
+      '/ak/about/auditor-general': cachedPage(3600),
+      '/ak/about/past-auditors-general': cachedPage(3600),
+      '/ak/about/management-team': cachedPage(3600),
+      '/ak/about/management-team/**': cachedPage(3600),
+      '/ak/about/board-members': cachedPage(3600),
+      '/ak/about/board-members/**': cachedPage(3600),
 
-      // Payload routes for the exact-match ISR pages above. Nuxt should
-      // generate these automatically from the ISR rules, but in the production
-      // build the generated rules land after routeRules is snapshotted into
-      // runtime config (Nuxt 3.21.8), so /_payload.json 404s and the client
-      // hydrates without SSR data. Keep each TTL in sync with its page rule.
-      // Pages with a same-TTL `/**` sibling (reports, media, careers, …) are
-      // already covered by the wildcard and need no entry here.
-      '/_payload.json': { isr: 600 },
-      '/publications/_payload.json': { isr: 600 }, // page is 600; /publications/** would give 3600
-      '/contact/_payload.json': { isr: 3600 },
-      '/about/the-service/_payload.json': { isr: 3600 },
-      '/about/auditor-general/_payload.json': { isr: 3600 },
-      '/about/past-auditors-general/_payload.json': { isr: 3600 },
-      '/ak/_payload.json': { isr: 600 },
-      '/ak/publications/_payload.json': { isr: 600 },
-      '/ak/contact/_payload.json': { isr: 3600 },
-      '/ak/about/the-service/_payload.json': { isr: 3600 },
-      '/ak/about/auditor-general/_payload.json': { isr: 3600 },
-      '/ak/about/past-auditors-general/_payload.json': { isr: 3600 },
+      // Payload routes for the exact-match cached pages above. A cached page
+      // doesn't inline its data: the HTML points at <page>/_payload.json, which
+      // is rendered (and cached) like a page and must carry the same rule —
+      // Nuxt only extracts payloads on routes with a `cache`/`isr` rule. Nuxt
+      // should generate these automatically, but in the production build the
+      // generated rules land after routeRules is snapshotted into runtime
+      // config (Nuxt 3.21.8, still so in 3.21.10), so /_payload.json 404s and
+      // the client hydrates without SSR data. Keep each TTL in sync with its
+      // page rule. Pages with a same-TTL `/**` sibling (reports, media,
+      // careers, …) are already covered by the wildcard and need no entry here.
+      '/_payload.json': cachedPage(600),
+      '/publications/_payload.json': cachedPage(600), // page is 600; /publications/** would give 3600
+      '/contact/_payload.json': cachedPage(3600),
+      '/about/the-service/_payload.json': cachedPage(3600),
+      '/about/auditor-general/_payload.json': cachedPage(3600),
+      '/about/past-auditors-general/_payload.json': cachedPage(3600),
+      '/ak/_payload.json': cachedPage(600),
+      '/ak/publications/_payload.json': cachedPage(600),
+      '/ak/contact/_payload.json': cachedPage(3600),
+      '/ak/about/the-service/_payload.json': cachedPage(3600),
+      '/ak/about/auditor-general/_payload.json': cachedPage(3600),
+      '/ak/about/past-auditors-general/_payload.json': cachedPage(3600),
 
       // Exclude image optimization and download routes from prerendering —
       // the crawler discovers every srcset breakpoint, adding 90+ routes at
@@ -456,8 +489,8 @@ export default defineNuxtConfig({
       '/api/board-members': { cache: isDev ? false : { maxAge: 3600, staleMaxAge: 7200 } },
       '/api/board-members/**': { cache: isDev ? false : { maxAge: 3600, staleMaxAge: 7200 } },
       // /api/site-stats and /api/auditor-general are intentionally NOT
-      // edge-cached: both are tiny indexed SELECTs consumed by ISR pages, so
-      // full loads are already shielded by page ISR. An edge cache here would
+      // edge-cached: both are tiny indexed SELECTs consumed by cached pages, so
+      // full loads are already shielded by the page cache. An edge cache here would
       // only add a staleness layer the admin cannot purge on edit (and
       // /api/auditor-general varies by Accept-Language, which the route-rule
       // cache does not key on), so admin changes surface promptly instead.

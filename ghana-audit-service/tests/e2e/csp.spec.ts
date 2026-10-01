@@ -62,6 +62,29 @@ test.describe('Content Security Policy', () => {
       expect(directives['frame-src']).toContain('blob:')
     })
 
+    // Production serves these pages from the page cache (server/plugins/pageCache.ts):
+    // the second request is a cache hit, which must still get its own nonce, in the
+    // header and on every nonce'd tag, rather than the one baked in at render time.
+    test(`${name} (${path}) — every response gets a fresh nonce matching its HTML`, async ({
+      request
+    }) => {
+      const nonces: string[] = []
+      for (let i = 0; i < 2; i++) {
+        const response = await request.get(path)
+        expect(response.ok()).toBe(true)
+
+        const csp = response.headers()['content-security-policy'] ?? ''
+        const nonce = /'nonce-([^']+)'/.exec(csp)?.[1]
+        expect(nonce, 'script-src should carry a nonce').toBeTruthy()
+
+        const html = await response.text()
+        const tagNonces = new Set([...html.matchAll(/\snonce="([^"]+)"/g)].map((m) => m[1]))
+        expect([...tagNonces]).toEqual([nonce])
+        nonces.push(nonce!)
+      }
+      expect(nonces[1]).not.toBe(nonces[0])
+    })
+
     test(`${name} (${path}) — renders with no CSP violations`, async ({ page }) => {
       const violations: string[] = []
       page.on('console', (msg) => {
