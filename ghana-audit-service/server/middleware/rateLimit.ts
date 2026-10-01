@@ -7,6 +7,7 @@ import {
   type RateLimitConfig
 } from '../utils/rateLimiter'
 import { isStaticAsset, BLOCKED_DIRECT_PATHS } from '../utils/staticAssets'
+import { isHealthProbePath } from '../utils/healthProbes'
 import { recordIncident } from '../utils/analytics/recordIncident'
 import { normaliseRoutePattern } from '../utils/analytics/fingerprint'
 
@@ -50,6 +51,10 @@ export default defineEventHandler(async (event): Promise<undefined | object> => 
 
   // Skip framework/static traffic so a normal page load doesn't drain budgets.
   if (isStaticAsset(path)) return
+
+  // Kubelet probes must never be throttled or wait on Redis: a 429 or a slow
+  // round-trip fails the liveness probe and restarts the pod.
+  if (isHealthProbePath(path)) return
 
   const clientIP = getClientIP(event)
 

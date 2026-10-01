@@ -389,6 +389,90 @@ kubectl scale deployment gas-frontend -n gas --replicas=3
 kubectl rollout restart deployment/gas-frontend -n gas
 ```
 
+## Frontend probes
+
+A-G report PDF optimization (Ghostscript, qpdf, pdftoppm, Tesseract) runs
+**inside the frontend pod**: its child processes share the container's CPU
+quota and memory limit with the Nitro server. Anything that restarts or kills
+the container also kills every in-flight upload pipeline and optimization,
+which admins then see as STALLED ("The upload stopped responding and was
+abandoned"). The probes are built so that load never causes a restart:
+
+| Probe     | Path       | Checks                                                       | On failure                                           |
+| --------- | ---------- | ------------------------------------------------------------ | ---------------------------------------------------- |
+| startup   | `/healthz` | Nitro is listening and its event loop answers                | restarted if not up within 60s                       |
+| liveness  | `/healthz` | the event loop answers — no SSR, database or Redis           | restarted after 5 failures 30s apart                 |
+| readiness | `/readyz`  | the above, plus this pod's MySQL pool answers `SELECT 1` ≤2s | removed from the Service until it passes; no restart |
+
+The probes used to hit `/`. That is a full SSR render plus several MySQL
+queries on every request: the `isr` route rules do not cache HTML on the
+`node-server` preset. While an optimization saturates the CPU quota, that
+render can stretch past the 5s probe timeout. `/healthz` does no I/O, so a database or Redis outage can
+never restart pods. `/readyz` does depend on MySQL, so a rollout whose new
+pods cannot reach the database stalls (and `kubectl rollout status` fails the
+deploy) instead of replacing healthy pods. The trade-off: during a MySQL outage
+every pod goes unready, and the ingress answers 503 until MySQL is back.
+
+Both endpoints skip the app's rate limiter and analytics capture, answer
+`Cache-Control: no-store`, and are safe to hit from outside the cluster (the
+`/readyz` database check is shared across concurrent requests and cached for
+1s). The code lives in `ghana-audit-service/server/utils/healthProbes.ts`.
+
+```bash
+# What the kubelet sees, from inside a frontend pod
+kubectl exec -n gas deploy/gas-frontend -- wget -qO- http://localhost:3000/healthz
+kubectl exec -n gas deploy/gas-frontend -- wget -qO- http://localhost:3000/readyz
+
+# Restart history and the reason for the last one (OOMKilled vs. probe failure)
+kubectl get pods -n gas -l app.kubernetes.io/name=gas-frontend
+kubectl describe pod -n gas -l app.kubernetes.io/name=gas-frontend | grep -A6 "Last State"
+kubectl get events -n gas --field-selector reason=Unhealthy
+```
+
+## Frontend resources and PDF optimization
+
+The frontend container is sized for one optimization at a time:
+
+| Setting                                           | Value                                      |
+| ------------------------------------------------- | ------------------------------------------ |
+| `resources.requests` (`frontend/deployment.yaml`) | `cpu: 250m`, `memory: 512Mi`               |
+| `resources.limits`                                | `cpu: "2"`, `memory: 1Gi`                  |
+| `PDF_OPTIMIZATION_MAX_CONCURRENT` (`gas-config`)  | `1` per pod; further jobs queue FIFO       |
+| HPA scale-down (`frontend/hpa.yaml`)              | after 30 min below target, ≤1 pod / 10 min |
+
+These come from running the built app under cgroup limits equal to the pod's,
+with two 60 MB / 40-page 300-DPI scans optimized through the admin API (MySQL
+seeded, Tesseract with `OMP_THREAD_LIMIT=1`):
+
+| Limits / concurrency     | Both scans done | `/healthz` max | `/` max | Peak anon RSS  | CPU throttled  |
+| ------------------------ | --------------- | -------------- | ------- | -------------- | -------------- |
+| 500m / 512Mi, 2 at once  | 509s            | 1.0s           | 2.8s    | 490 / 512 MiB  | 99% of periods |
+| 2 CPU / 1Gi, 1 at a time | 118s            | 31ms           | 213ms   | 326 / 1024 MiB | 33%            |
+| 1 CPU / 1Gi, 1 at a time | 234s            | 82ms           | 592ms   | 353 / 1024 MiB | 97%            |
+
+The server idles at ~200 MiB. One optimization keeps ~2 cores busy while it
+OCRs (two Tesseract processes), so a second concurrent run under the same CPU
+limit finishes nothing sooner and only adds memory. An OOM kill is the worst
+outcome: on cgroup v2 (AKS, Kubernetes ≥ 1.28) it kills the whole container,
+and with it every in-flight upload and optimization. Raise
+`PDF_OPTIMIZATION_MAX_CONCURRENT` only together with the pod's CPU and memory,
+never on its own.
+
+**Autoscaling caveat.** The HPA scales on CPU at 70% of the 250m request, and
+an optimization pins its pod near the 2-CPU limit, so every optimization
+scales the Deployment out to `maxReplicas`. Scaling back in terminates pods,
+and Nitro's graceful shutdown waits only for HTTP requests, not background
+upload pipelines or optimizations. Hence the slow scale-down: it makes killing
+a pod mid-job much rarer, but cannot rule it out. Rollouts
+(`kubectl rollout restart`, deploys) also terminate pods, so avoid deploying
+while large uploads are being processed.
+
+```bash
+# Live usage per pod (needs metrics-server) and HPA state
+kubectl top pods -n gas -l app.kubernetes.io/name=gas-frontend
+kubectl get hpa gas-frontend -n gas
+```
+
 ## Directory Structure
 
 ```
@@ -401,7 +485,7 @@ k8s/
     deployment.yaml           # Nuxt app (2 replicas, HPA, probes)
     service.yaml              # ClusterIP Service (port 80 -> 3000)
     ingress.yaml              # NGINX Ingress with TLS
-    hpa.yaml                  # Autoscaler (2-5 replicas, 70% CPU)
+    hpa.yaml                  # Autoscaler (2-5 replicas, 70% CPU, slow scale-down)
   mysql/
     statefulset.yaml          # MySQL 8.0 with 20Gi PVC
     service.yaml              # Headless Service
