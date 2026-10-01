@@ -758,14 +758,16 @@ git commit -m "feat(search): integrate command palette into header and register 
 
 In `pages/search.vue` line 15, change:
 
+<!-- prettier-ignore -->
 ```html
-<section class="section bg-gray-50"></section>
+<section class="section bg-gray-50">
 ```
 
 to:
 
+<!-- prettier-ignore -->
 ```html
-<section class="section bg-gray-50 dark:bg-gray-900"></section>
+<section class="section bg-gray-50 dark:bg-gray-900">
 ```
 
 - [ ] **Step 2: Fix the search input dark mode classes**
@@ -800,32 +802,32 @@ class="absolute right-3 bg-transparent border-none p-2 cursor-pointer text-gray-
 
 In `components/search/SearchResultCard.vue` line 2, change:
 
+<!-- prettier-ignore -->
 ```html
-<article
-  class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-5 hover:shadow-md transition-shadow"
-></article>
+<article class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-5 hover:shadow-md transition-shadow">
 ```
 
 to:
 
+<!-- prettier-ignore -->
 ```html
-<article
-  class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-5 hover:shadow-md hover:border-primary/30 dark:hover:border-primary-light/30 transition-all"
-></article>
+<article class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-5 hover:shadow-md hover:border-primary/30 dark:hover:border-primary-light/30 transition-all">
 ```
 
 - [ ] **Step 5: Fix the Help Section dark mode**
 
 In `pages/search.vue` line 257, the help section uses `bg-white` without dark variant. Change:
 
+<!-- prettier-ignore -->
 ```html
-<section class="section bg-white"></section>
+<section class="section bg-white">
 ```
 
 to:
 
+<!-- prettier-ignore -->
 ```html
-<section class="section bg-white dark:bg-gray-800"></section>
+<section class="section bg-white dark:bg-gray-800">
 ```
 
 - [ ] **Step 6: Commit**

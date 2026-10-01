@@ -648,16 +648,17 @@ Add a file size cell slot (after the `publishedAt` slot):
 
 Update the `AdminUiAdminDataTable` element to include:
 
+<!-- prettier-ignore -->
 ```html
-<AdminUiAdminDataTable
-  :columns="columns"
-  :data="items"
-  :loading="loading"
-  :meta="meta"
-  @page-change="handlePageChange"
-  @row-click="handleRowClick"
-  @sort="handleSort"
-></AdminUiAdminDataTable>
+    <AdminUiAdminDataTable
+      :columns="columns"
+      :data="items"
+      :loading="loading"
+      :meta="meta"
+      @page-change="handlePageChange"
+      @row-click="handleRowClick"
+      @sort="handleSort"
+    >
 ```
 
 - [ ] **Step 5: Verify in browser**
@@ -734,18 +735,19 @@ async function handleBulkDelete() {
 
 Update the `AdminUiAdminDataTable` to enable selection:
 
+<!-- prettier-ignore -->
 ```html
-<AdminUiAdminDataTable
-  :columns="columns"
-  :data="items"
-  :loading="loading"
-  :meta="meta"
-  selectable
-  @page-change="handlePageChange"
-  @row-click="handleRowClick"
-  @sort="handleSort"
-  @selection-change="handleSelectionChange"
-></AdminUiAdminDataTable>
+    <AdminUiAdminDataTable
+      :columns="columns"
+      :data="items"
+      :loading="loading"
+      :meta="meta"
+      selectable
+      @page-change="handlePageChange"
+      @row-click="handleRowClick"
+      @sort="handleSort"
+      @selection-change="handleSelectionChange"
+    >
 ```
 
 Add the bulk action bar between the search filter and the data table:
