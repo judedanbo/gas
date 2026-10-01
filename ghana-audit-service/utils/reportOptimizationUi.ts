@@ -9,7 +9,9 @@ export const OPTIMIZATION_ERROR_MESSAGES: Record<string, string> = {
   TIMEOUT:
     'Optimization took too long and was stopped. The original file is unchanged — you can retry.',
   QUEUE_TIMEOUT:
-    'Optimization waited too long behind other jobs. The original file is unchanged — try again shortly.'
+    'Optimization waited too long behind other jobs. The original file is unchanged — try again shortly.',
+  INTERRUPTED:
+    'Optimization was interrupted by a server restart. The file itself is saved — you can run optimization again.'
 }
 
 export function optimizationErrorMessage(code: string | null | undefined): string {

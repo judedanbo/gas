@@ -17,6 +17,7 @@ import {
   uploadJobErrorMessage,
   uploadJobPageLabel,
   uploadJobResultSummary,
+  uploadJobResumeNote,
   uploadJobStageLabel
 } from '~/utils/reportUploadJobUi'
 
@@ -76,6 +77,8 @@ export function uploadJobToNotification(job: ReportUploadJob): AdminNotification
         : 'success'
 
   const notes: AdminNotificationNote[] = []
+  const resumed = uploadJobResumeNote(job)
+  if (resumed) notes.push({ text: resumed, tone: 'muted' })
   const summary = uploadJobResultSummary(job)
   if (summary) {
     const kept = job.optimizationResult?.skippedCompression

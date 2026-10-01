@@ -4,6 +4,7 @@ import {
   uploadJobErrorMessage,
   uploadJobPageLabel,
   uploadJobResultSummary,
+  uploadJobResumeNote,
   uploadJobStageLabel
 } from '~/utils/reportUploadJobUi'
 import type { ReportUploadJob } from '~/types/admin'
@@ -119,6 +120,58 @@ describe('uploadJobResultSummary', () => {
       )
     ).toMatch(/already well-compressed/)
     expect(uploadJobResultSummary(job({ status: 'optimizing' }))).toBeNull()
+  })
+})
+
+describe('uploads interrupted by a server restart', () => {
+  const at = '2026-09-29T12:00:00.000Z'
+
+  it('says a stored upload is waiting to resume, without a stale page counter', () => {
+    const waiting = job({
+      status: 'optimizing',
+      phase: 'ocr',
+      page: 4,
+      totalPages: 9,
+      interruptedAt: at
+    })
+    expect(uploadJobStageLabel(waiting)).toBe('Server restarted — resuming shortly…')
+    expect(uploadJobPageLabel(waiting)).toBeNull()
+  })
+
+  it('explains why a resumed upload started its remaining steps over', () => {
+    expect(uploadJobResumeNote(job({ status: 'optimizing', attempts: 2 }))).toMatch(
+      /server restart/
+    )
+    expect(uploadJobResumeNote(job({ status: 'optimizing', attempts: 1 }))).toBeNull()
+    // A replica still on an older build sends no attempts at all.
+    expect(uploadJobResumeNote(job({ status: 'optimizing' }))).toBeNull()
+    expect(
+      uploadJobResumeNote(job({ status: 'optimizing', attempts: 2, interruptedAt: at }))
+    ).toBeNull()
+    expect(uploadJobResumeNote(job({ status: 'completed', active: false, attempts: 2 }))).toBeNull()
+  })
+
+  it('tells the admin exactly what was lost', () => {
+    // The bytes never reached storage: only a new upload helps.
+    expect(
+      uploadJobErrorMessage(job({ status: 'failed', active: false, errorCode: 'INTERRUPTED' }))
+    ).toBe(
+      'The server restarted before the file was saved to storage. Please upload the file again.'
+    )
+    expect(
+      uploadJobErrorMessage(job({ status: 'failed', active: false, errorCode: 'RESUME_FAILED' }))
+    ).toMatch(/could not be found.*upload the file again/)
+    // Stored, but optimization was given up after repeated restarts.
+    expect(
+      uploadJobErrorMessage(
+        job({
+          status: 'completed',
+          active: false,
+          optimizationStatus: 'error',
+          errorCode: 'INTERRUPTED'
+        })
+      )
+    ).toMatch(/file itself is saved — you can run optimization again/)
   })
 })
 
