@@ -107,10 +107,7 @@
         {{ note.text }}
       </p>
 
-      <div
-        v-if="notification.actions.length > 0 || !running"
-        class="flex flex-wrap items-center gap-x-4 gap-y-1 pt-0.5"
-      >
+      <div class="flex flex-wrap items-center gap-x-4 gap-y-1 pt-0.5">
         <NuxtLink
           v-for="action in notification.actions"
           :key="action.label"
@@ -119,6 +116,15 @@
           @click="emit('navigate')"
         >
           {{ action.label }}
+        </NuxtLink>
+        <NuxtLink
+          v-if="showDetails"
+          :to="notificationPath(notification.id)"
+          class="rounded-sm text-xs text-gray-600 hover:text-gray-900 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-primary dark:text-gray-400 dark:hover:text-gray-200"
+          :aria-label="`Details: ${accessibleName}`"
+          @click="emit('navigate')"
+        >
+          Details
         </NuxtLink>
         <button
           v-if="!running"
@@ -141,17 +147,24 @@
     AdminNotificationNote,
     AdminNotificationStatus
   } from '~/types/admin'
+  import { notificationPath } from '~/utils/adminNotifications'
   import { formatRelativeTime } from '~/utils/reportUploadJobUi'
 
   interface Props {
     notification: AdminNotification
     /** Unread when the panel was opened — highlighted until it closes. */
     fresh?: boolean
+    /** Link to the notification's own page. */
+    showDetails?: boolean
     /** Clock for the relative timestamp (ticks while the panel is open). */
     now?: number
   }
 
-  const props = withDefaults(defineProps<Props>(), { fresh: false, now: () => Date.now() })
+  const props = withDefaults(defineProps<Props>(), {
+    fresh: false,
+    showDetails: true,
+    now: () => Date.now()
+  })
 
   const emit = defineEmits<{
     dismiss: [id: string]
