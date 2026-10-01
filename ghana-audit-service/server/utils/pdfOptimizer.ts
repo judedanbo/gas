@@ -1,7 +1,7 @@
 import { execFile } from 'node:child_process'
 import { existsSync, statSync, promises as fs } from 'node:fs'
 import { tmpdir } from 'node:os'
-import { join, basename } from 'node:path'
+import { join, basename, dirname } from 'node:path'
 import { randomUUID } from 'node:crypto'
 
 // External-process runner. Injectable so unit tests can swap in a fake
@@ -15,7 +15,12 @@ export interface ExecResult {
 export type ExecRunner = (
   bin: string,
   args: string[],
-  options?: { timeout?: number; maxBuffer?: number; signal?: AbortSignal }
+  options?: {
+    timeout?: number
+    maxBuffer?: number
+    env?: NodeJS.ProcessEnv
+    signal?: AbortSignal
+  }
 ) => Promise<ExecResult>
 
 const defaultExecRunner: ExecRunner = (bin, args, options = {}) =>
@@ -76,6 +81,24 @@ const TIMEOUT = {
 // per page but CPU-hungry, so we cap to keep dev hosts responsive.
 const OCR_CONCURRENCY = 2
 
+// Tesseract is built with OpenMP and sizes its thread pool from the host's CPU
+// count, not the pod's CPU quota. With OCR_CONCURRENCY processes running at
+// once the threads oversubscribe the CPU and spin-wait each other: a page that
+// OCRs in ~4s alone ran past the 90s timeout. One thread per process keeps
+// "single-thread per page" true (ocrmypdf does the same).
+const TESSERACT_THREAD_ENV = { OMP_THREAD_LIMIT: '1' }
+
+// Scanned pages are rasterized at this resolution for OCR, and Tesseract must
+// be told the same: pdftoppm writes PGM, which carries no DPI, so Tesseract's
+// PDF renderer falls back to 70 DPI — the OCRed page comes out ~4x A4 (35x50in)
+// and Ghostscript never downsamples its "70 DPI" image.
+const OCR_DPI = 300
+
+// qpdf exits 3 when it had to repair the input (e.g. a wrong xref offset) but
+// still wrote correct output; such PDFs open fine in every viewer. Treat that
+// as success — real errors still exit 2.
+const QPDF_TOLERATE_WARNINGS = '--warning-exit-0'
+
 // pdftotext output threshold (printable chars) that classifies a page as
 // "native" — anything below and we look for embedded fonts / images.
 const NATIVE_TEXT_THRESHOLD = 20
@@ -135,6 +158,7 @@ export class PdfOptimizerError extends Error {
     | 'COMPRESS_FAILED'
     | 'PAGE_COUNT_MISMATCH'
     | 'NO_INPUT'
+    | 'REPLACE_FAILED'
   constructor(code: PdfOptimizerError['code'], message: string) {
     super(message)
     this.code = code
@@ -330,7 +354,7 @@ export async function optimizeReportPdf(
     let skippedCompression = false
     let finalSize = originalSize
     if (optimizedSize < originalSize) {
-      await fs.rename(optimizedPath, pdfPath)
+      await replaceFile(optimizedPath, pdfPath)
       finalSize = optimizedSize
     } else {
       // gs grew the file (already-tight native PDF). Keep the original.
@@ -373,6 +397,41 @@ export async function optimizeReportPdf(
 // Pipeline helpers
 // ---------------------------------------------------------------------------
 
+/**
+ * Swap the optimized file in for the original. The work dir is in tmpdir(),
+ * but the original may live on another filesystem — the on-disk fallback keeps
+ * report PDFs on a mounted Azure share — where rename() fails with EXDEV. Then
+ * copy to a staging file beside the target and rename that: the swap stays
+ * atomic on the target filesystem, and a failed copy never truncates the
+ * original.
+ */
+async function replaceFile(src: string, dest: string): Promise<void> {
+  try {
+    await fs.rename(src, dest)
+    return
+  } catch (err) {
+    if ((err as NodeJS.ErrnoException).code !== 'EXDEV') {
+      throw replaceError(dest, err)
+    }
+  }
+
+  const staging = join(dirname(dest), `.${basename(dest)}.${randomUUID()}.tmp`)
+  try {
+    await fs.copyFile(src, staging)
+    await fs.rename(staging, dest)
+  } catch (err) {
+    await fs.rm(staging, { force: true }).catch(() => {
+      /* best-effort */
+    })
+    throw replaceError(dest, err)
+  }
+}
+
+function replaceError(dest: string, err: unknown): PdfOptimizerError {
+  const message = err instanceof Error ? err.message : String(err)
+  return new PdfOptimizerError('REPLACE_FAILED', `Could not replace ${dest}: ${message}`)
+}
+
 async function readPdfInfo(path: string, signal?: AbortSignal): Promise<PdfInfo> {
   let stdout: string
   try {
@@ -398,14 +457,16 @@ async function readPdfInfo(path: string, signal?: AbortSignal): Promise<PdfInfo>
 // pipeline dependency — for the document's top-level `outlines` array.
 // A qpdf failure other than a missing binary degrades to "no bookmarks": the
 // split step surfaces genuine qpdf problems, and we'd rather optimize than
-// block on an outline-read quirk.
+// block on an outline-read quirk. Repair warnings must not count as a failure
+// here, or a damaged-but-readable PDF would skip the bookmark guard.
 async function hasOutlines(path: string, signal?: AbortSignal): Promise<boolean> {
   let stdout: string
   try {
-    ;({ stdout } = await execFileAsync(BIN.qpdf, ['--json=2', '--json-key=outlines', path], {
-      timeout: TIMEOUT.qpdfInfo,
-      signal
-    }))
+    ;({ stdout } = await execFileAsync(
+      BIN.qpdf,
+      [QPDF_TOLERATE_WARNINGS, '--json=2', '--json-key=outlines', path],
+      { timeout: TIMEOUT.qpdfInfo, signal }
+    ))
   } catch (err) {
     if (isMissingBinaryError(err, BIN.qpdf)) {
       throw new PdfOptimizerError(
@@ -425,10 +486,11 @@ async function hasOutlines(path: string, signal?: AbortSignal): Promise<boolean>
 
 async function splitByPage(input: string, outDir: string, signal?: AbortSignal): Promise<void> {
   try {
-    await execFileAsync(BIN.qpdf, [input, '--split-pages=1', join(outDir, 'page-%d.pdf')], {
-      timeout: TIMEOUT.qpdfSplit,
-      signal
-    })
+    await execFileAsync(
+      BIN.qpdf,
+      [QPDF_TOLERATE_WARNINGS, input, '--split-pages=1', join(outDir, 'page-%d.pdf')],
+      { timeout: TIMEOUT.qpdfSplit, signal }
+    )
   } catch (err) {
     throw wrapMissingBinaryError(err, BIN.qpdf, 'SPLIT_FAILED')
   }
@@ -520,7 +582,7 @@ async function ocrPage(
   const ppmPrefix = join(renderDir, `page-${idx}`)
 
   try {
-    await execFileAsync(BIN.pdftoppm, ['-r', '300', '-gray', pagePath, ppmPrefix], {
+    await execFileAsync(BIN.pdftoppm, ['-r', String(OCR_DPI), '-gray', pagePath, ppmPrefix], {
       timeout: TIMEOUT.pdftoppm,
       signal
     })
@@ -539,12 +601,19 @@ async function ocrPage(
 
   const ocrOutPrefix = join(workDir, `ocr-${idx}`)
   try {
-    await execFileAsync(BIN.tesseract, [renderedPath, ocrOutPrefix, '-l', language, 'pdf'], {
-      timeout: TIMEOUT.tesseract,
-      signal
-    })
+    await execFileAsync(
+      BIN.tesseract,
+      [renderedPath, ocrOutPrefix, '--dpi', String(OCR_DPI), '-l', language, 'pdf'],
+      { timeout: TIMEOUT.tesseract, env: { ...process.env, ...TESSERACT_THREAD_ENV }, signal }
+    )
   } catch (err) {
     throw wrapMissingBinaryError(err, BIN.tesseract, 'SPLIT_FAILED')
+  } finally {
+    // ~9MB per page at 300 DPI; kept until the job ended, a 300-page scan
+    // parked ~2.6GB in the pod's ephemeral storage.
+    await fs.rm(renderedPath, { force: true }).catch(() => {
+      /* best-effort; the work dir is removed at the end anyway */
+    })
   }
 
   // Tesseract appends ".pdf" to the prefix.
@@ -561,7 +630,7 @@ async function concatenatePages(
   signal?: AbortSignal
 ): Promise<void> {
   // qpdf --empty --pages a.pdf b.pdf c.pdf -- out.pdf
-  const args = ['--empty', '--pages', ...pagePaths, '--', outPath]
+  const args = [QPDF_TOLERATE_WARNINGS, '--empty', '--pages', ...pagePaths, '--', outPath]
   try {
     await execFileAsync(BIN.qpdf, args, { timeout: TIMEOUT.qpdfMerge, signal })
   } catch (err) {

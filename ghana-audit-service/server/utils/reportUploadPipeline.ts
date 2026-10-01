@@ -5,7 +5,7 @@ import { getContainerClient, blobKeyFromFileUrl } from './blobStorage'
 import { resolvePublicAsset } from './publicFiles'
 import { materializePdfSource, type LocalPdfSource } from './pdfSource'
 import { createJob, getJob, subscribe, type SequencedEvent } from './pdfOptimizationJobs'
-import { enqueue, registerActiveJob } from './pdfOptimizationScheduler'
+import { enqueue, maxRunning, registerActiveJob } from './pdfOptimizationScheduler'
 import { runReportOptimization } from './runReportOptimization'
 import type { AuditActor } from './auditLogger'
 import { logError, logWarn } from './logger'
@@ -55,13 +55,6 @@ export interface ReportUploadPipelineOptions {
  * handoff writes always land.
  */
 export const DRAIN_GRACE_MS = 20_000
-
-/**
- * Upload runs this process may already be carrying and still claim
- * interrupted jobs to resume — the optimizer runs two at a time per process,
- * so a busier pod leaves resumes to an idler replica.
- */
-const RESUME_CAPACITY = 2
 
 // Progress events arrive per page; coalesce DB writes to roughly one per
 // second (phase changes flush immediately so the label never lags).
@@ -593,7 +586,10 @@ export interface ResumeSweepResult {
 export async function resumeInterruptedUploadJobs(): Promise<ResumeSweepResult> {
   if (!isAcceptingUploads()) return { resumed: 0, finalized: 0 }
   const finalized = await finalizeExhaustedUploadJobs()
-  const capacity = RESUME_CAPACITY - runs.size
+  // Only take on what the optimizer can run here right away: a pod already
+  // carrying uploads leaves resumes to an idler replica, so they spread out
+  // instead of queueing behind one pod's single slot.
+  const capacity = maxRunning() - runs.size
   if (capacity <= 0) return { resumed: 0, finalized }
 
   const worker = uploadWorkerId()

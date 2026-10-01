@@ -31,6 +31,10 @@ export function uploadJobNotificationId(jobId: string): string {
   return `${UPLOAD_ID_PREFIX}${jobId}`
 }
 
+export function isUploadNotificationId(id: string): boolean {
+  return id.startsWith(UPLOAD_ID_PREFIX) && id.length > UPLOAD_ID_PREFIX.length
+}
+
 export function uploadJobIdFromNotificationId(id: string): string {
   return id.startsWith(UPLOAD_ID_PREFIX) ? id.slice(UPLOAD_ID_PREFIX.length) : id
 }
@@ -220,4 +224,109 @@ export function notificationBellLabel(activeCount: number, unreadCount: number):
   if (activeCount > 0) parts.push(`${activeCount} in progress`)
   if (unreadCount > 0) parts.push(`${unreadCount} unread`)
   return parts.length > 0 ? `Notifications (${parts.join(', ')})` : 'Notifications'
+}
+
+// ── Notification pages ──────────────────────────────────────────────────────
+
+/** The notification's own page (ids contain ':', so they are encoded). */
+export function notificationPath(id: string): string {
+  return `/admin/notifications/${encodeURIComponent(id)}`
+}
+
+export type NotificationFilter = 'all' | 'running' | 'unread' | 'problems'
+
+export const NOTIFICATION_FILTERS: { value: NotificationFilter; label: string }[] = [
+  { value: 'all', label: 'All' },
+  { value: 'running', label: 'In progress' },
+  { value: 'unread', label: 'Unread' },
+  { value: 'problems', label: 'Needs attention' }
+]
+
+export function filterNotifications(
+  items: AdminNotification[],
+  filter: NotificationFilter,
+  unreadIds: readonly string[] = []
+): AdminNotification[] {
+  switch (filter) {
+    case 'running':
+      return items.filter((n) => n.status === 'running')
+    case 'unread':
+      return items.filter((n) => unreadIds.includes(n.id))
+    case 'problems':
+      return items.filter((n) => n.status === 'warning' || n.status === 'error')
+    default:
+      return items
+  }
+}
+
+export interface NotificationDetail {
+  label: string
+  value: string
+}
+
+const PRESET_LABELS: Record<ReportUploadJob['preset'], string> = {
+  ebook: 'Balanced (150 DPI)',
+  screen: 'Aggressive (72 DPI)',
+  printer: 'Conservative (300 DPI)'
+}
+
+const STATUS_LABELS: Record<AdminNotificationStatus, string> = {
+  running: 'In progress',
+  success: 'Completed',
+  warning: 'Completed with warnings',
+  error: 'Failed',
+  info: 'Information'
+}
+
+export function notificationStatusLabel(status: AdminNotificationStatus): string {
+  return STATUS_LABELS[status]
+}
+
+function formatDateTime(value: string | null | undefined): string | null {
+  if (!value) return null
+  const date = new Date(value)
+  return Number.isNaN(date.getTime()) ? null : date.toLocaleString()
+}
+
+/**
+ * Fact rows for a notification's page. A report upload adds its file,
+ * compression and optimization facts from the job behind it.
+ */
+export function notificationDetails(
+  n: AdminNotification,
+  job?: ReportUploadJob | null
+): NotificationDetail[] {
+  const rows: NotificationDetail[] = [{ label: 'Status', value: notificationStatusLabel(n.status) }]
+  const push = (label: string, value: string | null | undefined) => {
+    if (value) rows.push({ label, value })
+  }
+
+  if (job) {
+    push('File', job.originalName)
+    push('Report', job.reportTitle)
+    push('Uploaded size', formatBytes(job.size))
+    if (job.finalSize && job.finalSize !== job.size) push('Stored size', formatBytes(job.finalSize))
+    push('Compression', PRESET_LABELS[job.preset])
+    const r = job.optimizationResult
+    if (r) {
+      push('Pages', `${r.pageCount} (${r.nativePages} native, ${r.scannedPages} scanned)`)
+      if (r.ocrFailedPages > 0) push('OCR failures', `${r.ocrFailedPages} page(s)`)
+      push(
+        'Space saved',
+        r.skippedCompression ? 'None — already well-compressed' : formatBytes(r.savedBytes)
+      )
+    }
+    push('Error code', job.errorCode)
+    // Explains a slow upload, or an optimization that ran twice.
+    if ((job.attempts ?? 1) > 1) push('Runs', `${job.attempts} (resumed after a server restart)`)
+    push('Started', formatDateTime(job.createdAt))
+    push('Finished', formatDateTime(job.completedAt))
+    return rows
+  }
+
+  push('About', n.subject)
+  push('Details', n.meta)
+  push('Started', formatDateTime(n.createdAt))
+  push('Finished', formatDateTime(n.finishedAt))
+  return rows
 }

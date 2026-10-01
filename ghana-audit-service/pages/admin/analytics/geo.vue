@@ -6,7 +6,14 @@
         <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Visitor Geolocation</h1>
         <p class="mt-1 text-sm text-gray-600 dark:text-gray-400">
           Where visits come from, by country and network (ASN). Resolved at capture time from
-          MaxMind GeoIP.
+          MaxMind GeoLite2. This product includes GeoLite2 Data created by MaxMind, available from
+          <a
+            href="https://www.maxmind.com"
+            class="underline hover:text-gray-900 dark:hover:text-white"
+            target="_blank"
+            rel="noopener noreferrer"
+            >https://www.maxmind.com<span class="sr-only"> (opens in a new tab)</span></a
+          >.
         </p>
       </div>
       <div class="flex items-center gap-2">
@@ -65,7 +72,8 @@
           {{ geoResolvedPct }}
         </div>
         <div class="text-xs text-gray-500 dark:text-gray-400">
-          of visits had a country (else MMDB not mounted)
+          of visits had a country (others: GeoLite2 data not loaded, or the visitor's IP was lost at
+          the load balancer)
         </div>
       </div>
     </div>

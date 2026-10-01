@@ -1,6 +1,10 @@
 import { describe, it, expect } from 'vitest'
 import {
+  filterNotifications,
+  isUploadNotificationId,
   notificationBellLabel,
+  notificationDetails,
+  notificationPath,
   notificationToastMessage,
   optimizationStatusToPatch,
   sortNotifications,
@@ -284,5 +288,76 @@ describe('labels', () => {
     expect(notificationBellLabel(0, 0)).toBe('Notifications')
     expect(notificationBellLabel(2, 0)).toBe('Notifications (2 in progress)')
     expect(notificationBellLabel(1, 3)).toBe('Notifications (1 in progress, 3 unread)')
+  })
+})
+
+describe('notification pages', () => {
+  it('links to an encoded per-notification page', () => {
+    expect(notificationPath('upload:job-1')).toBe('/admin/notifications/upload%3Ajob-1')
+    expect(isUploadNotificationId('upload:job-1')).toBe(true)
+    expect(isUploadNotificationId('upload:')).toBe(false)
+    expect(isUploadNotificationId('local:abc')).toBe(false)
+  })
+
+  it('filters by running, unread and needs-attention', () => {
+    const items = [
+      uploadJobToNotification(job({ id: 'run' })),
+      uploadJobToNotification(
+        job({ id: 'ok', status: 'completed', active: false, optimizationStatus: 'success' })
+      ),
+      uploadJobToNotification(job({ id: 'bad', status: 'failed', active: false })),
+      uploadJobToNotification(
+        job({ id: 'warn', status: 'completed', active: false, optimizationStatus: 'error' })
+      )
+    ]
+    const ids = (f: Parameters<typeof filterNotifications>[1], unread: string[] = []) =>
+      filterNotifications(items, f, unread).map((n) => n.id)
+    expect(ids('all')).toHaveLength(4)
+    expect(ids('running')).toEqual(['upload:run'])
+    expect(ids('unread', ['upload:ok'])).toEqual(['upload:ok'])
+    expect(ids('problems')).toEqual(['upload:bad', 'upload:warn'])
+  })
+
+  it("lists an upload's file, compression and optimization facts", () => {
+    const done = job({
+      status: 'completed',
+      active: false,
+      finalSize: 5 * 1024 * 1024,
+      size: 20 * 1024 * 1024,
+      optimizationStatus: 'success',
+      optimizationResult: { ...optimizationResult, ocrFailedPages: 1 },
+      completedAt: '2026-09-29T12:05:00.000Z'
+    })
+    const rows = Object.fromEntries(
+      notificationDetails(uploadJobToNotification(done), done).map((r) => [r.label, r.value])
+    )
+    expect(rows).toMatchObject({
+      Status: 'Completed',
+      File: 'AG Report 2025.pdf',
+      'Uploaded size': '20.0 MB',
+      'Stored size': '5.0 MB',
+      Compression: 'Balanced (150 DPI)',
+      Pages: '10 (8 native, 2 scanned)',
+      'OCR failures': '1 page(s)',
+      'Space saved': '15.0 MB'
+    })
+    expect(rows.Finished).toBeTruthy()
+    expect(rows['Error code']).toBeUndefined()
+    // A single run is the norm and not worth a row.
+    expect(rows.Runs).toBeUndefined()
+  })
+
+  it('says when an upload had to be resumed after a server restart', () => {
+    const resumed = job({ status: 'completed', active: false, attempts: 2 })
+    const rows = Object.fromEntries(
+      notificationDetails(uploadJobToNotification(resumed), resumed).map((r) => [r.label, r.value])
+    )
+    expect(rows.Runs).toBe('2 (resumed after a server restart)')
+  })
+
+  it('falls back to generic facts for local entries', () => {
+    const n = { ...uploadJobToNotification(job()), source: 'local' as const, subject: 'Images' }
+    const labels = notificationDetails(n).map((r) => r.label)
+    expect(labels).toEqual(['Status', 'About', 'Details', 'Started'])
   })
 })
