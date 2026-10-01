@@ -1,0 +1,4 @@
+# Git runs hooks from the repository root; lint-staged and the ESLint and
+# Prettier configs it uses live in the app.
+cd ghana-audit-service
+npx lint-staged
