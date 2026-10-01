@@ -37,13 +37,7 @@ export interface AuditReport {
 }
 
 export type AuditCategory =
-  | 'financial'
-  | 'compliance'
-  | 'it'
-  | 'performance'
-  | 'technical'
-  | 'follow-up'
-  | 'special'
+  'financial' | 'compliance' | 'it' | 'performance' | 'technical' | 'follow-up' | 'special'
 
 export interface Publication {
   id: string
@@ -58,12 +52,7 @@ export interface Publication {
 }
 
 export type PublicationType =
-  | 'press-statement'
-  | 'bulletin'
-  | 'guideline'
-  | 'manual'
-  | 'strategy'
-  | 'law'
+  'press-statement' | 'bulletin' | 'guideline' | 'manual' | 'strategy' | 'law'
 
 export interface NewsArticleImage {
   url: string

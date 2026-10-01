@@ -111,14 +111,17 @@ const mockGetQuery = vi.fn()
 const mockGetHeader = vi.fn(() => '')
 vi.stubGlobal('getQuery', mockGetQuery)
 vi.stubGlobal('getHeader', mockGetHeader)
-vi.stubGlobal('defineEventHandler', <T,>(handler: T) => handler)
+vi.stubGlobal('defineEventHandler', <T>(handler: T) => handler)
 
-const createMockEvent = () => ({ node: { req: {}, res: {} } }) as unknown as H3Event<EventHandlerRequest>
+const createMockEvent = () =>
+  ({ node: { req: {}, res: {} } }) as unknown as H3Event<EventHandlerRequest>
 
 async function importHandler() {
   vi.resetModules()
   const mod = await import('../../../server/api/search')
-  return mod.default as (event: H3Event<EventHandlerRequest>) => Promise<PaginatedResponse<SearchResult>>
+  return mod.default as (
+    event: H3Event<EventHandlerRequest>
+  ) => Promise<PaginatedResponse<SearchResult>>
 }
 
 async function importSchemaTags() {
@@ -212,9 +215,7 @@ describe('Search API', () => {
       tableResults.set(schema.publications, [
         publicationRow({ baseId: 20, title: 'Audit Manual', body: 'Audit guidance' })
       ])
-      tableResults.set(schema.newsArticles, [
-        newsRow({ baseId: 30, title: 'Audit news headline' })
-      ])
+      tableResults.set(schema.newsArticles, [newsRow({ baseId: 30, title: 'Audit news headline' })])
       mockGetQuery.mockReturnValue({
         query: 'audit',
         type: ['report', 'publication', 'news']
@@ -388,7 +389,13 @@ describe('Search API', () => {
       const result = await handler(createMockEvent())
 
       expect(result.data).toHaveLength(5)
-      expect(result.meta).toEqual({ total: 12, page: 2, perPage: 5, lastPage: 3, typeCounts: { news: 12 } })
+      expect(result.meta).toEqual({
+        total: 12,
+        page: 2,
+        perPage: 5,
+        lastPage: 3,
+        typeCounts: { news: 12 }
+      })
     })
 
     it('caps perPage at the maximum allowed value', async () => {
@@ -698,4 +705,3 @@ describe('Search API', () => {
     })
   })
 })
-

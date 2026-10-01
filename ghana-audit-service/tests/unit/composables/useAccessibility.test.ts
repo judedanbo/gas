@@ -16,10 +16,18 @@ describe('useAccessibility', () => {
     const store: Record<string, string> = {}
     vi.stubGlobal('localStorage', {
       getItem: (key: string) => store[key] ?? null,
-      setItem: (key: string, value: string) => { store[key] = value },
-      removeItem: (key: string) => { Reflect.deleteProperty(store, key) },
-      clear: () => { Object.keys(store).forEach((k) => Reflect.deleteProperty(store, k)) },
-      get length() { return Object.keys(store).length },
+      setItem: (key: string, value: string) => {
+        store[key] = value
+      },
+      removeItem: (key: string) => {
+        Reflect.deleteProperty(store, key)
+      },
+      clear: () => {
+        Object.keys(store).forEach((k) => Reflect.deleteProperty(store, k))
+      },
+      get length() {
+        return Object.keys(store).length
+      },
       key: (i: number) => Object.keys(store)[i] ?? null
     })
 

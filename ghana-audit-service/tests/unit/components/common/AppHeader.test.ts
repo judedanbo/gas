@@ -66,7 +66,7 @@ const AppHeader = {
 
     const currentLocale = ref(locale.value)
     const availableLocales = computed(() =>
-      (locales.value as Array<{ code: string; name: string }>).map(l => ({
+      (locales.value as Array<{ code: string; name: string }>).map((l) => ({
         code: l.code,
         name: l.name
       }))
@@ -351,7 +351,9 @@ describe('AppHeader', () => {
     it('should have proper aria-label', () => {
       const wrapper = mount(AppHeader)
 
-      expect(wrapper.find('.language-switcher select').attributes('aria-label')).toBe('Select language')
+      expect(wrapper.find('.language-switcher select').attributes('aria-label')).toBe(
+        'Select language'
+      )
     })
   })
 
@@ -463,11 +465,15 @@ describe('AppHeader', () => {
     it('should have proper aria-labels on all buttons', () => {
       const wrapper = mount(AppHeader)
 
-      expect(wrapper.find('.contrast-toggle').attributes('aria-label')).toBe('Toggle high contrast mode')
+      expect(wrapper.find('.contrast-toggle').attributes('aria-label')).toBe(
+        'Toggle high contrast mode'
+      )
       expect(wrapper.find('.decrease-text').attributes('aria-label')).toBe('Decrease text size')
       expect(wrapper.find('.increase-text').attributes('aria-label')).toBe('Increase text size')
       expect(wrapper.find('.search-toggle').attributes('aria-label')).toBe('Toggle search')
-      expect(wrapper.find('.mobile-menu-toggle').attributes('aria-label')).toBe('Toggle mobile menu')
+      expect(wrapper.find('.mobile-menu-toggle').attributes('aria-label')).toBe(
+        'Toggle mobile menu'
+      )
     })
   })
 })

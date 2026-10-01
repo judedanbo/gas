@@ -1,176 +1,174 @@
 <script setup lang="ts">
-import { useDateTimePicker } from '~/composables/useDateTimePicker'
+  import { useDateTimePicker } from '~/composables/useDateTimePicker'
 
-interface Props {
-  modelValue?: string | null
-  mode?: 'date' | 'time' | 'datetime'
-  label?: string
-  id?: string
-  placeholder?: string
-  min?: string
-  max?: string
-  required?: boolean
-  disabled?: boolean
-  error?: string
-  helpText?: string
-  hint?: string
-}
-
-const props = withDefaults(defineProps<Props>(), {
-  modelValue: null,
-  mode: 'date',
-  label: undefined,
-  id: undefined,
-  placeholder: undefined,
-  min: undefined,
-  max: undefined,
-  required: false,
-  disabled: false,
-  error: undefined,
-  helpText: undefined,
-  hint: undefined,
-})
-
-const emit = defineEmits<{
-  'update:modelValue': [value: string]
-  blur: []
-}>()
-
-const { parseValue, formatDisplay, toEmitValue } = useDateTimePicker()
-
-// Unique ID for accessibility
-const inputId = computed(() => props.id || `dtp-${Math.random().toString(36).slice(2, 9)}`)
-
-// Popover open state
-const isOpen = ref(false)
-
-// Trigger element ref for popover positioning
-const triggerRef = ref<HTMLElement | null>(null)
-
-// Working state
-const workingDate = ref<Date | null>(null)
-const workingHours = ref(0)
-const workingMinutes = ref(0)
-
-// View state for calendar
-const viewMonth = ref(new Date().getMonth())
-const viewYear = ref(new Date().getFullYear())
-
-// Min/max as Date objects
-const minDate = computed<Date | null>(() => {
-  if (!props.min) return null
-  const d = new Date(props.min)
-  return isNaN(d.getTime()) ? null : d
-})
-
-const maxDate = computed<Date | null>(() => {
-  if (!props.max) return null
-  const d = new Date(props.max)
-  return isNaN(d.getTime()) ? null : d
-})
-
-function syncFromModel() {
-  const parsed = parseValue(props.modelValue, props.mode as 'date' | 'time' | 'datetime')
-  workingDate.value = parsed.date
-  workingHours.value = parsed.hours
-  workingMinutes.value = parsed.minutes
-
-  // Only reset the calendar view when the popover is closed,
-  // so navigating to a different month isn't undone by time changes
-  if (parsed.date && !isOpen.value) {
-    viewMonth.value = parsed.date.getMonth()
-    viewYear.value = parsed.date.getFullYear()
+  interface Props {
+    modelValue?: string | null
+    mode?: 'date' | 'time' | 'datetime'
+    label?: string
+    id?: string
+    placeholder?: string
+    min?: string
+    max?: string
+    required?: boolean
+    disabled?: boolean
+    error?: string
+    helpText?: string
+    hint?: string
   }
-}
 
-syncFromModel()
+  const props = withDefaults(defineProps<Props>(), {
+    modelValue: null,
+    mode: 'date',
+    label: undefined,
+    id: undefined,
+    placeholder: undefined,
+    min: undefined,
+    max: undefined,
+    required: false,
+    disabled: false,
+    error: undefined,
+    helpText: undefined,
+    hint: undefined
+  })
 
-watch(() => props.modelValue, syncFromModel)
+  const emit = defineEmits<{
+    'update:modelValue': [value: string]
+    blur: []
+  }>()
 
-const displayValue = computed(() =>
-  formatDisplay(
-    workingDate.value,
-    workingHours.value,
-    workingMinutes.value,
-    props.mode as 'date' | 'time' | 'datetime',
-  ),
-)
+  const { parseValue, formatDisplay, toEmitValue } = useDateTimePicker()
 
-const effectivePlaceholder = computed(() => {
-  if (props.placeholder) return props.placeholder
-  switch (props.mode) {
-    case 'time':
-      return 'Select time'
-    case 'datetime':
-      return 'Select date and time'
-    default:
-      return 'Select date'
+  // Unique ID for accessibility
+  const inputId = computed(() => props.id || `dtp-${Math.random().toString(36).slice(2, 9)}`)
+
+  // Popover open state
+  const isOpen = ref(false)
+
+  // Trigger element ref for popover positioning
+  const triggerRef = ref<HTMLElement | null>(null)
+
+  // Working state
+  const workingDate = ref<Date | null>(null)
+  const workingHours = ref(0)
+  const workingMinutes = ref(0)
+
+  // View state for calendar
+  const viewMonth = ref(new Date().getMonth())
+  const viewYear = ref(new Date().getFullYear())
+
+  // Min/max as Date objects
+  const minDate = computed<Date | null>(() => {
+    if (!props.min) return null
+    const d = new Date(props.min)
+    return isNaN(d.getTime()) ? null : d
+  })
+
+  const maxDate = computed<Date | null>(() => {
+    if (!props.max) return null
+    const d = new Date(props.max)
+    return isNaN(d.getTime()) ? null : d
+  })
+
+  function syncFromModel() {
+    const parsed = parseValue(props.modelValue, props.mode as 'date' | 'time' | 'datetime')
+    workingDate.value = parsed.date
+    workingHours.value = parsed.hours
+    workingMinutes.value = parsed.minutes
+
+    // Only reset the calendar view when the popover is closed,
+    // so navigating to a different month isn't undone by time changes
+    if (parsed.date && !isOpen.value) {
+      viewMonth.value = parsed.date.getMonth()
+      viewYear.value = parsed.date.getFullYear()
+    }
   }
-})
 
-const inputClasses = computed(() => {
-  const base = 'form-input w-full pl-10 pr-10 cursor-pointer'
-  const errorClass = props.error
-    ? 'border-red-500 focus:border-red-500 focus:ring-red-500'
-    : ''
-  const disabledClass = props.disabled ? 'opacity-50 cursor-not-allowed' : ''
-  return [base, errorClass, disabledClass].filter(Boolean).join(' ')
-})
+  syncFromModel()
 
-function closePicker() {
-  isOpen.value = false
-  emit('blur')
-}
+  watch(() => props.modelValue, syncFromModel)
 
-function toggleOpen() {
-  if (props.disabled) return
-  isOpen.value = !isOpen.value
-  if (!isOpen.value) {
-    emit('blur')
-  }
-}
-
-function handleKeydown(e: KeyboardEvent) {
-  if (e.key === 'Enter' || e.key === ' ') {
-    e.preventDefault()
-    toggleOpen()
-  } else if (e.key === 'Escape') {
-    isOpen.value = false
-    emit('blur')
-  }
-}
-
-function emitValue() {
-  const value = toEmitValue(
-    workingDate.value,
-    workingHours.value,
-    workingMinutes.value,
-    props.mode as 'date' | 'time' | 'datetime',
+  const displayValue = computed(() =>
+    formatDisplay(
+      workingDate.value,
+      workingHours.value,
+      workingMinutes.value,
+      props.mode as 'date' | 'time' | 'datetime'
+    )
   )
-  emit('update:modelValue', value)
-}
 
-function handleDateSelect(date: Date) {
-  workingDate.value = date
-  viewMonth.value = date.getMonth()
-  viewYear.value = date.getFullYear()
-  emitValue()
-  // Auto-close in date-only mode
-  if (props.mode === 'date') {
+  const effectivePlaceholder = computed(() => {
+    if (props.placeholder) return props.placeholder
+    switch (props.mode) {
+      case 'time':
+        return 'Select time'
+      case 'datetime':
+        return 'Select date and time'
+      default:
+        return 'Select date'
+    }
+  })
+
+  const inputClasses = computed(() => {
+    const base = 'form-input w-full pl-10 pr-10 cursor-pointer'
+    const errorClass = props.error ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : ''
+    const disabledClass = props.disabled ? 'opacity-50 cursor-not-allowed' : ''
+    return [base, errorClass, disabledClass].filter(Boolean).join(' ')
+  })
+
+  function closePicker() {
     isOpen.value = false
     emit('blur')
   }
-}
 
-function handleHoursUpdate(hours: number) {
-  workingHours.value = hours
-  emitValue()
-}
+  function toggleOpen() {
+    if (props.disabled) return
+    isOpen.value = !isOpen.value
+    if (!isOpen.value) {
+      emit('blur')
+    }
+  }
 
-function handleMinutesUpdate(minutes: number) {
-  workingMinutes.value = minutes
-  emitValue()
-}
+  function handleKeydown(e: KeyboardEvent) {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault()
+      toggleOpen()
+    } else if (e.key === 'Escape') {
+      isOpen.value = false
+      emit('blur')
+    }
+  }
+
+  function emitValue() {
+    const value = toEmitValue(
+      workingDate.value,
+      workingHours.value,
+      workingMinutes.value,
+      props.mode as 'date' | 'time' | 'datetime'
+    )
+    emit('update:modelValue', value)
+  }
+
+  function handleDateSelect(date: Date) {
+    workingDate.value = date
+    viewMonth.value = date.getMonth()
+    viewYear.value = date.getFullYear()
+    emitValue()
+    // Auto-close in date-only mode
+    if (props.mode === 'date') {
+      isOpen.value = false
+      emit('blur')
+    }
+  }
+
+  function handleHoursUpdate(hours: number) {
+    workingHours.value = hours
+    emitValue()
+  }
+
+  function handleMinutesUpdate(minutes: number) {
+    workingMinutes.value = minutes
+    emitValue()
+  }
 </script>
 
 <template>
@@ -255,11 +253,7 @@ function handleMinutesUpdate(minutes: number) {
     </div>
 
     <!-- Picker Popover -->
-    <UiDateTimePickerPopover
-      :show="isOpen"
-      :trigger-ref="triggerRef"
-      @close="closePicker"
-    >
+    <UiDateTimePickerPopover :show="isOpen" :trigger-ref="triggerRef" @close="closePicker">
       <div class="p-3">
         <!-- Calendar panel (date and datetime modes) -->
         <UiDateTimePickerCalendarPanel

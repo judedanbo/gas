@@ -192,10 +192,7 @@ async function fetchGallerySlides(
       .select()
       .from(schema.galleryImages)
       .where(
-        and(
-          eq(schema.galleryImages.albumId, album[0].id),
-          isNull(schema.galleryImages.deletedAt)
-        )
+        and(eq(schema.galleryImages.albumId, album[0].id), isNull(schema.galleryImages.deletedAt))
       )
       .orderBy(asc(schema.galleryImages.id))
       .limit(count + offset)
@@ -207,9 +204,7 @@ async function fetchGallerySlides(
     const translations = await db
       .select()
       .from(schema.galleryImageTranslations)
-      .where(
-        sql`${schema.galleryImageTranslations.imageId} IN (${sql.join(imageIds, sql`, `)})`
-      )
+      .where(sql`${schema.galleryImageTranslations.imageId} IN (${sql.join(imageIds, sql`, `)})`)
 
     const albumTranslations = await db
       .select()

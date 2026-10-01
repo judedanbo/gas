@@ -46,10 +46,17 @@
         v-else-if="!reports || reports.length === 0"
         class="text-center py-16 bg-gray-50 dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700"
       >
-        <Icon name="heroicons:document-text" class="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-4" aria-hidden="true" />
-        <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">Reports coming soon</h3>
+        <Icon
+          name="heroicons:document-text"
+          class="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-4"
+          aria-hidden="true"
+        />
+        <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+          Reports coming soon
+        </h3>
         <p class="text-gray-500 dark:text-gray-400 mb-6 max-w-md mx-auto">
-          Audit reports are published periodically. Browse our archive for previously published reports.
+          Audit reports are published periodically. Browse our archive for previously published
+          reports.
         </p>
         <NuxtLink to="/reports" class="btn-primary btn-sm">Browse Report Archive</NuxtLink>
       </div>

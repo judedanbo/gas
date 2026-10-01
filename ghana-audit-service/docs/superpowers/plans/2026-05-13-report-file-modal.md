@@ -14,20 +14,21 @@
 
 ## File Map
 
-| Action | Path | Responsibility |
-|--------|------|---------------|
-| Create | `server/api/admin/reports/generate-thumbnail.post.ts` | API endpoint: accepts `fileUrl`, returns generated thumbnail URL |
-| Create | `components/admin/form/AdminReportFileModal.vue` | Unified modal: upload, preview, thumbnail, file size |
-| Create | `tests/unit/server/api/admin/reports/generate-thumbnail.test.ts` | Unit tests for thumbnail endpoint |
-| Create | `tests/unit/components/admin/form/AdminReportFileModal.test.ts` | Unit tests for modal component |
-| Modify | `pages/admin/reports/create.vue` | Replace inline upload + thumbnail with modal |
-| Modify | `pages/admin/reports/[id]/edit.vue` | Replace inline upload + preview + thumbnail with modal |
+| Action | Path                                                             | Responsibility                                                   |
+| ------ | ---------------------------------------------------------------- | ---------------------------------------------------------------- |
+| Create | `server/api/admin/reports/generate-thumbnail.post.ts`            | API endpoint: accepts `fileUrl`, returns generated thumbnail URL |
+| Create | `components/admin/form/AdminReportFileModal.vue`                 | Unified modal: upload, preview, thumbnail, file size             |
+| Create | `tests/unit/server/api/admin/reports/generate-thumbnail.test.ts` | Unit tests for thumbnail endpoint                                |
+| Create | `tests/unit/components/admin/form/AdminReportFileModal.test.ts`  | Unit tests for modal component                                   |
+| Modify | `pages/admin/reports/create.vue`                                 | Replace inline upload + thumbnail with modal                     |
+| Modify | `pages/admin/reports/[id]/edit.vue`                              | Replace inline upload + preview + thumbnail with modal           |
 
 ---
 
 ### Task 1: Server endpoint — generate-thumbnail
 
 **Files:**
+
 - Create: `server/api/admin/reports/generate-thumbnail.post.ts`
 - Reference: `server/utils/generateThumbnail.ts`, `server/utils/publicFiles.ts`
 - Test: `tests/unit/server/api/admin/reports/generate-thumbnail.test.ts`
@@ -206,6 +207,7 @@ git commit -m "feat(admin): add generate-thumbnail API endpoint for report PDFs"
 ### Task 2: AdminReportFileModal component
 
 **Files:**
+
 - Create: `components/admin/form/AdminReportFileModal.vue`
 - Reference: `components/ui/BaseModal.vue`, `components/admin/form/AdminFileUpload.vue`, `composables/useAdminApi.ts`
 
@@ -217,10 +219,7 @@ Create `components/admin/form/AdminReportFileModal.vue`:
 <template>
   <div>
     <!-- Inline Card -->
-    <AdminFormGroup
-      :label="required ? 'Report File *' : 'Report File'"
-      :error="error || undefined"
-    >
+    <AdminFormGroup :label="required ? 'Report File *' : 'Report File'" :error="error || undefined">
       <button
         type="button"
         class="w-full text-left"
@@ -274,12 +273,7 @@ Create `components/admin/form/AdminReportFileModal.vue`:
             v-else
             class="w-14 h-14 bg-red-100 dark:bg-red-900/20 rounded-lg flex items-center justify-center flex-shrink-0"
           >
-            <svg
-              class="w-7 h-7 text-red-600"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
+            <svg class="w-7 h-7 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path
                 stroke-linecap="round"
                 stroke-linejoin="round"
@@ -370,11 +364,7 @@ Create `components/admin/form/AdminReportFileModal.vue`:
           <div>
             <h3 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Preview</h3>
             <div class="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
-              <iframe
-                :src="modalFileUrl"
-                class="w-full h-[400px]"
-                title="PDF Preview"
-              />
+              <iframe :src="modalFileUrl" class="w-full h-[400px]" title="PDF Preview" />
               <div class="px-4 py-2 bg-gray-50 dark:bg-gray-700/50 text-sm">
                 <a
                   :href="modalFileUrl"
@@ -383,12 +373,7 @@ Create `components/admin/form/AdminReportFileModal.vue`:
                   class="text-primary hover:underline inline-flex items-center gap-1"
                 >
                   Open in new tab
-                  <svg
-                    class="w-3.5 h-3.5"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path
                       stroke-linecap="round"
                       stroke-linejoin="round"
@@ -413,9 +398,7 @@ Create `components/admin/form/AdminReportFileModal.vue`:
                   <div
                     class="animate-spin w-8 h-8 border-2 border-primary border-t-transparent rounded-full mx-auto mb-2"
                   />
-                  <p class="text-sm text-gray-500 dark:text-gray-400">
-                    Generating thumbnail...
-                  </p>
+                  <p class="text-sm text-gray-500 dark:text-gray-400">Generating thumbnail...</p>
                 </div>
                 <img
                   v-else-if="modalThumbnail"
@@ -447,15 +430,11 @@ Create `components/admin/form/AdminReportFileModal.vue`:
                   <template v-if="thumbnailSource === 'generated'">
                     Auto-generated from PDF
                   </template>
-                  <template v-else-if="thumbnailSource === 'custom'">
-                    Custom upload
-                  </template>
+                  <template v-else-if="thumbnailSource === 'custom'"> Custom upload </template>
                   <template v-else-if="thumbnailSource === 'existing'">
                     Existing thumbnail
                   </template>
-                  <template v-else>
-                    No thumbnail set
-                  </template>
+                  <template v-else> No thumbnail set </template>
                 </p>
 
                 <p v-if="thumbnailError" class="text-sm text-amber-600 dark:text-amber-400">
@@ -613,8 +592,7 @@ Create `components/admin/form/AdminReportFileModal.vue`:
       modalThumbnail.value = result.thumbnailUrl
       thumbnailSource.value = 'generated'
     } catch {
-      thumbnailError.value =
-        'Thumbnail generation failed. You can upload a custom image instead.'
+      thumbnailError.value = 'Thumbnail generation failed. You can upload a custom image instead.'
     } finally {
       thumbnailGenerating.value = false
     }
@@ -660,6 +638,7 @@ generation, file size display, and custom thumbnail replacement."
 ### Task 3: Unit tests for AdminReportFileModal
 
 **Files:**
+
 - Create: `tests/unit/components/admin/form/AdminReportFileModal.test.ts`
 - Reference: `tests/unit/components/ui/BaseButton.test.ts` (test patterns), `components/admin/form/AdminReportFileModal.vue`
 
@@ -694,12 +673,7 @@ const UiBaseModalStub = defineComponent({
   emits: ['update:modelValue'],
   setup(props, { slots }) {
     return () =>
-      props.modelValue
-        ? h('div', { class: 'modal' }, [
-            slots.default?.(),
-            slots.footer?.()
-          ])
-        : null
+      props.modelValue ? h('div', { class: 'modal' }, [slots.default?.(), slots.footer?.()]) : null
   }
 })
 
@@ -903,6 +877,7 @@ git commit -m "test(admin): add unit tests for AdminReportFileModal component"
 ### Task 4: Integrate modal into create page
 
 **Files:**
+
 - Modify: `pages/admin/reports/create.vue`
 
 - [ ] **Step 1: Replace file upload and thumbnail sections**
@@ -910,37 +885,39 @@ git commit -m "test(admin): add unit tests for AdminReportFileModal component"
 In `pages/admin/reports/create.vue`, replace the "File Upload" section (lines 47–58) with the modal component:
 
 Replace:
+
 ```html
-          <!-- File Upload -->
-          <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-            <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Report File</h2>
-            <AdminFormAdminFileUpload
-              v-model="form.fileUrl"
-              type="report"
-              label="PDF File"
-              required
-              :error="errors.fileUrl"
-              @file-info="handleFileInfo"
-            />
-          </div>
+<!-- File Upload -->
+<div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+  <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Report File</h2>
+  <AdminFormAdminFileUpload
+    v-model="form.fileUrl"
+    type="report"
+    label="PDF File"
+    required
+    :error="errors.fileUrl"
+    @file-info="handleFileInfo"
+  />
+</div>
 ```
 
 With:
+
 ```html
-          <!-- Report File -->
-          <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-            <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Report File</h2>
-            <AdminFormAdminReportFileModal
-              :file-url="form.fileUrl"
-              :file-size="form.fileSize"
-              :thumbnail="form.thumbnail"
-              :error="errors.fileUrl"
-              required
-              @update:file-url="form.fileUrl = $event"
-              @update:file-size="form.fileSize = $event"
-              @update:thumbnail="form.thumbnail = $event"
-            />
-          </div>
+<!-- Report File -->
+<div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+  <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Report File</h2>
+  <AdminFormAdminReportFileModal
+    :file-url="form.fileUrl"
+    :file-size="form.fileSize"
+    :thumbnail="form.thumbnail"
+    :error="errors.fileUrl"
+    required
+    @update:file-url="form.fileUrl = $event"
+    @update:file-size="form.fileSize = $event"
+    @update:thumbnail="form.thumbnail = $event"
+  />
+</div>
 ```
 
 - [ ] **Step 2: Remove the sidebar Thumbnail section**
@@ -948,16 +925,16 @@ With:
 Remove lines 151–160 (the Thumbnail card in the sidebar):
 
 ```html
-          <!-- Thumbnail -->
-          <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-            <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Thumbnail</h2>
-            <AdminFormAdminFileUpload
-              v-model="form.thumbnail"
-              type="thumbnail"
-              label="Cover Image"
-              help-text="Optional cover image for the report"
-            />
-          </div>
+<!-- Thumbnail -->
+<div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+  <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Thumbnail</h2>
+  <AdminFormAdminFileUpload
+    v-model="form.thumbnail"
+    type="thumbnail"
+    label="Cover Image"
+    help-text="Optional cover image for the report"
+  />
+</div>
 ```
 
 - [ ] **Step 3: Remove handleFileInfo function**
@@ -965,9 +942,9 @@ Remove lines 151–160 (the Thumbnail card in the sidebar):
 Remove from `<script setup>` (lines 356–358):
 
 ```typescript
-  function handleFileInfo(info: { filename: string; size: number; mimeType: string }) {
-    form.fileSize = info.size
-  }
+function handleFileInfo(info: { filename: string; size: number; mimeType: string }) {
+  form.fileSize = info.size
+}
 ```
 
 - [ ] **Step 4: Run typecheck**
@@ -991,6 +968,7 @@ AdminReportFileModal component."
 ### Task 5: Integrate modal into edit page
 
 **Files:**
+
 - Modify: `pages/admin/reports/[id]/edit.vue`
 
 - [ ] **Step 1: Replace file upload section with modal**
@@ -998,37 +976,39 @@ AdminReportFileModal component."
 In `pages/admin/reports/[id]/edit.vue`, replace the "File Upload" section (lines 104–115) with the modal component:
 
 Replace:
+
 ```html
-            <!-- File Upload -->
-            <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-              <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Report File</h2>
-              <AdminFormAdminFileUpload
-                v-model="form.fileUrl"
-                type="report"
-                label="PDF File"
-                required
-                :error="errors.fileUrl"
-                @file-info="handleFileInfo"
-              />
-            </div>
+<!-- File Upload -->
+<div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+  <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Report File</h2>
+  <AdminFormAdminFileUpload
+    v-model="form.fileUrl"
+    type="report"
+    label="PDF File"
+    required
+    :error="errors.fileUrl"
+    @file-info="handleFileInfo"
+  />
+</div>
 ```
 
 With:
+
 ```html
-            <!-- Report File -->
-            <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-              <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Report File</h2>
-              <AdminFormAdminReportFileModal
-                :file-url="form.fileUrl"
-                :file-size="form.fileSize"
-                :thumbnail="form.thumbnail"
-                :error="errors.fileUrl"
-                required
-                @update:file-url="form.fileUrl = $event"
-                @update:file-size="form.fileSize = $event"
-                @update:thumbnail="form.thumbnail = $event"
-              />
-            </div>
+<!-- Report File -->
+<div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+  <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Report File</h2>
+  <AdminFormAdminReportFileModal
+    :file-url="form.fileUrl"
+    :file-size="form.fileSize"
+    :thumbnail="form.thumbnail"
+    :error="errors.fileUrl"
+    required
+    @update:file-url="form.fileUrl = $event"
+    @update:file-size="form.fileSize = $event"
+    @update:thumbnail="form.thumbnail = $event"
+  />
+</div>
 ```
 
 - [ ] **Step 2: Remove the collapsible PDF preview section**
@@ -1036,13 +1016,10 @@ With:
 Remove lines 117–166 (the entire PDF Preview collapsible panel below the file upload):
 
 ```html
-            <!-- PDF Preview -->
-            <div
-              v-if="form.fileUrl"
-              class="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden"
-            >
-              ...entire preview section...
-            </div>
+<!-- PDF Preview -->
+<div v-if="form.fileUrl" class="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
+  ...entire preview section...
+</div>
 ```
 
 - [ ] **Step 3: Remove the sidebar Thumbnail section**
@@ -1050,30 +1027,32 @@ Remove lines 117–166 (the entire PDF Preview collapsible panel below the file 
 Remove lines 283–291 (the Thumbnail card in the sidebar):
 
 ```html
-            <!-- Thumbnail -->
-            <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-              <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Thumbnail</h2>
-              <AdminFormAdminFileUpload
-                v-model="form.thumbnail"
-                type="thumbnail"
-                label="Cover Image"
-                help-text="Optional cover image for the report"
-              />
-            </div>
+<!-- Thumbnail -->
+<div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+  <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Thumbnail</h2>
+  <AdminFormAdminFileUpload
+    v-model="form.thumbnail"
+    type="thumbnail"
+    label="Cover Image"
+    help-text="Optional cover image for the report"
+  />
+</div>
 ```
 
 - [ ] **Step 4: Remove unused state and functions from script**
 
 Remove `previewExpanded` ref (line 517):
+
 ```typescript
-  const previewExpanded = ref(false)
+const previewExpanded = ref(false)
 ```
 
 Remove `handleFileInfo` function (lines 659–661):
+
 ```typescript
-  function handleFileInfo(info: { filename: string; size: number; mimeType: string }) {
-    form.fileSize = info.size
-  }
+function handleFileInfo(info: { filename: string; size: number; mimeType: string }) {
+  form.fileSize = info.size
+}
 ```
 
 - [ ] **Step 5: Run typecheck**
@@ -1107,6 +1086,7 @@ Run: `cd ghana-audit-service && npm run dev`
 Navigate to `http://localhost:3000/admin/reports/create` (log in if needed).
 
 Verify:
+
 - "Attach Report" card is visible in the main content area with dashed border
 - Clicking it opens a modal titled "Report File"
 - Drag-and-drop or click-to-upload a PDF works inside the modal
@@ -1124,6 +1104,7 @@ Verify:
 Navigate to an existing report's edit page (e.g. `http://localhost:3000/admin/reports/1/edit`).
 
 Verify:
+
 - Inline card shows existing file's thumbnail (or PDF icon), filename, and file size
 - Clicking opens modal pre-loaded with existing file data
 - PDF preview renders in iframe
@@ -1139,6 +1120,7 @@ Verify:
 - [ ] **Step 4: Test thumbnail generation failure gracefully**
 
 If `pdftoppm` is not installed, verify:
+
 - Upload PDF succeeds
 - Thumbnail generation shows error message
 - "Upload custom image" option is available as fallback

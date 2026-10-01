@@ -31,7 +31,7 @@ describe('useToast', () => {
       expect(toasts.value[0]).toMatchObject({
         type: 'success',
         message: 'Operation completed',
-        duration: 4000,
+        duration: 4000
       })
       expect(toasts.value[0].id).toBeDefined()
     })
@@ -45,7 +45,7 @@ describe('useToast', () => {
       expect(toasts.value).toHaveLength(1)
       expect(toasts.value[0]).toMatchObject({
         type: 'error',
-        message: 'Something went wrong',
+        message: 'Something went wrong'
       })
     })
 
@@ -58,7 +58,7 @@ describe('useToast', () => {
       expect(toasts.value).toHaveLength(1)
       expect(toasts.value[0]).toMatchObject({
         type: 'warning',
-        message: 'Be careful',
+        message: 'Be careful'
       })
     })
 
@@ -71,7 +71,7 @@ describe('useToast', () => {
       expect(toasts.value).toHaveLength(1)
       expect(toasts.value[0]).toMatchObject({
         type: 'info',
-        message: 'Just so you know',
+        message: 'Just so you know'
       })
     })
 

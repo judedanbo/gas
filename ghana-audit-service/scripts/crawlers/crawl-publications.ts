@@ -80,10 +80,8 @@ const PRESS_STATEMENTS: PublicationItem[] = [
     translations: {
       en: {
         title: 'Auditor-General submits Report to Parliament',
-        excerpt:
-          'Petroleum fund management report submitted for 2018 financial year.',
-        content:
-          '<p>Petroleum fund management report submitted for 2018 financial year.</p>'
+        excerpt: 'Petroleum fund management report submitted for 2018 financial year.',
+        content: '<p>Petroleum fund management report submitted for 2018 financial year.</p>'
       }
     }
   },
@@ -144,8 +142,7 @@ const PRESS_STATEMENTS: PublicationItem[] = [
     translations: {
       en: {
         title: 'Submission of Assets And Liabilities Declaration forms',
-        excerpt:
-          'Suspended collection of declaration forms to reduce COVID-19 transmission risk.',
+        excerpt: 'Suspended collection of declaration forms to reduce COVID-19 transmission risk.',
         content:
           '<p>Suspended collection of declaration forms to reduce COVID-19 transmission risk.</p>'
       }
@@ -260,9 +257,9 @@ const BULLETINS: PublicationItem[] = [
       en: {
         title: '3rd Quarter 2025',
         excerpt:
-          'Overview of the National Anti-Corruption Plan (NACAP) and Ghana Audit Service\'s role as an Anti-Corruption Agent.',
+          "Overview of the National Anti-Corruption Plan (NACAP) and Ghana Audit Service's role as an Anti-Corruption Agent.",
         content:
-          '<p>Overview of the National Anti-Corruption Plan (NACAP) and Ghana Audit Service\'s role as an Anti-Corruption Agent.</p>'
+          "<p>Overview of the National Anti-Corruption Plan (NACAP) and Ghana Audit Service's role as an Anti-Corruption Agent.</p>"
       }
     }
   },
@@ -275,8 +272,7 @@ const BULLETINS: PublicationItem[] = [
     translations: {
       en: {
         title: '2nd Quarter 2025',
-        excerpt:
-          'Examination of substantive tests and controls in financial auditing procedures.',
+        excerpt: 'Examination of substantive tests and controls in financial auditing procedures.',
         content:
           '<p>Examination of substantive tests and controls in financial auditing procedures.</p>'
       }
@@ -339,8 +335,7 @@ const BULLETINS: PublicationItem[] = [
     translations: {
       en: {
         title: '2nd Quarter 2024',
-        excerpt:
-          'Emphasis on time consciousness and efficiency for auditors in completing tasks.',
+        excerpt: 'Emphasis on time consciousness and efficiency for auditors in completing tasks.',
         content:
           '<p>Emphasis on time consciousness and efficiency for auditors in completing tasks.</p>'
       }
@@ -499,10 +494,8 @@ const BULLETINS: PublicationItem[] = [
     translations: {
       en: {
         title: '4th Quarter 2021',
-        excerpt:
-          'Year-end reflection on achievements amid pandemic-related challenges.',
-        content:
-          '<p>Year-end reflection on achievements amid pandemic-related challenges.</p>'
+        excerpt: 'Year-end reflection on achievements amid pandemic-related challenges.',
+        content: '<p>Year-end reflection on achievements amid pandemic-related challenges.</p>'
       }
     }
   },
@@ -515,10 +508,9 @@ const BULLETINS: PublicationItem[] = [
     translations: {
       en: {
         title: '3rd Quarter 2021',
-        excerpt:
-          'Analysis of COVID-19 pandemic impact on Ghana\'s economy and government spending.',
+        excerpt: "Analysis of COVID-19 pandemic impact on Ghana's economy and government spending.",
         content:
-          '<p>Analysis of COVID-19 pandemic impact on Ghana\'s economy and government spending.</p>'
+          "<p>Analysis of COVID-19 pandemic impact on Ghana's economy and government spending.</p>"
       }
     }
   },
@@ -547,8 +539,7 @@ const BULLETINS: PublicationItem[] = [
     translations: {
       en: {
         title: '1st Quarter 2021',
-        excerpt:
-          'Overview of 2020 Financial Year Audit launch and institutions to be audited.',
+        excerpt: 'Overview of 2020 Financial Year Audit launch and institutions to be audited.',
         content:
           '<p>Overview of 2020 Financial Year Audit launch and institutions to be audited.</p>'
       }
@@ -563,8 +554,7 @@ const BULLETINS: PublicationItem[] = [
     translations: {
       en: {
         title: '4th Quarter 2020',
-        excerpt:
-          'Appreciation message acknowledging staff resilience during pandemic challenges.',
+        excerpt: 'Appreciation message acknowledging staff resilience during pandemic challenges.',
         content:
           '<p>Appreciation message acknowledging staff resilience during pandemic challenges.</p>'
       }
@@ -595,8 +585,7 @@ const BULLETINS: PublicationItem[] = [
     translations: {
       en: {
         title: '2nd Quarter 2020',
-        excerpt:
-          'Capacity building initiatives for staff to conduct audits in IT environments.',
+        excerpt: 'Capacity building initiatives for staff to conduct audits in IT environments.',
         content:
           '<p>Capacity building initiatives for staff to conduct audits in IT environments.</p>'
       }
@@ -612,9 +601,9 @@ const BULLETINS: PublicationItem[] = [
       en: {
         title: '1st Quarter 2020',
         excerpt:
-          'Overview of the Office of the Auditor-General as Ghana\'s Supreme Audit Institution.',
+          "Overview of the Office of the Auditor-General as Ghana's Supreme Audit Institution.",
         content:
-          '<p>Overview of the Office of the Auditor-General as Ghana\'s Supreme Audit Institution.</p>'
+          "<p>Overview of the Office of the Auditor-General as Ghana's Supreme Audit Institution.</p>"
       }
     }
   }

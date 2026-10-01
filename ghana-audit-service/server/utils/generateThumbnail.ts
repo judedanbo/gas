@@ -37,15 +37,22 @@ export async function generateThumbnailFromPdf(pdfPath: string): Promise<string 
   const tempJpg = `${outputPrefix}.jpg`
 
   try {
-    execFileSync('pdftoppm', [
-      '-jpeg',
-      '-singlefile',
-      '-f', '1',
-      '-scale-to', String(THUMBNAIL_WIDTH),
-      '-jpegopt', 'quality=85',
-      pdfPath,
-      outputPrefix
-    ], { timeout: 30_000, stdio: 'pipe' })
+    execFileSync(
+      'pdftoppm',
+      [
+        '-jpeg',
+        '-singlefile',
+        '-f',
+        '1',
+        '-scale-to',
+        String(THUMBNAIL_WIDTH),
+        '-jpegopt',
+        'quality=85',
+        pdfPath,
+        outputPrefix
+      ],
+      { timeout: 30_000, stdio: 'pipe' }
+    )
   } catch {
     return null
   }
@@ -74,5 +81,7 @@ export function removeThumbnail(thumbnailUrl: string): void {
   const filePath = join(process.cwd(), 'public', thumbnailUrl)
   try {
     if (existsSync(filePath)) unlinkSync(filePath)
-  } catch { /* best-effort cleanup */ }
+  } catch {
+    /* best-effort cleanup */
+  }
 }

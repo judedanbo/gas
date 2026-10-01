@@ -23,7 +23,9 @@ describe('jwt sign/verify', () => {
   })
 
   it('signs with the HS256 algorithm', () => {
-    const header = JSON.parse(Buffer.from(signToken(payload, 60).split('.')[0], 'base64').toString())
+    const header = JSON.parse(
+      Buffer.from(signToken(payload, 60).split('.')[0], 'base64').toString()
+    )
     expect(header.alg).toBe('HS256')
   })
 

@@ -149,7 +149,9 @@ async function main() {
       const filename = `${videoId}.jpg`
       const destPath = join(IMG_DIR, filename)
 
-      console.log(`\n[${i + 1}/${videoItems.length}] Downloading thumbnail for "${item.translations.en.title}"`)
+      console.log(
+        `\n[${i + 1}/${videoItems.length}] Downloading thumbnail for "${item.translations.en.title}"`
+      )
 
       try {
         if (existsSync(destPath)) {
@@ -159,7 +161,10 @@ async function main() {
           const res = await fetch(thumbUrl)
           if (res.ok && res.body) {
             const fileStream = createWriteStream(destPath)
-            await pipeline(Readable.fromWeb(res.body as Parameters<typeof Readable.fromWeb>[0]), fileStream)
+            await pipeline(
+              Readable.fromWeb(res.body as Parameters<typeof Readable.fromWeb>[0]),
+              fileStream
+            )
             item.thumbnail = `/img/videos/${filename}`
             console.log(`  Saved: ${item.thumbnail}`)
           } else {

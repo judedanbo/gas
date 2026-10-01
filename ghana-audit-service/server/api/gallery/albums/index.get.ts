@@ -61,10 +61,7 @@ export default defineEventHandler(async (event) => {
     })
     .from(schema.galleryImages)
     .where(
-      and(
-        inArray(schema.galleryImages.albumId, albumIds),
-        isNull(schema.galleryImages.deletedAt)
-      )
+      and(inArray(schema.galleryImages.albumId, albumIds), isNull(schema.galleryImages.deletedAt))
     )
     .orderBy(desc(schema.galleryImages.uploadedAt))
 
@@ -82,10 +79,7 @@ export default defineEventHandler(async (event) => {
     })
     .from(schema.galleryImages)
     .where(
-      and(
-        inArray(schema.galleryImages.albumId, albumIds),
-        isNull(schema.galleryImages.deletedAt)
-      )
+      and(inArray(schema.galleryImages.albumId, albumIds), isNull(schema.galleryImages.deletedAt))
     )
     .groupBy(schema.galleryImages.albumId)
 

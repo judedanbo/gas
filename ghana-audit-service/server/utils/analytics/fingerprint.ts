@@ -58,9 +58,7 @@ export function isIpAnonymizedRoute(routePattern: string): boolean {
   const p = routePattern.startsWith('/[locale]/')
     ? routePattern.slice('/[locale]'.length)
     : routePattern
-  return ANONYMIZED_IP_ROUTE_PREFIXES.some(
-    (prefix) => p === prefix || p.startsWith(`${prefix}/`)
-  )
+  return ANONYMIZED_IP_ROUTE_PREFIXES.some((prefix) => p === prefix || p.startsWith(`${prefix}/`))
 }
 
 export function hashUa(ua: string): string {

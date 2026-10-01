@@ -18,12 +18,7 @@
  */
 
 export type FuzzKind =
-  | 'sqli'
-  | 'xss'
-  | 'path_traversal'
-  | 'ssrf'
-  | 'length_anomaly'
-  | 'encoded_payload'
+  'sqli' | 'xss' | 'path_traversal' | 'ssrf' | 'length_anomaly' | 'encoded_payload'
 
 export interface FuzzMatch {
   kind: FuzzKind

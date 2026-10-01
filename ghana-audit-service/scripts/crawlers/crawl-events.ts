@@ -60,7 +60,9 @@ function parseSingleDate(dateText: string): string | null {
   try {
     const d = new Date(cleaned)
     if (!isNaN(d.getTime())) return d.toISOString().split('T')[0]
-  } catch { /* unparseable date */ }
+  } catch {
+    /* unparseable date */
+  }
   return null
 }
 
@@ -204,7 +206,8 @@ async function main() {
       })
 
       console.log(`  Done: "${detail.title.slice(0, 60)}"`)
-      if (detail.dateText) console.log(`  Date: ${detail.dateText} -> ${startDate}${endDate ? ` to ${endDate}` : ''}`)
+      if (detail.dateText)
+        console.log(`  Date: ${detail.dateText} -> ${startDate}${endDate ? ` to ${endDate}` : ''}`)
       if (detail.location) console.log(`  Location: ${detail.location}`)
     } catch (err) {
       console.error(`  Failed: ${(err as Error).message}`)

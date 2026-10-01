@@ -25,12 +25,7 @@ const dbConfig = {
 }
 
 type OfficeTypeSlug =
-  | 'head-office'
-  | 'regional-office'
-  | 'district-office'
-  | 'sector'
-  | 'branch'
-  | 'unit'
+  'head-office' | 'regional-office' | 'district-office' | 'sector' | 'branch' | 'unit'
 
 const officeTypesSeed: { slug: OfficeTypeSlug; name: string; displayOrder: number }[] = [
   { slug: 'head-office', name: 'Head Office', displayOrder: 0 },

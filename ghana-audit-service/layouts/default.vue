@@ -1,5 +1,7 @@
 <template>
-  <div class="layout-default bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 transition-colors duration-normal">
+  <div
+    class="layout-default bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 transition-colors duration-normal"
+  >
     <!-- Header Component -->
     <CommonAppHeader />
 
@@ -14,17 +16,17 @@
 </template>
 
 <script setup lang="ts">
-// Layout configuration
+  // Layout configuration
 </script>
 
 <style scoped>
-.layout-default {
-  display: flex;
-  flex-direction: column;
-  min-height: 100vh;
-}
+  .layout-default {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+  }
 
-.main-content {
-  flex: 1;
-}
+  .main-content {
+    flex: 1;
+  }
 </style>

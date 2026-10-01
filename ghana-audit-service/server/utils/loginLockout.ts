@@ -76,7 +76,10 @@ export function getLockoutConfig(): LockoutConfig {
  * Backoff duration for the n-th consecutive lockout (n >= 1):
  * min(base × multiplier^(n−1), max).
  */
-export function lockoutDurationMs(lockoutCount: number, cfg: LockoutConfig = getLockoutConfig()): number {
+export function lockoutDurationMs(
+  lockoutCount: number,
+  cfg: LockoutConfig = getLockoutConfig()
+): number {
   const n = Math.max(1, lockoutCount)
   const scaled = cfg.baseLockoutMs * Math.pow(cfg.multiplier, n - 1)
   return Math.min(Math.round(scaled), cfg.maxLockoutMs)
