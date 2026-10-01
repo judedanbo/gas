@@ -150,6 +150,8 @@
 </template>
 
 <script setup lang="ts">
+  import type { NotificationTask } from '~/composables/useAdminNotifications'
+
   type Status = 'queued' | 'uploading' | 'done' | 'error'
 
   interface Item {
@@ -178,11 +180,21 @@
       payload: {
         url: string
         translations: { en: { alt: string | null; caption: string | null } }
-      }[]
+      }[],
+      /**
+       * The batch's notification-center entry, left at "Saving…" when there
+       * is something to save: the listener saves the images and reports the
+       * outcome on it (succeed / fail). Null when there is nothing to report.
+       */
+      task: NotificationTask | null
     ]
   }>()
 
   const api = useAdminApi()
+  const notifications = useAdminNotifications()
+  // Uploads keep going if the page is left, but the listener that saves them
+  // is gone — the batch then reports through the notification center alone.
+  let unmounted = false
 
   const inputId = `bulk-upload-${Math.random().toString(36).slice(2, 9)}`
   const acceptedTypes = 'image/jpeg,image/png,image/webp,image/gif'
@@ -295,11 +307,25 @@
   async function startUpload() {
     if (uploading.value) return
     uploading.value = true
+    // Rejected files (no preview) are never sent.
+    const queue = items.value.filter(
+      (i) => i.status !== 'done' && !(i.status === 'error' && !i.previewUrl)
+    )
+    const total = queue.length
+    const task =
+      total > 0
+        ? notifications.startTask({
+            category: 'upload',
+            title: `Uploading ${total} image${total === 1 ? '' : 's'}`,
+            progress: 0,
+            progressLabel: 'Uploading images…'
+          })
+        : null
     try {
-      for (const item of items.value) {
-        if (item.status === 'done') continue
-        if (item.status === 'error' && !item.previewUrl) continue
+      for (const [index, item] of queue.entries()) {
+        task?.update({ progressDetail: `${index + 1} of ${total}` })
         await uploadOne(item)
+        task?.update({ progress: Math.round(((index + 1) / total) * 100) })
       }
       const successful = items.value
         .filter((i) => i.status === 'done' && i.url)
@@ -309,7 +335,42 @@
             en: { alt: i.alt || null, caption: i.caption || null }
           }
         }))
-      emit('complete', successful)
+
+      const failed = queue.filter((i) => i.status === 'error').length
+      const meta = failed > 0 ? `${total - failed} uploaded · ${failed} failed` : null
+      let handOver = task
+      if (task && successful.length === 0) {
+        task.fail({
+          title: 'Image upload failed',
+          notes: [
+            {
+              text:
+                total === 1
+                  ? 'The image could not be uploaded.'
+                  : `None of the ${total} images could be uploaded.`,
+              tone: 'error'
+            }
+          ],
+          // Each row shows its own error while this list is on screen.
+          toast: unmounted
+        })
+        handOver = null
+      } else if (task && unmounted) {
+        task.warn({
+          title: 'Images uploaded but not added to the gallery',
+          meta,
+          notes: [
+            {
+              text: 'The page was left before they were saved. Upload them again to add them.',
+              tone: 'warning'
+            }
+          ]
+        })
+        handOver = null
+      } else {
+        task?.update({ progress: 100, progressLabel: 'Saving to the gallery…', meta })
+      }
+      emit('complete', successful, handOver)
     } finally {
       uploading.value = false
     }
@@ -342,6 +403,7 @@
   defineExpose({ reset, items })
 
   onUnmounted(() => {
+    unmounted = true
     for (const item of items.value) {
       if (item.previewUrl) URL.revokeObjectURL(item.previewUrl)
     }

@@ -471,6 +471,7 @@
   }>()
 
   const api = useAdminApi()
+  const notifications = useAdminNotifications()
   const optimization = useReportOptimization()
   // Follows the server-side upload pipeline for the file in the modal.
   const uploadJob = useReportUploadJob()
@@ -573,11 +574,16 @@
 
   async function runOptimization(opts?: { allowDropBookmarks?: boolean }) {
     if (!modalFileUrl.value) return
+    const subject = followedJob.value?.originalName || extractFilename(modalFileUrl.value)
     await optimization.start({
       fileUrl: modalFileUrl.value,
       preset: optimizePreset.value,
       reportId: props.reportId,
-      allowDropBookmarks: opts?.allowDropBookmarks
+      allowDropBookmarks: opts?.allowDropBookmarks,
+      // Followed in the notification center too, so the outcome is reported
+      // even if the admin confirms and closes this dialog first.
+      onStarted: (jobId) =>
+        notifications.trackOptimization({ jobId, subject, reportId: props.reportId })
     })
     // The pipeline replaces the file in place, so the URL is unchanged.
     // Pick up the new size when the optimizer reports it.

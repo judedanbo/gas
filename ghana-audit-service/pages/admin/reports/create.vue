@@ -65,7 +65,7 @@
             />
             <!-- Server-side upload pipeline for the attached file; keeps
                  updating after the modal closes, and survives leaving the
-                 page (see the dashboard). -->
+                 page (see the notification center). -->
             <AdminUiAdminUploadJobProgress v-if="pageJob" :job="pageJob" class="mt-4" />
           </div>
         </div>
@@ -264,7 +264,7 @@
     }
   })
 
-  // Resume from the dashboard: /admin/reports/create?uploadJobId=… pre-fills
+  // Resume from a notification: /admin/reports/create?uploadJobId=… pre-fills
   // the file from a background upload (finished or still running) — e.g.
   // after signing out mid-upload and coming back.
   onMounted(async () => {

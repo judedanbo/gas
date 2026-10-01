@@ -19,7 +19,7 @@ import { auditReports, type ReportOptimizationMeta } from './audit-reports'
  *
  * Rows live in MySQL rather than the in-process/Redis optimization job
  * mirror so progress survives admin logouts, session expiry, other tabs,
- * and pod restarts — the dashboard polls this table.
+ * and pod restarts — the admin notification center polls this table.
  */
 export const REPORT_UPLOAD_JOB_STATUSES = [
   'queued',

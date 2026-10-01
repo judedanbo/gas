@@ -1,5 +1,6 @@
 import { ref, computed, getCurrentScope, onScopeDispose, type Ref } from 'vue'
 import type { ReportUploadJob } from '~/types/admin'
+import { BACKGROUND_REQUEST_HEADERS } from '~/composables/useAdminApi'
 
 /**
  * Polling clients for background A-G report uploads.
@@ -27,6 +28,15 @@ export interface UseReportUploadJobsOptions {
   sinceHours?: number
   /** Only in-flight jobs (no recent history). */
   activeOnly?: boolean
+  /** Only jobs the signed-in admin started. */
+  mine?: boolean
+  /**
+   * Send the polls as background requests, which the server does not count
+   * as user activity (for pollers that run on every page).
+   */
+  background?: boolean
+  /** Poll interval while nothing is running (default UPLOAD_JOB_IDLE_POLL_MS). */
+  idlePollMs?: number
   /** Begin polling immediately (default true). */
   autoStart?: boolean
 }
@@ -36,9 +46,10 @@ function pageVisible(): boolean {
 }
 
 /**
- * Dashboard list: every in-flight upload plus recent finished ones. Polls
+ * List of uploads: every in-flight one plus recent finished ones. Polls
  * fast while something is running, slowly otherwise (to notice jobs
- * started elsewhere), and pauses while the tab is hidden.
+ * started elsewhere), and pauses while the tab is hidden. The admin
+ * notification center runs one of these (mine + background) on every page.
  */
 export function useReportUploadJobs(options: UseReportUploadJobsOptions = {}) {
   const jobs = ref<ReportUploadJob[]>([])
@@ -48,29 +59,47 @@ export function useReportUploadJobs(options: UseReportUploadJobsOptions = {}) {
 
   const activeJobs = computed(() => jobs.value.filter((j) => j.active))
   const hasActive = computed(() => activeJobs.value.length > 0)
+  const idlePollMs = options.idlePollMs ?? UPLOAD_JOB_IDLE_POLL_MS
 
   let timer: ReturnType<typeof setTimeout> | null = null
   let polling = false
   let failures = 0
   let visibilityHandler: (() => void) | null = null
+  // Responses can land out of order, and a local change (upsert, dismiss)
+  // must not be undone by a poll that left before it. Only a response to a
+  // request issued after everything already applied may replace the list.
+  let lastRequest = 0
+  let appliedUpTo = 0
 
   async function fetchJobs(): Promise<void> {
     const api = useAdminApi()
+    const request = ++lastRequest
     loading.value = !loaded.value
     try {
-      const res = await api.get<JobsListResponse>('reports/upload-jobs', {
-        limit: options.limit,
-        sinceHours: options.sinceHours,
-        active: options.activeOnly ? 'true' : undefined
-      })
-      jobs.value = res.data
+      const res = await api.get<JobsListResponse>(
+        'reports/upload-jobs',
+        {
+          limit: options.limit,
+          sinceHours: options.sinceHours,
+          active: options.activeOnly ? 'true' : undefined,
+          mine: options.mine ? 'true' : undefined
+        },
+        options.background ? { headers: { ...BACKGROUND_REQUEST_HEADERS } } : undefined
+      )
+      if (request > appliedUpTo) {
+        appliedUpTo = request
+        jobs.value = res.data
+      }
       error.value = null
       failures = 0
       loaded.value = true
     } catch (err) {
       failures++
-      const e = err as { data?: { message?: string }; message?: string }
+      const e = err as { statusCode?: number; data?: { message?: string }; message?: string }
       error.value = e.data?.message || e.message || 'Could not load uploads'
+      // No permission (e.g. no access to the reports module) will not fix
+      // itself by retrying.
+      if (e.statusCode === 403) stopPolling()
     } finally {
       loading.value = false
     }
@@ -83,10 +112,10 @@ export function useReportUploadJobs(options: UseReportUploadJobsOptions = {}) {
       // Back off hard rather than hammer a broken endpoint; a visibility
       // change or manual refresh resumes the normal cadence.
       failures = 0
-      timer = setTimeout(tick, UPLOAD_JOB_IDLE_POLL_MS * 3)
+      timer = setTimeout(tick, idlePollMs * 3)
       return
     }
-    const delay = hasActive.value ? UPLOAD_JOB_ACTIVE_POLL_MS : UPLOAD_JOB_IDLE_POLL_MS
+    const delay = hasActive.value ? UPLOAD_JOB_ACTIVE_POLL_MS : idlePollMs
     timer = setTimeout(tick, delay)
   }
 
@@ -132,11 +161,47 @@ export function useReportUploadJobs(options: UseReportUploadJobsOptions = {}) {
     schedule()
   }
 
+  /**
+   * Insert or replace a job already in hand (the upload response) so it
+   * shows before the next poll; polls already in flight can't drop it.
+   */
+  function upsert(job: ReportUploadJob): void {
+    appliedUpTo = lastRequest
+    const index = jobs.value.findIndex((j) => j.id === job.id)
+    jobs.value =
+      index === -1
+        ? [job, ...jobs.value]
+        : jobs.value.map((existing, i) => (i === index ? job : existing))
+    if (job.active && polling) schedule()
+  }
+
   async function dismiss(id: string): Promise<boolean> {
     const api = useAdminApi()
     try {
       await api.post(`reports/upload-jobs/${id}/dismiss`)
+      appliedUpTo = lastRequest
       jobs.value = jobs.value.filter((j) => j.id !== id)
+      return true
+    } catch {
+      return false
+    }
+  }
+
+  /** Forget the list (e.g. another admin signed in on this tab). */
+  function reset(): void {
+    appliedUpTo = lastRequest
+    jobs.value = []
+    loaded.value = false
+    error.value = null
+  }
+
+  /** Dismiss every finished upload the signed-in admin started. */
+  async function dismissFinished(): Promise<boolean> {
+    const api = useAdminApi()
+    try {
+      await api.post('reports/upload-jobs/dismiss-finished')
+      appliedUpTo = lastRequest
+      jobs.value = jobs.value.filter((j) => j.active)
       return true
     } catch {
       return false
@@ -162,7 +227,10 @@ export function useReportUploadJobs(options: UseReportUploadJobsOptions = {}) {
     refresh,
     startPolling,
     stopPolling,
-    dismiss
+    upsert,
+    reset,
+    dismiss,
+    dismissFinished
   }
 }
 

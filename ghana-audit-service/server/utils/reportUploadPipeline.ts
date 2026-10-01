@@ -72,7 +72,7 @@ export async function runReportUploadPipeline(
 
   try {
     // 1. Store the original. Until this lands the fileUrl points nowhere,
-    //    which is why the dashboard shows "Storing…" rather than a link.
+    //    which is why the admin UI shows "Saving to storage…" rather than a link.
     await updateUploadJob(jobId, { status: 'storing', progress: STAGE_PROGRESS.storing })
     try {
       await persistUpload(uploadConfigs.report, job.filename, tempPath, job.mimeType)

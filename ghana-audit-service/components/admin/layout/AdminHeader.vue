@@ -78,6 +78,9 @@
           View Site
         </a>
 
+        <!-- Notifications: uploads, optimizations and other background work -->
+        <AdminLayoutAdminNotificationCenter />
+
         <!-- User Dropdown -->
         <div ref="userMenuRef" class="relative">
           <button

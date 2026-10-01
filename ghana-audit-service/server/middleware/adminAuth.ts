@@ -47,6 +47,13 @@ const PUBLIC_ADMIN_ROUTES = [
   '/api/admin/auth/accept-invitation'
 ]
 
+// Requests the client marks as background polling (the notification center
+// runs one on every admin page) are authenticated as usual but must not count
+// as user activity — otherwise an idle tab would keep its session alive
+// forever. Marking a request only ever withholds the idle-window slide.
+// Mirrored client-side in composables/useAdminApi.ts.
+const BACKGROUND_REQUEST_HEADER = 'X-Admin-Background'
+
 // SSE endpoints — EventSource cannot set custom headers, so for these routes
 // only we additionally accept a short-lived, aud-scoped ticket (see
 // server/utils/sseTicket.ts) via a `ticket` query parameter, instead of the
@@ -150,7 +157,8 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  const session = await validateSession(sessionId, { touch: true })
+  const background = getHeader(event, BACKGROUND_REQUEST_HEADER) === '1'
+  const session = await validateSession(sessionId, { touch: !background })
   if (!session.ok || session.userId !== user.id) {
     const reason = session.reason ?? 'invalid'
     throw createError({

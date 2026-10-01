@@ -164,6 +164,56 @@ export interface ReportUploadResponse extends UploadResponse {
   job: ReportUploadJob
 }
 
+// ── Admin notification center ─────────────────────────────────────────────
+// One feed (the bell in the admin header) for anything an admin should hear
+// about: background report uploads (persisted server-side), PDF
+// optimizations, and client-side tasks such as bulk image uploads.
+
+/** `running` is in progress; the others are outcomes. */
+export type AdminNotificationStatus = 'running' | 'success' | 'warning' | 'error' | 'info'
+
+/** Picks the icon shown while a notification is running. */
+export type AdminNotificationCategory = 'upload' | 'optimization' | 'general'
+
+export interface AdminNotificationNote {
+  text: string
+  tone: 'muted' | 'success' | 'warning' | 'error'
+}
+
+export interface AdminNotificationAction {
+  label: string
+  /** In-app route, rendered as a link. */
+  to: string | { path: string; query?: Record<string, string> }
+}
+
+export interface AdminNotification {
+  /** Stable across updates, e.g. `upload:<jobId>` or `local:<uuid>`. */
+  id: string
+  /** Where the record lives — decides how it is dismissed. */
+  source: 'report-upload' | 'local'
+  category: AdminNotificationCategory
+  status: AdminNotificationStatus
+  /** Headline, e.g. "Uploading report" or "Report upload complete". */
+  title: string
+  /** What it is about — usually a file name or report title. */
+  subject: string | null
+  /** Secondary detail such as the file size. */
+  meta: string | null
+  /** 0–100 while running; null shows an indeterminate bar. */
+  progress: number | null
+  /** Current step while running, e.g. "Classifying pages…". */
+  progressLabel: string | null
+  /** Fine-grained position, e.g. "Page 3 of 10". */
+  progressDetail: string | null
+  thumbnailUrl: string | null
+  notes: AdminNotificationNote[]
+  actions: AdminNotificationAction[]
+  createdAt: string
+  updatedAt: string
+  /** When it reached its outcome; null while running. */
+  finishedAt: string | null
+}
+
 // Content type categories
 export type AuditCategory =
   'financial' | 'compliance' | 'it' | 'performance' | 'technical' | 'follow-up' | 'special'

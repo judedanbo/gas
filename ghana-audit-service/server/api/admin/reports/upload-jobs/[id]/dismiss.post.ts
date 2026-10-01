@@ -3,7 +3,7 @@ import { dismissUploadJob, getUploadJob } from '../../../../../utils/reportUploa
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
-/** Acknowledge a finished upload so it leaves the dashboard list. */
+/** Acknowledge a finished upload so it leaves the notification center. */
 export default defineEventHandler(async (event) => {
   requirePermission(event, 'create')
 
