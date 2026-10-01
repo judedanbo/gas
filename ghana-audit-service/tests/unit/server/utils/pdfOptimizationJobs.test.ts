@@ -3,9 +3,12 @@ import { getRedis } from '~/server/utils/redis'
 import {
   createJob,
   effectiveJobState,
+  flushJobMirrors,
   getJob,
   getJobAcrossInstances,
+  interruptJob,
   sweepStalledJobs,
+  subscribe,
   updateJob,
   pushEvent,
   type JobState
@@ -102,6 +105,69 @@ describe('pdfOptimizationJobs', () => {
     const fake = makeFakeRedis()
     vi.mocked(getRedis).mockReturnValue(fake.client as never)
     await expect(getJobAcrossInstances('ghost')).resolves.toBeUndefined()
+  })
+
+  describe('shutdown', () => {
+    it('interruptJob reports a queued or running job INTERRUPTED and releases its subscribers', () => {
+      const queued = createJob('/pdf/reports/int-queued.pdf', 10)
+      const running = createJob('/pdf/reports/int-running.pdf', 11)
+      updateJob(running.id, { status: 'running' })
+      const terminal = vi.fn()
+      subscribe(running.id, ({ event }) => {
+        if (event.phase === 'done') terminal()
+      })
+
+      expect(interruptJob(queued.id)).toBe(true)
+      expect(interruptJob(running.id)).toBe(true)
+
+      for (const job of [queued, running]) {
+        expect(getJob(job.id)).toMatchObject({ status: 'error', errorCode: 'INTERRUPTED' })
+      }
+      expect(terminal).toHaveBeenCalledTimes(1)
+    })
+
+    it('interruptJob leaves a finished job with its outcome', () => {
+      const done = createJob('/pdf/reports/int-done.pdf', 12)
+      updateJob(done.id, { status: 'success' })
+      const failed = createJob('/pdf/reports/int-failed.pdf', 13)
+      updateJob(failed.id, { status: 'error', errorCode: 'HAS_BOOKMARKS' })
+
+      expect(interruptJob(done.id)).toBe(false)
+      expect(interruptJob(failed.id)).toBe(false)
+      expect(interruptJob('unknown')).toBe(false)
+      expect(getJob(done.id)?.status).toBe('success')
+      expect(getJob(failed.id)?.errorCode).toBe('HAS_BOOKMARKS')
+    })
+
+    it('flushJobMirrors waits for the mirror writes still in flight', async () => {
+      // A slow Redis: each write lands only when the test lets it.
+      const pending: Array<() => void> = []
+      const store = new Map<string, string>()
+      vi.mocked(getRedis).mockReturnValue({
+        set: (key: string, value: string) =>
+          new Promise((resolve) =>
+            pending.push(() => {
+              store.set(key, value)
+              resolve('OK')
+            })
+          )
+      } as never)
+
+      const job = createJob('/pdf/reports/flush.pdf', 14)
+      interruptJob(job.id)
+      let flushed = false
+      const flushing = flushJobMirrors().then(() => (flushed = true))
+
+      await Promise.resolve()
+      expect(flushed).toBe(false)
+
+      for (const land of pending) land()
+      await flushing
+      expect(JSON.parse(store.get(`gas:pdf-opt:${job.id}`)!)).toMatchObject({
+        status: 'error',
+        errorCode: 'INTERRUPTED'
+      })
+    })
   })
 
   describe('watchdog', () => {

@@ -5,7 +5,8 @@ import { uploadBlobFromFile } from '~/server/utils/blobStorage'
 import { persistOptimizationResult } from '~/server/utils/persistOptimizationResult'
 import { logAuditActionAs } from '~/server/utils/auditLogger'
 import { logError } from '~/server/utils/logger'
-import { createJob, getJob } from '~/server/utils/pdfOptimizationJobs'
+import { getRedis } from '~/server/utils/redis'
+import { createJob, getJob, interruptJob } from '~/server/utils/pdfOptimizationJobs'
 
 // Per CLAUDE.md: vi.mock factories must use `function` declarations (hoisted).
 vi.mock('~/server/utils/pdfOptimizer', async () => {
@@ -29,6 +30,10 @@ vi.mock('~/server/utils/auditLogger', () => ({
 
 vi.mock('~/server/utils/logger', () => ({
   logError: vi.fn()
+}))
+
+vi.mock('~/server/utils/redis', () => ({
+  getRedis: vi.fn(() => null)
 }))
 
 const actor = { userId: 7, ipAddress: null, userAgent: null }
@@ -65,6 +70,7 @@ function setup() {
 
 beforeEach(() => {
   vi.mocked(optimizeReportPdf).mockResolvedValue(result)
+  vi.mocked(getRedis).mockReturnValue(null)
 })
 
 describe('runReportOptimization', () => {
@@ -107,6 +113,40 @@ describe('runReportOptimization', () => {
       after: { fileUrl: FILE_URL, preset: 'ebook', error: 'INTERRUPTED' }
     })
     expect(cleanup).toHaveBeenCalledTimes(1)
+  })
+
+  it('never reads as running once aborted, so an interruption already reported stands', async () => {
+    // Every state the other replicas would have seen, in order.
+    const mirrored: string[] = []
+    vi.mocked(getRedis).mockReturnValue({
+      set: async (_key: string, value: string) => {
+        mirrored.push((JSON.parse(value) as { status: string }).status)
+        return 'OK'
+      }
+    } as never)
+    const { controller, job, run } = setup()
+    controller.abort()
+    // A shutdown reports it before the scheduler lets the run through.
+    interruptJob(job.id)
+
+    await run()
+
+    expect(mirrored).not.toContain('running')
+    expect(getJob(job.id)).toMatchObject({ status: 'error', errorCode: 'INTERRUPTED' })
+  })
+
+  it('ends as a success, error cleared, when it finishes after being reported interrupted', async () => {
+    const { job, run } = setup()
+    vi.mocked(uploadBlobFromFile).mockImplementationOnce(async () => {
+      // A shutdown lands while the optimized bytes are on their way to Blob.
+      interruptJob(job.id)
+    })
+
+    await run()
+
+    expect(getJob(job.id)).toMatchObject({ status: 'success', result })
+    expect(getJob(job.id)?.error).toBeUndefined()
+    expect(getJob(job.id)?.errorCode).toBeUndefined()
   })
 
   it('reports an interruption as INTERRUPTED, whatever the optimizer threw on its way out', async () => {

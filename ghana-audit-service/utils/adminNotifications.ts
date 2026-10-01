@@ -163,13 +163,18 @@ export function optimizationStatusToPatch(
   }
 
   if (s.status === 'error') {
+    // Cut short by a server restart rather than failed: nothing is wrong with
+    // the file, the optimization just needs running again.
+    const interrupted = s.errorCode === 'INTERRUPTED'
     return {
-      status: 'error',
-      title: 'Optimization failed',
+      status: interrupted ? 'warning' : 'error',
+      title: interrupted ? 'Optimization interrupted' : 'Optimization failed',
       progress: null,
       progressLabel: null,
       progressDetail: null,
-      notes: [{ text: optimizationErrorMessage(s.errorCode), tone: 'error' }],
+      notes: [
+        { text: optimizationErrorMessage(s.errorCode), tone: interrupted ? 'warning' : 'error' }
+      ],
       actions
     }
   }

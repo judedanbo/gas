@@ -585,13 +585,30 @@ describe('optimizeReportPdf', () => {
   it('never replaces the input once aborted, even with a smaller result in hand', async () => {
     const input = makeInputPdf(2048)
     const controller = new AbortController()
-    const program = nativeShrinkProgram([])
-    // The upload is handed off while the final sanity check runs.
-    program[program.length - 1] = () => {
-      controller.abort()
-      return { stdout: pdfinfoResult(2), stderr: '' }
-    }
-    programExec(program)
+
+    programExec([
+      () => ({ stdout: pdfinfoResult(2), stderr: '' }),
+      () => ({ stdout: qpdfOutlines(0), stderr: '' }),
+      (_b, args) => {
+        writeSplitPages(args[args.length - 1].replace(/[\\/]page-%d\.pdf$/, ''), 2)
+        return { stdout: '', stderr: '' }
+      },
+      () => ({ stdout: 'enough text to call native here.', stderr: '' }),
+      (_b, args) => {
+        writeFileSync(args[args.length - 1], Buffer.alloc(800, 0x21))
+        return { stdout: '', stderr: '' }
+      },
+      (_b, args) => {
+        const out = args.find((a) => a.startsWith('-sOutputFile='))!.replace('-sOutputFile=', '')
+        writeFileSync(out, Buffer.alloc(500, 0x21))
+        return { stdout: '', stderr: '' }
+      },
+      // The upload is handed off while the final sanity check runs.
+      () => {
+        controller.abort()
+        return { stdout: pdfinfoResult(2), stderr: '' }
+      }
+    ])
 
     await expect(optimizeReportPdf(input, { signal: controller.signal })).rejects.toMatchObject({
       name: 'AbortError'

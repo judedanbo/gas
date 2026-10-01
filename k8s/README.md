@@ -395,11 +395,11 @@ kubectl rollout restart deployment/gas-frontend -n gas
 A-G report PDF optimization (Ghostscript, qpdf, pdftoppm, Tesseract) runs
 **inside the frontend pod**: its child processes share the container's CPU
 quota and memory limit with the Nitro server. Anything that restarts or kills
-the container also cuts short every upload pipeline and optimization running in
-it: a background upload whose PDF already reached storage is resumed when the
-container comes back (its optimization starts over), one still being stored
-must be uploaded again, and an explicit "Optimize" run is lost. The probes are
-built so that load never causes a restart:
+the container also cuts short every in-flight upload pipeline and
+optimization: uploads whose PDF already reached storage redo their remaining
+steps, ones still being stored must be uploaded again, and explicit
+optimizations have to be run again. The probes are built so that load never
+causes a restart:
 
 | Probe     | Path       | Checks                                                       | On failure                                           |
 | --------- | ---------- | ------------------------------------------------------------ | ---------------------------------------------------- |
@@ -463,15 +463,17 @@ never on its own.
 
 **Autoscaling caveat.** The HPA scales on CPU at 70% of the 250m request, and
 an optimization pins its pod near the 2-CPU limit, so every optimization
-scales the Deployment out to `maxReplicas`. Scaling back in terminates pods. A
-terminating pod gives its background upload pipelines a 20s grace period and
-then hands them off: uploads already in storage resume on another pod, ones
-not yet stored fail at once asking for a re-upload (see
-`terminationGracePeriodSeconds` in `frontend/deployment.yaml`). An upload's
-optimization still starts over, and explicit optimizations are not handed off
-at all. Hence the slow scale-down: it makes interrupting a pod mid-job much
-rarer. Rollouts (`kubectl rollout restart`, deploys) terminate pods the same
-way.
+scales the Deployment out to `maxReplicas`. Scaling back in terminates pods.
+On SIGTERM a pod gives its in-flight uploads a 20s grace period, then hands
+them off: uploads already in storage resume on another pod, which redoes their
+remaining steps, and ones not yet stored fail at once asking for a re-upload
+(see `terminationGracePeriodSeconds` in `frontend/deployment.yaml`). Its
+explicit optimizations are reported as interrupted for the admin to run
+again. So minutes of optimization can be lost, and an upload still being
+stored has to be sent again. Hence the slow scale-down: it makes cutting a
+pod's work short much rarer, but cannot rule it out. Rollouts
+(`kubectl rollout restart`, deploys) also terminate pods, so prefer deploying
+while no large uploads are being processed.
 
 ```bash
 # Live usage per pod (needs metrics-server) and HPA state

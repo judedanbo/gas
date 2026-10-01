@@ -31,6 +31,8 @@ interface QueueItem {
   jobId: string
   fileUrl: string
   run: () => Promise<void>
+  /** Aborted: `run` does no work, so it no longer waits for a slot. */
+  signal?: AbortSignal
 }
 
 // In-process state. Registration and lookup of the local index are
@@ -102,23 +104,27 @@ export function registerActiveJob(fileUrl: string, jobId: string): void {
     })
 }
 
-function releaseActiveJob(fileUrl: string, jobId: string): void {
+/**
+ * Release the file claim if it is still this job's. The local claim goes at
+ * once; the returned promise settles when Redis has caught up (best-effort).
+ * The scheduler does this when a run ends; a shutdown drain also does it up
+ * front and awaits it, so other replicas can start the file again.
+ */
+export async function releaseActiveJob(fileUrl: string, jobId: string): Promise<void> {
   if (activeByFile.get(fileUrl) === jobId) {
     activeByFile.delete(fileUrl)
   }
   const redis = getRedis()
   if (!redis) return
-  void (async () => {
-    try {
-      // Only delete our own claim — another replica may have re-claimed.
-      const current = await redis.get(ACTIVE_INDEX_PREFIX + fileUrl)
-      if (current === jobId) {
-        await redis.del(ACTIVE_INDEX_PREFIX + fileUrl)
-      }
-    } catch {
-      /* best-effort; TTL is the backstop */
+  try {
+    // Only delete our own claim — another replica may have re-claimed.
+    const current = await redis.get(ACTIVE_INDEX_PREFIX + fileUrl)
+    if (current === jobId) {
+      await redis.del(ACTIVE_INDEX_PREFIX + fileUrl)
     }
-  })()
+  } catch {
+    /* best-effort; TTL is the backstop */
+  }
 }
 
 /**
@@ -126,29 +132,47 @@ function releaseActiveJob(fileUrl: string, jobId: string): void {
  * otherwise waits in FIFO order (job status stays 'queued' until run()
  * begins). Slot release and file-index cleanup always happen in the finally,
  * regardless of how run() ends — the watchdog never touches these.
+ *
+ * Pass the run's abort signal: once it aborts, run() does no work (see
+ * runReportOptimization), so a queued item is started at once to report the
+ * interruption and release its file instead of waiting for a slot.
  */
-export function enqueue(jobId: string, fileUrl: string, run: () => Promise<void>): void {
-  queue.push({ jobId, fileUrl, run })
+export function enqueue(
+  jobId: string,
+  fileUrl: string,
+  run: () => Promise<void>,
+  signal?: AbortSignal
+): void {
+  queue.push({ jobId, fileUrl, run, signal })
+  signal?.addEventListener('abort', pump, { once: true })
   pump()
 }
 
 function pump(): void {
+  // Aborted items do no work, so they never wait for a slot.
+  for (const item of queue.filter((queued) => queued.signal?.aborted)) {
+    queue.splice(queue.indexOf(item), 1)
+    start(item)
+  }
   const limit = maxRunning()
   while (running < limit && queue.length > 0) {
-    const item = queue.shift()!
-    running++
-    void item
-      .run()
-      .catch(() => {
-        // run() owns its own error reporting (job state + audit log); the
-        // scheduler only guarantees cleanup.
-      })
-      .finally(() => {
-        running--
-        releaseActiveJob(item.fileUrl, item.jobId)
-        pump()
-      })
+    start(queue.shift()!)
   }
+}
+
+function start(item: QueueItem): void {
+  running++
+  void item
+    .run()
+    .catch(() => {
+      // run() owns its own error reporting (job state + audit log); the
+      // scheduler only guarantees cleanup.
+    })
+    .finally(() => {
+      running--
+      void releaseActiveJob(item.fileUrl, item.jobId)
+      pump()
+    })
 }
 
 /** Test helper: reset all scheduler state between test cases. */
