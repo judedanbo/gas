@@ -1,4 +1,4 @@
-import { requirePermission } from '../../../../utils/adminHelpers'
+import { getCurrentUser, requirePermission } from '../../../../utils/adminHelpers'
 import {
   listUploadJobs,
   toUploadJobDTO,
@@ -11,8 +11,9 @@ export interface UploadJobsListResponse {
 }
 
 /**
- * Dashboard polling endpoint: every in-flight report upload plus recent
- * finished ones (undismissed, last `sinceHours`, default 24). Reads the
+ * Polling endpoint: every in-flight report upload plus recent finished ones
+ * (undismissed, last `sinceHours`, default 24). `mine=true` narrows it to the
+ * caller's own uploads — the admin notification center's feed. Reads the
  * persistent job table, so it answers from any replica and after re-login.
  */
 export default defineEventHandler(async (event): Promise<UploadJobsListResponse> => {
@@ -21,6 +22,7 @@ export default defineEventHandler(async (event): Promise<UploadJobsListResponse>
   const query = getQuery(event)
   const activeOnly = query.active === 'true'
   const includeDismissed = query.includeDismissed === 'true'
+  const userId = query.mine === 'true' ? getCurrentUser(event).id : undefined
   const limitRaw = Number(query.limit)
   const limit = Number.isFinite(limitRaw) && limitRaw > 0 ? Math.min(limitRaw, 100) : 50
   const sinceHoursRaw = Number(query.sinceHours)
@@ -30,6 +32,7 @@ export default defineEventHandler(async (event): Promise<UploadJobsListResponse>
   const rows = await listUploadJobs({
     activeOnly,
     includeDismissed,
+    userId,
     limit,
     since: new Date(Date.now() - sinceHours * 60 * 60_000)
   })

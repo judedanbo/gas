@@ -28,14 +28,14 @@ export function isActiveUploadStatus(status: ReportUploadJobStatus): boolean {
 /**
  * The pipeline touches updatedAt this often while alive; a row silent for
  * longer than STALL_TIMEOUT_MS belongs to a producer that died (pod restart,
- * OOM) and is flipped to failed by the watchdog so the dashboard never shows
+ * OOM) and is flipped to failed by the watchdog so the admin UI never shows
  * a spinner forever. The optimizer's own queue wait can be long, but the
  * heartbeat keeps ticking through it.
  */
 export const HEARTBEAT_INTERVAL_MS = 30_000
 export const STALL_TIMEOUT_MS = 5 * 60_000
 
-/** Terminal rows are kept this long for the dashboard's history, then pruned. */
+/** Terminal rows are kept this long for the notification history, then pruned. */
 export const TERMINAL_RETENTION_MS = 14 * 24 * 60 * 60_000
 
 /**
@@ -273,6 +273,8 @@ export interface ListUploadJobsOptions {
   since?: Date
   includeDismissed?: boolean
   limit?: number
+  /** Only jobs started by this user (the notification center's feed). */
+  userId?: number
 }
 
 export type UploadJobListRow = ReportUploadJob & {
@@ -281,7 +283,7 @@ export type UploadJobListRow = ReportUploadJob & {
 }
 
 /**
- * Jobs for the dashboard: every active job, plus recent terminal ones that
+ * Jobs for the admin UI: every active job, plus recent terminal ones that
  * have not been dismissed. Active first, then newest.
  */
 export async function listUploadJobs(
@@ -296,7 +298,11 @@ export async function listUploadJobs(
     ? gt(schema.reportUploadJobs.createdAt, since)
     : and(gt(schema.reportUploadJobs.createdAt, since), isNull(schema.reportUploadJobs.dismissedAt))
 
-  const where = opts.activeOnly ? active : or(active, recentTerminal)
+  const visible = opts.activeOnly ? active : or(active, recentTerminal)
+  const where =
+    opts.userId === undefined
+      ? visible
+      : and(eq(schema.reportUploadJobs.userId, opts.userId), visible)
 
   const activeFirst = sql<number>`CASE WHEN ${schema.reportUploadJobs.status} IN ('queued','storing','thumbnail','optimizing') THEN 0 ELSE 1 END`
 
@@ -347,7 +353,7 @@ export async function linkUploadJobToReport(
 }
 
 /**
- * Hide a finished job from the dashboard. Active jobs cannot be dismissed
+ * Hide a finished job from the notification center. Active jobs cannot be dismissed
  * (there is nothing to acknowledge yet). Returns false when nothing changed.
  */
 export async function dismissUploadJob(id: string): Promise<boolean> {
@@ -362,6 +368,25 @@ export async function dismissUploadJob(id: string): Promise<boolean> {
       )
     )
   return Boolean((result as { affectedRows?: number }).affectedRows)
+}
+
+/**
+ * "Clear all" for one user's notification feed: dismiss every finished job
+ * they started. Running jobs are left alone. Returns the number dismissed.
+ */
+export async function dismissFinishedUploadJobs(userId: number): Promise<number> {
+  const now = new Date()
+  const [result] = await getDatabase()
+    .update(schema.reportUploadJobs)
+    .set({ dismissedAt: now, updatedAt: now })
+    .where(
+      and(
+        eq(schema.reportUploadJobs.userId, userId),
+        inArray(schema.reportUploadJobs.status, ['completed', 'failed']),
+        isNull(schema.reportUploadJobs.dismissedAt)
+      )
+    )
+  return Number((result as { affectedRows?: number }).affectedRows ?? 0)
 }
 
 /**

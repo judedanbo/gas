@@ -6,7 +6,8 @@ import { pruneUploadJobs, sweepStalledUploadJobs } from '../utils/reportUploadJo
  * The pipeline heartbeats its job row while alive; if the pod that owns a
  * job dies mid-flight, the row would otherwise sit at "optimizing" forever.
  * Every minute, rows silent past STALL_TIMEOUT_MS are flipped to failed so
- * the dashboard reports it honestly. Hourly, old terminal rows are pruned.
+ * the notification center reports it honestly. Hourly, old terminal rows are
+ * pruned.
  * Mirrors the sessionCleanup plugin's lifecycle wiring.
  */
 

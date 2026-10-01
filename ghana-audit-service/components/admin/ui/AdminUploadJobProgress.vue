@@ -61,8 +61,8 @@
       {{ errorMessage }}
     </p>
     <p v-if="job.active && !compact" class="text-xs text-gray-500 dark:text-gray-400">
-      This continues in the background — you can leave this page or sign out, and track it from the
-      dashboard.
+      This continues in the background — you can leave this page or sign out, and follow it from the
+      notifications bell at the top of the page.
     </p>
   </div>
 </template>
@@ -78,7 +78,7 @@
 
   interface Props {
     job: ReportUploadJob
-    /** Hide the "continues in the background" hint (dashboard rows). */
+    /** Hide the "continues in the background" hint. */
     compact?: boolean
   }
 

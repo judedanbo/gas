@@ -211,6 +211,7 @@
   }>()
 
   const api = useAdminApi()
+  const notifications = useAdminNotifications()
 
   const isDragging = ref(false)
   const uploading = ref(false)
@@ -220,6 +221,9 @@
   const previewUrl = ref<string | null>(null)
   const fileName = ref<string | null>(null)
   const fileSize = ref<number | null>(null)
+  // Set once this field leaves the page; uploads still in flight then report
+  // only through the notification center.
+  let unmounted = false
 
   // File type configurations
   const typeConfig: Record<string, { accept: string[]; label: string; maxSize: number }> = {
@@ -290,9 +294,25 @@
     uploading.value = true
     uploadProgress.value = 0
 
+    // A-G reports run to 100MB: follow the transfer in the notification
+    // center too, so it stays visible if the admin closes the dialog or
+    // leaves the page. Once the bytes land, the server job takes over.
+    const transfer =
+      props.type === 'report'
+        ? notifications.startTask({
+            category: 'upload',
+            title: 'Uploading report',
+            subject: file.name,
+            meta: formatFileSize(file.size),
+            progress: 0,
+            progressLabel: 'Sending file to the server…'
+          })
+        : null
+
     try {
       const onProgress = (fraction: number) => {
         uploadProgress.value = Math.round(fraction * 100)
+        transfer?.update({ progress: uploadProgress.value })
       }
       let response: UploadResponse
       let job: ReportUploadJob | null = null
@@ -300,6 +320,8 @@
         const reportResponse = await api.uploadReport(file, { preset: props.preset, onProgress })
         job = reportResponse.job
         response = reportResponse
+        notifications.trackUploadJob(job)
+        transfer?.remove()
       } else {
         response = await api.upload(file, props.type, { onProgress })
       }
@@ -323,6 +345,12 @@
     } catch (e: unknown) {
       const error = e as { data?: { message?: string }; message?: string }
       uploadError.value = error.data?.message || error.message || 'Upload failed'
+      transfer?.fail({
+        title: 'Report upload failed',
+        notes: [{ text: uploadError.value, tone: 'error' }],
+        // The inline error already says so while this field is on screen.
+        toast: unmounted
+      })
     } finally {
       uploading.value = false
       uploadProgress.value = null
@@ -348,8 +376,10 @@
     return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
   }
 
-  // Cleanup on unmount
+  // Cleanup on unmount. An upload in flight keeps going; it reports through
+  // the notification center from then on.
   onUnmounted(() => {
+    unmounted = true
     if (previewUrl.value) {
       URL.revokeObjectURL(previewUrl.value)
     }
