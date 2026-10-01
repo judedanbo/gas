@@ -130,6 +130,35 @@ describe('useReportOptimization', () => {
     expect(o.errorMessage.value).toMatch(/bookmarks/i)
   })
 
+  it('explains an optimization cut short by a server restart', async () => {
+    const o = useReportOptimization()
+    const done = startOptimization(o)
+    await flush()
+
+    FakeEventSource.latest().emit('error', {
+      data: JSON.stringify({ message: 'INTERRUPTED', code: 'INTERRUPTED' })
+    })
+    await done
+
+    expect(o.status.value).toBe('error')
+    expect(o.errorMessage.value).toMatch(/interrupted by a server restart/)
+  })
+
+  it('explains a start turned away by a server that is restarting', async () => {
+    const o = useReportOptimization()
+    apiPost.mockRejectedValue({
+      statusCode: 503,
+      statusMessage: 'The server is restarting. Please try again in a moment.',
+      data: { data: { code: 'SERVER_RESTARTING' } }
+    })
+
+    await o.start({ fileUrl: '/pdf/reports/x.pdf' })
+
+    expect(o.status.value).toBe('error')
+    expect(o.jobId.value).toBeNull()
+    expect(o.errorMessage.value).toMatch(/restarting.*try again in a moment/)
+  })
+
   it('captures the error code from a rejected start request', async () => {
     const o = useReportOptimization()
     apiPost.mockRejectedValue({

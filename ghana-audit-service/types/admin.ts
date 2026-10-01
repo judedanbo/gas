@@ -150,6 +150,14 @@ export interface ReportUploadJob {
   optimizationResult: ReportOptimizationMeta | null
   error: string | null
   errorCode: string | null
+  /**
+   * Pipeline runs so far; above 1 means it was resumed after a server
+   * restart. Optional because a replica still on an older build omits it
+   * (and interruptedAt) during a rolling deploy.
+   */
+  attempts?: number
+  /** Set while the job waits for another server to resume it. */
+  interruptedAt?: string | null
   reportId: number | null
   reportTitle: string | null
   user: { id: number; name: string } | null

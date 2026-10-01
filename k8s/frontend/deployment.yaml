@@ -29,6 +29,15 @@ spec:
         app.kubernetes.io/name: gas-frontend
         app.kubernetes.io/part-of: ghana-audit-service
     spec:
+      # Room for a clean shutdown before the kubelet's SIGKILL. On SIGTERM the
+      # app gives running background report uploads ~20s (DRAIN_GRACE_MS in
+      # server/utils/reportUploadPipeline.ts), then hands the rest off:
+      # released for resume on another pod, or failed with an accurate
+      # message if the file never reached storage. Meanwhile Nitro waits up
+      # to NITRO_SHUTDOWN_TIMEOUT (30s) for open connections before running
+      # its close hooks (capped at another 30s); 75s lets that whole sequence
+      # finish instead of being killed partway. Keep it above DRAIN_GRACE_MS.
+      terminationGracePeriodSeconds: 75
       securityContext:
         runAsUser: 1001
         runAsGroup: 1001

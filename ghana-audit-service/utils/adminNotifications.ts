@@ -17,6 +17,7 @@ import {
   uploadJobErrorMessage,
   uploadJobPageLabel,
   uploadJobResultSummary,
+  uploadJobResumeNote,
   uploadJobStageLabel
 } from '~/utils/reportUploadJobUi'
 
@@ -80,6 +81,8 @@ export function uploadJobToNotification(job: ReportUploadJob): AdminNotification
         : 'success'
 
   const notes: AdminNotificationNote[] = []
+  const resumed = uploadJobResumeNote(job)
+  if (resumed) notes.push({ text: resumed, tone: 'muted' })
   const summary = uploadJobResultSummary(job)
   if (summary) {
     const kept = job.optimizationResult?.skippedCompression
@@ -160,13 +163,18 @@ export function optimizationStatusToPatch(
   }
 
   if (s.status === 'error') {
+    // Cut short by a server restart rather than failed: nothing is wrong with
+    // the file, the optimization just needs running again.
+    const interrupted = s.errorCode === 'INTERRUPTED'
     return {
-      status: 'error',
-      title: 'Optimization failed',
+      status: interrupted ? 'warning' : 'error',
+      title: interrupted ? 'Optimization interrupted' : 'Optimization failed',
       progress: null,
       progressLabel: null,
       progressDetail: null,
-      notes: [{ text: optimizationErrorMessage(s.errorCode), tone: 'error' }],
+      notes: [
+        { text: optimizationErrorMessage(s.errorCode), tone: interrupted ? 'warning' : 'error' }
+      ],
       actions
     }
   }

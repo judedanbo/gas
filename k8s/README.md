@@ -385,7 +385,8 @@ kubectl create job --from=cronjob/mysql-backup manual-backup-$(date +%s) -n gas
 # Scale frontend
 kubectl scale deployment gas-frontend -n gas --replicas=3
 
-# Restart frontend (rolling restart)
+# Restart frontend (rolling restart). Safe during background report uploads:
+# terminating pods hand them off to a live pod (see frontend/deployment.yaml).
 kubectl rollout restart deployment/gas-frontend -n gas
 ```
 
@@ -394,9 +395,10 @@ kubectl rollout restart deployment/gas-frontend -n gas
 A-G report PDF optimization (Ghostscript, qpdf, pdftoppm, Tesseract) runs
 **inside the frontend pod**: its child processes share the container's CPU
 quota and memory limit with the Nitro server. Anything that restarts or kills
-the container also kills every in-flight upload pipeline and optimization,
-which admins then see as STALLED ("The upload stopped responding and was
-abandoned"). The probes are built so that load never causes a restart:
+the container also cuts short every in-flight upload pipeline and
+optimization: uploads redo their remaining steps, and explicit optimizations
+have to be run again. The probes are built so that load never causes a
+restart:
 
 | Probe     | Path       | Checks                                                       | On failure                                           |
 | --------- | ---------- | ------------------------------------------------------------ | ---------------------------------------------------- |
@@ -460,12 +462,14 @@ never on its own.
 
 **Autoscaling caveat.** The HPA scales on CPU at 70% of the 250m request, and
 an optimization pins its pod near the 2-CPU limit, so every optimization
-scales the Deployment out to `maxReplicas`. Scaling back in terminates pods,
-and Nitro's graceful shutdown waits only for HTTP requests, not background
-upload pipelines or optimizations. Hence the slow scale-down: it makes killing
-a pod mid-job much rarer, but cannot rule it out. Rollouts
-(`kubectl rollout restart`, deploys) also terminate pods, so avoid deploying
-while large uploads are being processed.
+scales the Deployment out to `maxReplicas`. Scaling back in terminates pods.
+On SIGTERM a pod hands its in-flight uploads off to another pod, which redoes
+their remaining steps, and reports its explicit optimizations as interrupted
+for the admin to run again: no file is lost, but minutes of optimization can
+be. Hence the slow scale-down: it makes cutting a pod's work short much
+rarer, but cannot rule it out. Rollouts (`kubectl rollout restart`, deploys)
+also terminate pods, so prefer deploying while no large uploads are being
+processed.
 
 ```bash
 # Live usage per pod (needs metrics-server) and HPA state
