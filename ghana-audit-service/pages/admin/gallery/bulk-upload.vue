@@ -62,6 +62,7 @@
 </template>
 
 <script setup lang="ts">
+  import type { NotificationTask } from '~/composables/useAdminNotifications'
   import type { AdminGalleryAlbum, PaginatedResponse } from '~/types/admin'
 
   definePageMeta({ layout: 'admin' })
@@ -104,7 +105,8 @@
     payload: {
       url: string
       translations: { en: { alt: string | null; caption: string | null } }
-    }[]
+    }[],
+    task: NotificationTask | null
   ) {
     if (payload.length === 0) return
     error.value = null
@@ -123,10 +125,23 @@
           ? 'Unassigned'
           : destinationOptions.value.find((o) => o.value === albumId)?.label || `album ${albumId}`
       successMessage.value = `Saved ${response.count} image${response.count === 1 ? '' : 's'} to ${target}.`
+      task?.succeed({
+        title: 'Images added to the gallery',
+        subject: target,
+        notes: [{ text: successMessage.value, tone: 'success' }],
+        actions: [{ label: 'Open album', to: `/admin/gallery/albums/${albumId ?? 0}` }],
+        // Confirmed inline on this page.
+        toast: false
+      })
       bulkRef.value?.reset()
     } catch (e: unknown) {
       const err = e as { data?: { message?: string }; message?: string }
       error.value = err.data?.message || err.message || 'Failed to save uploaded images'
+      task?.fail({
+        title: 'Images not added to the gallery',
+        notes: [{ text: error.value, tone: 'error' }],
+        toast: false
+      })
     }
   }
 

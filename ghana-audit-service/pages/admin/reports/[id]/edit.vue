@@ -522,8 +522,20 @@
     useAdminCrud<AdminAuditReport>('reports')
   const { errors, validate, setErrors, clearFieldError, rules } = useFormValidation()
   const toast = useToast()
+  const notifications = useAdminNotifications()
   const optimization = useReportOptimization()
   const optimizePreset = useOptimizePreset()
+
+  // How optimizations of this report are named in the notification center.
+  function notificationSubject(): string {
+    return (
+      currentItem.value?.translations?.en?.title || form.fileUrl.split('/').pop() || 'Report PDF'
+    )
+  }
+
+  function trackOptimization(jobId: string): void {
+    notifications.trackOptimization({ jobId, subject: notificationSubject(), reportId: id })
+  }
 
   // Tooltip summary for the "Optimized" badge, from the persisted snapshot.
   const optimizedBadgeTitle = computed(() => {
@@ -536,24 +548,25 @@
     return `Optimized ${when} — saved ${formatBytes(meta.savedBytes)} (${meta.preset} preset)`
   })
 
+  // Progress and the outcome toast come from the notification center, which
+  // keeps following the job if the admin leaves this page.
   async function optimizeExistingFile(opts?: { allowDropBookmarks?: boolean }) {
     if (!form.fileUrl) return
     await optimization.start({
       fileUrl: form.fileUrl,
       preset: optimizePreset.value,
       reportId: id,
-      allowDropBookmarks: opts?.allowDropBookmarks
+      allowDropBookmarks: opts?.allowDropBookmarks,
+      onStarted: trackOptimization
     })
     if (optimization.status.value === 'success' && optimization.result.value) {
       if (!optimization.result.value.skippedCompression) {
         form.fileSize = optimization.result.value.optimizedSize
-        toast.success('PDF optimized')
-      } else {
-        toast.success('Optimization complete — original was already small')
       }
       // Refresh the row so other fields (e.g. updatedAt) stay current.
       await fetchOne(id)
-    } else if (optimization.status.value === 'error') {
+    } else if (optimization.status.value === 'error' && !optimization.jobId.value) {
+      // Refused before a job existed (nothing for the notification center).
       toast.error(optimization.errorMessage.value || 'Optimization failed')
     }
   }
@@ -769,6 +782,7 @@
     // authenticated polling — no SSE ticket needed.
     const attached = await optimization.attach({ reportId: id })
     if (attached) {
+      if (optimization.jobId.value) trackOptimization(optimization.jobId.value)
       const unwatch = watch(optimization.status, async (s) => {
         if (s !== 'success' && s !== 'error') return
         unwatch()

@@ -33,7 +33,7 @@ const NONE: UploadJobSaveInputs = {
 /**
  * Look up the upload job for the file being saved — by the id the form sent,
  * falling back to the most recent job for the fileUrl (a form restored from
- * the dashboard, or a client that pre-dates uploadJobId). A job whose file
+ * a notification, or a client that pre-dates uploadJobId). A job whose file
  * is not the one being saved is ignored.
  */
 export async function resolveUploadJobForSave(

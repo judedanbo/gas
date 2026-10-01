@@ -28,6 +28,19 @@ interface FetchOptions {
   headers?: Record<string, string>
 }
 
+export interface GetOptions {
+  headers?: Record<string, string>
+}
+
+/**
+ * Marks a request as background polling: the server authenticates it as
+ * usual but does not count it as user activity, so a poller left running in
+ * an idle tab cannot keep the session alive (server/middleware/adminAuth.ts).
+ */
+export const BACKGROUND_REQUEST_HEADERS: Readonly<Record<string, string>> = Object.freeze({
+  'X-Admin-Background': '1'
+})
+
 export function useAdminApi() {
   const { token, clearAuth } = useAdminAuth()
   const router = useRouter()
@@ -80,9 +93,10 @@ export function useAdminApi() {
   // GET request
   function get<T>(
     endpoint: string,
-    params?: Record<string, string | number | boolean | undefined | null>
+    params?: Record<string, string | number | boolean | undefined | null>,
+    options: GetOptions = {}
   ): Promise<T> {
-    return request<T>(endpoint, { method: 'GET', params })
+    return request<T>(endpoint, { method: 'GET', params, headers: options.headers })
   }
 
   // GET paginated list

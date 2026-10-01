@@ -283,6 +283,7 @@
 </template>
 
 <script setup lang="ts">
+  import type { NotificationTask } from '~/composables/useAdminNotifications'
   import type { AdminGalleryAlbum, AdminGalleryImage, GalleryAlbumInput } from '~/types/admin'
 
   definePageMeta({ layout: 'admin' })
@@ -494,15 +495,26 @@
     payload: {
       url: string
       translations: { en: { alt: string | null; caption: string | null } }
-    }[]
+    }[],
+    task: NotificationTask | null
   ) {
     if (payload.length === 0) return
     bulkSaving.value = true
     bulkSaveError.value = null
+    const target = isUnassigned.value ? 'Unassigned' : albumTitle.value || 'this album'
     try {
-      await api.post('gallery/bulk', {
+      const response = await api.post<{ count: number }>('gallery/bulk', {
         albumId: isUnassigned.value ? null : albumId.value,
         images: payload
+      })
+      const count = response?.count ?? payload.length
+      task?.succeed({
+        title: 'Images added to the gallery',
+        subject: target,
+        notes: [
+          { text: `Saved ${count} image${count === 1 ? '' : 's'} to ${target}.`, tone: 'success' }
+        ],
+        actions: [{ label: 'Open album', to: `/admin/gallery/albums/${albumId.value}` }]
       })
       showBulkUpload.value = false
       bulkRef.value?.reset()
@@ -510,6 +522,13 @@
     } catch (e: unknown) {
       const err = e as { data?: { message?: string }; message?: string }
       bulkSaveError.value = err.data?.message || err.message || 'Failed to save uploaded images'
+      task?.fail({
+        title: 'Images not added to the gallery',
+        subject: target,
+        notes: [{ text: bulkSaveError.value, tone: 'error' }],
+        // Shown in the upload dialog, which stays open.
+        toast: false
+      })
     } finally {
       bulkSaving.value = false
     }

@@ -1,6 +1,10 @@
 import type { ReportUploadJob } from '~/types/admin'
 import type { OptimizationPhase } from '~/composables/useReportOptimization'
-import { optimizationErrorMessage, optimizationPhaseLabel } from '~/utils/reportOptimizationUi'
+import {
+  optimizationErrorMessage,
+  optimizationPageLabel,
+  optimizationPhaseLabel
+} from '~/utils/reportOptimizationUi'
 import { formatBytes } from '~/utils/formatBytes'
 
 // Admin-facing copy for background report uploads. Like the optimization
@@ -40,10 +44,7 @@ export function uploadJobStageLabel(job: ReportUploadJob): string {
 /** Page x of N while inside the per-page optimizer phases, else null. */
 export function uploadJobPageLabel(job: ReportUploadJob): string | null {
   if (job.status !== 'optimizing') return null
-  if ((job.phase === 'classify' || job.phase === 'ocr') && job.totalPages > 0) {
-    return `Page ${job.page} of ${job.totalPages}`
-  }
-  return null
+  return optimizationPageLabel(job.phase as OptimizationPhase | null, job.page, job.totalPages)
 }
 
 /**
@@ -73,7 +74,7 @@ export function uploadJobResultSummary(job: ReportUploadJob): string | null {
   return `Reduced ${formatBytes(r.originalSize)} → ${formatBytes(r.optimizedSize)} (saved ${formatBytes(r.savedBytes)})`
 }
 
-/** "5 minutes ago" style stamp for the dashboard list. */
+/** "5 minutes ago" style stamp for notification lists. */
 export function formatRelativeTime(dateStr: string, now: number = Date.now()): string {
   const date = new Date(dateStr)
   if (Number.isNaN(date.getTime())) return ''

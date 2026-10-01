@@ -3,8 +3,10 @@ import { MySqlDialect } from 'drizzle-orm/mysql-core'
 import type { SQL } from 'drizzle-orm'
 import {
   applyUploadJobToReport,
+  dismissFinishedUploadJobs,
   dismissUploadJob,
   effectiveUploadJob,
+  listUploadJobs,
   sweepStalledUploadJobs,
   toUploadJobDTO,
   uploadProgressPercent,
@@ -15,7 +17,8 @@ import {
 
 const captured = vi.hoisted(() => ({
   ops: [] as Array<{ op: string; values?: Record<string, unknown>; where?: unknown }>,
-  affectedRows: 1
+  affectedRows: 1,
+  selectRows: [] as unknown[]
 }))
 
 // Per CLAUDE.md: vi.mock factories must use `function` declarations (hoisted).
@@ -27,6 +30,18 @@ vi.mock('~/server/database', async () => {
   return {
     schema,
     getDatabase: vi.fn(() => ({
+      select: () => ({
+        from: () => ({
+          leftJoin: () => ({
+            leftJoin: () => ({
+              where: (where: unknown) => {
+                captured.ops.push({ op: 'select', where })
+                return { orderBy: () => ({ limit: async () => captured.selectRows }) }
+              }
+            })
+          })
+        })
+      }),
       update: () => ({
         set: (values: Record<string, unknown>) => ({
           where: async (where: unknown) => {
@@ -51,6 +66,9 @@ vi.mock('~/server/utils/logger', () => ({
 const dialect = new MySqlDialect()
 function render(q: unknown): string {
   return dialect.sqlToQuery(q as SQL).sql
+}
+function params(q: unknown): unknown[] {
+  return dialect.sqlToQuery(q as SQL).params
 }
 
 const NOW = Date.UTC(2026, 8, 29, 12, 0, 0)
@@ -89,6 +107,7 @@ function row(overrides: Partial<ReportUploadJob> = {}): ReportUploadJob {
 beforeEach(() => {
   captured.ops.length = 0
   captured.affectedRows = 1
+  captured.selectRows = []
 })
 
 describe('uploadProgressPercent', () => {
@@ -185,6 +204,39 @@ describe('dismissUploadJob', () => {
     const where = render(captured.ops[0].where)
     expect(where).toContain('`status` in (?, ?)')
     expect(where).toContain('`dismissed_at` is null')
+  })
+})
+
+describe('listUploadJobs', () => {
+  it("lists every uploader's jobs by default", async () => {
+    await listUploadJobs()
+    const where = render(captured.ops[0].where)
+    expect(where).not.toContain('`user_id`')
+    expect(where).toContain('`dismissed_at` is null')
+  })
+
+  it('narrows to one uploader for the notification feed', async () => {
+    captured.selectRows = [{ job: row(), userName: 'Ama', reportTitle: 'AG Report' }]
+    const rows = await listUploadJobs({ userId: 7 })
+    const { where } = captured.ops[0]
+    expect(render(where)).toContain('`report_upload_jobs`.`user_id` = ?')
+    expect(params(where)).toContain(7)
+    expect(rows[0]).toMatchObject({ userId: 7, userName: 'Ama', reportTitle: 'AG Report' })
+  })
+})
+
+describe('dismissFinishedUploadJobs', () => {
+  it("dismisses only the caller's finished, undismissed jobs", async () => {
+    captured.affectedRows = 3
+    expect(await dismissFinishedUploadJobs(7)).toBe(3)
+    const [op] = captured.ops
+    expect(op.op).toBe('update')
+    expect(op.values?.dismissedAt).toBeInstanceOf(Date)
+    const where = render(op.where)
+    expect(where).toContain('`user_id` = ?')
+    expect(where).toContain('`status` in (?, ?)')
+    expect(where).toContain('`dismissed_at` is null')
+    expect(params(op.where)).toEqual([7, 'completed', 'failed'])
   })
 })
 
