@@ -266,10 +266,27 @@ jobs:
 
       - name: Verify rollout
         run: |
-          kubectl rollout status deployment/gas-frontend -n gas --timeout=180s
+          # Don't let `bash -e` stop at a failed rollout: print the pod status
+          # either way, and on failure show why (scheduling, probes, crashes,
+          # OOM) instead of only "timed out waiting for the condition".
+          STATUS=0
+          kubectl rollout status deployment/gas-frontend -n gas --timeout=180s || STATUS=$?
           echo "--- Pod status ---"
-          kubectl get pods -n gas
+          kubectl get pods -n gas -o wide
           echo "--- Service endpoints ---"
           kubectl get svc -n gas
           echo "--- Ingress ---"
           kubectl get ingress -n gas
+          if [ "$STATUS" -ne 0 ]; then
+            # Kubernetes state only, no container logs: this repo's Actions
+            # logs are public and app logs can carry visitor and admin data.
+            # Use `kubectl logs` locally for those.
+            echo "::group::Why gas-frontend did not finish rolling out"
+            kubectl get deployment,replicaset,hpa -n gas -o wide || true
+            kubectl describe pods -n gas -l app.kubernetes.io/name=gas-frontend || true
+            echo "--- Recent events in gas ---"
+            kubectl get events -n gas --sort-by=.lastTimestamp | tail -n 40 || true
+            echo "::endgroup::"
+            echo "::error title=gas-frontend rollout did not finish::kubectl rollout status failed (exit $STATUS). This step's log has the pod status, pod descriptions and recent events."
+            exit "$STATUS"
+          fi
