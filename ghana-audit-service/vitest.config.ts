@@ -19,18 +19,8 @@ export default defineConfig({
       provider: 'v8',
       reporter: ['text', 'json', 'html'],
       reportsDirectory: './coverage',
-      include: [
-        'composables/**/*.ts',
-        'server/utils/**/*.ts',
-        'server/api/**/*.ts'
-      ],
-      exclude: [
-        'node_modules',
-        'tests',
-        '**/*.d.ts',
-        '**/*.test.ts',
-        '**/*.spec.ts'
-      ]
+      include: ['composables/**/*.ts', 'server/utils/**/*.ts', 'server/api/**/*.ts'],
+      exclude: ['node_modules', 'tests', '**/*.d.ts', '**/*.test.ts', '**/*.spec.ts']
     },
     // Global test timeout
     testTimeout: 10000,

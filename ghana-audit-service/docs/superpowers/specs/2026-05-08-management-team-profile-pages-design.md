@@ -33,6 +33,7 @@ bio sections.
 **Route:** `GET /api/management-team/:slug`
 
 **Behavior:**
+
 - Accepts slug as route parameter via `getRouterParam(event, 'slug')`
 - Queries `management_team` table filtered by slug, `isActive = true`,
   `deletedAt IS NULL`
@@ -81,6 +82,7 @@ Breadcrumb: Home > About Us > Management Team > [Name]
 ```
 
 **Behavior:**
+
 - Fetches member data from `/api/management-team/:slug`
 - Uses `useSeoMeta` with the member's name and title
 - Parses bio into sections using the bio parser utility
@@ -90,6 +92,7 @@ Breadcrumb: Home > About Us > Management Team > [Name]
 - Links back to `/about/management-team`
 
 **Components used:**
+
 - `CommonBreadcrumb` for navigation
 - `UiBadge` for role badge
 - `UiIconText` for email/phone
@@ -100,6 +103,7 @@ Breadcrumb: Home > About Us > Management Team > [Name]
 **File:** `pages/about/management-team.vue` (modify)
 
 **Changes:**
+
 - AG section: Wrap name/photo in `<NuxtLink>` to individual profile
 - DAG profiles section: Wrap each DAG card name in `<NuxtLink>`
 - Org chart DAG cards: Make clickable cards link to profile pages (in
@@ -112,6 +116,7 @@ Breadcrumb: Home > About Us > Management Team > [Name]
 **Function:** `parseBioSections(bio: string): BioSection[]`
 
 **Type:**
+
 ```typescript
 interface BioSection {
   heading: string | null
@@ -120,6 +125,7 @@ interface BioSection {
 ```
 
 **Behavior:**
+
 - Splits bio text on `## ` heading markers
 - Returns array of `{ heading, content }` objects
 - Content before the first `##` gets `heading: null`

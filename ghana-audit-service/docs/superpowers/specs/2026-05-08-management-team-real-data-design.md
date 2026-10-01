@@ -37,26 +37,26 @@ All data comes from the Ghana Audit Service website:
 
 ## Department Mapping
 
-| # | Slug                       | Name (EN)                                                      | Icon                            |
-|---|----------------------------|----------------------------------------------------------------|---------------------------------|
-| 1 | central-government-audit   | Central Government Audit Department                            | heroicons:building-library      |
-| 2 | commercial-audit           | Commercial Audit Department                                    | heroicons:briefcase             |
-| 3 | performance-special-audit  | Performance and Special Audit Department                       | heroicons:chart-bar             |
-| 4 | finance-admin-hr           | Finance, Administration and Human Resource Department          | heroicons:wrench-screwdriver    |
-| 5 | eida-southern-zone         | Educational Institutions and District Assemblies - Southern Zone | heroicons:academic-cap        |
-| 6 | eida-northern-zone         | Educational Institutions and District Assemblies - Northern Zone | heroicons:map                 |
+| #   | Slug                      | Name (EN)                                                        | Icon                         |
+| --- | ------------------------- | ---------------------------------------------------------------- | ---------------------------- |
+| 1   | central-government-audit  | Central Government Audit Department                              | heroicons:building-library   |
+| 2   | commercial-audit          | Commercial Audit Department                                      | heroicons:briefcase          |
+| 3   | performance-special-audit | Performance and Special Audit Department                         | heroicons:chart-bar          |
+| 4   | finance-admin-hr          | Finance, Administration and Human Resource Department            | heroicons:wrench-screwdriver |
+| 5   | eida-southern-zone        | Educational Institutions and District Assemblies - Southern Zone | heroicons:academic-cap       |
+| 6   | eida-northern-zone        | Educational Institutions and District Assemblies - Northern Zone | heroicons:map                |
 
 ## Management Team Members
 
-| # | Slug                         | Role                    | Name                          | Department                  | Order |
-|---|------------------------------|-------------------------|-------------------------------|-----------------------------|-------|
-| 1 | johnson-akuamoah-asiedu      | auditor-general         | Johnson Akuamoah Asiedu       | (none)                      | 0     |
-| 2 | eugenia-shorme-nortey        | deputy-auditor-general  | Eugenia Shorme Nortey         | finance-admin-hr            | 1     |
-| 3 | samuel-frimpong-manso        | deputy-auditor-general  | Samuel Frimpong-Manso         | performance-special-audit   | 2     |
-| 4 | roberta-assiamah-appiah      | deputy-auditor-general  | Roberta Assiamah-Appiah       | eida-southern-zone          | 3     |
-| 5 | samuel-nii-odartey-lamptey   | deputy-auditor-general  | Samuel Nii Odartey Lamptey    | commercial-audit            | 4     |
-| 6 | judith-kwaaku                | deputy-auditor-general  | Judith Kwaaku                 | central-government-audit    | 5     |
-| 7 | george-swanzy-winful         | deputy-auditor-general  | George Swanzy Winful          | eida-northern-zone          | 6     |
+| #   | Slug                       | Role                   | Name                       | Department                | Order |
+| --- | -------------------------- | ---------------------- | -------------------------- | ------------------------- | ----- |
+| 1   | johnson-akuamoah-asiedu    | auditor-general        | Johnson Akuamoah Asiedu    | (none)                    | 0     |
+| 2   | eugenia-shorme-nortey      | deputy-auditor-general | Eugenia Shorme Nortey      | finance-admin-hr          | 1     |
+| 3   | samuel-frimpong-manso      | deputy-auditor-general | Samuel Frimpong-Manso      | performance-special-audit | 2     |
+| 4   | roberta-assiamah-appiah    | deputy-auditor-general | Roberta Assiamah-Appiah    | eida-southern-zone        | 3     |
+| 5   | samuel-nii-odartey-lamptey | deputy-auditor-general | Samuel Nii Odartey Lamptey | commercial-audit          | 4     |
+| 6   | judith-kwaaku              | deputy-auditor-general | Judith Kwaaku              | central-government-audit  | 5     |
+| 7   | george-swanzy-winful       | deputy-auditor-general | George Swanzy Winful       | eida-northern-zone        | 6     |
 
 Display order follows the order on the source website.
 

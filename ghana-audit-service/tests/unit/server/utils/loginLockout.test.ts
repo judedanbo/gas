@@ -52,7 +52,13 @@ describe('getLockoutConfig', () => {
 })
 
 describe('lockoutDurationMs (backoff)', () => {
-  const cfg = { maxFailures: 10, windowMs: 15 * MIN, baseLockoutMs: 15 * MIN, multiplier: 2, maxLockoutMs: 24 * 60 * MIN }
+  const cfg = {
+    maxFailures: 10,
+    windowMs: 15 * MIN,
+    baseLockoutMs: 15 * MIN,
+    multiplier: 2,
+    maxLockoutMs: 24 * 60 * MIN
+  }
 
   it('escalates exponentially per lockout cycle', () => {
     expect(lockoutDurationMs(1, cfg)).toBe(15 * MIN)
@@ -84,31 +90,61 @@ describe('isAccountLocked', () => {
 })
 
 describe('nextFailureState', () => {
-  const cfg = { maxFailures: 3, windowMs: 15 * MIN, baseLockoutMs: 15 * MIN, multiplier: 2, maxLockoutMs: 24 * 60 * MIN }
+  const cfg = {
+    maxFailures: 3,
+    windowMs: 15 * MIN,
+    baseLockoutMs: 15 * MIN,
+    multiplier: 2,
+    maxLockoutMs: 24 * 60 * MIN
+  }
   const now = new Date('2026-06-16T12:00:00Z')
 
   it('increments within the window without locking', () => {
-    const s = nextFailureState(fresh({ failedLoginAttempts: 1, lastFailedLoginAt: new Date(now.getTime() - MIN) }), now, cfg)
+    const s = nextFailureState(
+      fresh({ failedLoginAttempts: 1, lastFailedLoginAt: new Date(now.getTime() - MIN) }),
+      now,
+      cfg
+    )
     expect(s.failedLoginAttempts).toBe(2)
     expect(s.lockedUntil).toBeNull()
     expect(s.lastFailedLoginAt).toEqual(now)
   })
 
   it('restarts the window when the last failure is older than windowMs', () => {
-    const s = nextFailureState(fresh({ failedLoginAttempts: 2, lastFailedLoginAt: new Date(now.getTime() - 20 * MIN) }), now, cfg)
+    const s = nextFailureState(
+      fresh({ failedLoginAttempts: 2, lastFailedLoginAt: new Date(now.getTime() - 20 * MIN) }),
+      now,
+      cfg
+    )
     expect(s.failedLoginAttempts).toBe(1)
     expect(s.lockedUntil).toBeNull()
   })
 
   it('locks at maxFailures, resets attempts, and bumps lockoutCount', () => {
-    const s = nextFailureState(fresh({ failedLoginAttempts: 2, lockoutCount: 0, lastFailedLoginAt: new Date(now.getTime() - MIN) }), now, cfg)
+    const s = nextFailureState(
+      fresh({
+        failedLoginAttempts: 2,
+        lockoutCount: 0,
+        lastFailedLoginAt: new Date(now.getTime() - MIN)
+      }),
+      now,
+      cfg
+    )
     expect(s.failedLoginAttempts).toBe(0)
     expect(s.lockoutCount).toBe(1)
     expect(s.lockedUntil).toEqual(new Date(now.getTime() + 15 * MIN))
   })
 
   it('applies escalating backoff on the next lockout cycle', () => {
-    const s = nextFailureState(fresh({ failedLoginAttempts: 2, lockoutCount: 1, lastFailedLoginAt: new Date(now.getTime() - MIN) }), now, cfg)
+    const s = nextFailureState(
+      fresh({
+        failedLoginAttempts: 2,
+        lockoutCount: 1,
+        lastFailedLoginAt: new Date(now.getTime() - MIN)
+      }),
+      now,
+      cfg
+    )
     expect(s.lockoutCount).toBe(2)
     expect(s.lockedUntil).toEqual(new Date(now.getTime() + 30 * MIN))
   })

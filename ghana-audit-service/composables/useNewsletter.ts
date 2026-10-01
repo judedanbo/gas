@@ -56,7 +56,7 @@ export function useNewsletter() {
 
     try {
       // Fetch CSRF token if not already available
-      const token = csrfToken.value || await fetchCSRFToken()
+      const token = csrfToken.value || (await fetchCSRFToken())
       if (!token) {
         error.value = 'Security validation failed. Please refresh and try again.'
         return false

@@ -9,12 +9,12 @@ Seed the Media Center (News, Events, Photo Gallery, Videos) with all content fro
 
 ## Source URLs
 
-| Category      | Index URL                                  | ~Count |
-|---------------|--------------------------------------------|--------|
-| News          | https://audit.gov.gh/6/15/news             | 80+    |
-| Events        | https://audit.gov.gh/6/16/events           | 30     |
-| Photo Gallery | https://audit.gov.gh/6/17/photo-gallery    | 21 albums |
-| Videos        | https://audit.gov.gh/6/25/videos           | 6      |
+| Category      | Index URL                               | ~Count    |
+| ------------- | --------------------------------------- | --------- |
+| News          | https://audit.gov.gh/6/15/news          | 80+       |
+| Events        | https://audit.gov.gh/6/16/events        | 30        |
+| Photo Gallery | https://audit.gov.gh/6/17/photo-gallery | 21 albums |
+| Videos        | https://audit.gov.gh/6/25/videos        | 6         |
 
 ## Schema Change — Gallery Albums
 
@@ -24,35 +24,35 @@ The live site organizes photos as albums (each entry contains multiple images). 
 
 **galleryAlbums**
 
-| Column       | Type           | Constraints                             |
-|-------------|----------------|------------------------------------------|
-| id          | int            | PK, autoincrement                        |
-| slug        | varchar(255)   | unique, indexed                          |
-| coverImageId| int            | nullable, FK → galleryImages.id, set null|
-| publishedAt | datetime       | required, indexed                        |
-| isPublished | boolean        | default false, indexed                   |
-| createdAt   | datetime       | auto (now)                               |
-| updatedAt   | datetime       | auto (now, on update)                    |
-| createdBy   | int            | nullable, FK → users.id, set null        |
-| deletedAt   | datetime       | nullable (soft delete)                   |
+| Column       | Type         | Constraints                               |
+| ------------ | ------------ | ----------------------------------------- |
+| id           | int          | PK, autoincrement                         |
+| slug         | varchar(255) | unique, indexed                           |
+| coverImageId | int          | nullable, FK → galleryImages.id, set null |
+| publishedAt  | datetime     | required, indexed                         |
+| isPublished  | boolean      | default false, indexed                    |
+| createdAt    | datetime     | auto (now)                                |
+| updatedAt    | datetime     | auto (now, on update)                     |
+| createdBy    | int          | nullable, FK → users.id, set null         |
+| deletedAt    | datetime     | nullable (soft delete)                    |
 
 **galleryAlbumTranslations**
 
-| Column      | Type           | Constraints                              |
-|-------------|----------------|------------------------------------------|
-| id          | int            | PK, autoincrement                        |
-| albumId     | int            | FK → galleryAlbums.id, cascade           |
-| locale      | enum(en, ak)   |                                          |
-| title       | varchar(500)   | required                                 |
-| description | text           | nullable                                 |
-| Unique index on (albumId, locale) |      |                                          |
+| Column                            | Type         | Constraints                    |
+| --------------------------------- | ------------ | ------------------------------ |
+| id                                | int          | PK, autoincrement              |
+| albumId                           | int          | FK → galleryAlbums.id, cascade |
+| locale                            | enum(en, ak) |                                |
+| title                             | varchar(500) | required                       |
+| description                       | text         | nullable                       |
+| Unique index on (albumId, locale) |              |                                |
 
 ### Modified Table
 
 **galleryImages** — add column:
 
-| Column  | Type | Constraints                                  |
-|---------|------|----------------------------------------------|
+| Column  | Type | Constraints                                       |
+| ------- | ---- | ------------------------------------------------- |
 | albumId | int  | nullable, FK → galleryAlbums.id, cascade, indexed |
 
 ## Architecture — Two-Phase Pipeline
@@ -82,78 +82,86 @@ Four scripts under `server/database/seeds/`, following the existing `departments
 ### news.json
 
 ```json
-[{
-  "slug": "assistant-auditors-general-attend-workshop...",
-  "author": null,
-  "thumbnail": "/img/news/assistant_auditors-general_attend_workshop.png",
-  "category": "news",
-  "publishedAt": "2026-03-27",
-  "isPublished": true,
-  "translations": {
-    "en": {
-      "title": "Assistant Auditors-General attend...",
-      "excerpt": "The Auditor-General conducted a workshop...",
-      "content": "<p>Full HTML content...</p>"
-    }
-  },
-  "tags": []
-}]
+[
+  {
+    "slug": "assistant-auditors-general-attend-workshop...",
+    "author": null,
+    "thumbnail": "/img/news/assistant_auditors-general_attend_workshop.png",
+    "category": "news",
+    "publishedAt": "2026-03-27",
+    "isPublished": true,
+    "translations": {
+      "en": {
+        "title": "Assistant Auditors-General attend...",
+        "excerpt": "The Auditor-General conducted a workshop...",
+        "content": "<p>Full HTML content...</p>"
+      }
+    },
+    "tags": []
+  }
+]
 ```
 
 ### events.json
 
 ```json
-[{
-  "slug": "audit-service-holds-pensions-seminar...",
-  "startDate": "2024-11-20",
-  "endDate": "2024-11-21",
-  "isVirtual": false,
-  "thumbnail": "/img/events/pensions-seminar.jpg",
-  "isPublished": true,
-  "translations": {
-    "en": {
-      "title": "Audit Service holds pensions seminar...",
-      "description": "<p>Full HTML description...</p>",
-      "location": "Shippers House, Accra"
+[
+  {
+    "slug": "audit-service-holds-pensions-seminar...",
+    "startDate": "2024-11-20",
+    "endDate": "2024-11-21",
+    "isVirtual": false,
+    "thumbnail": "/img/events/pensions-seminar.jpg",
+    "isPublished": true,
+    "translations": {
+      "en": {
+        "title": "Audit Service holds pensions seminar...",
+        "description": "<p>Full HTML description...</p>",
+        "location": "Shippers House, Accra"
+      }
     }
   }
-}]
+]
 ```
 
 ### gallery.json
 
 ```json
-[{
-  "slug": "2026-thanksgiving-service",
-  "publishedAt": "2026-01-15",
-  "isPublished": true,
-  "translations": {
-    "en": { "title": "2026 Thanksgiving Service", "description": null }
-  },
-  "images": [
-    {
-      "url": "/img/photos/9991-100.jpg",
-      "translations": {
-        "en": { "alt": "2026 Thanksgiving Service", "caption": null }
+[
+  {
+    "slug": "2026-thanksgiving-service",
+    "publishedAt": "2026-01-15",
+    "isPublished": true,
+    "translations": {
+      "en": { "title": "2026 Thanksgiving Service", "description": null }
+    },
+    "images": [
+      {
+        "url": "/img/photos/9991-100.jpg",
+        "translations": {
+          "en": { "alt": "2026 Thanksgiving Service", "caption": null }
+        }
       }
-    }
-  ]
-}]
+    ]
+  }
+]
 ```
 
 ### videos.json
 
 ```json
-[{
-  "url": "https://youtube.com/...",
-  "thumbnail": "/img/videos/amis-methodologies.jpg",
-  "duration": null,
-  "publishedAt": "2024-08-16",
-  "isPublished": true,
-  "translations": {
-    "en": { "title": "AMIS Methodologies", "description": "..." }
+[
+  {
+    "url": "https://youtube.com/...",
+    "thumbnail": "/img/videos/amis-methodologies.jpg",
+    "duration": null,
+    "publishedAt": "2024-08-16",
+    "isPublished": true,
+    "translations": {
+      "en": { "title": "AMIS Methodologies", "description": "..." }
+    }
   }
-}]
+]
 ```
 
 ## File Layout

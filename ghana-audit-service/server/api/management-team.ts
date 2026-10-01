@@ -126,9 +126,7 @@ export default defineEventHandler(async (event): Promise<ManagementTeamMember[]>
     const officeTranslations = await db
       .select()
       .from(schema.officeTranslations)
-      .where(
-        sql`${schema.officeTranslations.officeId} IN (${sql.join(officeIds, sql`, `)})`
-      )
+      .where(sql`${schema.officeTranslations.officeId} IN (${sql.join(officeIds, sql`, `)})`)
 
     // Group office translations
     const officeTranslationsMap = officeTranslations.reduce(
@@ -212,9 +210,7 @@ export default defineEventHandler(async (event): Promise<ManagementTeamMember[]>
     ...member,
     translations: translationsByMember[member.id] || {},
     responsibilities: responsibilitiesByMember[member.id] || [],
-    regionalOffice: member.officeId
-      ? officesMap[member.officeId]
-      : undefined,
+    regionalOffice: member.officeId ? officesMap[member.officeId] : undefined,
     department: member.departmentId ? departmentsMap[member.departmentId] : undefined
   }))
 

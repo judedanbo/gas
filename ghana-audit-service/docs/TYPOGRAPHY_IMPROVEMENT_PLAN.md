@@ -3,6 +3,7 @@
 ## Current State Assessment
 
 ### Strengths
+
 - **Two-font system**: Merriweather (serif headings) + Open Sans (sans-serif body) is a solid pairing
 - **Responsive scaling**: Headings scale from mobile to desktop
 - **Design tokens**: CSS variables and Tailwind config are well-organized
@@ -11,15 +12,15 @@
 
 ### Key Weaknesses Identified
 
-| Issue | Impact | Severity |
-|-------|--------|----------|
-| Limited type scale (only 10 sizes) | Restricts visual hierarchy options | Medium |
-| No fluid typography (clamp) | Jarring breakpoint jumps | High |
-| Line heights too tight for large text | Reduced readability in heroes | Medium |
-| Missing letter-spacing tokens | Inconsistent tracking | Low |
-| No prose/typography plugin | Inconsistent long-form content | Medium |
-| Merriweather only has 400/700 weights | Limited heading weight variation | Low |
-| Font sizes jump significantly between scale steps | Loss of subtle hierarchy | Medium |
+| Issue                                             | Impact                             | Severity |
+| ------------------------------------------------- | ---------------------------------- | -------- |
+| Limited type scale (only 10 sizes)                | Restricts visual hierarchy options | Medium   |
+| No fluid typography (clamp)                       | Jarring breakpoint jumps           | High     |
+| Line heights too tight for large text             | Reduced readability in heroes      | Medium   |
+| Missing letter-spacing tokens                     | Inconsistent tracking              | Low      |
+| No prose/typography plugin                        | Inconsistent long-form content     | Medium   |
+| Merriweather only has 400/700 weights             | Limited heading weight variation   | Low      |
+| Font sizes jump significantly between scale steps | Loss of subtle hierarchy           | Medium   |
 
 ---
 
@@ -30,9 +31,12 @@
 #### 1.1 Implement Fluid Typography with CSS `clamp()` ✅ HIGH PRIORITY
 
 **Current Problem**: Hard breakpoints cause jarring size jumps
+
 ```css
 /* Current: discrete jumps */
-h1 { @apply text-4xl md:text-5xl; } /* 36px → 48px */
+h1 {
+  @apply text-4xl md:text-5xl;
+} /* 36px → 48px */
 ```
 
 **Recommended Approach** - Add fluid type utilities in `tailwind.config.ts`:
@@ -49,6 +53,7 @@ fontSize: {
 ```
 
 **Files to modify**:
+
 - `tailwind.config.ts:68-79`
 - `assets/css/tailwind.css:29-34` (update heading base styles)
 
@@ -89,6 +94,7 @@ letterSpacing: {
 #### 2.2 Improve Line Height for Large Text
 
 **Recommendation**:
+
 ```typescript
 fontSize: {
   '5xl': ['3rem', { lineHeight: '1.1', letterSpacing: '-0.025em' }],
@@ -163,6 +169,7 @@ fontSize: {
 **Steps**:
 
 1. Install the plugin:
+
 ```bash
 npm install @tailwindcss/typography
 ```
@@ -176,6 +183,7 @@ npm install @tailwindcss/typography
    - `pages/media/news/[slug].vue`
 
 4. Replace with:
+
 ```vue
 <div class="prose prose-ghana lg:prose-lg dark:prose-invert max-w-none">
   <!-- content -->
@@ -210,13 +218,13 @@ googleFonts: {
 ```css
 body {
   font-feature-settings:
-    "kern" 1,
-    "liga" 1,
-    "calt" 1;
+    'kern' 1,
+    'liga' 1,
+    'calt' 1;
 }
 
 .tabular-nums {
-  font-feature-settings: "tnum" 1;
+  font-feature-settings: 'tnum' 1;
 }
 ```
 
@@ -226,10 +234,10 @@ body {
 
 #### 5.1 Fix Inconsistent Heading Levels
 
-| Component | Issue | Fix |
-|-----------|-------|-----|
-| `components/ui/InfoCard.vue` | Always uses h3 | Add `headingLevel` prop |
-| `pages/media/news/[slug].vue` | Error h1 too small | Use h2 or match h1 styling |
+| Component                         | Issue                    | Fix                        |
+| --------------------------------- | ------------------------ | -------------------------- |
+| `components/ui/InfoCard.vue`      | Always uses h3           | Add `headingLevel` prop    |
+| `pages/media/news/[slug].vue`     | Error h1 too small       | Use h2 or match h1 styling |
 | `components/common/AppFooter.vue` | Scoped `.footer-heading` | Use component class system |
 
 #### 5.2 Extract Reusable Tag/Pill Component
@@ -289,35 +297,39 @@ a:focus-visible {
 
 ## Implementation Priority Matrix
 
-| Priority | Phase | Effort | Impact |
-|----------|-------|--------|--------|
-| 🔴 High | 1.1 Fluid typography | Medium | High - fixes jarring jumps |
-| 🔴 High | 3.1 Typography plugin | Medium | High - DRY, consistency |
-| 🟡 Medium | 2.1 Letter-spacing | Low | Medium - polish |
-| 🟡 Medium | 2.3 Semantic classes | Medium | Medium - maintainability |
-| 🟡 Medium | 5.1 Heading levels | Low | Medium - accessibility |
-| 🟢 Low | 4.1 Variable fonts | Low | Low-Medium - performance |
-| 🟢 Low | 6.1 Line length | Low | Medium - readability |
+| Priority  | Phase                 | Effort | Impact                     |
+| --------- | --------------------- | ------ | -------------------------- |
+| 🔴 High   | 1.1 Fluid typography  | Medium | High - fixes jarring jumps |
+| 🔴 High   | 3.1 Typography plugin | Medium | High - DRY, consistency    |
+| 🟡 Medium | 2.1 Letter-spacing    | Low    | Medium - polish            |
+| 🟡 Medium | 2.3 Semantic classes  | Medium | Medium - maintainability   |
+| 🟡 Medium | 5.1 Heading levels    | Low    | Medium - accessibility     |
+| 🟢 Low    | 4.1 Variable fonts    | Low    | Low-Medium - performance   |
+| 🟢 Low    | 6.1 Line length       | Low    | Medium - readability       |
 
 ---
 
 ## Files Requiring Modification
 
 ### Configuration Files
+
 1. `tailwind.config.ts` - Type scale, tracking, prose config
 2. `nuxt.config.ts` - Google Fonts optimization
 
 ### CSS Files
+
 3. `assets/css/tailwind.css` - Base styles, component classes, utilities
 4. `assets/css/variables.css` - Add new typography tokens
 
 ### Component Files
+
 5. `components/ui/InfoCard.vue` - Flexible heading level
 6. `components/ui/Tag.vue` - New component
 7. `components/common/AppFooter.vue` - Remove scoped styles
 8. `components/common/AppHeader.vue` - ARIA labels
 
 ### Page Files
+
 9. `pages/privacy-policy.vue` - Use prose classes
 10. `pages/terms.vue` - Use prose classes
 11. `pages/accessibility.vue` - Use prose classes
@@ -328,6 +340,7 @@ a:focus-visible {
 ## Measurement & Validation
 
 After implementing, validate with:
+
 1. **Lighthouse** - Performance score for font loading
 2. **axe DevTools** - Accessibility audit for text contrast
 3. **Responsively** - Check fluid typography across breakpoints

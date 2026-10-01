@@ -1,7 +1,11 @@
 import type { H3Event } from 'h3'
 import { eq, and, sql, desc, isNotNull } from 'drizzle-orm'
 import { getDatabase, schema } from '../../../database'
-import { requirePermission, parsePagination, buildPaginationMeta } from '../../../utils/adminHelpers'
+import {
+  requirePermission,
+  parsePagination,
+  buildPaginationMeta
+} from '../../../utils/adminHelpers'
 import { newsletterSubscriberColumns } from '../../../utils/dtoColumns'
 
 export default defineEventHandler(async (event) => {

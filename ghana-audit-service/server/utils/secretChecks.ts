@@ -6,7 +6,8 @@
 
 // Substrings that appear in the placeholders shipped across .env.example /
 // .env.docker / docker-compose.yml.
-const PLACEHOLDER_PATTERN = /change[-_ ]?(this|me)|generate-a|your-|secret-here|example|placeholder/i
+const PLACEHOLDER_PATTERN =
+  /change[-_ ]?(this|me)|generate-a|your-|secret-here|example|placeholder/i
 
 /**
  * True when `value` is set but looks like an unedited placeholder or is shorter

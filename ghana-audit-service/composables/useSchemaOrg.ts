@@ -18,7 +18,8 @@ export function useSchemaOrg() {
       alternateName: 'GAS',
       url: siteUrl,
       logo: `${siteUrl}/logo.png`,
-      description: 'The Ghana Audit Service has a constitutional mandate to audit all public accounts and report to Parliament, ensuring accountability in the use of public resources.',
+      description:
+        'The Ghana Audit Service has a constitutional mandate to audit all public accounts and report to Parliament, ensuring accountability in the use of public resources.',
       foundingDate: '1993',
       address: {
         '@type': 'PostalAddress',
@@ -34,10 +35,7 @@ export function useSchemaOrg() {
         email: 'info@audit.gov.gh',
         availableLanguage: ['en', 'ak']
       },
-      sameAs: [
-        'https://www.facebook.com/ghanaauditservice',
-        'https://twitter.com/GhanaAudit'
-      ]
+      sameAs: ['https://www.facebook.com/ghanaauditservice', 'https://twitter.com/GhanaAudit']
     }
   }
 
