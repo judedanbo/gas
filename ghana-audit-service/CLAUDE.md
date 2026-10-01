@@ -159,6 +159,8 @@ Optional:
 
 Husky + lint-staged: `*.{js,ts,vue}` → `eslint --fix` + `prettier --write`; `*.{json,css,md,yml,yaml}` → `prettier --write`. Don't `--no-verify` unless explicitly asked.
 
+`npm install` / `npm ci` in this directory installs the hook. `.git` lives at the repo root, so the `prepare` script runs `cd .. && husky ghana-audit-service/.husky` (plain `husky` prints `.git can't be found` here and skips setup), and `.husky/pre-commit` `cd`s back into this directory before running lint-staged. Existing clones need one `npm install` (or `npm run prepare`) to pick the hook up.
+
 ### Gotchas
 
 - **MySQL 8 `ONLY_FULL_GROUP_BY`**: All non-aggregated SELECT columns must be in GROUP BY or wrapped in an aggregate (`MAX`, `ANY_VALUE`). This includes columns from LEFT JOIN subqueries even when they're functionally determined. Always verify raw SQL queries.
