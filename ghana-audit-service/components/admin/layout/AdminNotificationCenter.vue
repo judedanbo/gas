@@ -139,11 +139,19 @@
           </template>
         </div>
 
-        <p
-          class="border-t border-gray-200 px-4 py-2 text-xs text-gray-600 dark:border-gray-700 dark:text-gray-400"
-        >
-          Uploads and optimizations keep running on the server after you leave the page or sign out.
-        </p>
+        <div class="space-y-1 border-t border-gray-200 px-4 py-2 dark:border-gray-700">
+          <NuxtLink
+            to="/admin/notifications"
+            class="rounded-sm text-sm font-medium text-primary hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-primary dark:text-primary-200"
+            @click="close(false)"
+          >
+            View all notifications
+          </NuxtLink>
+          <p class="text-xs text-gray-600 dark:text-gray-400">
+            Uploads and optimizations keep running on the server after you leave the page or sign
+            out.
+          </p>
+        </div>
       </div>
     </Transition>
   </div>

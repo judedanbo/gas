@@ -56,6 +56,10 @@ test.describe('Content Security Policy', () => {
       expect(directives['script-src']).toContain("'nonce-")
       expect(directives['script-src']).not.toContain("'unsafe-inline'")
       expect(directives['script-src']).not.toContain("'unsafe-eval'")
+
+      // The PDF reader frames the file it downloaded (with progress) via a blob: URL
+      expect(directives['frame-src'], 'frame-src directive should be present').toBeTruthy()
+      expect(directives['frame-src']).toContain('blob:')
     })
 
     test(`${name} (${path}) — renders with no CSP violations`, async ({ page }) => {

@@ -88,6 +88,17 @@ describe('uploadJobErrorMessage', () => {
     ).toBeNull()
     expect(uploadJobErrorMessage(job({ status: 'optimizing' }))).toBeNull()
   })
+
+  it('names the failing optimizer step when there is no dedicated copy', () => {
+    expect(
+      uploadJobErrorMessage(
+        job({ status: 'completed', optimizationStatus: 'error', errorCode: 'SPLIT_FAILED' })
+      )
+    ).toBe('Optimization failed (SPLIT_FAILED). The original file is unchanged.')
+    expect(uploadJobErrorMessage(job({ status: 'completed', optimizationStatus: 'error' }))).toBe(
+      'Optimization failed. The original file is unchanged.'
+    )
+  })
 })
 
 describe('uploadJobResultSummary', () => {

@@ -220,6 +220,27 @@ describe('useAdminNotifications — report uploads', () => {
     expect(store.notifications.value.map((n) => n.id)).toEqual(['upload:job-3'])
   })
 
+  it('marks a single entry read and ignores running ones', async () => {
+    feed = [completed(), completed({ id: 'job-2' }), job({ id: 'job-3' })]
+    const store = useAdminNotifications()
+    store.start()
+    await flush()
+    expect(store.unreadCount.value).toBe(2)
+
+    store.markSeen(['upload:job-1', 'upload:job-3'])
+    expect(store.unreadIds.value).toEqual(['upload:job-2'])
+  })
+
+  it('dismisses an upload that has aged out of the feed', async () => {
+    const store = useAdminNotifications()
+    store.start()
+    await flush()
+    expect(await store.dismiss('upload:old-job')).toBe(true)
+    expect(apiPost).toHaveBeenCalledWith('reports/upload-jobs/old-job/dismiss')
+    // Unknown local ids are not guessed at.
+    expect(await store.dismiss('local:missing')).toBe(false)
+  })
+
   it('tells the admin when a dismissal fails', async () => {
     feed = [completed()]
     const store = useAdminNotifications()
