@@ -326,7 +326,8 @@ kubectl create job --from=cronjob/mysql-backup manual-backup-$(date +%s) -n gas
 # Scale frontend
 kubectl scale deployment gas-frontend -n gas --replicas=3
 
-# Restart frontend (rolling restart)
+# Restart frontend (rolling restart). Safe during background report uploads:
+# terminating pods hand them off to a live pod (see frontend/deployment.yaml).
 kubectl rollout restart deployment/gas-frontend -n gas
 ```
 

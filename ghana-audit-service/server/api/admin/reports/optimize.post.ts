@@ -1,4 +1,5 @@
 import { requirePermission } from '../../../utils/adminHelpers'
+import { auditActorFromEvent } from '../../../utils/auditLogger'
 import { materializePdfSource } from '../../../utils/pdfSource'
 import type { CompressionPreset } from '../../../utils/pdfOptimizer'
 import { createJob } from '../../../utils/pdfOptimizationJobs'
@@ -68,6 +69,7 @@ export default defineEventHandler(async (event) => {
 
   const job = createJob(fileUrl, reportId)
   registerActiveJob(fileUrl, job.id)
+  const actor = auditActorFromEvent(event)
 
   // Run the optimizer detached from the request lifetime, throttled by the
   // scheduler (bounded concurrency + FIFO queue). The SSE endpoint
@@ -79,7 +81,7 @@ export default defineEventHandler(async (event) => {
       fileUrl,
       preset,
       allowDropBookmarks,
-      event,
+      actor,
       reportId
     })
   )

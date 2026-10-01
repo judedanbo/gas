@@ -581,4 +581,58 @@ describe('optimizeReportPdf', () => {
     await expect(optimizeReportPdf(input)).rejects.toMatchObject({ code: 'REPLACE_FAILED' })
     expect((await fs.stat(input)).size).toBe(2048)
   })
+
+  it('never replaces the input once aborted, even with a smaller result in hand', async () => {
+    const input = makeInputPdf(2048)
+    const controller = new AbortController()
+
+    programExec([
+      () => ({ stdout: pdfinfoResult(2), stderr: '' }),
+      () => ({ stdout: qpdfOutlines(0), stderr: '' }),
+      (_b, args) => {
+        writeSplitPages(args[args.length - 1].replace(/[\\/]page-%d\.pdf$/, ''), 2)
+        return { stdout: '', stderr: '' }
+      },
+      () => ({ stdout: 'enough text to call native here.', stderr: '' }),
+      (_b, args) => {
+        writeFileSync(args[args.length - 1], Buffer.alloc(800, 0x21))
+        return { stdout: '', stderr: '' }
+      },
+      (_b, args) => {
+        const out = args.find((a) => a.startsWith('-sOutputFile='))!.replace('-sOutputFile=', '')
+        writeFileSync(out, Buffer.alloc(500, 0x21))
+        return { stdout: '', stderr: '' }
+      },
+      // The upload is handed off while the final sanity check runs.
+      () => {
+        controller.abort()
+        return { stdout: pdfinfoResult(2), stderr: '' }
+      }
+    ])
+
+    await expect(optimizeReportPdf(input, { signal: controller.signal })).rejects.toMatchObject({
+      name: 'AbortError'
+    })
+    // Another server may be resuming from this very file.
+    expect((await fs.readFile(input)).equals(Buffer.alloc(2048, 0x25))).toBe(true)
+  })
+
+  it('hands its signal to every tool and stops instead of misreading a killed one', async () => {
+    const input = makeInputPdf()
+    const controller = new AbortController()
+    const signals: Array<AbortSignal | undefined> = []
+    __setExecRunnerForTests(async (bin, _args, options) => {
+      signals.push(options?.signal)
+      if (bin === 'pdfinfo') return { stdout: pdfinfoResult(3), stderr: '' }
+      // Aborted while qpdf reads the outline: the killed tool would read as
+      // "no bookmarks" and optimization would carry on.
+      controller.abort()
+      throw Object.assign(new Error('The operation was aborted'), { code: 'ABORT_ERR' })
+    })
+
+    await expect(optimizeReportPdf(input, { signal: controller.signal })).rejects.toMatchObject({
+      name: 'AbortError'
+    })
+    expect(signals).toEqual([controller.signal, controller.signal])
+  })
 })

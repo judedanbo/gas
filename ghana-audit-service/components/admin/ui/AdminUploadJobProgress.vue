@@ -43,6 +43,9 @@
       />
     </div>
 
+    <p v-if="resumeNote" class="text-xs text-gray-500 dark:text-gray-400">
+      {{ resumeNote }}
+    </p>
     <p v-if="resultSummary" class="text-xs text-gray-600 dark:text-gray-300">
       {{ resultSummary }}
     </p>
@@ -73,6 +76,7 @@
     uploadJobErrorMessage,
     uploadJobPageLabel,
     uploadJobResultSummary,
+    uploadJobResumeNote,
     uploadJobStageLabel
   } from '~/utils/reportUploadJobUi'
 
@@ -87,6 +91,7 @@
   const stageLabel = computed(() => uploadJobStageLabel(props.job))
   const pageLabel = computed(() => uploadJobPageLabel(props.job))
   const resultSummary = computed(() => uploadJobResultSummary(props.job))
+  const resumeNote = computed(() => uploadJobResumeNote(props.job))
   const errorMessage = computed(() => uploadJobErrorMessage(props.job))
   const ocrFailedPages = computed(() =>
     props.job.status === 'completed' ? (props.job.optimizationResult?.ocrFailedPages ?? 0) : 0

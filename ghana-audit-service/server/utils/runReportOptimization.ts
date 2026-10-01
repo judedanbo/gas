@@ -1,9 +1,8 @@
 import { statSync } from 'node:fs'
-import type { H3Event } from 'h3'
 import { persistOptimizationResult } from './persistOptimizationResult'
 import type { LocalPdfSource } from './pdfSource'
 import { uploadBlobFromFile } from './blobStorage'
-import { logAuditAction } from './auditLogger'
+import { logAuditActionAs, type AuditActor } from './auditLogger'
 import { optimizeReportPdf, PdfOptimizerError, type CompressionPreset } from './pdfOptimizer'
 import { pushEvent, updateJob } from './pdfOptimizationJobs'
 import { logError } from './logger'
@@ -14,9 +13,15 @@ export interface RunReportOptimizationOptions {
   fileUrl: string
   preset: CompressionPreset
   allowDropBookmarks: boolean
-  /** Request that started the work — only used for audit-log attribution. */
-  event: H3Event
+  /** Who started the work — audit-log attribution. */
+  actor: AuditActor
   reportId: number | null
+  /**
+   * Abort to stop early (a background upload handed off at shutdown). The
+   * job then ends as error INTERRUPTED and nothing more is written to
+   * storage: another server may already be resuming from the stored file.
+   */
+  signal?: AbortSignal
 }
 
 /**
@@ -30,13 +35,16 @@ export interface RunReportOptimizationOptions {
  * behave identically. Callers own scheduling (pdfOptimizationScheduler).
  */
 export async function runReportOptimization(opts: RunReportOptimizationOptions): Promise<void> {
-  const { jobId, source, fileUrl, preset, allowDropBookmarks, event, reportId } = opts
+  const { jobId, source, fileUrl, preset, allowDropBookmarks, actor, reportId, signal } = opts
   const { path: pdfPath, blobKey } = source
   updateJob(jobId, { status: 'running' })
   try {
+    // Aborted while it waited for a scheduler slot.
+    signal?.throwIfAborted()
     const result = await optimizeReportPdf(pdfPath, {
       preset,
       allowDropBookmarks,
+      signal,
       onProgress: (e) => pushEvent(jobId, e)
     })
 
@@ -47,6 +55,7 @@ export async function runReportOptimization(opts: RunReportOptimizationOptions):
     // blocks rather than read into a Buffer: PDFs run to 100MB and the pod
     // memory limit is 512Mi.
     if (blobKey && !result.skippedCompression) {
+      signal?.throwIfAborted()
       await uploadBlobFromFile(blobKey, pdfPath, 'application/pdf')
     }
 
@@ -70,7 +79,7 @@ export async function runReportOptimization(opts: RunReportOptimizationOptions):
       ocrFailedPages: result.ocrFailedPages
     })
 
-    void logAuditAction(event, 'update', 'report_optimization', reportId, {
+    void logAuditActionAs(actor, 'update', 'report_optimization', reportId, {
       after: {
         fileUrl,
         preset,
@@ -87,9 +96,17 @@ export async function runReportOptimization(opts: RunReportOptimizationOptions):
     // Log the full error server-side, but only surface a safe summary to the
     // admin client. PdfOptimizerError.code is a fixed enum (no internals); the
     // free-form message can contain file paths, so it is not sent to the client.
-    logError('pdfOptimizer', err)
-    const errorCode = err instanceof PdfOptimizerError ? err.code : 'UNKNOWN'
-    const message = err instanceof PdfOptimizerError ? err.code : 'Optimization failed'
+    // An abort is not a failure of the file — whatever the optimizer threw on
+    // its way out, report it as the interruption it is.
+    const interrupted = signal?.aborted === true
+    if (!interrupted) logError('pdfOptimizer', err)
+    const errorCode = interrupted
+      ? 'INTERRUPTED'
+      : err instanceof PdfOptimizerError
+        ? err.code
+        : 'UNKNOWN'
+    const message =
+      interrupted || err instanceof PdfOptimizerError ? errorCode : 'Optimization failed'
 
     // The file is left untouched on any error path (the optimizer only
     // renames into place after the optimized variant is fully written and
@@ -113,7 +130,7 @@ export async function runReportOptimization(opts: RunReportOptimizationOptions):
       ocrFailedPages: 0
     })
 
-    void logAuditAction(event, 'update', 'report_optimization', reportId, {
+    void logAuditActionAs(actor, 'update', 'report_optimization', reportId, {
       after: { fileUrl, preset, error: message }
     })
   } finally {

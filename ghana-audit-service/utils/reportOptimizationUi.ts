@@ -11,7 +11,9 @@ export const OPTIMIZATION_ERROR_MESSAGES: Record<string, string> = {
   QUEUE_TIMEOUT:
     'Optimization waited too long behind other jobs. The original file is unchanged — try again shortly.',
   INSPECT_FAILED:
-    'The PDF could not be read — it may be damaged or password-protected. The original file is unchanged.'
+    'The PDF could not be read — it may be damaged or password-protected. The original file is unchanged.',
+  INTERRUPTED:
+    'Optimization was interrupted by a server restart. The file itself is saved — you can run optimization again.'
 }
 
 export function optimizationErrorMessage(code: string | null | undefined): string {

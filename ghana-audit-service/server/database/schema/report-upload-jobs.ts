@@ -2,6 +2,7 @@ import {
   mysqlTable,
   int,
   bigint,
+  boolean,
   varchar,
   datetime,
   json,
@@ -20,6 +21,11 @@ import { auditReports, type ReportOptimizationMeta } from './audit-reports'
  * Rows live in MySQL rather than the in-process/Redis optimization job
  * mirror so progress survives admin logouts, session expiry, other tabs,
  * and pod restarts — the admin notification center polls this table.
+ *
+ * The pipeline itself runs in one pod's process. A status past 'storing'
+ * means the original is durable in storage, so if that process goes away
+ * (deploy, scale-down, OOM) the job can be resumed by another one; before
+ * that the bytes only existed in the dead pod's spool and the job fails.
  */
 export const REPORT_UPLOAD_JOB_STATUSES = [
   'queued',
@@ -54,6 +60,21 @@ export const reportUploadJobs = mysqlTable(
     /** Bytes in storage once the pipeline finished (post-optimization). */
     finalSize: bigint('final_size', { mode: 'number', unsigned: true }),
     preset: mysqlEnum('preset', ['screen', 'ebook', 'printer']).notNull().default('ebook'),
+    /** Kept so a resumed run optimizes exactly as the upload asked. */
+    allowDropBookmarks: boolean('allow_drop_bookmarks').notNull().default(false),
+    /**
+     * Fencing token of the pipeline run that owns the job. Every pipeline
+     * write is conditional on it, so a run that lost the job (handed off at
+     * shutdown, or presumed dead and resumed elsewhere) can no longer touch
+     * the row. NULL once released.
+     */
+    runId: varchar('run_id', { length: 36 }),
+    /** Host (pod name) of that run, so a restarted container can reclaim its predecessor's jobs. */
+    worker: varchar('worker', { length: 255 }),
+    /** Pipeline runs started so far — the original plus resumes. Caps resumes. */
+    attempts: int('attempts').notNull().default(1),
+    /** Set while a stored job waits for another run to resume it; cleared when one claims it. */
+    interruptedAt: datetime('interrupted_at'),
     thumbnailUrl: varchar('thumbnail_url', { length: 500 }),
     /** In-process optimization job id (pdfOptimizationJobs) for SSE attach. */
     optimizationJobId: varchar('optimization_job_id', { length: 36 }),
@@ -79,7 +100,8 @@ export const reportUploadJobs = mysqlTable(
     index('idx_report_upload_jobs_user').on(table.userId),
     index('idx_report_upload_jobs_report').on(table.reportId),
     index('idx_report_upload_jobs_file_url').on(table.fileUrl),
-    index('idx_report_upload_jobs_created').on(table.createdAt)
+    index('idx_report_upload_jobs_created').on(table.createdAt),
+    index('idx_report_upload_jobs_interrupted').on(table.interruptedAt)
   ]
 )
 
