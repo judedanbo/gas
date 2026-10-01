@@ -524,7 +524,10 @@ export default defineNuxtConfig({
         // script execution is constrained by the nonce-only script-src above.
         'img-src': ["'self'", 'https:', 'data:'],
         'connect-src': ["'self'"],
-        'frame-src': ["'self'", 'https://www.youtube.com', 'https://audit.gov.gh'],
+        // blob: lets the PDF reader (components/reports/PdfReader.vue) frame the file it
+        // has already downloaded with progress, instead of downloading it a second time.
+        // Only same-origin script can mint blob: URLs, so this admits no outside content.
+        'frame-src': ["'self'", 'blob:', 'https://www.youtube.com', 'https://audit.gov.gh'],
         'base-uri': ["'self'"],
         'object-src': ["'none'"]
       },
