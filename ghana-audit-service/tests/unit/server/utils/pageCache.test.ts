@@ -61,7 +61,7 @@ describe('swapNonce', () => {
     const out = swapNonce(html, rendered, fresh)
 
     expect(out).not.toContain(rendered)
-    expect(out.match(new RegExp(`nonce="${fresh.replace(/[+/]/g, '\\$&')}"`, 'g'))).toHaveLength(3)
+    expect(out.match(/nonce="[^"]*"/g)).toEqual(Array(3).fill(`nonce="${fresh}"`))
     expect(out.length).toBe(html.length)
   })
 
