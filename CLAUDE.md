@@ -8,7 +8,7 @@ This repo is a small monorepo wrapping a single application with its infrastruct
 
 - `ghana-audit-service/` — the Nuxt 3 app (frontend + Nitro server + Drizzle/MySQL data layer + admin panel). Has its own `CLAUDE.md` with app-specific guidance — **read it when working inside that directory**.
 - `docker-compose.yml` — root-level orchestration: three services (frontend, MySQL 8, Redis 7) on the `gas-network` bridge.
-- `k8s/` — Kubernetes manifests for AKS production deployment: namespace, frontend (Deployment + Service + Ingress + HPA), MySQL (StatefulSet), Redis (Deployment), migration Job, backup CronJob, ConfigMap/Secrets, TLS (cert-manager ClusterIssuer), and Network Policies. See `k8s/README.md` for cluster prerequisites and manual deploy instructions.
+- `k8s/` — Kubernetes manifests for AKS production deployment: namespace, frontend (Deployment + Service + Ingress + HPA), MySQL (StatefulSet), Redis (Deployment), migration Job, backup CronJob, GeoLite2 update CronJob, ConfigMap/Secrets, TLS (cert-manager ClusterIssuer), and Network Policies. See `k8s/README.md` for cluster prerequisites and manual deploy instructions.
 - `init-db/01-init.sql` — MySQL bootstrap (currently mounted via the commented-out volume in `docker-compose.yml`; uncomment to use).
 - `.env.example` — root-level env vars consumed by `docker-compose.yml` (DB creds, public site config, JWT secret, Redis URL, analytics salt, optional Sentry DSN and MaxMind GeoIP paths). The app has a separate `ghana-audit-service/.env.example` for local non-Docker dev.
 - `PLAN.md`, `component-reusability-plan.md` — historical planning docs, not authoritative; treat the code as the source of truth.
@@ -72,7 +72,7 @@ A server-side analytics subsystem captures per-request telemetry, rolls up route
 - **Storage**: `server/database/schema/analytics.ts` defines `request_events` (raw log with hashed IPs, never raw IPs), rollup tables, and incident records. Retention is controlled by `ANALYTICS_RETENTION_DAYS` (default 30).
 - **Scoring/detection**: `server/utils/analytics/` — fingerprinting, fuzz-pattern matching, probing-path detection, abuse scoring.
 - **Admin dashboards**: `server/api/admin/analytics/` exposes overview, route detail, bot detection, fuzz attempts, incidents. The frontend uses **ECharts** (`vue-echarts`) for visualization.
-- **Optional enrichment**: GeoIP via MaxMind (`ANALYTICS_GEOIP_DB_PATH`, `ANALYTICS_ASN_DB_PATH`) — disabled if the mmdb files aren't mounted.
+- **Optional enrichment**: GeoIP via MaxMind (`ANALYTICS_GEOIP_DB_PATH`, `ANALYTICS_ASN_DB_PATH`) — disabled if the mmdb files aren't mounted. The loader re-checks the files every 15 min, so files that appear or change later are picked up without a restart. In production the `geoip-update` CronJob (`k8s/jobs/geoip-update-cronjob.yaml`) downloads them onto `gas-geoip-pvc`; it needs the `MAXMIND_ACCOUNT_ID` / `MAXMIND_LICENSE_KEY` secrets, and lookups also need the ingress-nginx Service on `externalTrafficPolicy: Local` so real client IPs reach the app (see `k8s/README.md`). Kubelet probes (`kube-probe/*` with no `X-Forwarded-For`) are not recorded.
 
 ### Content crawlers
 `ghana-audit-service/scripts/crawlers/` contains `cheerio`-based scrapers (`crawl-news.ts`, `crawl-events.ts`, `crawl-gallery.ts`, `crawl-videos.ts`, `crawl-publications.ts`, `crawl-report-covers.ts`) for bootstrapping the DB from the existing live site. Run individual crawlers or `npm run crawl:all`.

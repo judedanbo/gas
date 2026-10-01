@@ -142,6 +142,11 @@ spec:
                 mountPath: /app/.output/public/pdf,
                 subPath: pdf,
               }
+            # MaxMind GeoLite2 databases, kept current by the geoip-update
+            # CronJob. See ANALYTICS_GEOIP_DB_PATH in k8s/config/configmap.yaml.
+            - name: geoip
+              mountPath: /app/data/geoip
+              readOnly: true
           resources:
             requests:
               cpu: 100m
@@ -180,6 +185,10 @@ spec:
         - name: public-files
           persistentVolumeClaim:
             claimName: gas-public-files-pvc
+        - name: geoip
+          persistentVolumeClaim:
+            claimName: gas-geoip-pvc
+            readOnly: true
         # CA for verifying Redis TLS. optional:true so the frontend still starts
         # if the redis-tls secret hasn't been provisioned yet (no site outage).
         - name: redis-ca
