@@ -41,12 +41,7 @@ export default defineEventHandler(async (event) => {
   const images = await db
     .select()
     .from(schema.galleryImages)
-    .where(
-      and(
-        eq(schema.galleryImages.albumId, album.id),
-        isNull(schema.galleryImages.deletedAt)
-      )
-    )
+    .where(and(eq(schema.galleryImages.albumId, album.id), isNull(schema.galleryImages.deletedAt)))
     .orderBy(desc(schema.galleryImages.uploadedAt))
 
   const imageIds = images.map((img) => img.id)
@@ -55,7 +50,9 @@ export default defineEventHandler(async (event) => {
       ? await db
           .select()
           .from(schema.galleryImageTranslations)
-          .where(sql`${schema.galleryImageTranslations.imageId} IN (${sql.join(imageIds, sql`, `)})`)
+          .where(
+            sql`${schema.galleryImageTranslations.imageId} IN (${sql.join(imageIds, sql`, `)})`
+          )
       : []
 
   const translationsByImage = imageTranslations.reduce<

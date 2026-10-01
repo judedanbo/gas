@@ -75,9 +75,7 @@ describe('usePublications', () => {
 
       await fetchPublications({ type: 'press-statement' })
 
-      expect(mockFetch).toHaveBeenCalledWith(
-        expect.stringContaining('type=press-statement')
-      )
+      expect(mockFetch).toHaveBeenCalledWith(expect.stringContaining('type=press-statement'))
     })
 
     it('should fetch publications with search filter', async () => {
@@ -91,9 +89,7 @@ describe('usePublications', () => {
 
       await fetchPublications({ search: 'bulletin' })
 
-      expect(mockFetch).toHaveBeenCalledWith(
-        expect.stringContaining('search=bulletin')
-      )
+      expect(mockFetch).toHaveBeenCalledWith(expect.stringContaining('search=bulletin'))
     })
 
     it('should fetch publications with pagination', async () => {
@@ -107,17 +103,13 @@ describe('usePublications', () => {
 
       await fetchPublications({ page: 3, perPage: 15 })
 
-      expect(mockFetch).toHaveBeenCalledWith(
-        expect.stringContaining('page=3')
-      )
-      expect(mockFetch).toHaveBeenCalledWith(
-        expect.stringContaining('perPage=15')
-      )
+      expect(mockFetch).toHaveBeenCalledWith(expect.stringContaining('page=3'))
+      expect(mockFetch).toHaveBeenCalledWith(expect.stringContaining('perPage=15'))
     })
 
     it('should set loading state during fetch', async () => {
       let resolvePromise: (value: unknown) => void
-      const fetchPromise = new Promise(resolve => {
+      const fetchPromise = new Promise((resolve) => {
         resolvePromise = resolve
       })
       mockFetch.mockReturnValue(fetchPromise)
@@ -189,7 +181,7 @@ describe('usePublications', () => {
 
     it('should set loading state during single publication fetch', async () => {
       let resolvePromise: (value: unknown) => void
-      const fetchPromise = new Promise(resolve => {
+      const fetchPromise = new Promise((resolve) => {
         resolvePromise = resolve
       })
       mockFetch.mockReturnValue(fetchPromise)

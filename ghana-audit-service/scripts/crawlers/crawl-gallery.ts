@@ -24,7 +24,9 @@ interface GalleryAlbum {
   images: GalleryImage[]
 }
 
-async function crawlIndex(): Promise<Array<{ url: string; title: string; thumbnail: string | null }>> {
+async function crawlIndex(): Promise<
+  Array<{ url: string; title: string; thumbnail: string | null }>
+> {
   const $ = await fetchHtml(INDEX_URL)
   const items: Array<{ url: string; title: string; thumbnail: string | null }> = []
 
@@ -43,9 +45,7 @@ async function crawlIndex(): Promise<Array<{ url: string; title: string; thumbna
 
     // Fallback: derive title from URL slug (last path segment, de-slugified)
     const urlSlug = href.split('/').filter(Boolean).pop() || ''
-    const titleFromSlug = urlSlug
-      .replace(/-+/g, ' ')
-      .replace(/\b\w/g, (c) => c.toUpperCase())
+    const titleFromSlug = urlSlug.replace(/-+/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())
     const title = imgAlt || titleFromSlug || 'Untitled Album'
 
     const thumbnail = imgSrc ? resolveUrl(imgSrc) : null

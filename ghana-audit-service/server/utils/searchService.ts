@@ -55,7 +55,10 @@ function toISODate(value: Date | string | null | undefined): string | undefined 
 }
 
 function stripHtml(html: string): string {
-  return html.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim()
+  return html
+    .replace(/<[^>]*>/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
 }
 
 function buildExcerpt(body: string, term: string, max = 200): string {
@@ -120,7 +123,12 @@ const PUBLICATION_TYPE_PATHS: Record<string, string> = {
   law: 'applicable-laws'
 }
 
-const PUBLICATION_TYPES_WITH_SLUG_ROUTE = new Set(['press-statement', 'bulletin', 'guideline', 'manual'])
+const PUBLICATION_TYPES_WITH_SLUG_ROUTE = new Set([
+  'press-statement',
+  'bulletin',
+  'guideline',
+  'manual'
+])
 
 function publicationUrl(type: string | undefined, slug: string | undefined): string {
   const segment = type ? (PUBLICATION_TYPE_PATHS[type] ?? '') : ''
@@ -327,10 +335,7 @@ async function searchEvents(db: Db, opts: SearchOptions, pattern: string): Promi
       body: schema.eventTranslations.description
     })
     .from(schema.events)
-    .innerJoin(
-      schema.eventTranslations,
-      eq(schema.eventTranslations.eventId, schema.events.id)
-    )
+    .innerJoin(schema.eventTranslations, eq(schema.eventTranslations.eventId, schema.events.id))
     .where(and(...conditions))
     .limit(MAX_PER_DOMAIN)
 
@@ -377,10 +382,7 @@ async function searchTenders(db: Db, opts: SearchOptions, pattern: string): Prom
       body: schema.tenderTranslations.description
     })
     .from(schema.tenders)
-    .innerJoin(
-      schema.tenderTranslations,
-      eq(schema.tenderTranslations.tenderId, schema.tenders.id)
-    )
+    .innerJoin(schema.tenderTranslations, eq(schema.tenderTranslations.tenderId, schema.tenders.id))
     .where(and(...conditions))
     .limit(MAX_PER_DOMAIN)
 
@@ -477,10 +479,7 @@ async function searchVideos(db: Db, opts: SearchOptions, pattern: string): Promi
       body: schema.videoTranslations.description
     })
     .from(schema.videos)
-    .innerJoin(
-      schema.videoTranslations,
-      eq(schema.videoTranslations.videoId, schema.videos.id)
-    )
+    .innerJoin(schema.videoTranslations, eq(schema.videoTranslations.videoId, schema.videos.id))
     .where(and(...conditions))
     .limit(MAX_PER_DOMAIN)
 
@@ -632,10 +631,7 @@ async function searchOffices(db: Db, opts: SearchOptions, pattern: string): Prom
       address: schema.officeTranslations.address
     })
     .from(schema.offices)
-    .innerJoin(
-      schema.officeTranslations,
-      eq(schema.officeTranslations.officeId, schema.offices.id)
-    )
+    .innerJoin(schema.officeTranslations, eq(schema.officeTranslations.officeId, schema.offices.id))
     .where(and(...conditions))
     .limit(MAX_PER_DOMAIN)
 
@@ -677,8 +673,7 @@ function searchStaticPages(opts: SearchOptions): RawHit[] {
     // surfaces the page when the user is in Akan — same fallback model as the DB
     // searchers, which join on `[locale, 'en']`.
     const titleHit =
-      titleLocale.toLowerCase().includes(termLower) ||
-      titleEn.toLowerCase().includes(termLower)
+      titleLocale.toLowerCase().includes(termLower) || titleEn.toLowerCase().includes(termLower)
     const bodyHit =
       descLocale.toLowerCase().includes(termLower) || descEn.toLowerCase().includes(termLower)
     if (!titleHit && !bodyHit) continue

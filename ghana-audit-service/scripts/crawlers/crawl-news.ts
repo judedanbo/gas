@@ -19,7 +19,9 @@ interface NewsItem {
   tags: string[]
 }
 
-async function crawlIndex(): Promise<Array<{ url: string; thumbnail: string | null; date: string | null }>> {
+async function crawlIndex(): Promise<
+  Array<{ url: string; thumbnail: string | null; date: string | null }>
+> {
   const $ = await fetchHtml(INDEX_URL)
   const items: Array<{ url: string; thumbnail: string | null; date: string | null }> = []
 
@@ -50,11 +52,15 @@ function parseDate(dateText: string | null): string {
   try {
     const d = new Date(cleaned)
     if (!isNaN(d.getTime())) return d.toISOString().split('T')[0]
-  } catch { /* unparseable date — try raw form */ }
+  } catch {
+    /* unparseable date — try raw form */
+  }
   try {
     const d = new Date(dateText)
     if (!isNaN(d.getTime())) return d.toISOString().split('T')[0]
-  } catch { /* unparseable date — fall through to default */ }
+  } catch {
+    /* unparseable date — fall through to default */
+  }
   return new Date().toISOString().split('T')[0]
 }
 

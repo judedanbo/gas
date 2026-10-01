@@ -12,7 +12,7 @@ describe('useDateTimePicker', () => {
     it('marks current-month days correctly for May 2026', () => {
       const { getCalendarDays } = useDateTimePicker()
       const days = getCalendarDays(2026, 4)
-      const currentMonthDays = days.filter(d => d.isCurrentMonth)
+      const currentMonthDays = days.filter((d) => d.isCurrentMonth)
       expect(currentMonthDays).toHaveLength(31)
     })
 
@@ -27,7 +27,7 @@ describe('useDateTimePicker', () => {
     it('handles February in a leap year', () => {
       const { getCalendarDays } = useDateTimePicker()
       const days = getCalendarDays(2028, 1)
-      const febDays = days.filter(d => d.isCurrentMonth)
+      const febDays = days.filter((d) => d.isCurrentMonth)
       expect(febDays).toHaveLength(29)
     })
   })

@@ -20,9 +20,7 @@ describe('useUnsavedChanges', () => {
 
   describe('initial state', () => {
     it('should report no changes initially before markSaved is called', async () => {
-      const { useUnsavedChanges } = await import(
-        '../../../composables/useUnsavedChanges'
-      )
+      const { useUnsavedChanges } = await import('../../../composables/useUnsavedChanges')
       const formData = () => ({ name: 'test', email: 'test@example.com' })
       const { hasChanges } = useUnsavedChanges(formData)
 
@@ -30,9 +28,7 @@ describe('useUnsavedChanges', () => {
     })
 
     it('should report no changes after markSaved with unchanged data', async () => {
-      const { useUnsavedChanges } = await import(
-        '../../../composables/useUnsavedChanges'
-      )
+      const { useUnsavedChanges } = await import('../../../composables/useUnsavedChanges')
       const formData = () => ({ name: 'test', email: 'test@example.com' })
       const { hasChanges, markSaved } = useUnsavedChanges(formData)
 
@@ -44,9 +40,7 @@ describe('useUnsavedChanges', () => {
 
   describe('detecting changes', () => {
     it('should detect changes after form data mutation', async () => {
-      const { useUnsavedChanges } = await import(
-        '../../../composables/useUnsavedChanges'
-      )
+      const { useUnsavedChanges } = await import('../../../composables/useUnsavedChanges')
       const data = reactive({ name: 'original', email: 'test@example.com' })
       const formData = () => ({ name: data.name, email: data.email })
       const { hasChanges, markSaved } = useUnsavedChanges(formData)
@@ -61,9 +55,7 @@ describe('useUnsavedChanges', () => {
     })
 
     it('should return to clean state when data is reverted', async () => {
-      const { useUnsavedChanges } = await import(
-        '../../../composables/useUnsavedChanges'
-      )
+      const { useUnsavedChanges } = await import('../../../composables/useUnsavedChanges')
       const data = reactive({ name: 'original' })
       const formData = () => ({ name: data.name })
       const { hasChanges, markSaved } = useUnsavedChanges(formData)
@@ -80,9 +72,7 @@ describe('useUnsavedChanges', () => {
 
   describe('markSaved', () => {
     it('should reset to clean after markSaved with new data', async () => {
-      const { useUnsavedChanges } = await import(
-        '../../../composables/useUnsavedChanges'
-      )
+      const { useUnsavedChanges } = await import('../../../composables/useUnsavedChanges')
       const data = reactive({ name: 'original' })
       const formData = () => ({ name: data.name })
       const { hasChanges, markSaved } = useUnsavedChanges(formData)
@@ -97,9 +87,7 @@ describe('useUnsavedChanges', () => {
     })
 
     it('should clear forcedClean flag when markSaved is called', async () => {
-      const { useUnsavedChanges } = await import(
-        '../../../composables/useUnsavedChanges'
-      )
+      const { useUnsavedChanges } = await import('../../../composables/useUnsavedChanges')
       const data = reactive({ name: 'original' })
       const formData = () => ({ name: data.name })
       const { hasChanges, markSaved, markClean } = useUnsavedChanges(formData)
@@ -118,9 +106,7 @@ describe('useUnsavedChanges', () => {
 
   describe('markClean', () => {
     it('should force clean state even with actual changes', async () => {
-      const { useUnsavedChanges } = await import(
-        '../../../composables/useUnsavedChanges'
-      )
+      const { useUnsavedChanges } = await import('../../../composables/useUnsavedChanges')
       const data = reactive({ name: 'original' })
       const formData = () => ({ name: data.name })
       const { hasChanges, markSaved, markClean } = useUnsavedChanges(formData)
@@ -136,17 +122,15 @@ describe('useUnsavedChanges', () => {
 
   describe('deep comparison', () => {
     it('should detect changes in nested objects', async () => {
-      const { useUnsavedChanges } = await import(
-        '../../../composables/useUnsavedChanges'
-      )
+      const { useUnsavedChanges } = await import('../../../composables/useUnsavedChanges')
       const data = reactive({
-        user: { name: 'John', address: { city: 'Accra', zip: '00233' } },
+        user: { name: 'John', address: { city: 'Accra', zip: '00233' } }
       })
       const formData = () => ({
         user: {
           name: data.user.name,
-          address: { city: data.user.address.city, zip: data.user.address.zip },
-        },
+          address: { city: data.user.address.city, zip: data.user.address.zip }
+        }
       })
       const { hasChanges, markSaved } = useUnsavedChanges(formData)
 
@@ -159,9 +143,7 @@ describe('useUnsavedChanges', () => {
     })
 
     it('should detect changes in arrays within form data', async () => {
-      const { useUnsavedChanges } = await import(
-        '../../../composables/useUnsavedChanges'
-      )
+      const { useUnsavedChanges } = await import('../../../composables/useUnsavedChanges')
       const data = reactive({ tags: ['audit', 'finance'] })
       const formData = () => ({ tags: [...data.tags] })
       const { hasChanges, markSaved } = useUnsavedChanges(formData)
@@ -174,14 +156,12 @@ describe('useUnsavedChanges', () => {
     })
 
     it('should not report changes when nested data is identical', async () => {
-      const { useUnsavedChanges } = await import(
-        '../../../composables/useUnsavedChanges'
-      )
+      const { useUnsavedChanges } = await import('../../../composables/useUnsavedChanges')
       const data = reactive({
-        config: { a: 1, b: { c: 2, d: [3, 4] } },
+        config: { a: 1, b: { c: 2, d: [3, 4] } }
       })
       const formData = () => ({
-        config: { a: data.config.a, b: { c: data.config.b.c, d: [...data.config.b.d] } },
+        config: { a: data.config.a, b: { c: data.config.b.c, d: [...data.config.b.d] } }
       })
       const { hasChanges, markSaved } = useUnsavedChanges(formData)
 
@@ -195,9 +175,7 @@ describe('useUnsavedChanges', () => {
       const mockOnBeforeRouteLeave = vi.fn()
       vi.stubGlobal('onBeforeRouteLeave', mockOnBeforeRouteLeave)
 
-      const { useUnsavedChanges } = await import(
-        '../../../composables/useUnsavedChanges'
-      )
+      const { useUnsavedChanges } = await import('../../../composables/useUnsavedChanges')
       const formData = () => ({ name: 'test' })
       useUnsavedChanges(formData)
 
@@ -211,9 +189,7 @@ describe('useUnsavedChanges', () => {
       const mockOnBeforeUnmount = vi.fn()
       vi.stubGlobal('onBeforeUnmount', mockOnBeforeUnmount)
 
-      const { useUnsavedChanges } = await import(
-        '../../../composables/useUnsavedChanges'
-      )
+      const { useUnsavedChanges } = await import('../../../composables/useUnsavedChanges')
       const formData = () => ({ name: 'test' })
       useUnsavedChanges(formData)
 

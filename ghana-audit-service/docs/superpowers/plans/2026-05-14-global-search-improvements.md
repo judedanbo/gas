@@ -13,6 +13,7 @@
 ### Task 1: Add i18n Keys for Command Palette
 
 **Files:**
+
 - Modify: `i18n/locales/en.json:115-127`
 - Modify: `i18n/locales/ak.json:115-127`
 
@@ -84,6 +85,7 @@ git commit -m "feat(i18n): add command palette search keys for en and ak"
 ### Task 2: Create `useSearchShortcut` Composable
 
 **Files:**
+
 - Create: `composables/useSearchShortcut.ts`
 - Create: `tests/unit/composables/useSearchShortcut.test.ts`
 
@@ -98,10 +100,13 @@ import { ref } from 'vue'
 vi.stubGlobal('ref', ref)
 
 const mockState = ref(false)
-vi.stubGlobal('useState', vi.fn((_key: string, init: () => boolean) => {
-  mockState.value = init()
-  return mockState
-}))
+vi.stubGlobal(
+  'useState',
+  vi.fn((_key: string, init: () => boolean) => {
+    mockState.value = init()
+    return mockState
+  })
+)
 
 describe('useSearchShortcut', () => {
   let cleanup: (() => void) | undefined
@@ -265,6 +270,7 @@ git commit -m "feat(search): add useSearchShortcut composable with Ctrl+K/Cmd+K 
 ### Task 3: Create `SearchCommandPalette.vue` Component
 
 **Files:**
+
 - Create: `components/search/SearchCommandPalette.vue`
 
 This is the core UI component. It uses `useState('searchPalette')` for open/close, `useSearch()` for data, debounced input, keyboard navigation, and full dark/light theme support.
@@ -286,10 +292,7 @@ Create `components/search/SearchCommandPalette.vue`:
         @keydown.esc.stop="close"
       >
         <!-- Backdrop -->
-        <div
-          class="absolute inset-0 bg-black/50 backdrop-blur-sm"
-          @click="close"
-        />
+        <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" @click="close" />
 
         <!-- Palette -->
         <div
@@ -300,7 +303,9 @@ Create `components/search/SearchCommandPalette.vue`:
           @keydown.enter.prevent="selectHighlighted"
         >
           <!-- Search Input -->
-          <div class="flex items-center gap-3 px-4 py-3 border-b border-gray-200 dark:border-gray-700">
+          <div
+            class="flex items-center gap-3 px-4 py-3 border-b border-gray-200 dark:border-gray-700"
+          >
             <Icon
               name="heroicons:magnifying-glass"
               class="w-5 h-5 text-gray-400 dark:text-gray-500 flex-shrink-0"
@@ -333,7 +338,9 @@ Create `components/search/SearchCommandPalette.vue`:
           >
             <!-- Loading -->
             <div v-if="loading" class="flex items-center justify-center py-8">
-              <div class="animate-spin rounded-full h-6 w-6 border-2 border-primary border-t-transparent" />
+              <div
+                class="animate-spin rounded-full h-6 w-6 border-2 border-primary border-t-transparent"
+              />
               <span class="sr-only">{{ $t('common.loading') }}</span>
             </div>
 
@@ -349,7 +356,10 @@ Create `components/search/SearchCommandPalette.vue`:
               />
               <p>{{ $t('search.commandPalette.hint') }}</p>
               <p class="mt-1 text-xs text-gray-400 dark:text-gray-500">
-                <kbd class="px-1.5 py-0.5 bg-gray-100 dark:bg-gray-700 rounded text-xs border border-gray-200 dark:border-gray-600">Ctrl+K</kbd>
+                <kbd
+                  class="px-1.5 py-0.5 bg-gray-100 dark:bg-gray-700 rounded text-xs border border-gray-200 dark:border-gray-600"
+                  >Ctrl+K</kbd
+                >
                 {{ $t('search.commandPalette.shortcutHint') }}
               </p>
             </div>
@@ -369,11 +379,10 @@ Create `components/search/SearchCommandPalette.vue`:
 
             <!-- Results List -->
             <template v-else>
-              <div
-                v-for="(group, groupIndex) in groupedResults"
-                :key="group.type"
-              >
-                <div class="px-4 pt-3 pb-1 text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500">
+              <div v-for="(group, groupIndex) in groupedResults" :key="group.type">
+                <div
+                  class="px-4 pt-3 pb-1 text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500"
+                >
                   {{ $t(`searchTypes.${group.type}`) }}
                 </div>
                 <div
@@ -383,9 +392,11 @@ Create `components/search/SearchCommandPalette.vue`:
                   role="option"
                   :aria-selected="highlightIndex === flatIndex(groupIndex, resultIndex)"
                   class="flex items-center gap-3 px-4 py-2.5 cursor-pointer transition-colors"
-                  :class="highlightIndex === flatIndex(groupIndex, resultIndex)
-                    ? 'bg-primary/10 dark:bg-primary/20 border-l-2 border-primary'
-                    : 'border-l-2 border-transparent hover:bg-gray-50 dark:hover:bg-gray-700/50'"
+                  :class="
+                    highlightIndex === flatIndex(groupIndex, resultIndex)
+                      ? 'bg-primary/10 dark:bg-primary/20 border-l-2 border-primary'
+                      : 'border-l-2 border-transparent hover:bg-gray-50 dark:hover:bg-gray-700/50'
+                  "
                   @click="navigateTo(result)"
                   @mouseenter="highlightIndex = flatIndex(groupIndex, resultIndex)"
                 >
@@ -397,7 +408,10 @@ Create `components/search/SearchCommandPalette.vue`:
                       {{ result.excerpt }}
                     </p>
                   </div>
-                  <span v-if="result.publishedAt" class="text-xs text-gray-400 dark:text-gray-500 flex-shrink-0">
+                  <span
+                    v-if="result.publishedAt"
+                    class="text-xs text-gray-400 dark:text-gray-500 flex-shrink-0"
+                  >
                     {{ formatDateShort(result.publishedAt) }}
                   </span>
                 </div>
@@ -423,8 +437,23 @@ Create `components/search/SearchCommandPalette.vue`:
               {{ $t('search.commandPalette.viewAll', { count: meta.total }) }}
             </NuxtLink>
             <div class="flex items-center gap-2 text-gray-400 dark:text-gray-500">
-              <span><kbd class="px-1 py-0.5 bg-gray-100 dark:bg-gray-700 rounded border border-gray-200 dark:border-gray-600">&uarr;</kbd><kbd class="px-1 py-0.5 bg-gray-100 dark:bg-gray-700 rounded border border-gray-200 dark:border-gray-600">&darr;</kbd> navigate</span>
-              <span><kbd class="px-1 py-0.5 bg-gray-100 dark:bg-gray-700 rounded border border-gray-200 dark:border-gray-600">&crarr;</kbd> select</span>
+              <span
+                ><kbd
+                  class="px-1 py-0.5 bg-gray-100 dark:bg-gray-700 rounded border border-gray-200 dark:border-gray-600"
+                  >&uarr;</kbd
+                ><kbd
+                  class="px-1 py-0.5 bg-gray-100 dark:bg-gray-700 rounded border border-gray-200 dark:border-gray-600"
+                  >&darr;</kbd
+                >
+                navigate</span
+              >
+              <span
+                ><kbd
+                  class="px-1 py-0.5 bg-gray-100 dark:bg-gray-700 rounded border border-gray-200 dark:border-gray-600"
+                  >&crarr;</kbd
+                >
+                select</span
+              >
             </div>
           </div>
         </div>
@@ -434,141 +463,141 @@ Create `components/search/SearchCommandPalette.vue`:
 </template>
 
 <script setup lang="ts">
-import type { SearchResult } from '~/types'
+  import type { SearchResult } from '~/types'
 
-const router = useRouter()
-const localePath = useLocalePath()
-const { formatDateShort } = useLocaleDate()
-const { results, loading, meta, search, clearResults } = useSearch()
+  const router = useRouter()
+  const localePath = useLocalePath()
+  const { formatDateShort } = useLocaleDate()
+  const { results, loading, meta, search, clearResults } = useSearch()
 
-const isOpen = useState('searchPalette', () => false)
-const query = ref('')
-const highlightIndex = ref(-1)
-const paletteRef = ref<HTMLElement | null>(null)
-const inputRef = ref<HTMLInputElement | null>(null)
+  const isOpen = useState('searchPalette', () => false)
+  const query = ref('')
+  const highlightIndex = ref(-1)
+  const paletteRef = ref<HTMLElement | null>(null)
+  const inputRef = ref<HTMLInputElement | null>(null)
 
-let debounceTimer: ReturnType<typeof setTimeout> | undefined
+  let debounceTimer: ReturnType<typeof setTimeout> | undefined
 
-interface ResultGroup {
-  type: string
-  items: SearchResult[]
-}
+  interface ResultGroup {
+    type: string
+    items: SearchResult[]
+  }
 
-const groupedResults = computed<ResultGroup[]>(() => {
-  const groups = new Map<string, SearchResult[]>()
-  const maxResults = 8
-  let count = 0
-  for (const result of results.value) {
-    if (count >= maxResults) break
-    const existing = groups.get(result.type)
-    if (existing) {
-      existing.push(result)
-    } else {
-      groups.set(result.type, [result])
+  const groupedResults = computed<ResultGroup[]>(() => {
+    const groups = new Map<string, SearchResult[]>()
+    const maxResults = 8
+    let count = 0
+    for (const result of results.value) {
+      if (count >= maxResults) break
+      const existing = groups.get(result.type)
+      if (existing) {
+        existing.push(result)
+      } else {
+        groups.set(result.type, [result])
+      }
+      count++
     }
-    count++
+    return Array.from(groups, ([type, items]) => ({ type, items }))
+  })
+
+  const flatResults = computed(() => groupedResults.value.flatMap((g) => g.items))
+
+  function flatIndex(groupIndex: number, resultIndex: number): number {
+    let idx = 0
+    for (let i = 0; i < groupIndex; i++) {
+      idx += groupedResults.value[i].items.length
+    }
+    return idx + resultIndex
   }
-  return Array.from(groups, ([type, items]) => ({ type, items }))
-})
 
-const flatResults = computed(() => groupedResults.value.flatMap(g => g.items))
+  const highlightedId = computed(() =>
+    highlightIndex.value >= 0 ? `search-result-${highlightIndex.value}` : undefined
+  )
 
-function flatIndex(groupIndex: number, resultIndex: number): number {
-  let idx = 0
-  for (let i = 0; i < groupIndex; i++) {
-    idx += groupedResults.value[i].items.length
+  const viewAllLink = computed(() => ({
+    path: localePath('/search'),
+    query: { q: query.value }
+  }))
+
+  function debouncedSearch() {
+    clearTimeout(debounceTimer)
+    highlightIndex.value = -1
+    const q = query.value.trim()
+    if (q.length < 2) {
+      clearResults()
+      return
+    }
+    debounceTimer = setTimeout(() => {
+      search({ query: q, perPage: 10 })
+    }, 300)
   }
-  return idx + resultIndex
-}
 
-const highlightedId = computed(() =>
-  highlightIndex.value >= 0 ? `search-result-${highlightIndex.value}` : undefined
-)
+  watch(query, debouncedSearch)
 
-const viewAllLink = computed(() => ({
-  path: localePath('/search'),
-  query: { q: query.value }
-}))
-
-function debouncedSearch() {
-  clearTimeout(debounceTimer)
-  highlightIndex.value = -1
-  const q = query.value.trim()
-  if (q.length < 2) {
-    clearResults()
-    return
+  function moveHighlight(delta: number) {
+    const total = flatResults.value.length
+    if (total === 0) return
+    highlightIndex.value = (highlightIndex.value + delta + total) % total
   }
-  debounceTimer = setTimeout(() => {
-    search({ query: q, perPage: 10 })
-  }, 300)
-}
 
-watch(query, debouncedSearch)
+  function selectHighlighted() {
+    const result = flatResults.value[highlightIndex.value]
+    if (result) {
+      navigateTo(result)
+    } else if (query.value.trim()) {
+      router.push(viewAllLink.value)
+      close()
+    }
+  }
 
-function moveHighlight(delta: number) {
-  const total = flatResults.value.length
-  if (total === 0) return
-  highlightIndex.value = (highlightIndex.value + delta + total) % total
-}
-
-function selectHighlighted() {
-  const result = flatResults.value[highlightIndex.value]
-  if (result) {
-    navigateTo(result)
-  } else if (query.value.trim()) {
-    router.push(viewAllLink.value)
+  function navigateTo(result: SearchResult) {
+    router.push(localePath(result.url))
     close()
   }
-}
 
-function navigateTo(result: SearchResult) {
-  router.push(localePath(result.url))
-  close()
-}
-
-function close() {
-  isOpen.value = false
-}
-
-watch(isOpen, (open) => {
-  if (open) {
-    document.body.style.overflow = 'hidden'
-    nextTick(() => inputRef.value?.focus())
-  } else {
-    document.body.style.overflow = ''
-    query.value = ''
-    highlightIndex.value = -1
-    clearResults()
-    clearTimeout(debounceTimer)
+  function close() {
+    isOpen.value = false
   }
-})
 
-onUnmounted(() => {
-  document.body.style.overflow = ''
-  clearTimeout(debounceTimer)
-})
+  watch(isOpen, (open) => {
+    if (open) {
+      document.body.style.overflow = 'hidden'
+      nextTick(() => inputRef.value?.focus())
+    } else {
+      document.body.style.overflow = ''
+      query.value = ''
+      highlightIndex.value = -1
+      clearResults()
+      clearTimeout(debounceTimer)
+    }
+  })
+
+  onUnmounted(() => {
+    document.body.style.overflow = ''
+    clearTimeout(debounceTimer)
+  })
 </script>
 
 <style scoped>
-.palette-enter-active,
-.palette-leave-active {
-  transition: opacity 0.15s ease;
-}
+  .palette-enter-active,
+  .palette-leave-active {
+    transition: opacity 0.15s ease;
+  }
 
-.palette-enter-from,
-.palette-leave-to {
-  opacity: 0;
-}
+  .palette-enter-from,
+  .palette-leave-to {
+    opacity: 0;
+  }
 
-.palette-enter-active > div:last-child,
-.palette-leave-active > div:last-child {
-  transition: transform 0.15s ease;
-}
+  .palette-enter-active > div:last-child,
+  .palette-leave-active > div:last-child {
+    transition: transform 0.15s ease;
+  }
 
-.palette-enter-from > div:last-child,
-.palette-leave-to > div:last-child {
-  transform: scale(0.95) translateY(-10px);
-}
+  .palette-enter-from > div:last-child,
+  .palette-leave-to > div:last-child {
+    transform: scale(0.95) translateY(-10px);
+  }
 </style>
 ```
 
@@ -589,6 +618,7 @@ git commit -m "feat(search): create SearchCommandPalette modal with live search 
 ### Task 4: Integrate Command Palette into AppHeader and App
 
 **Files:**
+
 - Modify: `components/common/AppHeader.vue:155-201,254-259`
 - Modify: `app.vue:18-31`
 
@@ -635,16 +665,19 @@ In `components/common/AppHeader.vue`:
 **In `<script setup>`**, replace `isSearchOpen` and `toggleSearch`:
 
 Remove:
+
 ```typescript
 const isSearchOpen = ref(false)
 ```
 
 Add:
+
 ```typescript
 const isSearchPaletteOpen = useState('searchPalette', () => false)
 ```
 
 Replace the `toggleSearch` function:
+
 ```typescript
 const openSearch = () => {
   isSearchPaletteOpen.value = true
@@ -653,6 +686,7 @@ const openSearch = () => {
 ```
 
 Update the `toggleMobileMenu` function — replace `isSearchOpen.value = false` with `isSearchPaletteOpen.value = false`:
+
 ```typescript
 const toggleMobileMenu = () => {
   isMobileMenuOpen.value = !isMobileMenuOpen.value
@@ -663,6 +697,7 @@ const toggleMobileMenu = () => {
 ```
 
 Update the route watcher — replace `isSearchOpen.value = false` with `isSearchPaletteOpen.value = false`:
+
 ```typescript
 watch(
   () => route.path,
@@ -715,6 +750,7 @@ git commit -m "feat(search): integrate command palette into header and register 
 ### Task 5: Fix Dark Mode on /search Page
 
 **Files:**
+
 - Modify: `pages/search.vue:15,32-33,39-40`
 - Modify: `components/search/SearchResultCard.vue:2`
 
@@ -722,12 +758,14 @@ git commit -m "feat(search): integrate command palette into header and register 
 
 In `pages/search.vue` line 15, change:
 
+<!-- prettier-ignore -->
 ```html
 <section class="section bg-gray-50">
 ```
 
 to:
 
+<!-- prettier-ignore -->
 ```html
 <section class="section bg-gray-50 dark:bg-gray-900">
 ```
@@ -764,12 +802,14 @@ class="absolute right-3 bg-transparent border-none p-2 cursor-pointer text-gray-
 
 In `components/search/SearchResultCard.vue` line 2, change:
 
+<!-- prettier-ignore -->
 ```html
 <article class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-5 hover:shadow-md transition-shadow">
 ```
 
 to:
 
+<!-- prettier-ignore -->
 ```html
 <article class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-5 hover:shadow-md hover:border-primary/30 dark:hover:border-primary-light/30 transition-all">
 ```
@@ -778,12 +818,14 @@ to:
 
 In `pages/search.vue` line 257, the help section uses `bg-white` without dark variant. Change:
 
+<!-- prettier-ignore -->
 ```html
 <section class="section bg-white">
 ```
 
 to:
 
+<!-- prettier-ignore -->
 ```html
 <section class="section bg-white dark:bg-gray-800">
 ```

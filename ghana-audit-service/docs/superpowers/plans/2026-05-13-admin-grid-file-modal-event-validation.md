@@ -12,33 +12,34 @@
 
 ## File Map
 
-| Action | File | Responsibility |
-|--------|------|---------------|
-| Rename+Modify | `components/admin/ui/AdminReportCard.vue` → `AdminEntityCard.vue` | Generic grid card for any entity |
-| Modify | `pages/admin/reports/index.vue` | Switch to `AdminEntityCard`, keep existing behavior |
-| Modify | `pages/admin/publications/index.vue` | Add view toggle + grid section |
-| Modify | `pages/admin/news/index.vue` | Add view toggle + grid section |
-| Modify | `pages/admin/events/index.vue` | Add view toggle + grid section |
-| Rename+Modify | `components/admin/form/AdminReportFileModal.vue` → `AdminFileModal.vue` | Generic file modal with `resource` prop |
-| Modify | `pages/admin/reports/create.vue` | Use renamed `AdminFileModal` |
-| Modify | `pages/admin/reports/[id]/edit.vue` | Use renamed `AdminFileModal` |
-| Modify | `pages/admin/publications/create.vue` | Replace inline upload with file modal |
-| Modify | `pages/admin/publications/[id]/edit.vue` | Replace inline upload with file modal |
-| Create | `server/api/admin/publications/generate-thumbnail.post.ts` | Publication thumbnail generation endpoint |
-| Modify | `server/database/schema/publications.ts` | Add `fileSize` column |
-| Modify | `server/utils/validation.ts` | Add `fileSize` to publication schema; add `superRefine` to event schema |
-| Modify | `types/admin.ts` | Add `fileSize` to `PublicationInput` |
-| Modify | `server/api/admin/publications/index.ts` | Handle `fileSize` in create |
-| Modify | `server/api/admin/publications/[id].ts` | Handle `fileSize` in update |
-| Modify | `pages/admin/events/create.vue` | Wire endDate error + validation rule |
-| Modify | `pages/admin/events/[id]/edit.vue` | Wire endDate error + validation rule |
-| Rename+Modify | `tests/unit/components/admin/form/AdminReportFileModal.test.ts` → `AdminFileModal.test.ts` | Update test for renamed component |
+| Action        | File                                                                                       | Responsibility                                                          |
+| ------------- | ------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------- |
+| Rename+Modify | `components/admin/ui/AdminReportCard.vue` → `AdminEntityCard.vue`                          | Generic grid card for any entity                                        |
+| Modify        | `pages/admin/reports/index.vue`                                                            | Switch to `AdminEntityCard`, keep existing behavior                     |
+| Modify        | `pages/admin/publications/index.vue`                                                       | Add view toggle + grid section                                          |
+| Modify        | `pages/admin/news/index.vue`                                                               | Add view toggle + grid section                                          |
+| Modify        | `pages/admin/events/index.vue`                                                             | Add view toggle + grid section                                          |
+| Rename+Modify | `components/admin/form/AdminReportFileModal.vue` → `AdminFileModal.vue`                    | Generic file modal with `resource` prop                                 |
+| Modify        | `pages/admin/reports/create.vue`                                                           | Use renamed `AdminFileModal`                                            |
+| Modify        | `pages/admin/reports/[id]/edit.vue`                                                        | Use renamed `AdminFileModal`                                            |
+| Modify        | `pages/admin/publications/create.vue`                                                      | Replace inline upload with file modal                                   |
+| Modify        | `pages/admin/publications/[id]/edit.vue`                                                   | Replace inline upload with file modal                                   |
+| Create        | `server/api/admin/publications/generate-thumbnail.post.ts`                                 | Publication thumbnail generation endpoint                               |
+| Modify        | `server/database/schema/publications.ts`                                                   | Add `fileSize` column                                                   |
+| Modify        | `server/utils/validation.ts`                                                               | Add `fileSize` to publication schema; add `superRefine` to event schema |
+| Modify        | `types/admin.ts`                                                                           | Add `fileSize` to `PublicationInput`                                    |
+| Modify        | `server/api/admin/publications/index.ts`                                                   | Handle `fileSize` in create                                             |
+| Modify        | `server/api/admin/publications/[id].ts`                                                    | Handle `fileSize` in update                                             |
+| Modify        | `pages/admin/events/create.vue`                                                            | Wire endDate error + validation rule                                    |
+| Modify        | `pages/admin/events/[id]/edit.vue`                                                         | Wire endDate error + validation rule                                    |
+| Rename+Modify | `tests/unit/components/admin/form/AdminReportFileModal.test.ts` → `AdminFileModal.test.ts` | Update test for renamed component                                       |
 
 ---
 
 ### Task 1: Generalize AdminReportCard → AdminEntityCard
 
 **Files:**
+
 - Rename: `components/admin/ui/AdminReportCard.vue` → `components/admin/ui/AdminEntityCard.vue`
 - Modify: `pages/admin/reports/index.vue`
 
@@ -205,60 +206,60 @@ Replace the entire contents of `components/admin/ui/AdminEntityCard.vue` with:
 In `pages/admin/reports/index.vue`, replace the grid card usage. Change line 268-277 from:
 
 ```vue
-          <AdminUiAdminReportCard
-            v-for="report in items"
-            :key="report.id"
-            :report="report"
-            :selected="isSelected(report)"
-            :category-class="categoryStyles[report.category] || 'bg-gray-100 text-gray-700'"
-            @click="handleRowClick(report)"
-            @toggle-select="toggleCardSelect(report)"
-            @delete="confirmDelete(report)"
-          />
+<AdminUiAdminReportCard
+  v-for="report in items"
+  :key="report.id"
+  :report="report"
+  :selected="isSelected(report)"
+  :category-class="categoryStyles[report.category] || 'bg-gray-100 text-gray-700'"
+  @click="handleRowClick(report)"
+  @toggle-select="toggleCardSelect(report)"
+  @delete="confirmDelete(report)"
+/>
 ```
 
 to:
 
 ```vue
-          <AdminUiAdminEntityCard
-            v-for="report in items"
-            :key="report.id"
-            :title="report.translations?.en?.title || 'Untitled'"
-            :thumbnail="report.thumbnail"
-            :selected="isSelected(report)"
-            :edit-url="`/admin/reports/${report.id}/edit`"
-            :badge-label="report.category?.replace('-', ' ') || null"
-            :badge-class="categoryStyles[report.category] || 'bg-gray-100 text-gray-700'"
-            :metadata="formatReportMeta(report)"
-            :is-published="report.isPublished"
-            @click="handleRowClick(report)"
-            @toggle-select="toggleCardSelect(report)"
-            @delete="confirmDelete(report)"
-          />
+<AdminUiAdminEntityCard
+  v-for="report in items"
+  :key="report.id"
+  :title="report.translations?.en?.title || 'Untitled'"
+  :thumbnail="report.thumbnail"
+  :selected="isSelected(report)"
+  :edit-url="`/admin/reports/${report.id}/edit`"
+  :badge-label="report.category?.replace('-', ' ') || null"
+  :badge-class="categoryStyles[report.category] || 'bg-gray-100 text-gray-700'"
+  :metadata="formatReportMeta(report)"
+  :is-published="report.isPublished"
+  @click="handleRowClick(report)"
+  @toggle-select="toggleCardSelect(report)"
+  @delete="confirmDelete(report)"
+/>
 ```
 
 Add the `formatReportMeta` helper in `<script setup>` (in the existing script section, after the `categoryStyles` definition):
 
 ```ts
-  function formatFileSize(value: unknown): string {
-    if (!value) return ''
-    const str = String(value)
-    if (str.includes('MB') || str.includes('KB') || str.includes('GB')) return str
-    const bytes = Number(str)
-    if (isNaN(bytes) || bytes === 0) return ''
-    if (bytes < 1024) return `${bytes} B`
-    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
-    if (bytes < 1024 * 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
-    return `${(bytes / (1024 * 1024 * 1024)).toFixed(1)} GB`
-  }
+function formatFileSize(value: unknown): string {
+  if (!value) return ''
+  const str = String(value)
+  if (str.includes('MB') || str.includes('KB') || str.includes('GB')) return str
+  const bytes = Number(str)
+  if (isNaN(bytes) || bytes === 0) return ''
+  if (bytes < 1024) return `${bytes} B`
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
+  if (bytes < 1024 * 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
+  return `${(bytes / (1024 * 1024 * 1024)).toFixed(1)} GB`
+}
 
-  function formatReportMeta(report: AdminAuditReport): string[] {
-    const meta: string[] = []
-    if (report.publishedAt) meta.push(new Date(report.publishedAt).toLocaleDateString())
-    const size = formatFileSize(report.fileSize)
-    if (size) meta.push(size)
-    return meta
-  }
+function formatReportMeta(report: AdminAuditReport): string[] {
+  const meta: string[] = []
+  if (report.publishedAt) meta.push(new Date(report.publishedAt).toLocaleDateString())
+  const size = formatFileSize(report.fileSize)
+  if (size) meta.push(size)
+  return meta
+}
 ```
 
 - [ ] **Step 4: Run typecheck to verify**
@@ -286,6 +287,7 @@ new generic props."
 ### Task 2: Add grid/table view toggle to publications index
 
 **Files:**
+
 - Modify: `pages/admin/publications/index.vue`
 
 - [ ] **Step 1: Add view toggle buttons and viewMode state**
@@ -403,30 +405,30 @@ Then add this grid section right after the closing `</AdminUiAdminDataTable>` ta
 Add these to the `<script setup>` section:
 
 ```ts
-  // View mode
-  const viewMode = ref<'table' | 'grid'>(
-    (typeof localStorage !== 'undefined' &&
-      (localStorage.getItem('admin-publications-view') as 'table' | 'grid')) ||
-      'table'
-  )
-  watch(viewMode, (v) => {
-    if (typeof localStorage !== 'undefined') localStorage.setItem('admin-publications-view', v)
-  })
+// View mode
+const viewMode = ref<'table' | 'grid'>(
+  (typeof localStorage !== 'undefined' &&
+    (localStorage.getItem('admin-publications-view') as 'table' | 'grid')) ||
+    'table'
+)
+watch(viewMode, (v) => {
+  if (typeof localStorage !== 'undefined') localStorage.setItem('admin-publications-view', v)
+})
 
-  const typeStyles: Record<string, string> = {
-    'press-statement': 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300',
-    bulletin: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300',
-    guideline: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300',
-    manual: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300',
-    strategy: 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300',
-    law: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300'
-  }
+const typeStyles: Record<string, string> = {
+  'press-statement': 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300',
+  bulletin: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300',
+  guideline: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300',
+  manual: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300',
+  strategy: 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300',
+  law: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300'
+}
 
-  function formatPubMeta(pub: AdminPublication): string[] {
-    const meta: string[] = []
-    if (pub.publishedAt) meta.push(new Date(pub.publishedAt).toLocaleDateString())
-    return meta
-  }
+function formatPubMeta(pub: AdminPublication): string[] {
+  const meta: string[] = []
+  if (pub.publishedAt) meta.push(new Date(pub.publishedAt).toLocaleDateString())
+  return meta
+}
 ```
 
 - [ ] **Step 4: Run typecheck**
@@ -449,6 +451,7 @@ git commit -m "feat(admin): add grid/table view toggle to publications index"
 ### Task 3: Add grid/table view toggle to news index
 
 **Files:**
+
 - Modify: `pages/admin/news/index.vue`
 
 - [ ] **Step 1: Add view toggle to page header**
@@ -566,21 +569,21 @@ Add this grid section after the closing `</AdminUiAdminDataTable>` tag (before `
 Add to `<script setup>`:
 
 ```ts
-  // View mode
-  const viewMode = ref<'table' | 'grid'>(
-    (typeof localStorage !== 'undefined' &&
-      (localStorage.getItem('admin-news-view') as 'table' | 'grid')) ||
-      'table'
-  )
-  watch(viewMode, (v) => {
-    if (typeof localStorage !== 'undefined') localStorage.setItem('admin-news-view', v)
-  })
+// View mode
+const viewMode = ref<'table' | 'grid'>(
+  (typeof localStorage !== 'undefined' &&
+    (localStorage.getItem('admin-news-view') as 'table' | 'grid')) ||
+    'table'
+)
+watch(viewMode, (v) => {
+  if (typeof localStorage !== 'undefined') localStorage.setItem('admin-news-view', v)
+})
 
-  function formatNewsMeta(article: AdminNewsArticle): string[] {
-    const meta: string[] = []
-    if (article.publishedAt) meta.push(new Date(article.publishedAt).toLocaleDateString())
-    return meta
-  }
+function formatNewsMeta(article: AdminNewsArticle): string[] {
+  const meta: string[] = []
+  if (article.publishedAt) meta.push(new Date(article.publishedAt).toLocaleDateString())
+  return meta
+}
 ```
 
 - [ ] **Step 4: Run typecheck**
@@ -603,6 +606,7 @@ git commit -m "feat(admin): add grid/table view toggle to news index"
 ### Task 4: Add grid/table view toggle to events index
 
 **Files:**
+
 - Modify: `pages/admin/events/index.vue`
 
 - [ ] **Step 1: Add view toggle to page header**
@@ -720,23 +724,23 @@ Add this grid section after `</AdminUiAdminDataTable>` (before `AdminUiAdminConf
 Add to `<script setup>`:
 
 ```ts
-  // View mode
-  const viewMode = ref<'table' | 'grid'>(
-    (typeof localStorage !== 'undefined' &&
-      (localStorage.getItem('admin-events-view') as 'table' | 'grid')) ||
-      'table'
-  )
-  watch(viewMode, (v) => {
-    if (typeof localStorage !== 'undefined') localStorage.setItem('admin-events-view', v)
-  })
+// View mode
+const viewMode = ref<'table' | 'grid'>(
+  (typeof localStorage !== 'undefined' &&
+    (localStorage.getItem('admin-events-view') as 'table' | 'grid')) ||
+    'table'
+)
+watch(viewMode, (v) => {
+  if (typeof localStorage !== 'undefined') localStorage.setItem('admin-events-view', v)
+})
 
-  function formatEventMeta(evt: AdminEvent): string[] {
-    const meta: string[] = []
-    if (evt.startDate) meta.push(new Date(evt.startDate).toLocaleDateString())
-    const location = evt.translations?.en?.location
-    if (location) meta.push(location)
-    return meta
-  }
+function formatEventMeta(evt: AdminEvent): string[] {
+  const meta: string[] = []
+  if (evt.startDate) meta.push(new Date(evt.startDate).toLocaleDateString())
+  const location = evt.translations?.en?.location
+  if (location) meta.push(location)
+  return meta
+}
 ```
 
 - [ ] **Step 4: Run typecheck**
@@ -759,6 +763,7 @@ git commit -m "feat(admin): add grid/table view toggle to events index"
 ### Task 5: Generalize AdminReportFileModal → AdminFileModal
 
 **Files:**
+
 - Rename: `components/admin/form/AdminReportFileModal.vue` → `AdminFileModal.vue`
 - Rename: `tests/unit/components/admin/form/AdminReportFileModal.test.ts` → `AdminFileModal.test.ts`
 - Modify: `pages/admin/reports/create.vue`
@@ -777,24 +782,24 @@ git mv tests/unit/components/admin/form/AdminReportFileModal.test.ts tests/unit/
 In `components/admin/form/AdminFileModal.vue`, update the props interface and defaults. Replace lines 308-322:
 
 ```typescript
-  interface Props {
-    resource: 'reports' | 'publications'
-    label?: string
-    fileUrl?: string | null
-    fileSize?: number | null
-    thumbnail?: string | null
-    error?: string
-    required?: boolean
-  }
+interface Props {
+  resource: 'reports' | 'publications'
+  label?: string
+  fileUrl?: string | null
+  fileSize?: number | null
+  thumbnail?: string | null
+  error?: string
+  required?: boolean
+}
 
-  const props = withDefaults(defineProps<Props>(), {
-    label: 'File',
-    fileUrl: null,
-    fileSize: null,
-    thumbnail: null,
-    error: undefined,
-    required: false
-  })
+const props = withDefaults(defineProps<Props>(), {
+  label: 'File',
+  fileUrl: null,
+  fileSize: null,
+  thumbnail: null,
+  error: undefined,
+  required: false
+})
 ```
 
 - [ ] **Step 3: Update template text and upload type**
@@ -816,19 +821,19 @@ In the same file, make these changes:
 Replace the hard-coded `reports/generate-thumbnail` call in the `generateThumbnail` function (line 394). Change:
 
 ```typescript
-      const result = await api.post<{ success: boolean; thumbnailUrl: string }>(
-        'reports/generate-thumbnail',
-        { fileUrl: modalFileUrl.value }
-      )
+const result = await api.post<{ success: boolean; thumbnailUrl: string }>(
+  'reports/generate-thumbnail',
+  { fileUrl: modalFileUrl.value }
+)
 ```
 
 to:
 
 ```typescript
-      const result = await api.post<{ success: boolean; thumbnailUrl: string }>(
-        `${props.resource}/generate-thumbnail`,
-        { fileUrl: modalFileUrl.value }
-      )
+const result = await api.post<{ success: boolean; thumbnailUrl: string }>(
+  `${props.resource}/generate-thumbnail`,
+  { fileUrl: modalFileUrl.value }
+)
 ```
 
 - [ ] **Step 5: Update reports create page to use renamed component**
@@ -836,33 +841,33 @@ to:
 In `pages/admin/reports/create.vue`, replace line 50-59:
 
 ```vue
-            <AdminFormAdminReportFileModal
-              :file-url="form.fileUrl"
-              :file-size="form.fileSize"
-              :thumbnail="form.thumbnail"
-              :error="errors.fileUrl"
-              required
-              @update:file-url="form.fileUrl = $event"
-              @update:file-size="form.fileSize = $event"
-              @update:thumbnail="form.thumbnail = $event"
-            />
+<AdminFormAdminReportFileModal
+  :file-url="form.fileUrl"
+  :file-size="form.fileSize"
+  :thumbnail="form.thumbnail"
+  :error="errors.fileUrl"
+  required
+  @update:file-url="form.fileUrl = $event"
+  @update:file-size="form.fileSize = $event"
+  @update:thumbnail="form.thumbnail = $event"
+/>
 ```
 
 with:
 
 ```vue
-            <AdminFormAdminFileModal
-              resource="reports"
-              label="Report File"
-              :file-url="form.fileUrl"
-              :file-size="form.fileSize"
-              :thumbnail="form.thumbnail"
-              :error="errors.fileUrl"
-              required
-              @update:file-url="form.fileUrl = $event"
-              @update:file-size="form.fileSize = $event"
-              @update:thumbnail="form.thumbnail = $event"
-            />
+<AdminFormAdminFileModal
+  resource="reports"
+  label="Report File"
+  :file-url="form.fileUrl"
+  :file-size="form.fileSize"
+  :thumbnail="form.thumbnail"
+  :error="errors.fileUrl"
+  required
+  @update:file-url="form.fileUrl = $event"
+  @update:file-size="form.fileSize = $event"
+  @update:thumbnail="form.thumbnail = $event"
+/>
 ```
 
 - [ ] **Step 6: Update reports edit page to use renamed component**
@@ -870,33 +875,33 @@ with:
 In `pages/admin/reports/[id]/edit.vue`, replace line 107-116:
 
 ```vue
-              <AdminFormAdminReportFileModal
-                :file-url="form.fileUrl"
-                :file-size="form.fileSize"
-                :thumbnail="form.thumbnail"
-                :error="errors.fileUrl"
-                required
-                @update:file-url="form.fileUrl = $event"
-                @update:file-size="form.fileSize = $event"
-                @update:thumbnail="form.thumbnail = $event"
-              />
+<AdminFormAdminReportFileModal
+  :file-url="form.fileUrl"
+  :file-size="form.fileSize"
+  :thumbnail="form.thumbnail"
+  :error="errors.fileUrl"
+  required
+  @update:file-url="form.fileUrl = $event"
+  @update:file-size="form.fileSize = $event"
+  @update:thumbnail="form.thumbnail = $event"
+/>
 ```
 
 with:
 
 ```vue
-              <AdminFormAdminFileModal
-                resource="reports"
-                label="Report File"
-                :file-url="form.fileUrl"
-                :file-size="form.fileSize"
-                :thumbnail="form.thumbnail"
-                :error="errors.fileUrl"
-                required
-                @update:file-url="form.fileUrl = $event"
-                @update:file-size="form.fileSize = $event"
-                @update:thumbnail="form.thumbnail = $event"
-              />
+<AdminFormAdminFileModal
+  resource="reports"
+  label="Report File"
+  :file-url="form.fileUrl"
+  :file-size="form.fileSize"
+  :thumbnail="form.thumbnail"
+  :error="errors.fileUrl"
+  required
+  @update:file-url="form.fileUrl = $event"
+  @update:file-size="form.fileSize = $event"
+  @update:thumbnail="form.thumbnail = $event"
+/>
 ```
 
 - [ ] **Step 7: Update test file**
@@ -927,6 +932,7 @@ resource prop. Reports pages updated to pass resource='reports'."
 ### Task 6: Add publication fileSize — DB schema, server validation, types
 
 **Files:**
+
 - Modify: `server/database/schema/publications.ts`
 - Modify: `server/utils/validation.ts`
 - Modify: `types/admin.ts`
@@ -964,40 +970,40 @@ In `types/admin.ts`, add to the `PublicationInput` interface (after line 397 `fi
 In `server/api/admin/publications/index.ts`, update the INSERT SQL (lines 126-138). Change:
 
 ```typescript
-    const [result] = await connection.execute(
-      `INSERT INTO publications (slug, type, published_at, file_url, thumbnail, is_published, created_by, updated_by)
+const [result] = await connection.execute(
+  `INSERT INTO publications (slug, type, published_at, file_url, thumbnail, is_published, created_by, updated_by)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-      [
-        input.slug,
-        input.type,
-        new Date(input.publishedAt),
-        input.fileUrl || null,
-        input.thumbnail || null,
-        input.isPublished,
-        user.id,
-        user.id
-      ]
-    )
+  [
+    input.slug,
+    input.type,
+    new Date(input.publishedAt),
+    input.fileUrl || null,
+    input.thumbnail || null,
+    input.isPublished,
+    user.id,
+    user.id
+  ]
+)
 ```
 
 to:
 
 ```typescript
-    const [result] = await connection.execute(
-      `INSERT INTO publications (slug, type, published_at, file_url, file_size, thumbnail, is_published, created_by, updated_by)
+const [result] = await connection.execute(
+  `INSERT INTO publications (slug, type, published_at, file_url, file_size, thumbnail, is_published, created_by, updated_by)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [
-        input.slug,
-        input.type,
-        new Date(input.publishedAt),
-        input.fileUrl || null,
-        input.fileSize || null,
-        input.thumbnail || null,
-        input.isPublished,
-        user.id,
-        user.id
-      ]
-    )
+  [
+    input.slug,
+    input.type,
+    new Date(input.publishedAt),
+    input.fileUrl || null,
+    input.fileSize || null,
+    input.thumbnail || null,
+    input.isPublished,
+    user.id,
+    user.id
+  ]
+)
 ```
 
 - [ ] **Step 5: Handle fileSize in publication update endpoint**
@@ -1005,24 +1011,24 @@ to:
 In `server/api/admin/publications/[id].ts`, update the UPDATE SQL (lines 106-117). Change:
 
 ```typescript
-    await connection.execute(
-      `UPDATE publications SET slug = ?, type = ?, published_at = ?, file_url = ?, thumbnail = ?, is_published = ?, updated_by = ? WHERE id = ?`,
-      [
-        input.slug,
-        input.type,
-        new Date(input.publishedAt),
-        input.fileUrl || null,
-        input.thumbnail || null,
-        input.isPublished,
-        user.id,
-        id
-      ]
-    )
+await connection.execute(
+  `UPDATE publications SET slug = ?, type = ?, published_at = ?, file_url = ?, thumbnail = ?, is_published = ?, updated_by = ? WHERE id = ?`,
+  [
+    input.slug,
+    input.type,
+    new Date(input.publishedAt),
+    input.fileUrl || null,
+    input.thumbnail || null,
+    input.isPublished,
+    user.id,
+    id
+  ]
+)
 ```
 
 to:
 
-```typescript
+````typescript
     await connection.execute(
       `UPDATE publications SET slug = ?, type = ?, published_at = ?, file_url = ?, file_size = ?, thumbnail = ?, is_published = ?, updated_by = ? WHERE id = ?`,
       [
@@ -1042,7 +1048,7 @@ to:
 
 ```bash
 cd ghana-audit-service && npm run db:generate && npm run db:migrate
-```
+````
 
 - [ ] **Step 7: Run typecheck**
 
@@ -1067,6 +1073,7 @@ TypeScript types, and create/update API handlers."
 ### Task 7: Create publications thumbnail generation endpoint
 
 **Files:**
+
 - Create: `server/api/admin/publications/generate-thumbnail.post.ts`
 
 - [ ] **Step 1: Create the endpoint**
@@ -1121,6 +1128,7 @@ git commit -m "feat(admin): add publications thumbnail generation endpoint"
 ### Task 8: Integrate file modal into publication create/edit pages
 
 **Files:**
+
 - Modify: `pages/admin/publications/create.vue`
 - Modify: `pages/admin/publications/[id]/edit.vue`
 
@@ -1129,7 +1137,7 @@ git commit -m "feat(admin): add publications thumbnail generation endpoint"
 In `pages/admin/publications/create.vue`, replace the Document section (lines 41-49):
 
 ```vue
-          <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+<div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
             <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Document</h2>
             <AdminFormAdminFileUpload
               v-model="form.fileUrl"
@@ -1143,7 +1151,7 @@ In `pages/admin/publications/create.vue`, replace the Document section (lines 41
 with:
 
 ```vue
-          <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+<div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
             <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Document</h2>
             <AdminFormAdminFileModal
               resource="publications"
@@ -1162,7 +1170,7 @@ with:
 Also remove the standalone Thumbnail section (lines 133-140):
 
 ```vue
-          <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+<div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
             <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Thumbnail</h2>
             <AdminFormAdminFileUpload
               v-model="form.thumbnail"
@@ -1179,16 +1187,16 @@ Remove that entire `<div>` block (thumbnail is now handled inside the file modal
 In the `<script setup>`, update the `form` reactive (line 178-186). Add `fileSize`:
 
 ```typescript
-  const form = reactive<PublicationInput>({
-    slug: '',
-    type: 'press-statement',
-    fileUrl: '',
-    fileSize: undefined,
-    thumbnail: '',
-    isPublished: false,
-    publishedAt: '',
-    translations: { en: { title: '', excerpt: '', content: '' } }
-  })
+const form = reactive<PublicationInput>({
+  slug: '',
+  type: 'press-statement',
+  fileUrl: '',
+  fileSize: undefined,
+  thumbnail: '',
+  isPublished: false,
+  publishedAt: '',
+  translations: { en: { title: '', excerpt: '', content: '' } }
+})
 ```
 
 - [ ] **Step 3: Update publication edit page — replace file upload section**
@@ -1196,7 +1204,7 @@ In the `<script setup>`, update the `form` reactive (line 178-186). Add `fileSiz
 In `pages/admin/publications/[id]/edit.vue`, replace the Document section (lines 53-61):
 
 ```vue
-            <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+<div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
               <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Document</h2>
               <AdminFormAdminFileUpload
                 v-model="form.fileUrl"
@@ -1210,7 +1218,7 @@ In `pages/admin/publications/[id]/edit.vue`, replace the Document section (lines
 with:
 
 ```vue
-            <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+<div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
               <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Document</h2>
               <AdminFormAdminFileModal
                 resource="publications"
@@ -1229,7 +1237,7 @@ with:
 Also remove the standalone Thumbnail section (lines 145-152):
 
 ```vue
-            <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+<div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
               <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Thumbnail</h2>
               <AdminFormAdminFileUpload
                 v-model="form.thumbnail"
@@ -1244,22 +1252,22 @@ Also remove the standalone Thumbnail section (lines 145-152):
 In the `<script setup>`, update the form reactive (line 195-203). Add `fileSize`:
 
 ```typescript
-  const form = reactive<PublicationInput>({
-    slug: '',
-    type: 'press-statement',
-    fileUrl: '',
-    fileSize: undefined,
-    thumbnail: '',
-    isPublished: false,
-    publishedAt: '',
-    translations: { en: { title: '', excerpt: '', content: '' } }
-  })
+const form = reactive<PublicationInput>({
+  slug: '',
+  type: 'press-statement',
+  fileUrl: '',
+  fileSize: undefined,
+  thumbnail: '',
+  isPublished: false,
+  publishedAt: '',
+  translations: { en: { title: '', excerpt: '', content: '' } }
+})
 ```
 
 In the `onMounted` callback (around line 291-301), add after `form.fileUrl = item.fileUrl || ''`:
 
 ```typescript
-      form.fileSize = (item as any).fileSize || undefined
+form.fileSize = (item as any).fileSize || undefined
 ```
 
 - [ ] **Step 5: Run typecheck**
@@ -1286,6 +1294,7 @@ preview and auto-generated thumbnails like reports."
 ### Task 9: Fix event endDate validation — client + server
 
 **Files:**
+
 - Modify: `pages/admin/events/create.vue`
 - Modify: `pages/admin/events/[id]/edit.vue`
 - Modify: `server/utils/validation.ts`
@@ -1295,22 +1304,18 @@ preview and auto-generated thumbnails like reports."
 In `pages/admin/events/create.vue`, replace lines 114-118:
 
 ```vue
-              <AdminFormAdminDatePicker
-                v-model="form.endDate"
-                label="End Date"
-                type="datetime-local"
-              />
+<AdminFormAdminDatePicker v-model="form.endDate" label="End Date" type="datetime-local" />
 ```
 
 with:
 
 ```vue
-              <AdminFormAdminDatePicker
-                v-model="form.endDate"
-                label="End Date"
-                type="datetime-local"
-                :error="errors.endDate"
-              />
+<AdminFormAdminDatePicker
+  v-model="form.endDate"
+  label="End Date"
+  type="datetime-local"
+  :error="errors.endDate"
+/>
 ```
 
 - [ ] **Step 2: Add endDate validation rule on create page**
@@ -1318,22 +1323,22 @@ with:
 In the `validationRules` object (lines 187-192), add the `endDate` rule:
 
 ```typescript
-  const validationRules = {
-    'translations.en.title': [rules.required],
-    slug: [rules.required],
-    startDate: [rules.required],
-    registrationUrl: [rules.url],
-    endDate: [
-      (value: unknown) => {
-        if (!value) return true
-        if (!form.startDate) return true
-        const end = Date.parse(String(value))
-        const start = Date.parse(form.startDate)
-        if (isNaN(end)) return 'Invalid date'
-        return end > start || 'End date must be after start date'
-      }
-    ]
-  }
+const validationRules = {
+  'translations.en.title': [rules.required],
+  slug: [rules.required],
+  startDate: [rules.required],
+  registrationUrl: [rules.url],
+  endDate: [
+    (value: unknown) => {
+      if (!value) return true
+      if (!form.startDate) return true
+      const end = Date.parse(String(value))
+      const start = Date.parse(form.startDate)
+      if (isNaN(end)) return 'Invalid date'
+      return end > start || 'End date must be after start date'
+    }
+  ]
+}
 ```
 
 - [ ] **Step 3: Wire endDate error display on edit page**
@@ -1341,22 +1346,18 @@ In the `validationRules` object (lines 187-192), add the `endDate` rule:
 In `pages/admin/events/[id]/edit.vue`, replace lines 126-130:
 
 ```vue
-                <AdminFormAdminDatePicker
-                  v-model="form.endDate"
-                  label="End Date"
-                  type="datetime-local"
-                />
+<AdminFormAdminDatePicker v-model="form.endDate" label="End Date" type="datetime-local" />
 ```
 
 with:
 
 ```vue
-                <AdminFormAdminDatePicker
-                  v-model="form.endDate"
-                  label="End Date"
-                  type="datetime-local"
-                  :error="errors.endDate"
-                />
+<AdminFormAdminDatePicker
+  v-model="form.endDate"
+  label="End Date"
+  type="datetime-local"
+  :error="errors.endDate"
+/>
 ```
 
 - [ ] **Step 4: Add endDate validation rule on edit page**
@@ -1364,22 +1365,22 @@ with:
 In the `validationRules` object (lines 200-205), add the `endDate` rule:
 
 ```typescript
-  const validationRules = {
-    'translations.en.title': [rules.required],
-    slug: [rules.required],
-    startDate: [rules.required],
-    registrationUrl: [rules.url],
-    endDate: [
-      (value: unknown) => {
-        if (!value) return true
-        if (!form.startDate) return true
-        const end = Date.parse(String(value))
-        const start = Date.parse(form.startDate)
-        if (isNaN(end)) return 'Invalid date'
-        return end > start || 'End date must be after start date'
-      }
-    ]
-  }
+const validationRules = {
+  'translations.en.title': [rules.required],
+  slug: [rules.required],
+  startDate: [rules.required],
+  registrationUrl: [rules.url],
+  endDate: [
+    (value: unknown) => {
+      if (!value) return true
+      if (!form.startDate) return true
+      const end = Date.parse(String(value))
+      const start = Date.parse(form.startDate)
+      if (isNaN(end)) return 'Invalid date'
+      return end > start || 'End date must be after start date'
+    }
+  ]
+}
 ```
 
 - [ ] **Step 5: Add server-side superRefine to eventSchema**

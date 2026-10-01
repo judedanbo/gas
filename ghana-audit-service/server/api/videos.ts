@@ -11,12 +11,7 @@ export default defineEventHandler(async (event): Promise<Video[]> => {
   const dbVideos = await db
     .select()
     .from(schema.videos)
-    .where(
-      and(
-        eq(schema.videos.isPublished, true),
-        isNull(schema.videos.deletedAt)
-      )
-    )
+    .where(and(eq(schema.videos.isPublished, true), isNull(schema.videos.deletedAt)))
     .orderBy(desc(schema.videos.publishedAt))
 
   const videoIds = dbVideos.map((v) => v.id)
@@ -25,9 +20,7 @@ export default defineEventHandler(async (event): Promise<Video[]> => {
       ? await db
           .select()
           .from(schema.videoTranslations)
-          .where(
-            sql`${schema.videoTranslations.videoId} IN (${sql.join(videoIds, sql`, `)})`
-          )
+          .where(sql`${schema.videoTranslations.videoId} IN (${sql.join(videoIds, sql`, `)})`)
       : []
 
   const translationsByVideo = translations.reduce(

@@ -53,9 +53,10 @@ export default defineEventHandler(async (event) => {
       'Content-Disposition',
       `${isInlineView ? 'inline' : 'attachment'}; filename="${downloadName.replace(/"/g, '')}"`
     )
-    setHeader(event, 'Cache-Control', isInlineView
-      ? 'private, max-age=300'
-      : 'private, no-store, must-revalidate'
+    setHeader(
+      event,
+      'Cache-Control',
+      isInlineView ? 'private, max-age=300' : 'private, no-store, must-revalidate'
     )
   }
 

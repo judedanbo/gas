@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import {
   __resetUploadPipelineForTests,
   beginUploadTransfer,
@@ -238,6 +238,10 @@ function holdOptimizer() {
   })
   return { started: started.promise, release: () => release.resolve() }
 }
+
+afterEach(() => {
+  vi.unstubAllEnvs()
+})
 
 beforeEach(() => {
   store.rows.clear()
@@ -588,7 +592,16 @@ describe('resumeInterruptedUploadJobs', () => {
     })
   }
 
+  it('claims one interrupted job per free optimizer slot (one per pod by default)', async () => {
+    interruptedJob()
+    interruptedJob()
+
+    expect(await resumeInterruptedUploadJobs()).toEqual({ resumed: 1, finalized: 0 })
+    expect(listInterruptedUploadJobs).toHaveBeenCalledWith(1)
+  })
+
   it('claims as many interrupted jobs as it has room for and resumes them here', async () => {
+    vi.stubEnv('PDF_OPTIMIZATION_MAX_CONCURRENT', '2')
     const jobs = [interruptedJob(), interruptedJob(), interruptedJob()]
 
     const result = await resumeInterruptedUploadJobs()
@@ -611,10 +624,9 @@ describe('resumeInterruptedUploadJobs', () => {
     await vi.waitFor(() => expect(rowOf(busy).status).toBe('storing'))
     interruptedJob()
 
-    await resumeInterruptedUploadJobs()
-
-    // One local run leaves room for one resume.
-    expect(listInterruptedUploadJobs).toHaveBeenCalledWith(1)
+    // Its one optimizer slot is spoken for by the upload already running here.
+    expect(await resumeInterruptedUploadJobs()).toEqual({ resumed: 0, finalized: 0 })
+    expect(listInterruptedUploadJobs).not.toHaveBeenCalled()
     storing.resolve('/pdf/reports/20260929-x.pdf')
     await run
   })

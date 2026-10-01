@@ -104,6 +104,7 @@ types/
 ### Phase 1: Foundation
 
 **Files to create:**
+
 - `composables/useAdminAuth.ts` - Token storage, login/logout, permission checks
 - `composables/useAdminApi.ts` - $fetch wrapper with Authorization header
 - `middleware/admin-auth.ts` - Route guard for `/admin/*` (except login)
@@ -114,6 +115,7 @@ types/
 - `types/admin.ts` - AdminUser, LoginResponse, Permission types
 
 **Key patterns:**
+
 ```typescript
 // useAdminAuth.ts
 export function useAdminAuth() {
@@ -138,6 +140,7 @@ export default defineNuxtRouteMiddleware((to) => {
 ### Phase 2: Core UI Components
 
 **Files to create:**
+
 - `components/admin/ui/AdminDataTable.vue` - Columns, rows, sorting, actions
 - `components/admin/ui/AdminPagination.vue` - Page controls
 - `components/admin/ui/AdminSearchFilter.vue` - Search input + filter dropdowns
@@ -146,6 +149,7 @@ export default defineNuxtRouteMiddleware((to) => {
 - `components/admin/ui/AdminStatsCard.vue` - Metric display
 
 **AdminDataTable props:**
+
 ```typescript
 interface Props {
   columns: { key: string; label: string; sortable?: boolean }[]
@@ -159,6 +163,7 @@ interface Props {
 ### Phase 3: Form Components
 
 **Files to create:**
+
 - `components/admin/form/AdminFormGroup.vue` - Label, slot, error message
 - `components/admin/form/AdminInput.vue` - Text with validation state
 - `components/admin/form/AdminTextarea.vue` - Multi-line
@@ -170,19 +175,25 @@ interface Props {
 - `composables/useAdminCrud.ts` - Generic fetchAll, fetchOne, create, update, remove
 
 **Translation tabs pattern:**
+
 ```vue
-<AdminTranslationTabs v-model="form.translations" :fields="[
-  { key: 'title', label: 'Title', type: 'input', required: true },
-  { key: 'summary', label: 'Summary', type: 'textarea' }
-]" />
+<AdminTranslationTabs
+  v-model="form.translations"
+  :fields="[
+    { key: 'title', label: 'Title', type: 'input', required: true },
+    { key: 'summary', label: 'Summary', type: 'textarea' }
+  ]"
+/>
 ```
 
 ### Phase 4: Dashboard Home
 
 **Files to create:**
+
 - `pages/admin/index.vue` - Stats grid + recent activity
 
 **Features:**
+
 - Content counts by type (reports, publications, news, etc.)
 - Recent audit log entries
 - Quick action buttons (create report, create news, etc.)
@@ -199,6 +210,7 @@ pages/admin/{resource}/
 ```
 
 **Implementation order (by complexity):**
+
 1. **Reports** - File upload + translations (reference implementation)
 2. **Publications** - Similar to reports
 3. **News** - Includes tag selection
@@ -214,6 +226,7 @@ pages/admin/{resource}/
 13. **Users** - Admin-only, role selection
 
 **Content form components:**
+
 - `components/admin/content/ReportForm.vue`
 - `components/admin/content/PublicationForm.vue`
 - ... (one per content type)
@@ -221,6 +234,7 @@ pages/admin/{resource}/
 ### Phase 6: Read-Only Pages
 
 **Files to create:**
+
 - `pages/admin/audit-logs/index.vue` - Activity log with filters
 - `pages/admin/newsletter/index.vue` - Subscriber list + stats
 - `pages/admin/contact-submissions/index.vue` - Form submissions
@@ -275,50 +289,50 @@ Activity
 
 ## Reference Files
 
-| Purpose | File |
-|---------|------|
-| Composable pattern | `composables/useReports.ts` |
-| Modal pattern | `components/ui/BaseModal.vue` |
-| Layout pattern | `layouts/default.vue` |
-| Form classes | `assets/css/tailwind.css` |
-| API response format | `server/api/admin/reports/index.ts` |
-| Server auth middleware | `server/middleware/adminAuth.ts` |
+| Purpose                | File                                |
+| ---------------------- | ----------------------------------- |
+| Composable pattern     | `composables/useReports.ts`         |
+| Modal pattern          | `components/ui/BaseModal.vue`       |
+| Layout pattern         | `layouts/default.vue`               |
+| Form classes           | `assets/css/tailwind.css`           |
+| API response format    | `server/api/admin/reports/index.ts` |
+| Server auth middleware | `server/middleware/adminAuth.ts`    |
 
 ---
 
 ## API Endpoints Summary
 
-| Resource | Endpoints |
-|----------|-----------|
-| Auth | POST /login, POST /logout, GET /me |
-| reports | GET, POST, GET/:id, PUT/:id, DELETE/:id |
-| publications | GET, POST, GET/:id, PUT/:id, DELETE/:id |
-| news | GET, POST, GET/:id, PUT/:id, DELETE/:id |
-| events | GET, POST, GET/:id, PUT/:id, DELETE/:id |
-| vacancies | GET, POST, GET/:id, PUT/:id, DELETE/:id |
-| tenders | GET, POST, GET/:id, PUT/:id, DELETE/:id |
-| departments | GET, POST, GET/:id, PUT/:id, DELETE/:id |
-| team-members | GET, POST, GET/:id, PUT/:id, DELETE/:id |
-| regional-offices | GET, POST, GET/:id, PUT/:id, DELETE/:id |
-| gallery | GET, POST, GET/:id, PUT/:id, DELETE/:id |
-| videos | GET, POST, GET/:id, PUT/:id, DELETE/:id |
-| tags | GET, POST |
-| users | GET, POST, GET/:id, PUT/:id, DELETE/:id |
-| audit-logs | GET |
-| newsletter | GET |
-| contact-submissions | GET, GET/:id, PUT/:id |
-| upload | POST?type=report\|publication\|image\|thumbnail |
+| Resource            | Endpoints                                       |
+| ------------------- | ----------------------------------------------- |
+| Auth                | POST /login, POST /logout, GET /me              |
+| reports             | GET, POST, GET/:id, PUT/:id, DELETE/:id         |
+| publications        | GET, POST, GET/:id, PUT/:id, DELETE/:id         |
+| news                | GET, POST, GET/:id, PUT/:id, DELETE/:id         |
+| events              | GET, POST, GET/:id, PUT/:id, DELETE/:id         |
+| vacancies           | GET, POST, GET/:id, PUT/:id, DELETE/:id         |
+| tenders             | GET, POST, GET/:id, PUT/:id, DELETE/:id         |
+| departments         | GET, POST, GET/:id, PUT/:id, DELETE/:id         |
+| team-members        | GET, POST, GET/:id, PUT/:id, DELETE/:id         |
+| regional-offices    | GET, POST, GET/:id, PUT/:id, DELETE/:id         |
+| gallery             | GET, POST, GET/:id, PUT/:id, DELETE/:id         |
+| videos              | GET, POST, GET/:id, PUT/:id, DELETE/:id         |
+| tags                | GET, POST                                       |
+| users               | GET, POST, GET/:id, PUT/:id, DELETE/:id         |
+| audit-logs          | GET                                             |
+| newsletter          | GET                                             |
+| contact-submissions | GET, GET/:id, PUT/:id                           |
+| upload              | POST?type=report\|publication\|image\|thumbnail |
 
 ---
 
 ## Estimated Files Count
 
-| Category | Count |
-|----------|-------|
-| Layouts | 1 |
-| Middleware | 1 |
-| Pages | ~45 |
-| Components | ~25 |
-| Composables | 3 |
-| Types | 1 |
-| **Total** | **~76 files** |
+| Category    | Count         |
+| ----------- | ------------- |
+| Layouts     | 1             |
+| Middleware  | 1             |
+| Pages       | ~45           |
+| Components  | ~25           |
+| Composables | 3             |
+| Types       | 1             |
+| **Total**   | **~76 files** |

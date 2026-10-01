@@ -23,7 +23,7 @@ interface Props {
   editUrl: string
   badgeLabel: string | null
   badgeClass: string
-  metadata: string[]       // formatted strings like "May 13, 2026", "2.4 MB"
+  metadata: string[] // formatted strings like "May 13, 2026", "2.4 MB"
   isPublished: boolean
 }
 
@@ -57,6 +57,7 @@ Only the reports index has a table/grid toggle with localStorage persistence. Pu
 Add the identical view toggle pattern (two icon buttons in the page header) to all three index pages.
 
 **View mode persistence** — localStorage keys:
+
 - `admin-publications-view`
 - `admin-news-view`
 - `admin-events-view`
@@ -65,13 +66,14 @@ Add the identical view toggle pattern (two icon buttons in the page header) to a
 
 **Grid card prop mapping per entity:**
 
-| Entity | Badge | Badge Style | Metadata |
-|--------|-------|-------------|----------|
-| Publications | Type label (e.g. "Press Statement") | Type-specific color class | Published date |
-| News | Author name (if present) | Neutral gray | Published date |
-| Events | "Virtual" / "In-Person" | accent (virtual) / secondary (in-person) | Start date, location |
+| Entity       | Badge                               | Badge Style                              | Metadata             |
+| ------------ | ----------------------------------- | ---------------------------------------- | -------------------- |
+| Publications | Type label (e.g. "Press Statement") | Type-specific color class                | Published date       |
+| News         | Author name (if present)            | Neutral gray                             | Published date       |
+| Events       | "Virtual" / "In-Person"             | accent (virtual) / secondary (in-person) | Start date, location |
 
 **Grid section includes:**
+
 - Loading spinner (same as reports)
 - Empty state with entity-specific messaging
 - Pagination with "Showing X to Y of Z" + `<AdminUiAdminPagination>`
@@ -101,7 +103,7 @@ Rename `components/admin/form/AdminReportFileModal.vue` to `AdminFileModal.vue`.
 ```ts
 interface Props {
   resource: 'reports' | 'publications'
-  label?: string              // default: "File"
+  label?: string // default: "File"
   fileUrl?: string | null
   fileSize?: number | null
   thumbnail?: string | null
@@ -111,6 +113,7 @@ interface Props {
 ```
 
 **What the `resource` prop controls:**
+
 - Upload type passed to `AdminFileUpload`: `resource === 'reports' ? 'report' : 'publication'`
 - Thumbnail generation endpoint: `` `${resource}/generate-thumbnail` ``
 - Display text adapts: "Attach Report" → "Attach Publication" (driven by `label`)
@@ -119,6 +122,7 @@ interface Props {
 **Server-side:** Create `server/api/admin/publications/generate-thumbnail.post.ts` mirroring the reports endpoint but validating `/uploads/publications/` paths. Both use the same `generateThumbnailFromPdf()` utility.
 
 **Publication create/edit page integration:**
+
 - Replace inline `AdminFileUpload` + standalone thumbnail upload with `<AdminFormAdminFileModal resource="publications" label="Publication File" ... />`
 - Same event wiring as reports: `@update:file-url`, `@update:file-size`, `@update:thumbnail`
 - `PublicationInput` type needs `fileSize` field added (currently absent)
@@ -151,6 +155,7 @@ interface Props {
 **Layer 1: Wire error display (create + edit pages)**
 
 Add `:error="errors.endDate"` to the `AdminDatePicker` for endDate on both:
+
 - `pages/admin/events/create.vue`
 - `pages/admin/events/[id]/edit.vue`
 
@@ -161,7 +166,7 @@ Add a custom validation rule in `validationRules`. The `ValidationRule` type is 
 ```ts
 endDate: [
   (value: unknown) => {
-    if (!value) return true  // optional field
+    if (!value) return true // optional field
     if (!form.startDate) return true
     const end = Date.parse(String(value))
     const start = Date.parse(form.startDate)
@@ -176,19 +181,21 @@ endDate: [
 Add `.superRefine()` to `eventSchema`:
 
 ```ts
-export const eventSchema = z.object({
-  // ... existing fields
-}).superRefine((data, ctx) => {
-  if (data.endDate && data.startDate) {
-    if (Date.parse(data.endDate) <= Date.parse(data.startDate)) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: 'End date must be after start date',
-        path: ['endDate']
-      })
+export const eventSchema = z
+  .object({
+    // ... existing fields
+  })
+  .superRefine((data, ctx) => {
+    if (data.endDate && data.startDate) {
+      if (Date.parse(data.endDate) <= Date.parse(data.startDate)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'End date must be after start date',
+          path: ['endDate']
+        })
+      }
     }
-  }
-})
+  })
 ```
 
 ### Files Changed

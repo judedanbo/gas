@@ -322,6 +322,8 @@ export function notificationDetails(
       )
     }
     push('Error code', job.errorCode)
+    // Explains a slow upload, or an optimization that ran twice.
+    if ((job.attempts ?? 1) > 1) push('Runs', `${job.attempts} (resumed after a server restart)`)
     push('Started', formatDateTime(job.createdAt))
     push('Finished', formatDateTime(job.completedAt))
     return rows

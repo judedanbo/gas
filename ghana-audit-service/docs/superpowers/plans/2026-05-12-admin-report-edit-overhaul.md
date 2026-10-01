@@ -12,23 +12,24 @@
 
 ## File Structure
 
-| File | Responsibility |
-|------|---------------|
-| `composables/useToast.ts` | Singleton toast notification queue with auto-dismiss |
-| `components/ui/ToastContainer.vue` | Renders toast stack, fixed top-right, slide-in transitions |
-| `composables/useUnsavedChanges.ts` | Deep-compare form snapshots, beforeunload + route leave guards |
-| `components/admin/form/AdminRichText.vue` | TipTap wrapper: toolbar + editor with v-model, error/disabled states |
-| `components/admin/form/AdminTranslationTabs.vue` | Modified — richtext field type renders AdminRichText instead of textarea |
-| `server/api/admin/reports/[id]/history.get.ts` | Audit log query joined with users, returns timeline data |
-| `pages/admin/reports/[id]/edit.vue` | Full overhaul — skeleton, sidebar reorg, PDF preview, sticky bar, history |
-| `pages/admin/reports/create.vue` | Summary field type change to richtext |
-| `layouts/admin.vue` | Mount `<UiToastContainer />` |
+| File                                             | Responsibility                                                            |
+| ------------------------------------------------ | ------------------------------------------------------------------------- |
+| `composables/useToast.ts`                        | Singleton toast notification queue with auto-dismiss                      |
+| `components/ui/ToastContainer.vue`               | Renders toast stack, fixed top-right, slide-in transitions                |
+| `composables/useUnsavedChanges.ts`               | Deep-compare form snapshots, beforeunload + route leave guards            |
+| `components/admin/form/AdminRichText.vue`        | TipTap wrapper: toolbar + editor with v-model, error/disabled states      |
+| `components/admin/form/AdminTranslationTabs.vue` | Modified — richtext field type renders AdminRichText instead of textarea  |
+| `server/api/admin/reports/[id]/history.get.ts`   | Audit log query joined with users, returns timeline data                  |
+| `pages/admin/reports/[id]/edit.vue`              | Full overhaul — skeleton, sidebar reorg, PDF preview, sticky bar, history |
+| `pages/admin/reports/create.vue`                 | Summary field type change to richtext                                     |
+| `layouts/admin.vue`                              | Mount `<UiToastContainer />`                                              |
 
 ---
 
 ### Task 1: Toast Notification System
 
 **Files:**
+
 - Create: `composables/useToast.ts`
 - Create: `components/ui/ToastContainer.vue`
 - Modify: `layouts/admin.vue`
@@ -183,20 +184,58 @@ Create `components/ui/ToastContainer.vue`:
           <!-- Icon -->
           <div :class="['shrink-0 mt-0.5', iconColor[toast.type]]">
             <!-- Success checkmark -->
-            <svg v-if="toast.type === 'success'" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+            <svg
+              v-if="toast.type === 'success'"
+              class="w-5 h-5"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M5 13l4 4L19 7"
+              />
             </svg>
             <!-- Error X -->
-            <svg v-else-if="toast.type === 'error'" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            <svg
+              v-else-if="toast.type === 'error'"
+              class="w-5 h-5"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M6 18L18 6M6 6l12 12"
+              />
             </svg>
             <!-- Warning triangle -->
-            <svg v-else-if="toast.type === 'warning'" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            <svg
+              v-else-if="toast.type === 'warning'"
+              class="w-5 h-5"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+              />
             </svg>
             <!-- Info circle -->
             <svg v-else class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+              />
             </svg>
           </div>
 
@@ -210,7 +249,12 @@ Create `components/ui/ToastContainer.vue`:
             @click="dismiss(toast.id)"
           >
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M6 18L18 6M6 6l12 12"
+              />
             </svg>
           </button>
         </div>
@@ -262,8 +306,8 @@ In `layouts/admin.vue`, add `<UiToastContainer />` just before the closing `</di
 Change in `layouts/admin.vue` — add after the `</Transition>` block (line 28):
 
 ```vue
-    <!-- Toast Notifications -->
-    <UiToastContainer />
+<!-- Toast Notifications -->
+<UiToastContainer />
 ```
 
 - [ ] **Step 7: Commit**
@@ -281,6 +325,7 @@ UiToastContainer component. Mounted in admin layout for all admin pages."
 ### Task 2: Unsaved Changes Composable
 
 **Files:**
+
 - Create: `composables/useUnsavedChanges.ts`
 - Create: `tests/unit/composables/useUnsavedChanges.test.ts`
 
@@ -442,6 +487,7 @@ registers beforeunload and onBeforeRouteLeave guards."
 ### Task 3: Install TipTap and Create Rich Text Component
 
 **Files:**
+
 - Modify: `package.json` (npm install)
 - Create: `components/admin/form/AdminRichText.vue`
 - Modify: `components/admin/form/AdminTranslationTabs.vue`
@@ -494,7 +540,10 @@ Create `components/admin/form/AdminRichText.vue`:
         </button>
 
         <!-- Link popover -->
-        <div v-if="showLinkInput" class="flex items-center gap-2 ml-2 pl-2 border-l border-gray-300 dark:border-gray-500">
+        <div
+          v-if="showLinkInput"
+          class="flex items-center gap-2 ml-2 pl-2 border-l border-gray-300 dark:border-gray-500"
+        >
           <input
             ref="linkInputRef"
             v-model="linkUrl"
@@ -504,11 +553,7 @@ Create `components/admin/form/AdminRichText.vue`:
             @keydown.enter="applyLink"
             @keydown.escape="showLinkInput = false"
           />
-          <button
-            type="button"
-            class="text-sm text-primary hover:underline"
-            @click="applyLink"
-          >
+          <button type="button" class="text-sm text-primary hover:underline" @click="applyLink">
             Apply
           </button>
           <button
@@ -704,17 +749,17 @@ Create `components/admin/form/AdminRichText.vue`:
 In `components/admin/form/AdminTranslationTabs.vue`, replace the richtext placeholder (lines 53-64) that currently renders `AdminFormAdminTextarea` with:
 
 ```vue
-            <!-- Rich Text -->
-            <AdminFormAdminRichText
-              v-else-if="field.type === 'richtext'"
-              :id="`${field.key}-${locale.code}`"
-              :model-value="getFieldValue(locale.code, field.key)"
-              :label="field.label"
-              :placeholder="field.placeholder"
-              :required="field.required && locale.required"
-              :error="getFieldError(locale.code, field.key)"
-              @update:model-value="setFieldValue(locale.code, field.key, String($event))"
-            />
+<!-- Rich Text -->
+<AdminFormAdminRichText
+  v-else-if="field.type === 'richtext'"
+  :id="`${field.key}-${locale.code}`"
+  :model-value="getFieldValue(locale.code, field.key)"
+  :label="field.label"
+  :placeholder="field.placeholder"
+  :required="field.required && locale.required"
+  :error="getFieldError(locale.code, field.key)"
+  @update:model-value="setFieldValue(locale.code, field.key, String($event))"
+/>
 ```
 
 - [ ] **Step 4: Verify build compiles**
@@ -740,6 +785,7 @@ Integrated into AdminTranslationTabs for richtext field type."
 ### Task 4: History API Endpoint
 
 **Files:**
+
 - Create: `server/api/admin/reports/[id]/history.get.ts`
 
 - [ ] **Step 1: Create the history endpoint**
@@ -776,12 +822,7 @@ export default defineEventHandler(async (event) => {
     })
     .from(schema.auditLogs)
     .leftJoin(schema.users, eq(schema.auditLogs.userId, schema.users.id))
-    .where(
-      and(
-        eq(schema.auditLogs.entityType, 'audit_report'),
-        eq(schema.auditLogs.entityId, id)
-      )
-    )
+    .where(and(eq(schema.auditLogs.entityType, 'audit_report'), eq(schema.auditLogs.entityId, id)))
     .orderBy(desc(schema.auditLogs.createdAt))
     .limit(20)
 
@@ -820,6 +861,7 @@ joined with user names, ordered newest first, limited to 20."
 ### Task 5: Edit Page Overhaul — Skeleton Loading
 
 **Files:**
+
 - Modify: `pages/admin/reports/[id]/edit.vue`
 
 - [ ] **Step 1: Replace the spinner with a skeleton loader**
@@ -827,58 +869,58 @@ joined with user names, ordered newest first, limited to 20."
 In `pages/admin/reports/[id]/edit.vue`, replace the loading block (lines 3-6):
 
 ```html
-    <!-- Loading -->
-    <div v-if="loading" class="flex items-center justify-center py-12">
-      <div class="animate-spin w-8 h-8 border-2 border-primary border-t-transparent rounded-full" />
-    </div>
+<!-- Loading -->
+<div v-if="loading" class="flex items-center justify-center py-12">
+  <div class="animate-spin w-8 h-8 border-2 border-primary border-t-transparent rounded-full" />
+</div>
 ```
 
 With this skeleton:
 
 ```html
-    <!-- Loading Skeleton -->
-    <div v-if="loading" class="space-y-6">
-      <div class="flex items-center gap-4 mb-6">
-        <div class="w-9 h-9 rounded-lg bg-gray-200 dark:bg-gray-700 animate-pulse" />
-        <div class="space-y-2">
-          <div class="h-7 w-40 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
-          <div class="h-4 w-64 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
+<!-- Loading Skeleton -->
+<div v-if="loading" class="space-y-6">
+  <div class="flex items-center gap-4 mb-6">
+    <div class="w-9 h-9 rounded-lg bg-gray-200 dark:bg-gray-700 animate-pulse" />
+    <div class="space-y-2">
+      <div class="h-7 w-40 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
+      <div class="h-4 w-64 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
+    </div>
+  </div>
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <div class="lg:col-span-2 space-y-6">
+      <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+        <div class="h-5 w-24 bg-gray-200 dark:bg-gray-700 rounded animate-pulse mb-4" />
+        <div class="space-y-3">
+          <div class="h-10 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
+          <div class="h-32 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
         </div>
       </div>
-      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div class="lg:col-span-2 space-y-6">
-          <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-            <div class="h-5 w-24 bg-gray-200 dark:bg-gray-700 rounded animate-pulse mb-4" />
-            <div class="space-y-3">
-              <div class="h-10 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
-              <div class="h-32 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
-            </div>
-          </div>
-          <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-            <div class="h-5 w-28 bg-gray-200 dark:bg-gray-700 rounded animate-pulse mb-4" />
-            <div class="h-32 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
-          </div>
-        </div>
-        <div class="space-y-6">
-          <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-            <div class="h-5 w-20 bg-gray-200 dark:bg-gray-700 rounded animate-pulse mb-4" />
-            <div class="space-y-3">
-              <div class="h-10 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
-              <div class="h-10 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
-              <div class="h-8 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
-            </div>
-          </div>
-          <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-            <div class="h-5 w-24 bg-gray-200 dark:bg-gray-700 rounded animate-pulse mb-4" />
-            <div class="h-32 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
-          </div>
-          <div class="bg-gray-50 dark:bg-gray-800/50 rounded-lg p-4">
-            <div class="h-4 w-40 bg-gray-200 dark:bg-gray-700 rounded animate-pulse mb-2" />
-            <div class="h-4 w-36 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
-          </div>
-        </div>
+      <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+        <div class="h-5 w-28 bg-gray-200 dark:bg-gray-700 rounded animate-pulse mb-4" />
+        <div class="h-32 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
       </div>
     </div>
+    <div class="space-y-6">
+      <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+        <div class="h-5 w-20 bg-gray-200 dark:bg-gray-700 rounded animate-pulse mb-4" />
+        <div class="space-y-3">
+          <div class="h-10 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
+          <div class="h-10 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
+          <div class="h-8 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
+        </div>
+      </div>
+      <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+        <div class="h-5 w-24 bg-gray-200 dark:bg-gray-700 rounded animate-pulse mb-4" />
+        <div class="h-32 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
+      </div>
+      <div class="bg-gray-50 dark:bg-gray-800/50 rounded-lg p-4">
+        <div class="h-4 w-40 bg-gray-200 dark:bg-gray-700 rounded animate-pulse mb-2" />
+        <div class="h-4 w-36 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
+      </div>
+    </div>
+  </div>
+</div>
 ```
 
 - [ ] **Step 2: Verify page loads correctly**
@@ -902,6 +944,7 @@ for translations, file upload, settings, thumbnail, and meta."
 ### Task 6: Edit Page Overhaul — Sidebar Reorganization + Status Badge
 
 **Files:**
+
 - Modify: `pages/admin/reports/[id]/edit.vue`
 
 - [ ] **Step 1: Reorganize the sidebar**
@@ -915,111 +958,134 @@ Replace the entire sidebar `<div class="space-y-6">` block (lines 80-187 of the 
 5. **Meta** (timestamps)
 
 ```html
-          <!-- Sidebar -->
-          <div class="space-y-6">
-            <!-- Status -->
-            <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-              <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Status</h2>
-              <div class="space-y-4">
-                <div class="flex items-center gap-2">
-                  <span
-                    :class="[
+<!-- Sidebar -->
+<div class="space-y-6">
+  <!-- Status -->
+  <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+    <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Status</h2>
+    <div class="space-y-4">
+      <div class="flex items-center gap-2">
+        <span
+          :class="[
                       'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium',
                       form.isPublished
                         ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300'
                         : 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300'
                     ]"
-                  >
-                    {{ form.isPublished ? 'Published' : 'Draft' }}
-                  </span>
-                </div>
+        >
+          {{ form.isPublished ? 'Published' : 'Draft' }}
+        </span>
+      </div>
 
-                <AdminFormAdminSwitch
-                  v-model="form.isPublished"
-                  label="Published"
-                  description="Make this report visible to the public"
-                />
+      <AdminFormAdminSwitch
+        v-model="form.isPublished"
+        label="Published"
+        description="Make this report visible to the public"
+      />
 
-                <AdminFormAdminDatePicker
-                  v-if="form.isPublished"
-                  v-model="form.publishedAt"
-                  label="Publish Date"
-                  type="datetime-local"
-                />
-              </div>
-            </div>
+      <AdminFormAdminDatePicker
+        v-if="form.isPublished"
+        v-model="form.publishedAt"
+        label="Publish Date"
+        type="datetime-local"
+      />
+    </div>
+  </div>
 
-            <!-- URL -->
-            <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-              <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">URL</h2>
-              <div>
-                <AdminFormAdminInput
-                  v-model="form.slug"
-                  label="Slug"
-                  required
-                  help-text="URL-friendly identifier"
-                  :error="errors.slug || slugError"
-                  @update:model-value="handleSlugChange"
-                >
-                  <template #suffix>
-                    <span v-if="isCheckingSlug" class="text-gray-400">
-                      <svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
-                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
-                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                      </svg>
-                    </span>
-                    <span v-else-if="isSlugAvailable === true" class="text-green-500">
-                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-                      </svg>
-                    </span>
-                    <span v-else-if="isSlugAvailable === false" class="text-red-500">
-                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                      </svg>
-                    </span>
-                  </template>
-                </AdminFormAdminInput>
-                <p v-if="slugSuggestion" class="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                  Suggestion:
-                  <button type="button" class="text-primary hover:underline" @click="useSlugSuggestion">
-                    {{ slugSuggestion }}
-                  </button>
-                </p>
-              </div>
-            </div>
-
-            <!-- Classification -->
-            <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-              <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Classification</h2>
-              <AdminFormAdminSelect
-                v-model="form.category"
-                :options="categories"
-                label="Category"
-                required
-                :error="errors.category"
+  <!-- URL -->
+  <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+    <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">URL</h2>
+    <div>
+      <AdminFormAdminInput
+        v-model="form.slug"
+        label="Slug"
+        required
+        help-text="URL-friendly identifier"
+        :error="errors.slug || slugError"
+        @update:model-value="handleSlugChange"
+      >
+        <template #suffix>
+          <span v-if="isCheckingSlug" class="text-gray-400">
+            <svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+              <circle
+                class="opacity-25"
+                cx="12"
+                cy="12"
+                r="10"
+                stroke="currentColor"
+                stroke-width="4"
               />
-            </div>
-
-            <!-- Thumbnail -->
-            <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-              <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Thumbnail</h2>
-              <AdminFormAdminFileUpload
-                v-model="form.thumbnail"
-                type="thumbnail"
-                label="Cover Image"
-                help-text="Optional cover image for the report"
+              <path
+                class="opacity-75"
+                fill="currentColor"
+                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
               />
-            </div>
+            </svg>
+          </span>
+          <span v-else-if="isSlugAvailable === true" class="text-green-500">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M5 13l4 4L19 7"
+              />
+            </svg>
+          </span>
+          <span v-else-if="isSlugAvailable === false" class="text-red-500">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M6 18L18 6M6 6l12 12"
+              />
+            </svg>
+          </span>
+        </template>
+      </AdminFormAdminInput>
+      <p v-if="slugSuggestion" class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+        Suggestion:
+        <button type="button" class="text-primary hover:underline" @click="useSlugSuggestion">
+          {{ slugSuggestion }}
+        </button>
+      </p>
+    </div>
+  </div>
 
-            <!-- History section will be added in Task 7 -->
+  <!-- Classification -->
+  <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+    <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Classification</h2>
+    <AdminFormAdminSelect
+      v-model="form.category"
+      :options="categories"
+      label="Category"
+      required
+      :error="errors.category"
+    />
+  </div>
 
-            <!-- Meta Info -->
-            <div class="bg-gray-50 dark:bg-gray-800/50 rounded-lg p-4 text-sm text-gray-500 dark:text-gray-400 space-y-1">
-              <p>Created: {{ formatDate(currentItem.createdAt) }}</p>
-              <p>Updated: {{ formatDate(currentItem.updatedAt) }}</p>
-            </div>
-          </div>
+  <!-- Thumbnail -->
+  <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+    <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Thumbnail</h2>
+    <AdminFormAdminFileUpload
+      v-model="form.thumbnail"
+      type="thumbnail"
+      label="Cover Image"
+      help-text="Optional cover image for the report"
+    />
+  </div>
+
+  <!-- History section will be added in Task 7 -->
+
+  <!-- Meta Info -->
+  <div
+    class="bg-gray-50 dark:bg-gray-800/50 rounded-lg p-4 text-sm text-gray-500 dark:text-gray-400 space-y-1"
+  >
+    <p>Created: {{ formatDate(currentItem.createdAt) }}</p>
+    <p>Updated: {{ formatDate(currentItem.updatedAt) }}</p>
+  </div>
+</div>
 ```
 
 - [ ] **Step 2: Verify no typecheck errors**
@@ -1043,6 +1109,7 @@ Add prominent Published/Draft status badge pill."
 ### Task 7: Edit Page Overhaul — PDF Preview + History Timeline + Rich Text
 
 **Files:**
+
 - Modify: `pages/admin/reports/[id]/edit.vue`
 
 - [ ] **Step 1: Add PDF preview section**
@@ -1050,38 +1117,45 @@ Add prominent Published/Draft status badge pill."
 In the main content column (after the file upload card), add:
 
 ```html
-            <!-- PDF Preview -->
-            <div v-if="form.fileUrl" class="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
-              <button
-                type="button"
-                class="w-full flex items-center justify-between px-6 py-4 text-left"
-                @click="previewExpanded = !previewExpanded"
-              >
-                <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Preview</h2>
-                <svg
-                  :class="['w-5 h-5 text-gray-400 transition-transform', previewExpanded ? 'rotate-180' : '']"
-                  fill="none" stroke="currentColor" viewBox="0 0 24 24"
-                >
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-                </svg>
-              </button>
-              <div v-if="previewExpanded" class="border-t border-gray-200 dark:border-gray-700">
-                <iframe :src="form.fileUrl" class="w-full h-[500px]" title="PDF Preview" />
-                <div class="px-6 py-3 bg-gray-50 dark:bg-gray-700/50 text-sm">
-                  <a
-                    :href="form.fileUrl"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    class="text-primary hover:underline inline-flex items-center gap-1"
-                  >
-                    Open in new tab
-                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                    </svg>
-                  </a>
-                </div>
-              </div>
-            </div>
+<!-- PDF Preview -->
+<div v-if="form.fileUrl" class="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
+  <button
+    type="button"
+    class="w-full flex items-center justify-between px-6 py-4 text-left"
+    @click="previewExpanded = !previewExpanded"
+  >
+    <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Preview</h2>
+    <svg
+      :class="['w-5 h-5 text-gray-400 transition-transform', previewExpanded ? 'rotate-180' : '']"
+      fill="none"
+      stroke="currentColor"
+      viewBox="0 0 24 24"
+    >
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+    </svg>
+  </button>
+  <div v-if="previewExpanded" class="border-t border-gray-200 dark:border-gray-700">
+    <iframe :src="form.fileUrl" class="w-full h-[500px]" title="PDF Preview" />
+    <div class="px-6 py-3 bg-gray-50 dark:bg-gray-700/50 text-sm">
+      <a
+        :href="form.fileUrl"
+        target="_blank"
+        rel="noopener noreferrer"
+        class="text-primary hover:underline inline-flex items-center gap-1"
+      >
+        Open in new tab
+        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
+          />
+        </svg>
+      </a>
+    </div>
+  </div>
+</div>
 ```
 
 - [ ] **Step 2: Add history timeline section to sidebar**
@@ -1089,72 +1163,86 @@ In the main content column (after the file upload card), add:
 Insert this between the Thumbnail card and the Meta Info card in the sidebar:
 
 ```html
-            <!-- History -->
-            <div class="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
-              <button
-                type="button"
-                class="w-full flex items-center justify-between px-6 py-4 text-left"
-                @click="historyExpanded = !historyExpanded"
-              >
-                <h2 class="text-lg font-semibold text-gray-900 dark:text-white">History</h2>
-                <svg
-                  :class="['w-5 h-5 text-gray-400 transition-transform', historyExpanded ? 'rotate-180' : '']"
-                  fill="none" stroke="currentColor" viewBox="0 0 24 24"
-                >
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-                </svg>
-              </button>
-              <div v-if="historyExpanded" class="border-t border-gray-200 dark:border-gray-700 px-6 py-4">
-                <div v-if="historyLoading" class="flex justify-center py-4">
-                  <div class="animate-spin w-5 h-5 border-2 border-primary border-t-transparent rounded-full" />
-                </div>
-                <div v-else-if="historyEntries.length === 0" class="text-sm text-gray-500 dark:text-gray-400 py-2">
-                  No history available
-                </div>
-                <div v-else class="relative">
-                  <div class="absolute left-3 top-2 bottom-2 w-px bg-gray-200 dark:bg-gray-600" />
-                  <div v-for="entry in historyEntries.slice(0, 10)" :key="entry.id" class="relative pl-8 pb-4 last:pb-0">
-                    <div class="absolute left-1.5 top-1.5 w-3 h-3 rounded-full border-2 border-white dark:border-gray-800"
-                      :class="{
+<!-- History -->
+<div class="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
+  <button
+    type="button"
+    class="w-full flex items-center justify-between px-6 py-4 text-left"
+    @click="historyExpanded = !historyExpanded"
+  >
+    <h2 class="text-lg font-semibold text-gray-900 dark:text-white">History</h2>
+    <svg
+      :class="['w-5 h-5 text-gray-400 transition-transform', historyExpanded ? 'rotate-180' : '']"
+      fill="none"
+      stroke="currentColor"
+      viewBox="0 0 24 24"
+    >
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+    </svg>
+  </button>
+  <div v-if="historyExpanded" class="border-t border-gray-200 dark:border-gray-700 px-6 py-4">
+    <div v-if="historyLoading" class="flex justify-center py-4">
+      <div class="animate-spin w-5 h-5 border-2 border-primary border-t-transparent rounded-full" />
+    </div>
+    <div
+      v-else-if="historyEntries.length === 0"
+      class="text-sm text-gray-500 dark:text-gray-400 py-2"
+    >
+      No history available
+    </div>
+    <div v-else class="relative">
+      <div class="absolute left-3 top-2 bottom-2 w-px bg-gray-200 dark:bg-gray-600" />
+      <div
+        v-for="entry in historyEntries.slice(0, 10)"
+        :key="entry.id"
+        class="relative pl-8 pb-4 last:pb-0"
+      >
+        <div
+          class="absolute left-1.5 top-1.5 w-3 h-3 rounded-full border-2 border-white dark:border-gray-800"
+          :class="{
                         'bg-green-500': entry.action === 'create',
                         'bg-blue-500': entry.action === 'update',
                         'bg-red-500': entry.action === 'delete'
                       }"
-                    />
-                    <div class="text-sm">
-                      <span class="font-medium text-gray-900 dark:text-white">{{ entry.userName }}</span>
-                      <span class="text-gray-500 dark:text-gray-400">
-                        {{ entry.action === 'create' ? ' created' : entry.action === 'update' ? ' updated' : ' deleted' }} this report
-                      </span>
-                      <p class="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
-                        {{ formatRelativeTime(entry.createdAt) }}
-                      </p>
-                      <div v-if="entry.action === 'update' && entry.changes">
-                        <button
-                          type="button"
-                          class="text-xs text-primary hover:underline mt-1"
-                          @click="entry._expanded = !entry._expanded"
-                        >
-                          {{ entry._expanded ? 'Hide changes' : 'View changes' }}
-                        </button>
-                        <div v-if="entry._expanded" class="mt-2 text-xs space-y-1 bg-gray-50 dark:bg-gray-700/50 rounded p-2">
-                          <div
-                            v-for="(change, field) in getChangedFields(entry.changes)"
-                            :key="field"
-                            class="text-gray-600 dark:text-gray-400"
-                          >
-                            <span class="font-medium">{{ humanizeField(String(field)) }}:</span>
-                            <span class="text-red-500 line-through">{{ truncate(String(change.before)) }}</span>
-                            <span class="mx-1">&rarr;</span>
-                            <span class="text-green-600">{{ truncate(String(change.after)) }}</span>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
+        />
+        <div class="text-sm">
+          <span class="font-medium text-gray-900 dark:text-white">{{ entry.userName }}</span>
+          <span class="text-gray-500 dark:text-gray-400">
+            {{ entry.action === 'create' ? ' created' : entry.action === 'update' ? ' updated' : '
+            deleted' }} this report
+          </span>
+          <p class="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
+            {{ formatRelativeTime(entry.createdAt) }}
+          </p>
+          <div v-if="entry.action === 'update' && entry.changes">
+            <button
+              type="button"
+              class="text-xs text-primary hover:underline mt-1"
+              @click="entry._expanded = !entry._expanded"
+            >
+              {{ entry._expanded ? 'Hide changes' : 'View changes' }}
+            </button>
+            <div
+              v-if="entry._expanded"
+              class="mt-2 text-xs space-y-1 bg-gray-50 dark:bg-gray-700/50 rounded p-2"
+            >
+              <div
+                v-for="(change, field) in getChangedFields(entry.changes)"
+                :key="field"
+                class="text-gray-600 dark:text-gray-400"
+              >
+                <span class="font-medium">{{ humanizeField(String(field)) }}:</span>
+                <span class="text-red-500 line-through">{{ truncate(String(change.before)) }}</span>
+                <span class="mx-1">&rarr;</span>
+                <span class="text-green-600">{{ truncate(String(change.after)) }}</span>
               </div>
             </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
 ```
 
 - [ ] **Step 3: Change summary field type to richtext**
@@ -1162,21 +1250,21 @@ Insert this between the Thumbnail card and the Meta Info card in the sidebar:
 In the `translationFields` array in the `<script setup>`, change the summary field's type:
 
 ```typescript
-  const translationFields = [
-    {
-      key: 'title',
-      label: 'Title',
-      type: 'input' as const,
-      required: true,
-      placeholder: 'Enter report title'
-    },
-    {
-      key: 'summary',
-      label: 'Summary',
-      type: 'richtext' as const,
-      placeholder: 'Brief description of the report'
-    }
-  ]
+const translationFields = [
+  {
+    key: 'title',
+    label: 'Title',
+    type: 'input' as const,
+    required: true,
+    placeholder: 'Enter report title'
+  },
+  {
+    key: 'summary',
+    label: 'Summary',
+    type: 'richtext' as const,
+    placeholder: 'Brief description of the report'
+  }
+]
 ```
 
 - [ ] **Step 4: Add new reactive state and helper functions to the script section**
@@ -1184,109 +1272,121 @@ In the `translationFields` array in the `<script setup>`, change the summary fie
 Add these to the `<script setup>` block:
 
 ```typescript
-  // PDF preview state
-  const previewExpanded = ref(false)
+// PDF preview state
+const previewExpanded = ref(false)
 
-  // History state
-  const historyExpanded = ref(false)
-  const historyLoading = ref(false)
-  const historyEntries = ref<Array<{
+// History state
+const historyExpanded = ref(false)
+const historyLoading = ref(false)
+const historyEntries = ref<
+  Array<{
     id: number
     action: string
     userName: string
     changes: Record<string, unknown> | null
     createdAt: string
     _expanded?: boolean
-  }>>([])
+  }>
+>([])
 
-  // Fetch history
-  async function fetchHistory() {
-    historyLoading.value = true
-    try {
-      const response = await $fetch<{ data: typeof historyEntries.value }>(`/api/admin/reports/${id}/history`)
-      historyEntries.value = response.data.map((e) => ({ ...e, _expanded: false }))
-    } catch {
-      historyEntries.value = []
-    } finally {
-      historyLoading.value = false
+// Fetch history
+async function fetchHistory() {
+  historyLoading.value = true
+  try {
+    const response = await $fetch<{ data: typeof historyEntries.value }>(
+      `/api/admin/reports/${id}/history`
+    )
+    historyEntries.value = response.data.map((e) => ({ ...e, _expanded: false }))
+  } catch {
+    historyEntries.value = []
+  } finally {
+    historyLoading.value = false
+  }
+}
+
+// Format relative time
+function formatRelativeTime(dateStr: string): string {
+  const date = new Date(dateStr)
+  const now = new Date()
+  const diffMs = now.getTime() - date.getTime()
+  const diffMins = Math.floor(diffMs / 60000)
+  const diffHours = Math.floor(diffMs / 3600000)
+  const diffDays = Math.floor(diffMs / 86400000)
+
+  if (diffMins < 1) return 'just now'
+  if (diffMins < 60) return `${diffMins} minute${diffMins === 1 ? '' : 's'} ago`
+  if (diffHours < 24) return `${diffHours} hour${diffHours === 1 ? '' : 's'} ago`
+  if (diffDays < 30) return `${diffDays} day${diffDays === 1 ? '' : 's'} ago`
+  return date.toLocaleDateString()
+}
+
+// Get changed fields from audit log changes JSON
+function getChangedFields(
+  changes: Record<string, unknown> | null
+): Record<string, { before: unknown; after: unknown }> {
+  if (!changes) return {}
+  const before = (changes.before || {}) as Record<string, unknown>
+  const after = (changes.after || {}) as Record<string, unknown>
+  const result: Record<string, { before: unknown; after: unknown }> = {}
+
+  for (const key of new Set([...Object.keys(before), ...Object.keys(after)])) {
+    if (JSON.stringify(before[key]) !== JSON.stringify(after[key])) {
+      result[key] = { before: before[key], after: after[key] }
     }
   }
+  return result
+}
 
-  // Format relative time
-  function formatRelativeTime(dateStr: string): string {
-    const date = new Date(dateStr)
-    const now = new Date()
-    const diffMs = now.getTime() - date.getTime()
-    const diffMins = Math.floor(diffMs / 60000)
-    const diffHours = Math.floor(diffMs / 3600000)
-    const diffDays = Math.floor(diffMs / 86400000)
-
-    if (diffMins < 1) return 'just now'
-    if (diffMins < 60) return `${diffMins} minute${diffMins === 1 ? '' : 's'} ago`
-    if (diffHours < 24) return `${diffHours} hour${diffHours === 1 ? '' : 's'} ago`
-    if (diffDays < 30) return `${diffDays} day${diffDays === 1 ? '' : 's'} ago`
-    return date.toLocaleDateString()
+// Humanize field names
+function humanizeField(field: string): string {
+  const map: Record<string, string> = {
+    slug: 'Slug',
+    category: 'Category',
+    isPublished: 'Published',
+    is_published: 'Published',
+    publishedAt: 'Publish Date',
+    published_at: 'Publish Date',
+    fileUrl: 'File',
+    file_url: 'File',
+    fileSize: 'File Size',
+    file_size: 'File Size',
+    thumbnail: 'Thumbnail',
+    translations: 'Content'
   }
+  return (
+    map[field] ||
+    field
+      .replace(/([A-Z])/g, ' $1')
+      .replace(/_/g, ' ')
+      .replace(/^\w/, (c) => c.toUpperCase())
+  )
+}
 
-  // Get changed fields from audit log changes JSON
-  function getChangedFields(changes: Record<string, unknown> | null): Record<string, { before: unknown; after: unknown }> {
-    if (!changes) return {}
-    const before = (changes.before || {}) as Record<string, unknown>
-    const after = (changes.after || {}) as Record<string, unknown>
-    const result: Record<string, { before: unknown; after: unknown }> = {}
-
-    for (const key of new Set([...Object.keys(before), ...Object.keys(after)])) {
-      if (JSON.stringify(before[key]) !== JSON.stringify(after[key])) {
-        result[key] = { before: before[key], after: after[key] }
-      }
-    }
-    return result
-  }
-
-  // Humanize field names
-  function humanizeField(field: string): string {
-    const map: Record<string, string> = {
-      slug: 'Slug',
-      category: 'Category',
-      isPublished: 'Published',
-      is_published: 'Published',
-      publishedAt: 'Publish Date',
-      published_at: 'Publish Date',
-      fileUrl: 'File',
-      file_url: 'File',
-      fileSize: 'File Size',
-      file_size: 'File Size',
-      thumbnail: 'Thumbnail',
-      translations: 'Content'
-    }
-    return map[field] || field.replace(/([A-Z])/g, ' $1').replace(/_/g, ' ').replace(/^\w/, (c) => c.toUpperCase())
-  }
-
-  // Truncate long values for display
-  function truncate(value: string, maxLength = 50): string {
-    if (typeof value === 'object') return JSON.stringify(value).slice(0, maxLength)
-    const str = String(value)
-    return str.length > maxLength ? str.slice(0, maxLength) + '...' : str
-  }
+// Truncate long values for display
+function truncate(value: string, maxLength = 50): string {
+  if (typeof value === 'object') return JSON.stringify(value).slice(0, maxLength)
+  const str = String(value)
+  return str.length > maxLength ? str.slice(0, maxLength) + '...' : str
+}
 ```
 
 Update the `onMounted` to also fetch history:
 
 ```typescript
-  onMounted(async () => {
-    const report = await fetchOne(id)
-    if (report) {
-      form.slug = report.slug
-      form.category = report.category
-      form.fileUrl = report.fileUrl
-      form.fileSize = report.fileSize || undefined
-      form.thumbnail = report.thumbnail || ''
-      form.isPublished = report.isPublished
-      form.publishedAt = report.publishedAt || ''
-      form.translations = report.translations || { en: { title: '', summary: '' } }
-    }
-    fetchHistory()
-  })
+onMounted(async () => {
+  const report = await fetchOne(id)
+  if (report) {
+    form.slug = report.slug
+    form.category = report.category
+    form.fileUrl = report.fileUrl
+    form.fileSize = report.fileSize || undefined
+    form.thumbnail = report.thumbnail || ''
+    form.isPublished = report.isPublished
+    form.publishedAt = report.publishedAt || ''
+    form.translations = report.translations || { en: { title: '', summary: '' } }
+  }
+  fetchHistory()
+})
 ```
 
 - [ ] **Step 5: Verify build**
@@ -1310,6 +1410,7 @@ and TipTap rich text for the summary field."
 ### Task 8: Edit Page Overhaul — Sticky Save Bar + Unsaved Changes + Post-Save Behavior
 
 **Files:**
+
 - Modify: `pages/admin/reports/[id]/edit.vue`
 
 - [ ] **Step 1: Wire up useUnsavedChanges and useToast**
@@ -1317,37 +1418,37 @@ and TipTap rich text for the summary field."
 Add to the imports/composable calls in the `<script setup>`:
 
 ```typescript
-  const toast = useToast()
-  const { hasChanges, markSaved, markClean } = useUnsavedChanges(() => ({
-    slug: form.slug,
-    category: form.category,
-    fileUrl: form.fileUrl,
-    fileSize: form.fileSize,
-    thumbnail: form.thumbnail,
-    isPublished: form.isPublished,
-    publishedAt: form.publishedAt,
-    translations: form.translations
-  }))
+const toast = useToast()
+const { hasChanges, markSaved, markClean } = useUnsavedChanges(() => ({
+  slug: form.slug,
+  category: form.category,
+  fileUrl: form.fileUrl,
+  fileSize: form.fileSize,
+  thumbnail: form.thumbnail,
+  isPublished: form.isPublished,
+  publishedAt: form.publishedAt,
+  translations: form.translations
+}))
 ```
 
 Update the `onMounted` to call `markSaved()` after form population:
 
 ```typescript
-  onMounted(async () => {
-    const report = await fetchOne(id)
-    if (report) {
-      form.slug = report.slug
-      form.category = report.category
-      form.fileUrl = report.fileUrl
-      form.fileSize = report.fileSize || undefined
-      form.thumbnail = report.thumbnail || ''
-      form.isPublished = report.isPublished
-      form.publishedAt = report.publishedAt || ''
-      form.translations = report.translations || { en: { title: '', summary: '' } }
-      nextTick(() => markSaved())
-    }
-    fetchHistory()
-  })
+onMounted(async () => {
+  const report = await fetchOne(id)
+  if (report) {
+    form.slug = report.slug
+    form.category = report.category
+    form.fileUrl = report.fileUrl
+    form.fileSize = report.fileSize || undefined
+    form.thumbnail = report.thumbnail || ''
+    form.isPublished = report.isPublished
+    form.publishedAt = report.publishedAt || ''
+    form.translations = report.translations || { en: { title: '', summary: '' } }
+    nextTick(() => markSaved())
+  }
+  fetchHistory()
+})
 ```
 
 - [ ] **Step 2: Update handleSubmit to stay on page with toast**
@@ -1355,45 +1456,44 @@ Update the `onMounted` to call `markSaved()` after form population:
 Replace the `handleSubmit` function:
 
 ```typescript
-  async function handleSubmit() {
-    if (!validate(form, validationRules)) return
+async function handleSubmit() {
+  if (!validate(form, validationRules)) return
 
-    const data: ReportInput = {
-      ...form,
-      publishedAt:
-        form.isPublished && form.publishedAt ? form.publishedAt : new Date().toISOString()
-    }
-
-    const result = await update(id, data)
-    if (result) {
-      toast.success('Report updated successfully')
-      markSaved()
-      await fetchOne(id)
-      if (currentItem.value) {
-        form.publishedAt = currentItem.value.publishedAt || ''
-      }
-      nextTick(() => markSaved())
-      fetchHistory()
-    } else if (fieldErrors.value) {
-      setErrors(fieldErrors.value)
-      toast.error(error.value || 'Failed to save report')
-    }
+  const data: ReportInput = {
+    ...form,
+    publishedAt: form.isPublished && form.publishedAt ? form.publishedAt : new Date().toISOString()
   }
 
-  // Discard changes
-  function handleDiscard() {
+  const result = await update(id, data)
+  if (result) {
+    toast.success('Report updated successfully')
+    markSaved()
+    await fetchOne(id)
     if (currentItem.value) {
-      form.slug = currentItem.value.slug
-      form.category = currentItem.value.category
-      form.fileUrl = currentItem.value.fileUrl
-      form.fileSize = currentItem.value.fileSize || undefined
-      form.thumbnail = currentItem.value.thumbnail || ''
-      form.isPublished = currentItem.value.isPublished
       form.publishedAt = currentItem.value.publishedAt || ''
-      form.translations = currentItem.value.translations || { en: { title: '', summary: '' } }
-      nextTick(() => markSaved())
     }
+    nextTick(() => markSaved())
+    fetchHistory()
+  } else if (fieldErrors.value) {
+    setErrors(fieldErrors.value)
+    toast.error(error.value || 'Failed to save report')
   }
+}
+
+// Discard changes
+function handleDiscard() {
+  if (currentItem.value) {
+    form.slug = currentItem.value.slug
+    form.category = currentItem.value.category
+    form.fileUrl = currentItem.value.fileUrl
+    form.fileSize = currentItem.value.fileSize || undefined
+    form.thumbnail = currentItem.value.thumbnail || ''
+    form.isPublished = currentItem.value.isPublished
+    form.publishedAt = currentItem.value.publishedAt || ''
+    form.translations = currentItem.value.translations || { en: { title: '', summary: '' } }
+    nextTick(() => markSaved())
+  }
+}
 ```
 
 - [ ] **Step 3: Replace the bottom action bar with sticky save bar**
@@ -1401,39 +1501,48 @@ Replace the `handleSubmit` function:
 Remove the old bottom actions block and replace with:
 
 ```html
-        <!-- Sticky Save Bar -->
-        <Transition name="slide-up">
-          <div
-            v-if="hasChanges || saving"
-            class="sticky bottom-0 z-10 -mx-4 lg:-mx-6 px-4 lg:px-6 py-4 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)]"
-          >
-            <div class="flex items-center justify-between max-w-full">
-              <div class="flex items-center gap-2 text-sm text-amber-600 dark:text-amber-400">
-                <span class="w-2 h-2 rounded-full bg-amber-500" />
-                Unsaved changes
-              </div>
-              <div class="flex items-center gap-3">
-                <button type="button" class="btn btn-ghost" :disabled="saving" @click="handleDiscard">
-                  Discard
-                </button>
-                <NuxtLink to="/admin/reports" class="btn btn-ghost" :disabled="saving">
-                  Cancel
-                </NuxtLink>
-                <button
-                  type="submit"
-                  class="btn btn-primary inline-flex items-center gap-2"
-                  :disabled="saving"
-                >
-                  <svg v-if="saving" class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
-                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
-                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                  </svg>
-                  {{ saving ? 'Saving...' : 'Save Changes' }}
-                </button>
-              </div>
-            </div>
-          </div>
-        </Transition>
+<!-- Sticky Save Bar -->
+<Transition name="slide-up">
+  <div
+    v-if="hasChanges || saving"
+    class="sticky bottom-0 z-10 -mx-4 lg:-mx-6 px-4 lg:px-6 py-4 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)]"
+  >
+    <div class="flex items-center justify-between max-w-full">
+      <div class="flex items-center gap-2 text-sm text-amber-600 dark:text-amber-400">
+        <span class="w-2 h-2 rounded-full bg-amber-500" />
+        Unsaved changes
+      </div>
+      <div class="flex items-center gap-3">
+        <button type="button" class="btn btn-ghost" :disabled="saving" @click="handleDiscard">
+          Discard
+        </button>
+        <NuxtLink to="/admin/reports" class="btn btn-ghost" :disabled="saving"> Cancel </NuxtLink>
+        <button
+          type="submit"
+          class="btn btn-primary inline-flex items-center gap-2"
+          :disabled="saving"
+        >
+          <svg v-if="saving" class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+            <circle
+              class="opacity-25"
+              cx="12"
+              cy="12"
+              r="10"
+              stroke="currentColor"
+              stroke-width="4"
+            />
+            <path
+              class="opacity-75"
+              fill="currentColor"
+              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+            />
+          </svg>
+          {{ saving ? 'Saving...' : 'Save Changes' }}
+        </button>
+      </div>
+    </div>
+  </div>
+</Transition>
 ```
 
 Add the transition styles to the component (or a `<style>` block):
@@ -1478,6 +1587,7 @@ Post-save stays on page with toast confirmation and re-fetches data."
 ### Task 9: Update Create Page (Rich Text) + Final Verification
 
 **Files:**
+
 - Modify: `pages/admin/reports/create.vue`
 
 - [ ] **Step 1: Update create page summary field to richtext**
@@ -1485,21 +1595,21 @@ Post-save stays on page with toast confirmation and re-fetches data."
 In `pages/admin/reports/create.vue`, change the `translationFields` array — update the summary field type from `'textarea'` to `'richtext'`:
 
 ```typescript
-  const translationFields = [
-    {
-      key: 'title',
-      label: 'Title',
-      type: 'input' as const,
-      required: true,
-      placeholder: 'Enter report title'
-    },
-    {
-      key: 'summary',
-      label: 'Summary',
-      type: 'richtext' as const,
-      placeholder: 'Brief description of the report'
-    }
-  ]
+const translationFields = [
+  {
+    key: 'title',
+    label: 'Title',
+    type: 'input' as const,
+    required: true,
+    placeholder: 'Enter report title'
+  },
+  {
+    key: 'summary',
+    label: 'Summary',
+    type: 'richtext' as const,
+    placeholder: 'Brief description of the report'
+  }
+]
 ```
 
 - [ ] **Step 2: Run full quality gate**
@@ -1513,6 +1623,7 @@ Expected: All pass
 - [ ] **Step 3: Fix any lint/type issues**
 
 If the quality gate reports issues, fix them. Common ones:
+
 - TipTap types may need `@ts-expect-error` for some edge cases
 - Unused imports flagged by ESLint
 - Formatting issues caught by Prettier (run `npm run lint:fix`)

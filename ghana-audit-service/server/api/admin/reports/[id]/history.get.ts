@@ -27,12 +27,7 @@ export default defineEventHandler(async (event) => {
     })
     .from(schema.auditLogs)
     .leftJoin(schema.users, eq(schema.auditLogs.userId, schema.users.id))
-    .where(
-      and(
-        eq(schema.auditLogs.entityType, 'audit_report'),
-        eq(schema.auditLogs.entityId, id)
-      )
-    )
+    .where(and(eq(schema.auditLogs.entityType, 'audit_report'), eq(schema.auditLogs.entityId, id)))
     .orderBy(desc(schema.auditLogs.createdAt))
     .limit(20)
 

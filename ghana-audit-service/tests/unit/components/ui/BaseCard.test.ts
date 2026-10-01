@@ -26,7 +26,9 @@ const BaseCard = {
         lg: 'shadow-lg'
       }
 
-      const hoverEffect = props.hover ? 'transition-all duration-200 hover:shadow-lg hover:-translate-y-1' : ''
+      const hoverEffect = props.hover
+        ? 'transition-all duration-200 hover:shadow-lg hover:-translate-y-1'
+        : ''
 
       return [base, shadows[props.shadow as string], hoverEffect].join(' ')
     })

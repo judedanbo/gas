@@ -396,9 +396,10 @@ A-G report PDF optimization (Ghostscript, qpdf, pdftoppm, Tesseract) runs
 **inside the frontend pod**: its child processes share the container's CPU
 quota and memory limit with the Nitro server. Anything that restarts or kills
 the container also cuts short every in-flight upload pipeline and
-optimization: uploads redo their remaining steps, and explicit optimizations
-have to be run again. The probes are built so that load never causes a
-restart:
+optimization: uploads whose PDF already reached storage redo their remaining
+steps, ones still being stored must be uploaded again, and explicit
+optimizations have to be run again. The probes are built so that load never
+causes a restart:
 
 | Probe     | Path       | Checks                                                       | On failure                                           |
 | --------- | ---------- | ------------------------------------------------------------ | ---------------------------------------------------- |
@@ -463,13 +464,16 @@ never on its own.
 **Autoscaling caveat.** The HPA scales on CPU at 70% of the 250m request, and
 an optimization pins its pod near the 2-CPU limit, so every optimization
 scales the Deployment out to `maxReplicas`. Scaling back in terminates pods.
-On SIGTERM a pod hands its in-flight uploads off to another pod, which redoes
-their remaining steps, and reports its explicit optimizations as interrupted
-for the admin to run again: no file is lost, but minutes of optimization can
-be. Hence the slow scale-down: it makes cutting a pod's work short much
-rarer, but cannot rule it out. Rollouts (`kubectl rollout restart`, deploys)
-also terminate pods, so prefer deploying while no large uploads are being
-processed.
+On SIGTERM a pod gives its in-flight uploads a 20s grace period, then hands
+them off: uploads already in storage resume on another pod, which redoes their
+remaining steps, and ones not yet stored fail at once asking for a re-upload
+(see `terminationGracePeriodSeconds` in `frontend/deployment.yaml`). Its
+explicit optimizations are reported as interrupted for the admin to run
+again. So minutes of optimization can be lost, and an upload still being
+stored has to be sent again. Hence the slow scale-down: it makes cutting a
+pod's work short much rarer, but cannot rule it out. Rollouts
+(`kubectl rollout restart`, deploys) also terminate pods, so prefer deploying
+while no large uploads are being processed.
 
 ```bash
 # Live usage per pod (needs metrics-server) and HPA state

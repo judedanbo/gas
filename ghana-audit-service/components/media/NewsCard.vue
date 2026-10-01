@@ -1,5 +1,7 @@
 <template>
-  <article class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden transition-all hover:border-primary hover:shadow-lg">
+  <article
+    class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden transition-all hover:border-primary hover:shadow-lg"
+  >
     <!-- Thumbnail -->
     <div class="aspect-video bg-gray-100">
       <UiBaseImage
@@ -20,7 +22,9 @@
         <UiBadge v-if="article.category" variant="primary" size="sm">
           {{ article.category }}
         </UiBadge>
-        <time class="text-sm text-gray-500 dark:text-gray-400">{{ formatDate(article.publishedAt) }}</time>
+        <time class="text-sm text-gray-500 dark:text-gray-400">{{
+          formatDate(article.publishedAt)
+        }}</time>
       </div>
 
       <h3 class="text-lg font-semibold leading-snug mb-2">
@@ -42,7 +46,13 @@
         :aria-label="`${$t('common.readMore')}: ${article.title}`"
       >
         {{ $t('common.readMore') }}
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+        <svg
+          class="w-4 h-4"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+          aria-hidden="true"
+        >
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
         </svg>
       </NuxtLink>
@@ -51,17 +61,17 @@
 </template>
 
 <script setup lang="ts">
-import type { NewsArticle } from '~/types'
+  import type { NewsArticle } from '~/types'
 
-interface Props {
-  article: NewsArticle
-}
+  interface Props {
+    article: NewsArticle
+  }
 
-defineProps<Props>()
+  defineProps<Props>()
 
-const { formatDateShort } = useLocaleDate()
+  const { formatDateShort } = useLocaleDate()
 
-function formatDate(dateStr: string): string {
-  return formatDateShort(dateStr)
-}
+  function formatDate(dateStr: string): string {
+    return formatDateShort(dateStr)
+  }
 </script>

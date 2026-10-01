@@ -4,15 +4,28 @@ import { ref } from 'vue'
 vi.stubGlobal('ref', ref)
 
 const mockState = ref(false)
-vi.stubGlobal('useState', vi.fn((_key: string, init: () => boolean) => {
-  mockState.value = init()
-  return mockState
-}))
+vi.stubGlobal(
+  'useState',
+  vi.fn((_key: string, init: () => boolean) => {
+    mockState.value = init()
+    return mockState
+  })
+)
 
 let mountedCb: (() => void) | undefined
 let unmountedCb: (() => void) | undefined
-vi.stubGlobal('onMounted', vi.fn((cb: () => void) => { mountedCb = cb }))
-vi.stubGlobal('onUnmounted', vi.fn((cb: () => void) => { unmountedCb = cb }))
+vi.stubGlobal(
+  'onMounted',
+  vi.fn((cb: () => void) => {
+    mountedCb = cb
+  })
+)
+vi.stubGlobal(
+  'onUnmounted',
+  vi.fn((cb: () => void) => {
+    unmountedCb = cb
+  })
+)
 
 describe('useSearchShortcut', () => {
   beforeEach(() => {

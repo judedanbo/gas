@@ -257,8 +257,7 @@
               </summary>
               <pre
                 class="mt-1 max-h-40 overflow-auto rounded bg-gray-50 p-2 text-[11px] dark:bg-gray-900/50"
-                >{{ JSON.stringify(i.details, null, 2) }}</pre
-              >
+                >{{ JSON.stringify(i.details, null, 2) }}</pre>
             </details>
           </li>
         </ul>
