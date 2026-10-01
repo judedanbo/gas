@@ -427,6 +427,11 @@ export default defineNuxtConfig({
       '/sw.js': { prerender: false },
       '/workbox-*.js': { prerender: false },
 
+      // Kubernetes probes (server/routes/healthz.ts, readyz.ts) must always
+      // reflect live state; a cached answer would mask a wedged pod.
+      '/healthz': { cache: false },
+      '/readyz': { cache: false },
+
       // Public API caching - disabled in dev, SWR in production.
       // /api/reports (list) is wrapped with defineAnalyticsCachedHandler
       // so its cache hits land in request_events.cache_hit; the route-rule
