@@ -6,6 +6,7 @@ import {
   normaliseRoutePattern,
   parseReferrerHost,
   isIpAnonymizedRoute,
+  isKubeletProbe,
   __resetIpSaltForTests
 } from '../../../../server/utils/analytics/fingerprint'
 
@@ -101,6 +102,25 @@ describe('analytics/fingerprint', () => {
       // Real-world example: a custom embedded HTTP client that doesn't begin
       // with Mozilla/5.0 and isn't on the script allowlist.
       expect(classifyUa('AcmeFetcher/1.2 contact@example.com').family).toBe('unknown')
+    })
+  })
+
+  describe('isKubeletProbe', () => {
+    it('matches a kubelet probe that connected directly to the pod', () => {
+      expect(isKubeletProbe('kube-probe/1.31', undefined)).toBe(true)
+      expect(isKubeletProbe('kube-probe/1.31', '')).toBe(true)
+    })
+
+    it('does not match a probe User-Agent that came through the ingress', () => {
+      // ingress-nginx always sets X-Forwarded-For, so this is an outside
+      // client spoofing the UA — it must still be recorded.
+      expect(isKubeletProbe('kube-probe/1.31', '203.0.113.7')).toBe(false)
+    })
+
+    it('does not match ordinary clients', () => {
+      expect(isKubeletProbe('Mozilla/5.0 (X11; Linux x86_64)', undefined)).toBe(false)
+      expect(isKubeletProbe('', undefined)).toBe(false)
+      expect(isKubeletProbe('my-kube-probe/1.0', undefined)).toBe(false)
     })
   })
 

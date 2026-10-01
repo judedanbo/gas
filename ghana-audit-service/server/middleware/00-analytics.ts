@@ -8,7 +8,8 @@ import {
   classifyUa,
   normaliseRoutePattern,
   parseReferrerHost,
-  isIpAnonymizedRoute
+  isIpAnonymizedRoute,
+  isKubeletProbe
 } from '../utils/analytics/fingerprint'
 import { pushAnalyticsEvent } from '../utils/analytics/buffer'
 import { isProbingPath } from '../utils/analytics/probingPaths'
@@ -53,9 +54,11 @@ export default defineEventHandler((event) => {
   if (isStaticAsset(path)) return
   if (BLOCKED_DIRECT_PATHS.test(path)) return
 
+  const ua = getHeader(event, 'user-agent') || ''
+  if (isKubeletProbe(ua, getHeader(event, 'x-forwarded-for'))) return
+
   const start = performance.now()
   const method = (event.method || 'GET').slice(0, 8)
-  const ua = getHeader(event, 'user-agent') || ''
   const ip = getClientIP(event)
   const ipHash = hashIp(ip)
   const uaHash = hashUa(ua)
