@@ -50,7 +50,7 @@
     "db:seed:all": "npm run db:seed && npm run db:seed:departments && npm run db:seed:offices && npm run db:seed:sectors && npm run db:seed:management-team && npm run db:seed:board-members && npm run db:seed:site-stats && npm run db:seed:auditor-general && npm run db:seed:reports && npm run db:seed:publications && npm run db:seed:news && npm run db:seed:events && npm run db:seed:gallery && npm run db:seed:videos",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "prepare": "cd .. && husky ghana-audit-service/.husky"
+    "prepare": "cd .. && husky"
   },
   "dependencies": {
     "@azure/storage-blob": "^12.32.0",

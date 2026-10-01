@@ -93,7 +93,7 @@ A-G report PDF optimization (Ghostscript/Tesseract) runs inside the frontend pod
 - `npm update` within semver range is safe and should be run periodically. Always run the full quality gate (`typecheck`, `lint`, `test:run`) after updates — semver-compatible type changes can still break `vue-tsc`.
 
 ### Pre-commit
-The app uses Husky + lint-staged (`*.{js,ts,vue}` → eslint --fix + prettier; `*.{json,css,md,yml,yaml}` → prettier). Don't bypass hooks unless explicitly asked.
+The app uses Husky + lint-staged (`*.{js,ts,vue}` → eslint --fix + prettier; `*.{json,css,md,yml,yaml}` → prettier). The hook is `.husky/pre-commit` at the repo root, installed by `npm install` / `npm ci` in `ghana-audit-service/` (its `prepare` script runs `cd .. && husky`). Don't bypass hooks unless explicitly asked.
 
 ## Conventions from CONTRIBUTING.md
 
