@@ -152,6 +152,11 @@ jobs:
           # envsubst renders empty -> /api/live-events falls back to the
           # keyless channel /live probe. See k8s/config/secrets.yaml.
           YOUTUBE_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}
+          # MaxMind GeoLite2 account for the geoip-update CronJob (visitor
+          # geolocation). Optional — if unset, the CronJob step below is skipped
+          # with a warning and every visit shows as "Unknown" country.
+          MAXMIND_ACCOUNT_ID: ${{ secrets.MAXMIND_ACCOUNT_ID }}
+          MAXMIND_LICENSE_KEY: ${{ secrets.MAXMIND_LICENSE_KEY }}
         run: |
           envsubst < k8s/config/secrets.yaml | kubectl apply -f -
 
@@ -190,6 +195,13 @@ jobs:
             || kubectl apply -f k8s/storage/prod-pvc.yaml
           kubectl wait --for=jsonpath='{.status.phase}'=Bound \
             pvc/gas-public-files-pvc -n gas --timeout=60s
+          # GeoLite2 databases (written by the geoip-update CronJob, read by
+          # the frontend). Same create-if-absent rule; the frontend mounts it,
+          # so it must be Bound before the frontend is applied.
+          kubectl get pvc gas-geoip-pvc -n gas >/dev/null 2>&1 \
+            || kubectl apply -f k8s/storage/geoip-pvc.yaml
+          kubectl wait --for=jsonpath='{.status.phase}'=Bound \
+            pvc/gas-geoip-pvc -n gas --timeout=180s
 
       - name: Apply frontend
         run: |
@@ -205,6 +217,52 @@ jobs:
 
       - name: Apply backup CronJob
         run: kubectl apply -f k8s/jobs/mysql-backup-cronjob.yaml
+
+      - name: Apply GeoIP update CronJob
+        env:
+          MAXMIND_ACCOUNT_ID: ${{ secrets.MAXMIND_ACCOUNT_ID }}
+          MAXMIND_LICENSE_KEY: ${{ secrets.MAXMIND_LICENSE_KEY }}
+        run: |
+          if [ -z "$MAXMIND_ACCOUNT_ID" ] || [ -z "$MAXMIND_LICENSE_KEY" ]; then
+            echo "::warning title=Visitor geolocation disabled::MAXMIND_ACCOUNT_ID / MAXMIND_LICENSE_KEY are not set, so no GeoLite2 databases are downloaded and every visit shows as Unknown country. See k8s/README.md (Visitor geolocation)."
+            exit 0
+          fi
+          kubectl apply -f k8s/jobs/geoip-update-cronjob.yaml
+          # The schedule only fires twice a week, so a fresh volume would stay
+          # empty for days. Run it now until one run has succeeded.
+          LAST_OK=$(kubectl get cronjob geoip-update -n gas -o jsonpath='{.status.lastSuccessfulTime}')
+          if [ -n "$LAST_OK" ]; then
+            echo "geoip-update last succeeded at $LAST_OK; leaving it to its schedule."
+            exit 0
+          fi
+          JOB=geoip-update-$(echo ${{ github.sha }} | cut -c1-7)
+          kubectl delete job "$JOB" -n gas --ignore-not-found
+          kubectl create job "$JOB" --from=cronjob/geoip-update -n gas
+          # Non-fatal: geolocation is not worth failing a deploy over, but a
+          # failure must be visible rather than silent.
+          if kubectl wait --for=condition=complete "job/$JOB" -n gas --timeout=180s; then
+            kubectl logs "job/$JOB" -n gas --tail=20 || true
+          else
+            kubectl logs "job/$JOB" -n gas --tail=50 || true
+            echo "::warning title=GeoLite2 download failed::job/$JOB did not complete; check the MaxMind credentials. The frontend keeps running without geolocation."
+          fi
+
+      - name: Check client IPs reach the app
+        run: |
+          # Visitor geolocation and per-IP rate limiting both need the real
+          # client IP. With the default externalTrafficPolicy (Cluster) the
+          # Azure load balancer replaces it with a node address before
+          # ingress-nginx sees it. The controller is installed outside this
+          # workflow, so warn rather than change it here.
+          POLICY=$(kubectl get svc -n ingress-nginx \
+            -l app.kubernetes.io/component=controller \
+            -o jsonpath='{.items[?(@.spec.type=="LoadBalancer")].spec.externalTrafficPolicy}' \
+            2>/dev/null || true)
+          if [ "$POLICY" = "Local" ]; then
+            echo "ingress-nginx externalTrafficPolicy=Local — client IPs preserved."
+          else
+            echo "::warning title=Client IPs not preserved::ingress-nginx controller Service has externalTrafficPolicy='${POLICY:-unknown}' (want 'Local'), so visitors show as an internal node IP: no country, and rate limits shared per node. See k8s/README.md (Preserving client IPs)."
+          fi
 
       - name: Verify rollout
         run: |

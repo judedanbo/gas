@@ -25,7 +25,23 @@ data:
   # CIDR ranges, comma-separated). In-cluster the peer is the ingress-nginx
   # controller pod, so this must cover the pod network. Default below is the
   # kubenet pod CIDR; for Azure CNI set it to your node/pod subnet instead.
+  #
+  # The ingress-nginx controller Service must also use externalTrafficPolicy:
+  # Local, or the Azure load balancer replaces every visitor IP with a node
+  # address before nginx sees it (see k8s/README.md "Preserving client IPs").
+  # Verify the ingress pods fall inside this range with:
+  #   kubectl get pods -n ingress-nginx -o wide
   TRUSTED_PROXIES: "10.244.0.0/16"
+  # MaxMind GeoLite2 databases, downloaded by the geoip-update CronJob onto
+  # gas-geoip-pvc and mounted read-only at /app/data/geoip. Until the first
+  # download lands the app logs once and retries every 15 minutes.
+  ANALYTICS_GEOIP_DB_PATH: "/app/data/geoip/GeoLite2-Country.mmdb"
+  ANALYTICS_ASN_DB_PATH: "/app/data/geoip/GeoLite2-ASN.mmdb"
   NODE_ENV: "production"
   HOST: "0.0.0.0"
   PORT: "3000"
+  # A-G report optimizations (Ghostscript + Tesseract) run inside the frontend
+  # pod; at most this many per pod, the rest queue. One keeps ~2 cores busy
+  # while it OCRs, so raise this only together with the frontend's resources
+  # in frontend/deployment.yaml. (The code default is also 1.)
+  PDF_OPTIMIZATION_MAX_CONCURRENT: "1"

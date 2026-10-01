@@ -6,10 +6,20 @@ import {
   type JobState
 } from './pdfOptimizationJobs'
 
-// Ghostscript + Tesseract are CPU-heavy and run in the web pod, so at most
-// this many optimizations execute concurrently per process. Anything beyond
-// waits in FIFO order with job status 'queued'.
-const MAX_RUNNING = 2
+// Ghostscript + Tesseract are CPU-heavy and run in the web pod, sharing its CPU
+// quota and memory limit with the server, so at most this many optimizations
+// execute concurrently per process. Anything beyond waits in FIFO order with
+// job status 'queued'. One optimization already keeps ~2 cores busy while it
+// OCRs (OCR_CONCURRENCY Tesseract processes); under the pod's CPU limit a
+// second concurrent run finishes nothing sooner and only adds its own child
+// processes to peak memory. Raise PDF_OPTIMIZATION_MAX_CONCURRENT only together
+// with the pod's resources (k8s/frontend/deployment.yaml).
+const DEFAULT_MAX_RUNNING = 1
+
+function maxRunning(): number {
+  const n = Number(process.env.PDF_OPTIMIZATION_MAX_CONCURRENT)
+  return Number.isInteger(n) && n > 0 ? n : DEFAULT_MAX_RUNNING
+}
 
 // Cross-replica per-file index: fileUrl -> jobId of the active optimization.
 // TTL matches the job mirror so a dead pod's claim self-releases.
@@ -143,7 +153,8 @@ function pump(): void {
     queue.splice(queue.indexOf(item), 1)
     start(item)
   }
-  while (running < MAX_RUNNING && queue.length > 0) {
+  const limit = maxRunning()
+  while (running < limit && queue.length > 0) {
     start(queue.shift()!)
   }
 }

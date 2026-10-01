@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import {
   __resetExplicitOptimizationsForTests,
   drainExplicitOptimizations,
@@ -163,6 +163,10 @@ beforeEach(() => {
   vi.mocked(uploadBlobFromFile).mockResolvedValue(undefined)
 })
 
+afterEach(() => {
+  vi.unstubAllEnvs()
+})
+
 describe('startExplicitOptimization', () => {
   it('claims the file and runs the optimizer with an abort signal', async () => {
     const { job, cleanup, fileUrl } = start()
@@ -183,7 +187,8 @@ describe('startExplicitOptimization', () => {
 describe('drainExplicitOptimizations (shutdown)', () => {
   it('reports every queued and running optimization INTERRUPTED at once and frees their files', async () => {
     const signals = holdOptimizer()
-    // The scheduler runs two at a time: the third waits in the queue.
+    // Two run at once; the third waits in the queue.
+    vi.stubEnv('PDF_OPTIMIZATION_MAX_CONCURRENT', '2')
     const runs = [start(), start(), start()]
     await vi.waitFor(() => expect(signals).toHaveLength(2))
     const terminal: string[] = []
@@ -260,6 +265,7 @@ describe('drainExplicitOptimizations (shutdown)', () => {
   })
 
   it('leaves background-upload optimizations to the upload drain', async () => {
+    vi.stubEnv('PDF_OPTIMIZATION_MAX_CONCURRENT', '2')
     const signals = holdOptimizer()
     // How the upload pipeline queues its optimization: not through here.
     const uploadRun = new AbortController()
@@ -299,6 +305,7 @@ describe('drainExplicitOptimizations (shutdown)', () => {
   it('releases one queued behind background uploads without waiting for a slot', async () => {
     const signals = holdOptimizer()
     // Both optimizer slots are busy with uploads, which drain on their own.
+    vi.stubEnv('PDF_OPTIMIZATION_MAX_CONCURRENT', '2')
     const uploadRuns = [new AbortController(), new AbortController()]
     for (const [i, controller] of uploadRuns.entries()) {
       const fileUrl = `/pdf/reports/busy-upload-${i}.pdf`

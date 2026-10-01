@@ -14,8 +14,54 @@ helm repo update
 helm install ingress-nginx ingress-nginx/ingress-nginx \
   --namespace ingress-nginx \
   --create-namespace \
-  --set controller.replicaCount=2
+  --set controller.replicaCount=2 \
+  --set controller.service.externalTrafficPolicy=Local \
+  --set controller.service.annotations."service\.beta\.kubernetes\.io/azure-load-balancer-health-probe-request-path"=/healthz
 ```
+
+#### Preserving client IPs
+
+`externalTrafficPolicy=Local` is required, not optional. With the chart default
+(`Cluster`) the Azure load balancer SNATs every request to a node address before
+nginx sees it, so the app records each visitor as an internal `10.x` IP. That
+breaks visitor geolocation (every visit shows as "Unknown" country) and makes the
+per-IP rate limiter count every visitor sharing a node as one client. With
+`Local`, the load balancer only sends traffic to nodes running a controller pod
+and the original source IP is kept; nginx passes it on in `X-Forwarded-For`,
+which the app trusts from peers in `TRUSTED_PROXIES` (`config/configmap.yaml`).
+
+Check an existing cluster first. The plain-manifest install
+(`kubectl apply -f .../deploy/static/provider/cloud/deploy.yaml`) already sets
+`Local`; the Helm chart does not:
+
+```bash
+kubectl get svc ingress-nginx-controller -n ingress-nginx \
+  -o jsonpath='{.spec.externalTrafficPolicy}{"\n"}'   # want: Local
+```
+
+If it prints `Cluster`, switch it in place (the load balancer is reprogrammed;
+expect a few seconds of disruption):
+
+```bash
+# Installed with kubectl / plain manifests:
+kubectl patch svc ingress-nginx-controller -n ingress-nginx \
+  -p '{"spec":{"externalTrafficPolicy":"Local"}}'
+
+# Installed with Helm (a kubectl patch would be reverted on the next upgrade):
+helm upgrade ingress-nginx ingress-nginx/ingress-nginx -n ingress-nginx --reuse-values \
+  --set controller.service.externalTrafficPolicy=Local
+```
+
+If you later re-apply the controller manifest, keep `externalTrafficPolicy: Local`
+in it, or the re-apply will undo the patch.
+
+Then confirm `TRUSTED_PROXIES` covers the controller pods' IPs
+(`kubectl get pods -n ingress-nginx -o wide`). The default `10.244.0.0/16` is
+the kubenet / Azure CNI Overlay pod CIDR; on flat Azure CNI, use the node/pod
+subnet instead. The deploy workflow warns on every run while the policy is not
+`Local`, and the frontend logs a one-time
+`[analytics/geoip] client IP … is a private address` warning if visitor IPs are
+still being lost.
 
 ### 2. cert-manager
 
@@ -80,6 +126,8 @@ cannot see will make `azure/login` fail with empty credentials.
 | `ADMIN_NAME`                      | Initial admin display name (optional; defaults to `Administrator`)                                                      |
 | `AZURE_STORAGE_CONNECTION_STRING` | Optional — Blob backend for report PDFs (see [Report PDFs](#report-pdfs--azure-blob-storage)); unset = on-disk fallback |
 | `AZURE_BLOB_CONTAINER`            | Optional — Blob container for report PDFs (e.g. `reports`)                                                              |
+| `MAXMIND_ACCOUNT_ID`              | Optional — MaxMind account ID for visitor geolocation (see [Visitor geolocation](#visitor-geolocation--maxmind-geolite2)) |
+| `MAXMIND_LICENSE_KEY`             | Optional — MaxMind licence key; unset ⇒ geolocation off, every visit shows as "Unknown" country                         |
 
 > `ACR_NAME` is **not** a secret — it is a workflow `env:` value in `deploy.yml`.
 
@@ -189,6 +237,10 @@ the `build-and-push` and `deploy` jobs run with `environment: production`.
    # Azure Files (persistent storage)
    gh secret set AZURE_STORAGE_ACCOUNT_NAME --env $ENV   # paste storage account name
    gh secret set AZURE_STORAGE_ACCOUNT_KEY  --env $ENV --body "$(az storage account keys list --account-name <acct> --query '[0].value' -o tsv)"
+
+   # MaxMind GeoLite2 (visitor geolocation) — see "Visitor geolocation" below
+   gh secret set MAXMIND_ACCOUNT_ID    --env $ENV   # paste account ID
+   gh secret set MAXMIND_LICENSE_KEY   --env $ENV   # paste licence key
    ```
 
 4. **Verify** all required secrets are present (or run `k8s/check-deploy-secrets.sh`):
@@ -240,8 +292,10 @@ production (`audit.gov.gh`) will be a separate deployment.
 
 4. **Cluster has the assumed dependencies:** the `infosys-issuer` ClusterIssuer
    (referenced by the ingress, managed outside this repo), the `ingress-nginx`
-   controller + namespace, the `managed-csi` and `my-blobstorage` storage
-   classes, and metrics-server (for the frontend HPA).
+   controller + namespace (installed with `externalTrafficPolicy=Local` — see
+   [Preserving client IPs](#preserving-client-ips)), the `managed-csi`,
+   `my-blobstorage` and `azurefile-csi` storage classes, and metrics-server (for
+   the frontend HPA).
 
 ## Manual Deploy
 
@@ -283,9 +337,11 @@ export SEED_SCRIPT=db:seed:all
 envsubst < k8s/jobs/seed-job.yaml | kubectl apply -f -
 kubectl wait --for=condition=complete job/gas-seed-job -n gas --timeout=300s
 
-# 6. Apply persistent storage (dynamically-provisioned blob PVC)
+# 6. Apply persistent storage (dynamically-provisioned blob PVC + GeoIP share)
 kubectl apply -f k8s/storage/prod-pvc.yaml
 kubectl wait --for=jsonpath='{.status.phase}'=Bound pvc/gas-public-files-pvc -n gas --timeout=60s
+kubectl apply -f k8s/storage/geoip-pvc.yaml
+kubectl wait --for=jsonpath='{.status.phase}'=Bound pvc/gas-geoip-pvc -n gas --timeout=180s
 
 # 7. Deploy frontend (pin image via envsubst — restricted so the seed-public
 #    initContainer's busybox script ($d/$f) is left untouched)
@@ -296,9 +352,12 @@ kubectl apply -f k8s/frontend/service.yaml
 kubectl apply -f k8s/frontend/ingress.yaml
 kubectl apply -f k8s/frontend/hpa.yaml
 
-# 8. Apply policies and backup
+# 8. Apply policies, backup and GeoIP updates (the last needs MAXMIND_* in
+#    gas-maxmind; trigger the first download by hand)
 kubectl apply -f k8s/network/network-policies.yaml
 kubectl apply -f k8s/jobs/mysql-backup-cronjob.yaml
+kubectl apply -f k8s/jobs/geoip-update-cronjob.yaml
+kubectl create job geoip-update-initial --from=cronjob/geoip-update -n gas
 
 # 9. Verify
 kubectl rollout status deployment/gas-frontend -n gas
@@ -331,6 +390,90 @@ kubectl scale deployment gas-frontend -n gas --replicas=3
 kubectl rollout restart deployment/gas-frontend -n gas
 ```
 
+## Frontend probes
+
+A-G report PDF optimization (Ghostscript, qpdf, pdftoppm, Tesseract) runs
+**inside the frontend pod**: its child processes share the container's CPU
+quota and memory limit with the Nitro server. Anything that restarts or kills
+the container also kills every in-flight upload pipeline and optimization,
+which admins then see as STALLED ("The upload stopped responding and was
+abandoned"). The probes are built so that load never causes a restart:
+
+| Probe     | Path       | Checks                                                       | On failure                                           |
+| --------- | ---------- | ------------------------------------------------------------ | ---------------------------------------------------- |
+| startup   | `/healthz` | Nitro is listening and its event loop answers                | restarted if not up within 60s                       |
+| liveness  | `/healthz` | the event loop answers — no SSR, database or Redis           | restarted after 5 failures 30s apart                 |
+| readiness | `/readyz`  | the above, plus this pod's MySQL pool answers `SELECT 1` ≤2s | removed from the Service until it passes; no restart |
+
+The probes used to hit `/`. That is a full SSR render plus several MySQL
+queries on every request: the `isr` route rules do not cache HTML on the
+`node-server` preset. While an optimization saturates the CPU quota, that
+render can stretch past the 5s probe timeout. `/healthz` does no I/O, so a database or Redis outage can
+never restart pods. `/readyz` does depend on MySQL, so a rollout whose new
+pods cannot reach the database stalls (and `kubectl rollout status` fails the
+deploy) instead of replacing healthy pods. The trade-off: during a MySQL outage
+every pod goes unready, and the ingress answers 503 until MySQL is back.
+
+Both endpoints skip the app's rate limiter and analytics capture, answer
+`Cache-Control: no-store`, and are safe to hit from outside the cluster (the
+`/readyz` database check is shared across concurrent requests and cached for
+1s). The code lives in `ghana-audit-service/server/utils/healthProbes.ts`.
+
+```bash
+# What the kubelet sees, from inside a frontend pod
+kubectl exec -n gas deploy/gas-frontend -- wget -qO- http://localhost:3000/healthz
+kubectl exec -n gas deploy/gas-frontend -- wget -qO- http://localhost:3000/readyz
+
+# Restart history and the reason for the last one (OOMKilled vs. probe failure)
+kubectl get pods -n gas -l app.kubernetes.io/name=gas-frontend
+kubectl describe pod -n gas -l app.kubernetes.io/name=gas-frontend | grep -A6 "Last State"
+kubectl get events -n gas --field-selector reason=Unhealthy
+```
+
+## Frontend resources and PDF optimization
+
+The frontend container is sized for one optimization at a time:
+
+| Setting                                           | Value                                      |
+| ------------------------------------------------- | ------------------------------------------ |
+| `resources.requests` (`frontend/deployment.yaml`) | `cpu: 250m`, `memory: 512Mi`               |
+| `resources.limits`                                | `cpu: "2"`, `memory: 1Gi`                  |
+| `PDF_OPTIMIZATION_MAX_CONCURRENT` (`gas-config`)  | `1` per pod; further jobs queue FIFO       |
+| HPA scale-down (`frontend/hpa.yaml`)              | after 30 min below target, ≤1 pod / 10 min |
+
+These come from running the built app under cgroup limits equal to the pod's,
+with two 60 MB / 40-page 300-DPI scans optimized through the admin API (MySQL
+seeded, Tesseract with `OMP_THREAD_LIMIT=1`):
+
+| Limits / concurrency     | Both scans done | `/healthz` max | `/` max | Peak anon RSS  | CPU throttled  |
+| ------------------------ | --------------- | -------------- | ------- | -------------- | -------------- |
+| 500m / 512Mi, 2 at once  | 509s            | 1.0s           | 2.8s    | 490 / 512 MiB  | 99% of periods |
+| 2 CPU / 1Gi, 1 at a time | 118s            | 31ms           | 213ms   | 326 / 1024 MiB | 33%            |
+| 1 CPU / 1Gi, 1 at a time | 234s            | 82ms           | 592ms   | 353 / 1024 MiB | 97%            |
+
+The server idles at ~200 MiB. One optimization keeps ~2 cores busy while it
+OCRs (two Tesseract processes), so a second concurrent run under the same CPU
+limit finishes nothing sooner and only adds memory. An OOM kill is the worst
+outcome: on cgroup v2 (AKS, Kubernetes ≥ 1.28) it kills the whole container,
+and with it every in-flight upload and optimization. Raise
+`PDF_OPTIMIZATION_MAX_CONCURRENT` only together with the pod's CPU and memory,
+never on its own.
+
+**Autoscaling caveat.** The HPA scales on CPU at 70% of the 250m request, and
+an optimization pins its pod near the 2-CPU limit, so every optimization
+scales the Deployment out to `maxReplicas`. Scaling back in terminates pods,
+and Nitro's graceful shutdown waits only for HTTP requests, not background
+upload pipelines or optimizations. Hence the slow scale-down: it makes killing
+a pod mid-job much rarer, but cannot rule it out. Rollouts
+(`kubectl rollout restart`, deploys) also terminate pods, so avoid deploying
+while large uploads are being processed.
+
+```bash
+# Live usage per pod (needs metrics-server) and HPA state
+kubectl top pods -n gas -l app.kubernetes.io/name=gas-frontend
+kubectl get hpa gas-frontend -n gas
+```
+
 ## Directory Structure
 
 ```
@@ -343,7 +486,7 @@ k8s/
     deployment.yaml           # Nuxt app (2 replicas, HPA, probes)
     service.yaml              # ClusterIP Service (port 80 -> 3000)
     ingress.yaml              # NGINX Ingress with TLS
-    hpa.yaml                  # Autoscaler (2-5 replicas, 70% CPU)
+    hpa.yaml                  # Autoscaler (2-5 replicas, 70% CPU, slow scale-down)
   mysql/
     statefulset.yaml          # MySQL 8.0 with 20Gi PVC
     service.yaml              # Headless Service
@@ -354,10 +497,12 @@ k8s/
     migrate-job.yaml          # DB migration (runs before each deploy)
     seed-job.yaml             # One-time DB seed: admin user + content (manual)
     mysql-backup-cronjob.yaml # Daily mysqldump (02:00 UTC, 7-day retention)
+    geoip-update-cronjob.yaml # MaxMind GeoLite2 download (Wed + Sat 05:17 UTC)
   network/
     network-policies.yaml     # Default-deny + per-service allow rules
   storage/
     prod-pvc.yaml             # Active: dynamic ReadWriteMany PVC (gas-public-files-pvc)
+    geoip-pvc.yaml            # Azure Files RWX PVC for GeoLite2 databases (gas-geoip-pvc)
     public-files.yaml         # Legacy: static PV/PVC for Azure Files (gas-public share)
 ```
 
@@ -460,3 +605,51 @@ npm run pdf:migrate-blob
 > Do **not** do step 6 before steps 1–5 verify in production: until the blobs
 > exist and the env vars are set, the on-disk `public/pdf` (image or Files mount)
 > is the only source, and removing it would 404 every report download.
+
+## Visitor geolocation — MaxMind GeoLite2
+
+The admin **Analytics → Geo** page resolves each visit's country and network
+(ASN) at capture time from MaxMind's free GeoLite2 databases. The licence
+forbids committing them, so the cluster downloads them itself:
+
+- `jobs/geoip-update-cronjob.yaml` runs the official `geoipupdate` image every
+  Wednesday and Saturday (the day after MaxMind's Tuesday/Friday releases) and
+  writes `GeoLite2-Country.mmdb` + `GeoLite2-ASN.mmdb` to `gas-geoip-pvc`.
+- The frontend mounts that volume read-only at `/app/data/geoip`
+  (`ANALYTICS_GEOIP_DB_PATH` / `ANALYTICS_ASN_DB_PATH` in `config/configmap.yaml`)
+  and re-checks the files every 15 minutes, so new downloads are picked up
+  without a restart.
+- Lookups also need the real visitor IP — see
+  [Preserving client IPs](#preserving-client-ips).
+
+### Setup
+
+1. Sign up for a free GeoLite2 account at <https://www.maxmind.com/en/geolite2/signup>.
+2. In the account portal, note the **Account ID** and generate a **licence key**
+   (**Manage License Keys → Generate new license key**).
+3. Set them as `MAXMIND_ACCOUNT_ID` and `MAXMIND_LICENSE_KEY` on the
+   `production` environment (see [Setting the secrets](#setting-the-secrets-step-by-step)).
+4. Deploy. The workflow renders them into the `gas-maxmind` Secret (read only by
+   the CronJob, never by the frontend), applies the CronJob, and — until one run
+   has succeeded — starts an immediate download. Without the secrets it skips
+   the CronJob and logs a warning.
+
+### Verify
+
+```bash
+# Latest download run
+kubectl get jobs -n gas -l app.kubernetes.io/name=geoip-update
+kubectl logs -n gas job/<job-name>
+
+# Frontend picked the files up (within 15 minutes of the download)
+kubectl logs -n gas deployment/gas-frontend | grep analytics/geoip
+#   [analytics/geoip] country DB loaded { path: '/app/data/geoip/GeoLite2-Country.mmdb', ... }
+
+# Force a refresh
+kubectl create job geoip-update-manual-$(date +%s) --from=cronjob/geoip-update -n gas
+```
+
+New visits then appear with a country on the Geo page. Visits recorded before
+this was set up keep their empty country: they were stored without one (and,
+while client IPs weren't preserved, with a node address instead of the
+visitor's).

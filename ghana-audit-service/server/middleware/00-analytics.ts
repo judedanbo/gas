@@ -2,13 +2,15 @@ import { getHeader } from 'h3'
 import { performance } from 'node:perf_hooks'
 import { getClientIP } from '../utils/rateLimiter'
 import { isStaticAsset, BLOCKED_DIRECT_PATHS } from '../utils/staticAssets'
+import { isHealthProbePath } from '../utils/healthProbes'
 import {
   hashIp,
   hashUa,
   classifyUa,
   normaliseRoutePattern,
   parseReferrerHost,
-  isIpAnonymizedRoute
+  isIpAnonymizedRoute,
+  isKubeletProbe
 } from '../utils/analytics/fingerprint'
 import { pushAnalyticsEvent } from '../utils/analytics/buffer'
 import { isProbingPath } from '../utils/analytics/probingPaths'
@@ -52,10 +54,15 @@ export default defineEventHandler((event) => {
   const path = rawPath.split('?')[0]
   if (isStaticAsset(path)) return
   if (BLOCKED_DIRECT_PATHS.test(path)) return
+  // Kubelet probes hit every pod every few seconds: operational noise, not
+  // visitor traffic, and they must stay cheap (see utils/healthProbes.ts).
+  if (isHealthProbePath(path)) return
+
+  const ua = getHeader(event, 'user-agent') || ''
+  if (isKubeletProbe(ua, getHeader(event, 'x-forwarded-for'))) return
 
   const start = performance.now()
   const method = (event.method || 'GET').slice(0, 8)
-  const ua = getHeader(event, 'user-agent') || ''
   const ip = getClientIP(event)
   const ipHash = hashIp(ip)
   const uaHash = hashUa(ua)
