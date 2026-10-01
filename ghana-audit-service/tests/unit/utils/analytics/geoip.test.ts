@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach } from 'vitest'
 import {
   getGeoIp,
   isHostingAsn,
+  isNonRoutableIp,
   initGeoIpReaders,
   __resetGeoIpForTests
 } from '../../../../server/utils/analytics/geoip'
@@ -31,6 +32,44 @@ describe('analytics/geoip', () => {
       await initGeoIpReaders()
       // Should not throw, and should still return null lookups.
       expect(getGeoIp('203.0.113.1')).toEqual({ country: null, asn: null })
+    })
+  })
+
+  describe('isNonRoutableIp', () => {
+    it('flags private, loopback, link-local and CGNAT IPv4', () => {
+      for (const ip of [
+        '10.244.1.7',
+        '10.224.0.4',
+        '172.16.0.1',
+        '172.31.255.255',
+        '192.168.1.10',
+        '127.0.0.1',
+        '169.254.169.254',
+        '100.64.0.1',
+        '::ffff:10.244.1.7'
+      ]) {
+        expect(isNonRoutableIp(ip), ip).toBe(true)
+      }
+    })
+
+    it('flags loopback, ULA and link-local IPv6', () => {
+      for (const ip of ['::1', 'fc00::1', 'fd12:3456::1', 'fe80::1', 'FE80::abcd']) {
+        expect(isNonRoutableIp(ip), ip).toBe(true)
+      }
+    })
+
+    it('does not flag public addresses', () => {
+      for (const ip of [
+        '41.66.200.1', // Ghana (MTN)
+        '8.8.8.8',
+        '172.15.0.1',
+        '172.32.0.1',
+        '100.128.0.1',
+        '2001:4860:4860::8888',
+        'unknown'
+      ]) {
+        expect(isNonRoutableIp(ip), ip).toBe(false)
+      }
     })
   })
 

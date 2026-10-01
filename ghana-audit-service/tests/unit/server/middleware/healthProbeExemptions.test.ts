@@ -47,13 +47,22 @@ const { default: rateLimit } = (await import('~/server/middleware/rateLimit')) a
   default: Middleware
 }
 
+// A browser request arriving through the ingress (X-Forwarded-For set), so the
+// analytics middleware's kube-probe user-agent skip cannot be what exempts the
+// probe paths: they are skipped for anyone who requests them.
 function fakeEvent(path: string) {
   return {
     path,
     method: 'GET',
     context: {} as Record<string, unknown>,
     node: {
-      req: { headers: { 'user-agent': 'kube-probe/1.33' }, httpVersion: '1.1' },
+      req: {
+        headers: {
+          'user-agent': 'Mozilla/5.0 (X11; Linux x86_64)',
+          'x-forwarded-for': '203.0.113.9'
+        },
+        httpVersion: '1.1'
+      },
       res: { on: vi.fn(), statusCode: 200, getHeader: vi.fn() }
     }
   }

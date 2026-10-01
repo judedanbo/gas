@@ -133,6 +133,16 @@ describe('AdminNotificationCenter', () => {
     wrapper.unmount()
   })
 
+  it('links each entry and the whole feed to the notification pages', async () => {
+    const wrapper = mountCenter()
+    await wrapper.get('button[aria-haspopup="dialog"]').trigger('click')
+    const links = wrapper.findAllComponents(RouterLinkStub).map((l) => l.props('to'))
+    expect(links).toContain('/admin/notifications')
+    expect(links).toContain('/admin/notifications/upload%3A1')
+    expect(links).toContain('/admin/notifications/upload%3A2')
+    wrapper.unmount()
+  })
+
   it('closes on Escape and hands focus back to the bell', async () => {
     const wrapper = mountCenter()
     const bell = wrapper.get('button[aria-haspopup="dialog"]')

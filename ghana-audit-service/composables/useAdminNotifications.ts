@@ -16,6 +16,7 @@ import {
   optimizationNotificationId,
   optimizationStatusToPatch,
   reportEditAction,
+  isUploadNotificationId,
   sortNotifications,
   uploadJobIdFromNotificationId,
   uploadJobToNotification
@@ -294,14 +295,17 @@ function createStore() {
     return Array.isArray(stored) ? stored.filter((id): id is string => typeof id === 'string') : []
   }
 
-  function markAllSeen(): void {
-    if (unreadIds.value.length === 0) return
-    const next = [
-      ...seenIds.value.filter((id) => !unreadIds.value.includes(id)),
-      ...unreadIds.value
-    ]
+  /** Mark finished entries read (unknown or running ids are ignored). */
+  function markSeen(ids: string[]): void {
+    const fresh = ids.filter((id) => unreadIds.value.includes(id))
+    if (fresh.length === 0) return
+    const next = [...seenIds.value.filter((id) => !fresh.includes(id)), ...fresh]
     seenIds.value = next.slice(-MAX_SEEN_IDS)
     if (ownerId !== null) writeStorage(local(), seenKey(ownerId), seenIds.value)
+  }
+
+  function markAllSeen(): void {
+    markSeen(unreadIds.value)
   }
 
   // ── Local entries ────────────────────────────────────────────────────────
@@ -542,8 +546,12 @@ function createStore() {
 
   async function dismiss(id: string): Promise<boolean> {
     const n = notifications.value.find((item) => item.id === id)
-    if (!n || !isFinished(n)) return false
-    if (n.source === 'report-upload') {
+    if (n && !isFinished(n)) return false
+    // An upload can be dismissed from its page even when it has aged out of
+    // the feed; the server refuses uploads that are still running.
+    const upload = n ? n.source === 'report-upload' : isUploadNotificationId(id)
+    if (!n && !upload) return false
+    if (upload) {
       const ok = await uploads.dismiss(uploadJobIdFromNotificationId(id))
       if (!ok) useToast().error('Could not dismiss the notification. Please try again.')
       return ok
@@ -641,6 +649,7 @@ function createStore() {
     refresh: uploads.refresh,
     openPanel,
     closePanel,
+    markSeen,
     markAllSeen,
     dismiss,
     clearFinished,
