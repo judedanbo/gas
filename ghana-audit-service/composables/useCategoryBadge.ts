@@ -1,6 +1,7 @@
 import type { AuditCategory, PublicationType } from '~/types'
 
-type BadgeVariant = 'primary' | 'secondary' | 'accent' | 'success' | 'warning' | 'danger' | 'info' | 'gray'
+type BadgeVariant =
+  'primary' | 'secondary' | 'accent' | 'success' | 'warning' | 'danger' | 'info' | 'gray'
 
 /**
  * Composable for consistent badge styling across audit categories and publication types
@@ -8,44 +9,44 @@ type BadgeVariant = 'primary' | 'secondary' | 'accent' | 'success' | 'warning' |
 export function useCategoryBadge() {
   // Audit category to badge variant mapping
   const auditCategoryVariants: Record<AuditCategory, BadgeVariant> = {
-    'financial': 'primary',
-    'performance': 'secondary',
-    'compliance': 'accent',
-    'it': 'info',
-    'technical': 'gray',
+    financial: 'primary',
+    performance: 'secondary',
+    compliance: 'accent',
+    it: 'info',
+    technical: 'gray',
     'follow-up': 'danger',
-    'special': 'warning'
+    special: 'warning'
   }
 
   // Audit category labels
   const auditCategoryLabels: Record<AuditCategory, string> = {
-    'financial': 'Financial Audit',
-    'performance': 'Performance Audit',
-    'compliance': 'Compliance Audit',
-    'it': 'IT Audit',
-    'technical': 'Technical Audit',
+    financial: 'Financial Audit',
+    performance: 'Performance Audit',
+    compliance: 'Compliance Audit',
+    it: 'IT Audit',
+    technical: 'Technical Audit',
     'follow-up': 'Follow-up Review',
-    'special': 'Special Audit'
+    special: 'Special Audit'
   }
 
   // Publication type to badge variant mapping
   const publicationTypeVariants: Record<PublicationType, BadgeVariant> = {
     'press-statement': 'primary',
-    'bulletin': 'info',
-    'guideline': 'accent',
-    'manual': 'secondary',
-    'strategy': 'success',
-    'law': 'warning'
+    bulletin: 'info',
+    guideline: 'accent',
+    manual: 'secondary',
+    strategy: 'success',
+    law: 'warning'
   }
 
   // Publication type labels
   const publicationTypeLabels: Record<PublicationType, string> = {
     'press-statement': 'Press Statement',
-    'bulletin': 'Bulletin',
-    'guideline': 'Guideline',
-    'manual': 'Manual',
-    'strategy': 'Strategy',
-    'law': 'Law'
+    bulletin: 'Bulletin',
+    guideline: 'Guideline',
+    manual: 'Manual',
+    strategy: 'Strategy',
+    law: 'Law'
   }
 
   /**

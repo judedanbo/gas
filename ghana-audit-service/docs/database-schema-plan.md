@@ -125,57 +125,58 @@ npm run db:studio
 
 All admin API routes are located under `server/api/admin/`:
 
-| Endpoint                  | Methods        | Description                    |
-| ------------------------- | -------------- | ------------------------------ |
-| `/auth/login`             | POST           | Authenticate and get JWT token |
-| `/auth/logout`            | POST           | Log logout action              |
-| `/auth/me`                | GET            | Get current user               |
-| `/reports`                | GET, POST      | List/create audit reports      |
-| `/reports/[id]`           | GET, PUT, DEL  | Get/update/delete report       |
-| `/publications`           | GET, POST      | List/create publications       |
-| `/publications/[id]`      | GET, PUT, DEL  | Get/update/delete publication  |
-| `/news`                   | GET, POST      | List/create news articles      |
-| `/news/[id]`              | GET, PUT, DEL  | Get/update/delete article      |
-| `/events`                 | GET, POST      | List/create events             |
-| `/events/[id]`            | GET, PUT, DEL  | Get/update/delete event        |
-| `/vacancies`              | GET, POST      | List/create vacancies          |
-| `/vacancies/[id]`         | GET, PUT, DEL  | Get/update/delete vacancy      |
-| `/tenders`                | GET, POST      | List/create tenders            |
-| `/tenders/[id]`           | GET, PUT, DEL  | Get/update/delete tender       |
-| `/departments`            | GET, POST      | List/create departments        |
-| `/departments/[id]`       | GET, PUT, DEL  | Get/update/delete department   |
-| `/team-members`           | GET, POST      | List/create team members       |
-| `/team-members/[id]`      | GET, PUT, DEL  | Get/update/delete member       |
-| `/regional-offices`       | GET, POST      | List/create offices            |
-| `/regional-offices/[id]`  | GET, PUT, DEL  | Get/update/delete office       |
-| `/gallery`                | GET, POST      | List/create gallery images     |
-| `/gallery/[id]`           | GET, PUT, DEL  | Get/update/delete image        |
-| `/videos`                 | GET, POST      | List/create videos             |
-| `/videos/[id]`            | GET, PUT, DEL  | Get/update/delete video        |
-| `/tags`                   | GET, POST      | List/create tags               |
-| `/tags/[id]`              | GET, PUT, DEL  | Get/update/delete tag          |
-| `/users`                  | GET, POST      | List/create users (admin only) |
-| `/users/[id]`             | GET, PUT, DEL  | Get/update/delete user         |
-| `/audit-logs`             | GET            | List audit logs                |
-| `/contact-submissions`    | GET            | List contact submissions       |
-| `/contact-submissions/[id]`| GET, PUT      | Get/update submission status   |
-| `/newsletter`             | GET            | List newsletter subscribers    |
-| `/upload`                 | POST           | Upload files (PDF, images)     |
+| Endpoint                    | Methods       | Description                    |
+| --------------------------- | ------------- | ------------------------------ |
+| `/auth/login`               | POST          | Authenticate and get JWT token |
+| `/auth/logout`              | POST          | Log logout action              |
+| `/auth/me`                  | GET           | Get current user               |
+| `/reports`                  | GET, POST     | List/create audit reports      |
+| `/reports/[id]`             | GET, PUT, DEL | Get/update/delete report       |
+| `/publications`             | GET, POST     | List/create publications       |
+| `/publications/[id]`        | GET, PUT, DEL | Get/update/delete publication  |
+| `/news`                     | GET, POST     | List/create news articles      |
+| `/news/[id]`                | GET, PUT, DEL | Get/update/delete article      |
+| `/events`                   | GET, POST     | List/create events             |
+| `/events/[id]`              | GET, PUT, DEL | Get/update/delete event        |
+| `/vacancies`                | GET, POST     | List/create vacancies          |
+| `/vacancies/[id]`           | GET, PUT, DEL | Get/update/delete vacancy      |
+| `/tenders`                  | GET, POST     | List/create tenders            |
+| `/tenders/[id]`             | GET, PUT, DEL | Get/update/delete tender       |
+| `/departments`              | GET, POST     | List/create departments        |
+| `/departments/[id]`         | GET, PUT, DEL | Get/update/delete department   |
+| `/team-members`             | GET, POST     | List/create team members       |
+| `/team-members/[id]`        | GET, PUT, DEL | Get/update/delete member       |
+| `/regional-offices`         | GET, POST     | List/create offices            |
+| `/regional-offices/[id]`    | GET, PUT, DEL | Get/update/delete office       |
+| `/gallery`                  | GET, POST     | List/create gallery images     |
+| `/gallery/[id]`             | GET, PUT, DEL | Get/update/delete image        |
+| `/videos`                   | GET, POST     | List/create videos             |
+| `/videos/[id]`              | GET, PUT, DEL | Get/update/delete video        |
+| `/tags`                     | GET, POST     | List/create tags               |
+| `/tags/[id]`                | GET, PUT, DEL | Get/update/delete tag          |
+| `/users`                    | GET, POST     | List/create users (admin only) |
+| `/users/[id]`               | GET, PUT, DEL | Get/update/delete user         |
+| `/audit-logs`               | GET           | List audit logs                |
+| `/contact-submissions`      | GET           | List contact submissions       |
+| `/contact-submissions/[id]` | GET, PUT      | Get/update submission status   |
+| `/newsletter`               | GET           | List newsletter subscribers    |
+| `/upload`                   | POST          | Upload files (PDF, images)     |
 
 ### Authentication
 
 All admin routes (except `/auth/login`) require a valid JWT token in the Authorization header:
+
 ```
 Authorization: Bearer <token>
 ```
 
 ### Role-Based Access Control
 
-| Role   | Permissions                          |
-| ------ | ------------------------------------ |
-| admin  | read, create, update, delete, users  |
-| editor | read, create, update                 |
-| viewer | read                                 |
+| Role   | Permissions                         |
+| ------ | ----------------------------------- |
+| admin  | read, create, update, delete, users |
+| editor | read, create, update                |
+| viewer | read                                |
 
 ### Seed Database
 

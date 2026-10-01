@@ -26,13 +26,7 @@ const dbConfig = {
 }
 
 type ReportCategory =
-  | 'financial'
-  | 'compliance'
-  | 'it'
-  | 'performance'
-  | 'technical'
-  | 'follow-up'
-  | 'special'
+  'financial' | 'compliance' | 'it' | 'performance' | 'technical' | 'follow-up' | 'special'
 
 interface SeedReportItem {
   slug: string

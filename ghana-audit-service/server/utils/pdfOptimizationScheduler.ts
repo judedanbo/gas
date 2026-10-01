@@ -16,7 +16,8 @@ import {
 // with the pod's resources (k8s/frontend/deployment.yaml).
 const DEFAULT_MAX_RUNNING = 1
 
-function maxRunning(): number {
+/** Optimizations this process runs at once; also caps how much interrupted upload work it claims. */
+export function maxRunning(): number {
   const n = Number(process.env.PDF_OPTIMIZATION_MAX_CONCURRENT)
   return Number.isInteger(n) && n > 0 ? n : DEFAULT_MAX_RUNNING
 }

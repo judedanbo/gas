@@ -101,10 +101,20 @@ describe('UiBaseImage', () => {
     // components, so the v-if/v-else-if/v-else chain must stay a single root.
     const cls = 'w-full h-full object-cover'
 
-    const optimised = mount(BaseImage, { props: { src: '/img/a.jpg' }, attrs: { class: cls }, global })
-    expect(optimised.findComponent({ name: 'NuxtImg' }).classes()).toEqual(expect.arrayContaining(cls.split(' ')))
+    const optimised = mount(BaseImage, {
+      props: { src: '/img/a.jpg' },
+      attrs: { class: cls },
+      global
+    })
+    expect(optimised.findComponent({ name: 'NuxtImg' }).classes()).toEqual(
+      expect.arrayContaining(cls.split(' '))
+    )
 
-    const raw = mount(BaseImage, { props: { src: 'https://x/y.jpg' }, attrs: { class: cls }, global })
+    const raw = mount(BaseImage, {
+      props: { src: 'https://x/y.jpg' },
+      attrs: { class: cls },
+      global
+    })
     expect(raw.find('img').classes()).toEqual(expect.arrayContaining(cls.split(' ')))
 
     const placeholder = mount(BaseImage, { props: { src: null }, attrs: { class: cls }, global })

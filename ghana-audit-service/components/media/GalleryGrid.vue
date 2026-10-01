@@ -17,12 +17,20 @@
         />
 
         <!-- Overlay -->
-        <div class="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-          <Icon name="heroicons:magnifying-glass-plus" class="w-10 h-10 text-white" aria-hidden="true" />
+        <div
+          class="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"
+        >
+          <Icon
+            name="heroicons:magnifying-glass-plus"
+            class="w-10 h-10 text-white"
+            aria-hidden="true"
+          />
         </div>
 
         <!-- Caption -->
-        <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-3 text-white text-sm opacity-0 group-hover:opacity-100 transition-opacity">
+        <div
+          class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-3 text-white text-sm opacity-0 group-hover:opacity-100 transition-opacity"
+        >
           {{ image.caption || image.alt }}
         </div>
       </button>
@@ -89,51 +97,51 @@
 </template>
 
 <script setup lang="ts">
-import type { GalleryImage } from '~/types'
+  import type { GalleryImage } from '~/types'
 
-interface Props {
-  images: GalleryImage[]
-}
-
-const props = defineProps<Props>()
-
-const lightboxOpen = ref(false)
-const currentIndex = ref(0)
-
-const currentImage = computed(() => props.images[currentIndex.value])
-
-function openLightbox(index: number) {
-  currentIndex.value = index
-  lightboxOpen.value = true
-  document.body.style.overflow = 'hidden'
-}
-
-function closeLightbox() {
-  lightboxOpen.value = false
-  document.body.style.overflow = ''
-}
-
-function prevImage() {
-  if (currentIndex.value > 0) {
-    currentIndex.value--
+  interface Props {
+    images: GalleryImage[]
   }
-}
 
-function nextImage() {
-  if (currentIndex.value < props.images.length - 1) {
-    currentIndex.value++
-  }
-}
+  const props = defineProps<Props>()
 
-// Keyboard navigation
-onMounted(() => {
-  const handleKeydown = (e: KeyboardEvent) => {
-    if (!lightboxOpen.value) return
-    if (e.key === 'Escape') closeLightbox()
-    if (e.key === 'ArrowLeft') prevImage()
-    if (e.key === 'ArrowRight') nextImage()
+  const lightboxOpen = ref(false)
+  const currentIndex = ref(0)
+
+  const currentImage = computed(() => props.images[currentIndex.value])
+
+  function openLightbox(index: number) {
+    currentIndex.value = index
+    lightboxOpen.value = true
+    document.body.style.overflow = 'hidden'
   }
-  window.addEventListener('keydown', handleKeydown)
-  onUnmounted(() => window.removeEventListener('keydown', handleKeydown))
-})
+
+  function closeLightbox() {
+    lightboxOpen.value = false
+    document.body.style.overflow = ''
+  }
+
+  function prevImage() {
+    if (currentIndex.value > 0) {
+      currentIndex.value--
+    }
+  }
+
+  function nextImage() {
+    if (currentIndex.value < props.images.length - 1) {
+      currentIndex.value++
+    }
+  }
+
+  // Keyboard navigation
+  onMounted(() => {
+    const handleKeydown = (e: KeyboardEvent) => {
+      if (!lightboxOpen.value) return
+      if (e.key === 'Escape') closeLightbox()
+      if (e.key === 'ArrowLeft') prevImage()
+      if (e.key === 'ArrowRight') nextImage()
+    }
+    window.addEventListener('keydown', handleKeydown)
+    onUnmounted(() => window.removeEventListener('keydown', handleKeydown))
+  })
 </script>

@@ -15,18 +15,19 @@ New composable at `composables/useUnsavedChanges.ts`:
 
 ```typescript
 interface UseUnsavedChangesOptions {
-  formData: () => Record<string, unknown>  // reactive getter for current form state
-  enabled?: Ref<boolean> | boolean         // disable during initial load
+  formData: () => Record<string, unknown> // reactive getter for current form state
+  enabled?: Ref<boolean> | boolean // disable during initial load
 }
 
 interface UseUnsavedChangesReturn {
   hasChanges: ComputedRef<boolean>
-  markSaved: () => void       // snapshot current state as "saved"
-  markClean: () => void       // force no-changes state (e.g., after discard)
+  markSaved: () => void // snapshot current state as "saved"
+  markClean: () => void // force no-changes state (e.g., after discard)
 }
 ```
 
 **Behavior:**
+
 - Deep-compares current form state against a stored snapshot using `JSON.stringify`
 - `markSaved()` updates the snapshot to current values (called after successful save)
 - Registers `beforeunload` handler when `hasChanges` is true
@@ -37,12 +38,14 @@ interface UseUnsavedChangesReturn {
 Replace the current bottom action bar with a bar fixed to the viewport bottom. Appears with a slide-up transition when `hasChanges` is true.
 
 **Layout:**
+
 - Left: amber dot + "Unsaved changes" text
 - Right: "Discard" ghost button (resets form to snapshot) + "Save Changes" primary button with spinner
 
 The bar uses `position: sticky; bottom: 0` within the form container with a `z-10` to sit above content. Background matches the card style (`bg-white dark:bg-gray-800`) with a top border and subtle shadow.
 
 ### Files
+
 - `composables/useUnsavedChanges.ts` — new
 - `pages/admin/reports/[id]/edit.vue` — replace bottom action bar
 
@@ -51,11 +54,10 @@ The bar uses `position: sticky; bottom: 0` within the form container with a `z-1
 When `form.fileUrl` is set, render a preview section below the file upload card in the main content column.
 
 **Component structure (inline, not a separate component):**
+
 ```html
 <div class="bg-white dark:bg-gray-800 rounded-lg shadow">
-  <button @click="previewExpanded = !previewExpanded">
-    Preview <chevron-icon />
-  </button>
+  <button @click="previewExpanded = !previewExpanded">Preview <chevron-icon /></button>
   <div v-if="previewExpanded">
     <iframe :src="form.fileUrl" class="w-full h-[500px] rounded-b-lg" />
     <a :href="form.fileUrl" target="_blank">Open in new tab</a>
@@ -64,6 +66,7 @@ When `form.fileUrl` is set, render a preview section below the file upload card 
 ```
 
 **Details:**
+
 - Default state: collapsed (to save vertical space)
 - The iframe `src` uses the `fileUrl` directly (internal path like `/uploads/reports/xxx.pdf`)
 - Fallback link always visible below the iframe for browsers that don't render PDFs
@@ -71,11 +74,13 @@ When `form.fileUrl` is set, render a preview section below the file upload card 
 - No CSP changes needed — `frame-src 'self'` is already allowed
 
 ### Files
+
 - `pages/admin/reports/[id]/edit.vue` — add preview section
 
 ## 3. Rich Text Summary (TipTap)
 
 ### New Dependencies
+
 ```
 @tiptap/vue-3
 @tiptap/starter-kit
@@ -88,6 +93,7 @@ When `form.fileUrl` is set, render a preview section below the file upload card 
 New component at `components/admin/form/AdminRichText.vue`.
 
 **Props:**
+
 - `modelValue: string` — HTML content
 - `label?: string`
 - `placeholder?: string`
@@ -98,6 +104,7 @@ New component at `components/admin/form/AdminRichText.vue`.
 **Emits:** `update:modelValue`
 
 **Toolbar buttons (single row):**
+
 - Bold (B) — toggle
 - Italic (I) — toggle
 - Bullet list — toggle
@@ -106,6 +113,7 @@ New component at `components/admin/form/AdminRichText.vue`.
 - Clear formatting — clears all marks
 
 **Styling:**
+
 - Toolbar: `bg-gray-50 dark:bg-gray-700` with `border-b`, icon buttons with hover/active states
 - Editor area: min-height 120px, max-height 300px with overflow scroll
 - Active toolbar buttons get `bg-gray-200 dark:bg-gray-600` treatment
@@ -113,6 +121,7 @@ New component at `components/admin/form/AdminRichText.vue`.
 - Focus ring matching the admin input style
 
 **TipTap extensions used:**
+
 - `StarterKit` (provides bold, italic, bullet list, ordered list, paragraph, hard break)
 - `Link` with `openOnClick: false` (don't navigate when clicking links in the editor)
 - `Placeholder` for placeholder text
@@ -135,9 +144,13 @@ New component at `components/admin/form/AdminRichText.vue`.
 ### Data format
 
 Summary fields store HTML strings in the existing `text` column (no schema change). Example output:
+
 ```html
 <p>This report covers the <strong>2025 financial year</strong> audit of:</p>
-<ul><li>Revenue collection</li><li>Expenditure management</li></ul>
+<ul>
+  <li>Revenue collection</li>
+  <li>Expenditure management</li>
+</ul>
 ```
 
 ### Public display
@@ -145,6 +158,7 @@ Summary fields store HTML strings in the existing `text` column (no schema chang
 The report detail page should render summary with `v-html` inside a container with Tailwind Typography's `prose` class for consistent styling. `@tailwindcss/typography` is already installed.
 
 ### Files
+
 - `components/admin/form/AdminRichText.vue` — new
 - `components/admin/form/AdminTranslationTabs.vue` — verify/add richtext case
 - `pages/admin/reports/[id]/edit.vue` — change summary field type to `richtext`
@@ -161,6 +175,7 @@ New endpoint at `server/api/admin/reports/[id]/history.get.ts`.
 **Query:** `audit_logs` table filtered by `entityType = 'report'` and `entityId = :id`, joined with `users` to get the actor's name. Ordered by `createdAt DESC`, limited to 20.
 
 **Response:**
+
 ```json
 {
   "data": [
@@ -180,6 +195,7 @@ New endpoint at `server/api/admin/reports/[id]/history.get.ts`.
 A new collapsible section in the sidebar titled "History", positioned between the Thumbnail and Meta sections.
 
 **Timeline design:**
+
 - Vertical line (left border) with circular dots at each entry
 - Each entry: user initial circle (colored) + user name + action verb + relative time
 - Action verbs: "created this report", "updated this report", "deleted this report"
@@ -187,12 +203,14 @@ A new collapsible section in the sidebar titled "History", positioned between th
 - Show last 10 entries; if more exist, show "View full history" link (placeholder — links nowhere for now, can be a future full-page view)
 
 **Change diff display (for updates):**
+
 - Parse the `changes` JSON (which has `before` and `after` keys)
 - Show field-level diffs: "Title: 'Old Title' → 'New Title'"
 - Skip unchanged fields
 - Translate field keys to human-readable labels
 
 ### Files
+
 - `server/api/admin/reports/[id]/history.get.ts` — new
 - `pages/admin/reports/[id]/edit.vue` — add history section
 
@@ -207,7 +225,7 @@ interface Toast {
   id: string
   type: 'success' | 'error' | 'warning' | 'info'
   message: string
-  duration?: number  // ms, default 4000
+  duration?: number // ms, default 4000
 }
 
 interface UseToastReturn {
@@ -227,6 +245,7 @@ Auto-dismiss after `duration` ms. Each toast gets a unique ID for targeted dismi
 Renders the toast queue as stacked cards in the top-right corner of the viewport (`fixed top-4 right-4 z-50`). Each toast slides in from the right with a transition.
 
 **Toast card:**
+
 - Icon (checkmark for success, X for error, warning triangle, info circle)
 - Message text
 - Close button
@@ -237,6 +256,7 @@ Renders the toast queue as stacked cards in the top-right corner of the viewport
 Add `<UiToastContainer />` to the admin layout so it's available on all admin pages.
 
 ### Files
+
 - `composables/useToast.ts` — new
 - `components/ui/ToastContainer.vue` — new
 - `layouts/admin.vue` — mount container
@@ -246,12 +266,14 @@ Add `<UiToastContainer />` to the admin layout so it's available on all admin pa
 Replace the current spinner with a skeleton that mirrors the two-column edit page layout.
 
 **Structure:**
+
 - Left column: two cards with animated pulse placeholders (matching translations card height + file upload card height)
 - Right column: three smaller cards with pulse placeholders (matching settings, thumbnail, meta)
 
 Uses `animate-pulse` on `bg-gray-200 dark:bg-gray-700` rounded blocks. No separate component — inline in the edit page template since it's specific to this layout.
 
 ### Files
+
 - `pages/admin/reports/[id]/edit.vue` — replace spinner with skeleton
 
 ## 7. Sidebar Reorganization
@@ -268,11 +290,13 @@ Reorder and regroup the sidebar sections for better information hierarchy:
 Each section remains in its own card. The status badge is a colored pill at the top of the Status card for immediate visibility.
 
 ### Files
+
 - `pages/admin/reports/[id]/edit.vue` — reorder sidebar sections
 
 ## 8. Post-Save Behavior
 
 After a successful save:
+
 1. Show success toast: "Report updated successfully"
 2. Stay on the edit page (do NOT redirect to list)
 3. Call `markSaved()` to reset the unsaved changes snapshot
@@ -283,18 +307,18 @@ The "Cancel" button in the sticky bar navigates back to `/admin/reports`. The ba
 
 ## Files Changed (Summary)
 
-| File | Change |
-|------|--------|
-| `composables/useUnsavedChanges.ts` | New — unsaved changes detection |
-| `composables/useToast.ts` | New — toast notification system |
-| `components/ui/ToastContainer.vue` | New — toast renderer |
-| `components/admin/form/AdminRichText.vue` | New — TipTap rich text editor |
+| File                                             | Change                            |
+| ------------------------------------------------ | --------------------------------- |
+| `composables/useUnsavedChanges.ts`               | New — unsaved changes detection   |
+| `composables/useToast.ts`                        | New — toast notification system   |
+| `components/ui/ToastContainer.vue`               | New — toast renderer              |
+| `components/admin/form/AdminRichText.vue`        | New — TipTap rich text editor     |
 | `components/admin/form/AdminTranslationTabs.vue` | Add richtext field type rendering |
-| `server/api/admin/reports/[id]/history.get.ts` | New — audit trail endpoint |
-| `pages/admin/reports/[id]/edit.vue` | Major overhaul — all sections |
-| `pages/admin/reports/create.vue` | Rich text field type + toast |
-| `layouts/admin.vue` | Mount toast container |
-| `package.json` | TipTap dependencies |
+| `server/api/admin/reports/[id]/history.get.ts`   | New — audit trail endpoint        |
+| `pages/admin/reports/[id]/edit.vue`              | Major overhaul — all sections     |
+| `pages/admin/reports/create.vue`                 | Rich text field type + toast      |
+| `layouts/admin.vue`                              | Mount toast container             |
+| `package.json`                                   | TipTap dependencies               |
 
 ## Out of Scope
 

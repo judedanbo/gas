@@ -362,6 +362,16 @@ describe('notification pages', () => {
     })
     expect(rows.Finished).toBeTruthy()
     expect(rows['Error code']).toBeUndefined()
+    // A single run is the norm and not worth a row.
+    expect(rows.Runs).toBeUndefined()
+  })
+
+  it('says when an upload had to be resumed after a server restart', () => {
+    const resumed = job({ status: 'completed', active: false, attempts: 2 })
+    const rows = Object.fromEntries(
+      notificationDetails(uploadJobToNotification(resumed), resumed).map((r) => [r.label, r.value])
+    )
+    expect(rows.Runs).toBe('2 (resumed after a server restart)')
   })
 
   it('falls back to generic facts for local entries', () => {

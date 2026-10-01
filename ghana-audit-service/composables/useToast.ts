@@ -30,6 +30,6 @@ export function useToast() {
     error: (message: string, duration?: number) => addToast('error', message, duration),
     warning: (message: string, duration?: number) => addToast('warning', message, duration),
     info: (message: string, duration?: number) => addToast('info', message, duration),
-    dismiss,
+    dismiss
   }
 }

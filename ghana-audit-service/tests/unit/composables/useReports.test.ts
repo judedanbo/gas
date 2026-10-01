@@ -76,9 +76,7 @@ describe('useReports', () => {
 
       await fetchReports({ category: 'financial' })
 
-      expect(mockFetch).toHaveBeenCalledWith(
-        expect.stringContaining('category=financial')
-      )
+      expect(mockFetch).toHaveBeenCalledWith(expect.stringContaining('category=financial'))
     })
 
     it('should fetch reports with year filter', async () => {
@@ -92,9 +90,7 @@ describe('useReports', () => {
 
       await fetchReports({ year: 2024 })
 
-      expect(mockFetch).toHaveBeenCalledWith(
-        expect.stringContaining('year=2024')
-      )
+      expect(mockFetch).toHaveBeenCalledWith(expect.stringContaining('year=2024'))
     })
 
     it('should fetch reports with search filter', async () => {
@@ -108,9 +104,7 @@ describe('useReports', () => {
 
       await fetchReports({ search: 'audit' })
 
-      expect(mockFetch).toHaveBeenCalledWith(
-        expect.stringContaining('search=audit')
-      )
+      expect(mockFetch).toHaveBeenCalledWith(expect.stringContaining('search=audit'))
     })
 
     it('should fetch reports with pagination', async () => {
@@ -124,17 +118,13 @@ describe('useReports', () => {
 
       await fetchReports({ page: 2, perPage: 20 })
 
-      expect(mockFetch).toHaveBeenCalledWith(
-        expect.stringContaining('page=2')
-      )
-      expect(mockFetch).toHaveBeenCalledWith(
-        expect.stringContaining('perPage=20')
-      )
+      expect(mockFetch).toHaveBeenCalledWith(expect.stringContaining('page=2'))
+      expect(mockFetch).toHaveBeenCalledWith(expect.stringContaining('perPage=20'))
     })
 
     it('should set loading state during fetch', async () => {
       let resolvePromise: (value: unknown) => void
-      const fetchPromise = new Promise(resolve => {
+      const fetchPromise = new Promise((resolve) => {
         resolvePromise = resolve
       })
       mockFetch.mockReturnValue(fetchPromise)
@@ -206,7 +196,7 @@ describe('useReports', () => {
 
     it('should set loading state during single report fetch', async () => {
       let resolvePromise: (value: unknown) => void
-      const fetchPromise = new Promise(resolve => {
+      const fetchPromise = new Promise((resolve) => {
         resolvePromise = resolve
       })
       mockFetch.mockReturnValue(fetchPromise)

@@ -23,10 +23,10 @@ Single new component (`AdminReportFileModal`) using Approach A — a focused com
 
 ```typescript
 interface Props {
-  fileUrl?: string | null       // existing file URL (edit mode)
-  fileSize?: number | null      // existing file size in bytes
-  thumbnail?: string | null     // existing thumbnail URL
-  error?: string                // validation error from parent form
+  fileUrl?: string | null // existing file URL (edit mode)
+  fileSize?: number | null // existing file size in bytes
+  thumbnail?: string | null // existing thumbnail URL
+  error?: string // validation error from parent form
   required?: boolean
 }
 ```
@@ -46,10 +46,12 @@ defineEmits<{
 Two states:
 
 **No file attached (create page initial state):**
+
 - Styled card with dashed border, upload icon, and "Attach Report" text
 - Clicking opens the modal
 
 **File attached (edit page, or after upload):**
+
 - Compact card showing:
   - Thumbnail image on the left (or PDF icon fallback if no thumbnail)
   - Filename (extracted from URL path)
@@ -110,15 +112,20 @@ Uses `UiBaseModal` with `size="full"` (max-w-4xl) and title "Report File".
 **Auth**: Standard admin auth middleware (automatic for `/api/admin/**`)
 
 **Request body**:
+
 ```typescript
-{ fileUrl: string }  // e.g. "/uploads/reports/20260513-abc.pdf"
+{
+  fileUrl: string
+} // e.g. "/uploads/reports/20260513-abc.pdf"
 ```
 
 **Validation**:
+
 - `fileUrl` is required, must be a non-empty string
 - `fileUrl` must start with `/uploads/reports/` (prevent path traversal)
 
 **Processing**:
+
 1. Call `resolvePublicAsset(fileUrl)` to get filesystem path
 2. If file not found, return 422 "PDF file not found"
 3. Call `generateThumbnailFromPdf(pdfPath)`
@@ -126,8 +133,12 @@ Uses `UiBaseModal` with `size="full"` (max-w-4xl) and title "Report File".
 5. Return `{ success: true, thumbnailUrl: "<generated url>" }`
 
 **Response**:
+
 ```typescript
-{ success: boolean; thumbnailUrl: string }
+{
+  success: boolean
+  thumbnailUrl: string
+}
 ```
 
 ## Page Integration
@@ -135,6 +146,7 @@ Uses `UiBaseModal` with `size="full"` (max-w-4xl) and title "Report File".
 ### Create page (`pages/admin/reports/create.vue`)
 
 **Changes:**
+
 - Replace `AdminFileUpload` for report PDF (lines 48-58) with `AdminReportFileModal`
 - Remove the sidebar Thumbnail `AdminFileUpload` section (lines 152-160)
 - Remove `handleFileInfo` function — modal emits directly to form fields
@@ -155,6 +167,7 @@ Uses `UiBaseModal` with `size="full"` (max-w-4xl) and title "Report File".
 ### Edit page (`pages/admin/reports/[id]/edit.vue`)
 
 **Changes:**
+
 - Replace `AdminFileUpload` for report PDF (lines 105-115) with `AdminReportFileModal`
 - Remove collapsible PDF preview section (lines 118-166)
 - Remove sidebar Thumbnail section (lines 283-291)
@@ -163,6 +176,7 @@ Uses `UiBaseModal` with `size="full"` (max-w-4xl) and title "Report File".
 - Wire up same three v-model bindings as create page
 
 ### What stays unchanged on both pages:
+
 - Form submission logic (`create()` / `update()`)
 - Slug, category, translations, publish settings
 - Validation rules (`fileUrl` remains required)

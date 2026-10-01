@@ -14,10 +14,10 @@
 
 ## File Structure
 
-| Action | File | Responsibility |
-|--------|------|----------------|
-| Create | `public/images/management/*.jpg` (7 files) | Member profile photos served as static assets |
-| Create | `server/database/seeds/departments.ts` | Seed 6 departments with English translations |
+| Action | File                                       | Responsibility                                 |
+| ------ | ------------------------------------------ | ---------------------------------------------- |
+| Create | `public/images/management/*.jpg` (7 files) | Member profile photos served as static assets  |
+| Create | `server/database/seeds/departments.ts`     | Seed 6 departments with English translations   |
 | Modify | `server/database/seeds/management-team.ts` | Replace placeholder data with real member data |
 
 ---
@@ -40,6 +40,7 @@ Expected: `Switched to a new branch 'feature/management-team-real-data'`
 ### Task 2: Download management team photos
 
 **Files:**
+
 - Create: `public/images/management/johnson-akuamoah-asiedu.jpg`
 - Create: `public/images/management/eugenia-shorme-nortey.jpg`
 - Create: `public/images/management/samuel-frimpong-manso.jpg`
@@ -103,6 +104,7 @@ git commit -m "feat(assets): add management team photos from audit.gov.gh"
 ### Task 3: Create departments seed script
 
 **Files:**
+
 - Create: `server/database/seeds/departments.ts`
 
 - [ ] **Step 1: Write the departments seed script**
@@ -282,6 +284,7 @@ git commit -m "feat(db): add departments seed with real department data"
 ### Task 4: Rewrite management team seed with real data
 
 **Files:**
+
 - Modify: `server/database/seeds/management-team.ts`
 
 - [ ] **Step 1: Replace the entire management-team.ts seed file**
@@ -397,7 +400,8 @@ In October 2025, he authored and launched a book on public sector auditing pract
     translations: {
       en: {
         name: 'Roberta Assiamah-Appiah',
-        title: 'Deputy Auditor-General, Educational Institutions and District Assemblies - Southern Zone',
+        title:
+          'Deputy Auditor-General, Educational Institutions and District Assemblies - Southern Zone',
         bio: `Ms. Roberta Assiamah-Appiah joined the Audit Service in 1991. She was appointed Acting Deputy Auditor-General in 2010 and received confirmation as substantive DAG in 2012. Prior to her current role, she served as DAG for Finance and Administration Department.
 
 She has undertaken audits of Ghana's Mission in Berne, Switzerland; Ghana Institute of Management and Public Administration (GIMPA); Driver, Vehicle and Licensing Authority (DVLA); and Judicial Service projects funded by DANIDA and the World Bank.
@@ -466,7 +470,8 @@ She enjoys reading and solving puzzles.`
     translations: {
       en: {
         name: 'George Swanzy Winful',
-        title: 'Deputy Auditor-General, Educational Institutions and District Assemblies - Northern Zone',
+        title:
+          'Deputy Auditor-General, Educational Institutions and District Assemblies - Northern Zone',
         bio: `Mr. George Swanzy Winful is a seasoned auditor and finance professional with more than 34 years of service in Ghana's public sector and international audit practice.
 
 He is a Fellow of the Association of Chartered Certified Accountants (FCCA), holds an MBA in Public Finance, and is a member of the Institute of Chartered Accountants, Ghana (ICA).
@@ -630,6 +635,7 @@ echo "=== Photos ===" && ls -1 public/images/management/ && echo "=== Seeds ==="
 ```
 
 Expected output:
+
 ```
 === Photos ===
 eugenia-shorme-nortey.jpg
@@ -658,6 +664,7 @@ Only run this step if Step 1 or 2 required fixes. Skip if everything passed clea
 ### Task 6: Update package.json seed commands (optional but recommended)
 
 **Files:**
+
 - Modify: `package.json`
 
 - [ ] **Step 1: Check current seed commands**

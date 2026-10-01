@@ -10,10 +10,7 @@ export default defineEventHandler(async (event): Promise<Event[]> => {
   const db = getDatabase()
   const now = new Date()
 
-  const conditions = [
-    eq(schema.events.isPublished, true),
-    isNull(schema.events.deletedAt)
-  ]
+  const conditions = [eq(schema.events.isPublished, true), isNull(schema.events.deletedAt)]
 
   if (query.filter === 'upcoming') {
     conditions.push(gte(schema.events.startDate, now))
@@ -23,13 +20,10 @@ export default defineEventHandler(async (event): Promise<Event[]> => {
 
   const whereClause = and(...conditions)
 
-  const orderDir = query.filter === 'past' ? desc(schema.events.startDate) : asc(schema.events.startDate)
+  const orderDir =
+    query.filter === 'past' ? desc(schema.events.startDate) : asc(schema.events.startDate)
 
-  const dbEvents = await db
-    .select()
-    .from(schema.events)
-    .where(whereClause)
-    .orderBy(orderDir)
+  const dbEvents = await db.select().from(schema.events).where(whereClause).orderBy(orderDir)
 
   const eventIds = dbEvents.map((e) => e.id)
   const translations =
@@ -37,9 +31,7 @@ export default defineEventHandler(async (event): Promise<Event[]> => {
       ? await db
           .select()
           .from(schema.eventTranslations)
-          .where(
-            sql`${schema.eventTranslations.eventId} IN (${sql.join(eventIds, sql`, `)})`
-          )
+          .where(sql`${schema.eventTranslations.eventId} IN (${sql.join(eventIds, sql`, `)})`)
       : []
 
   const translationsByEvent = translations.reduce(
@@ -52,7 +44,10 @@ export default defineEventHandler(async (event): Promise<Event[]> => {
       }
       return acc
     },
-    {} as Record<number, Record<string, { title: string; description: string; location: string | null }>>
+    {} as Record<
+      number,
+      Record<string, { title: string; description: string; location: string | null }>
+    >
   )
 
   const eventsWithData = dbEvents.map((e) => ({

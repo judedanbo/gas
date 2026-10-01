@@ -1,8 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import {
-  contactSubmissionColumns,
-  newsletterSubscriberColumns
-} from '~/server/utils/dtoColumns'
+import { contactSubmissionColumns, newsletterSubscriberColumns } from '~/server/utils/dtoColumns'
 
 // These projections exist to keep PII columns out of admin API responses.
 // Pinning the exact key sets means adding a leaked column (ipAddress,

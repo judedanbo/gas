@@ -21,9 +21,7 @@ export default defineEventHandler(async (event): Promise<Office[]> => {
       ? await db
           .select()
           .from(schema.officeTranslations)
-          .where(
-            sql`${schema.officeTranslations.officeId} IN (${sql.join(officeIds, sql`, `)})`
-          )
+          .where(sql`${schema.officeTranslations.officeId} IN (${sql.join(officeIds, sql`, `)})`)
       : []
 
   const typeIds = [...new Set(offices.map((o) => o.typeId))]

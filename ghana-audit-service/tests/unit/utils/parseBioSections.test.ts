@@ -6,7 +6,9 @@ describe('parseBioSections', () => {
   it('returns single section with null heading for plain text', () => {
     const bio = 'A simple bio with no sections.'
     const result = parseBioSections(bio)
-    expect(result).toEqual([{ heading: null, content: 'A simple bio with no sections.', isHtml: false }])
+    expect(result).toEqual([
+      { heading: null, content: 'A simple bio with no sections.', isHtml: false }
+    ])
   })
 
   it('returns empty array for empty string', () => {
@@ -29,13 +31,14 @@ MBA in Finance.`
     expect(result).toEqual([
       {
         heading: 'Career Background',
-        content:
-          'Joined in 2004 as Assistant Auditor-General.\n\nServed in multiple departments.', isHtml: false
+        content: 'Joined in 2004 as Assistant Auditor-General.\n\nServed in multiple departments.',
+        isHtml: false
       },
       {
         heading: 'Qualifications',
-        content: 'Chartered Accountant.\n\nMBA in Finance.', isHtml: false
-      },
+        content: 'Chartered Accountant.\n\nMBA in Finance.',
+        isHtml: false
+      }
     ])
   })
 
@@ -48,7 +51,7 @@ Joined in 2004.`
     const result = parseBioSections(bio)
     expect(result).toEqual([
       { heading: null, content: 'Mr. Smith is a senior official.', isHtml: false },
-      { heading: 'Career Background', content: 'Joined in 2004.', isHtml: false },
+      { heading: 'Career Background', content: 'Joined in 2004.', isHtml: false }
     ])
   })
 
@@ -59,7 +62,7 @@ Joined in 2004.`
 
     const result = parseBioSections(bio)
     expect(result).toEqual([
-      { heading: 'Spaced Heading', content: 'Content with leading spaces.', isHtml: false },
+      { heading: 'Spaced Heading', content: 'Content with leading spaces.', isHtml: false }
     ])
   })
 
@@ -78,9 +81,7 @@ Has content.`
 ## Real Section
 Has content.`
     const result = parseBioSections(bio)
-    expect(result).toEqual([
-      { heading: 'Real Section', content: 'Has content.', isHtml: false }
-    ])
+    expect(result).toEqual([{ heading: 'Real Section', content: 'Has content.', isHtml: false }])
   })
 
   describe('HTML bios (admin TipTap editor)', () => {
@@ -88,9 +89,7 @@ Has content.`
       // The admin editor runs StarterKit with `heading: false`, so this is the shape
       // real bios take — and the case that used to render raw <p> tags on the page.
       const bio = '<p>Dr. Graham was appointed in 2023.</p><p>She holds a PhD.</p>'
-      expect(parseBioSections(bio)).toEqual([
-        { heading: null, content: bio, isHtml: true }
-      ])
+      expect(parseBioSections(bio)).toEqual([{ heading: null, content: bio, isHtml: true }])
     })
 
     it('preserves inline markup so the section can be rendered with v-html', () => {
@@ -136,9 +135,7 @@ Has content.`
 
     it('treats a bare comparison in plain text as text, not markup', () => {
       const bio = 'Audited < 5% of entities before 2004.'
-      expect(parseBioSections(bio)).toEqual([
-        { heading: null, content: bio, isHtml: false }
-      ])
+      expect(parseBioSections(bio)).toEqual([{ heading: null, content: bio, isHtml: false }])
     })
 
     it('returns an empty array for markup carrying no prose', () => {
