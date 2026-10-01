@@ -17,9 +17,10 @@ export interface RunReportOptimizationOptions {
   actor: AuditActor
   reportId: number | null
   /**
-   * Abort to stop early (a background upload handed off at shutdown). The
-   * job then ends as error INTERRUPTED and nothing more is written to
-   * storage: another server may already be resuming from the stored file.
+   * Abort to stop early at shutdown (a background upload handed off, an
+   * explicit optimization interrupted). The job then ends as error
+   * INTERRUPTED and nothing more is written to storage: another server may
+   * already be resuming from the stored file, or optimizing it afresh.
    */
   signal?: AbortSignal
 }
@@ -37,9 +38,10 @@ export interface RunReportOptimizationOptions {
 export async function runReportOptimization(opts: RunReportOptimizationOptions): Promise<void> {
   const { jobId, source, fileUrl, preset, allowDropBookmarks, actor, reportId, signal } = opts
   const { path: pdfPath, blobKey } = source
-  updateJob(jobId, { status: 'running' })
+  // Aborted while it waited for a scheduler slot: it never starts, so it never
+  // reads as running (a shutdown may already have reported it interrupted).
+  if (!signal?.aborted) updateJob(jobId, { status: 'running' })
   try {
-    // Aborted while it waited for a scheduler slot.
     signal?.throwIfAborted()
     const result = await optimizeReportPdf(pdfPath, {
       preset,
@@ -65,7 +67,9 @@ export async function runReportOptimization(opts: RunReportOptimizationOptions):
     // via the modal's update:optimization emit / the upload job row.)
     await persistOptimizationResult(fileUrl, reportId, preset, result)
 
-    updateJob(jobId, { status: 'success', result })
+    // Clears an error the job was given while this ran on (INTERRUPTED by a
+    // shutdown that couldn't stop it, a watchdog timeout): it succeeded.
+    updateJob(jobId, { status: 'success', result, error: undefined, errorCode: undefined })
     // Emit a terminal 'done' event so SSE subscribers that connected while the
     // job was still running are notified of completion.
     pushEvent(jobId, {

@@ -6,6 +6,7 @@ import {
   getActiveJobForFile,
   getActiveJobIdLocal,
   registerActiveJob,
+  releaseActiveJob,
   __resetSchedulerForTests
 } from '~/server/utils/pdfOptimizationScheduler'
 
@@ -76,6 +77,56 @@ describe('pdfOptimizationScheduler', () => {
     gates[1].resolve()
     gates[2].resolve()
     await flush()
+  })
+
+  it('lets an aborted item through at once, without waiting for a slot, and frees its file', async () => {
+    const gates = [deferred(), deferred()]
+    for (const [i, gate] of gates.entries()) {
+      const job = createJob(`/pdf/reports/slot-${i}.pdf`)
+      enqueue(job.id, job.fileUrl, () => gate.promise)
+    }
+    const waiting = createJob('/pdf/reports/aborted-in-queue.pdf')
+    registerActiveJob(waiting.fileUrl, waiting.id)
+    const controller = new AbortController()
+    const run = vi.fn(async () => {})
+    enqueue(waiting.id, waiting.fileUrl, run, controller.signal)
+    expect(run).not.toHaveBeenCalled()
+
+    controller.abort()
+
+    // Both slots are still taken, yet the aborted item has run (and, doing no
+    // work, finished) — so its file is free again.
+    expect(run).toHaveBeenCalledTimes(1)
+    await flush()
+    expect(getActiveJobIdLocal(waiting.fileUrl)).toBeUndefined()
+
+    // The slots it never held are untouched: one more item still queues.
+    const next = createJob('/pdf/reports/after-abort.pdf')
+    const nextRun = vi.fn(async () => {})
+    enqueue(next.id, next.fileUrl, nextRun)
+    expect(nextRun).not.toHaveBeenCalled()
+    gates[0].resolve()
+    await flush()
+    expect(nextRun).toHaveBeenCalledTimes(1)
+    gates[1].resolve()
+    await flush()
+  })
+
+  it('releaseActiveJob drops the claim in Redis before resolving, but never another job’s', async () => {
+    const fake = makeFakeRedis()
+    vi.mocked(getRedis).mockReturnValue(fake.client as never)
+
+    const job = createJob('/pdf/reports/release-await.pdf')
+    registerActiveJob(job.fileUrl, job.id)
+    await flush()
+    await releaseActiveJob(job.fileUrl, job.id)
+    expect(fake.store.has('gas:pdf-opt-active:/pdf/reports/release-await.pdf')).toBe(false)
+    expect(getActiveJobIdLocal(job.fileUrl)).toBeUndefined()
+
+    // Re-claimed by another replica meanwhile: left alone.
+    fake.store.set('gas:pdf-opt-active:/pdf/reports/release-await.pdf', 'other-job')
+    await releaseActiveJob(job.fileUrl, job.id)
+    expect(fake.store.get('gas:pdf-opt-active:/pdf/reports/release-await.pdf')).toBe('other-job')
   })
 
   it('registers and resolves the active job for a file, ignoring terminal jobs', () => {

@@ -7,6 +7,7 @@ import { materializePdfSource, type LocalPdfSource } from './pdfSource'
 import { createJob, getJob, subscribe, type SequencedEvent } from './pdfOptimizationJobs'
 import { enqueue, registerActiveJob } from './pdfOptimizationScheduler'
 import { runReportOptimization } from './runReportOptimization'
+import { settledOrTimeout } from './shutdownSignals'
 import type { AuditActor } from './auditLogger'
 import { logError, logWarn } from './logger'
 import {
@@ -486,19 +487,24 @@ async function optimizeInPlace(
 
   try {
     // Always enqueued once registered: even an aborted run's item has to
-    // pass through the scheduler, which is what releases the file claim.
+    // pass through the scheduler, which is what releases the file claim (at
+    // once, given the signal, rather than when a slot frees up).
     const optimized = new Promise<void>((resolve) => {
-      enqueue(optJob.id, job.fileUrl, () =>
-        runReportOptimization({
-          jobId: optJob.id,
-          source,
-          fileUrl: job.fileUrl,
-          preset: job.preset,
-          allowDropBookmarks: job.allowDropBookmarks,
-          actor,
-          reportId: null,
-          signal: run.controller.signal
-        }).finally(resolve)
+      enqueue(
+        optJob.id,
+        job.fileUrl,
+        () =>
+          runReportOptimization({
+            jobId: optJob.id,
+            source,
+            fileUrl: job.fileUrl,
+            preset: job.preset,
+            allowDropBookmarks: job.allowDropBookmarks,
+            actor,
+            reportId: null,
+            signal: run.controller.signal
+          }).finally(resolve),
+        run.controller.signal
       )
     })
     await writeJob(run, { optimizationJobId: optJob.id })
@@ -552,16 +558,6 @@ async function drainRuns(graceMs: number): Promise<void> {
     'reportUpload',
     `shutdown: released ${resumable} stored upload(s) for resume elsewhere, failed ${failed} not yet stored`
   )
-}
-
-function settledOrTimeout(promises: Promise<void>[], ms: number): Promise<void> {
-  return new Promise((resolve) => {
-    const timer = setTimeout(resolve, ms)
-    void Promise.allSettled(promises).then(() => {
-      clearTimeout(timer)
-      resolve()
-    })
-  })
 }
 
 /**

@@ -239,6 +239,25 @@ describe('optimizationStatusToPatch', () => {
     expect(failed.title).toBe('Optimization failed')
     expect(failed.notes[0].text).toMatch(/took too long/)
   })
+
+  it('reads a server restart as an interruption to run again, not a failure', () => {
+    const interrupted = optimizationStatusToPatch(
+      status({ status: 'error', active: false, errorCode: 'INTERRUPTED' }),
+      42
+    )
+    expect(interrupted).toMatchObject({
+      status: 'warning',
+      title: 'Optimization interrupted',
+      progress: null,
+      actions: [{ label: 'Open report', to: '/admin/reports/42/edit' }]
+    })
+    expect(interrupted.notes).toEqual([
+      {
+        text: expect.stringMatching(/interrupted by a server restart.*run optimization again/),
+        tone: 'warning'
+      }
+    ])
+  })
 })
 
 describe('sortNotifications', () => {

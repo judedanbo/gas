@@ -101,6 +101,22 @@ async function mirrorToRedis(state: JobState): Promise<void> {
   }
 }
 
+// Mirror writes still in flight. A process that is shutting down waits for
+// them (flushJobMirrors): the other replicas only learn a job's final state
+// from the mirror, and Redis is closed on the way out.
+const pendingMirrors = new Set<Promise<void>>()
+
+function mirror(state: JobState): void {
+  const write = mirrorToRedis(state)
+  pendingMirrors.add(write)
+  void write.finally(() => pendingMirrors.delete(write))
+}
+
+/** Resolves once every mirror write issued so far has landed (or failed). */
+export async function flushJobMirrors(): Promise<void> {
+  await Promise.allSettled([...pendingMirrors])
+}
+
 let sweepTimer: ReturnType<typeof setInterval> | undefined
 
 // Lazily started with the first job so idle processes never tick.
@@ -133,23 +149,37 @@ export function sweepStalledJobs(now: number = Date.now()): void {
   for (const state of jobs.values()) {
     const stall = stallOf(state, now)
     if (!stall) continue
-    updateJob(state.id, {
-      status: 'error',
-      error: 'Optimization timed out',
-      errorCode: stall.errorCode
-    })
-    // Terminal event so SSE subscribers get notified instead of hanging.
-    pushEvent(state.id, {
-      phase: 'done',
-      originalSize: 0,
-      optimizedSize: 0,
-      savedBytes: 0,
-      skippedCompression: true,
-      nativePages: 0,
-      scannedPages: 0,
-      ocrFailedPages: 0
-    })
+    failJob(state.id, 'Optimization timed out', stall.errorCode)
   }
+}
+
+/**
+ * Report a queued or running job as INTERRUPTED because this process is
+ * shutting down and will not finish it. A job that already finished keeps
+ * its outcome. Returns whether the job was interrupted.
+ */
+export function interruptJob(id: string): boolean {
+  const state = jobs.get(id)
+  if (!state || state.status === 'success' || state.status === 'error') return false
+  // Same error and code the runner reports when its signal aborts it, so the
+  // job ends up identical whichever of the two gets there first.
+  failJob(id, 'INTERRUPTED', 'INTERRUPTED')
+  return true
+}
+
+function failJob(id: string, error: string, errorCode: string): void {
+  updateJob(id, { status: 'error', error, errorCode })
+  // Terminal event so SSE subscribers get notified instead of hanging.
+  pushEvent(id, {
+    phase: 'done',
+    originalSize: 0,
+    optimizedSize: 0,
+    savedBytes: 0,
+    skippedCompression: true,
+    nativePages: 0,
+    scannedPages: 0,
+    ocrFailedPages: 0
+  })
 }
 
 /**
@@ -182,7 +212,7 @@ export function createJob(fileUrl: string, reportId?: number | null): JobState {
     updatedAt: Date.now()
   }
   jobs.set(state.id, state)
-  void mirrorToRedis(state)
+  mirror(state)
   return state
 }
 
@@ -208,7 +238,7 @@ export function updateJob(id: string, patch: Partial<JobState>): JobState | unde
   const state = jobs.get(id)
   if (!state) return undefined
   Object.assign(state, patch, { updatedAt: Date.now() })
-  void mirrorToRedis(state)
+  mirror(state)
   if (state.status === 'success' || state.status === 'error') {
     scheduleCleanup(id)
   } else {
@@ -231,7 +261,7 @@ export function pushEvent(id: string, event: ProgressEvent): void {
     state.events.splice(0, state.events.length - MAX_EVENTS_PER_JOB)
   }
   state.updatedAt = Date.now()
-  void mirrorToRedis(state)
+  mirror(state)
   getEmitter(id).emit('event', wrapped)
 }
 

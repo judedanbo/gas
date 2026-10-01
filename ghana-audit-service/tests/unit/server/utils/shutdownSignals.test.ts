@@ -1,6 +1,10 @@
 import { EventEmitter } from 'node:events'
 import { describe, it, expect, vi, afterEach } from 'vitest'
-import { nitroShutdownSignals, onShutdownSignal } from '~/server/utils/shutdownSignals'
+import {
+  nitroShutdownSignals,
+  onShutdownSignal,
+  settledOrTimeout
+} from '~/server/utils/shutdownSignals'
 
 // A stand-in for `process`: real EventEmitter semantics for once/off/
 // listenerCount, and a spy instead of actually signalling the test runner.
@@ -68,6 +72,39 @@ describe('onShutdownSignal', () => {
     expect(proc.kill).toHaveBeenCalledWith(4242, 'SIGINT')
   })
 
+  it('re-raises only once every handler registered here has settled', async () => {
+    const proc = fakeProcess()
+    const uploads = deferred()
+    const optimizations = vi.fn(async () => undefined)
+    onShutdownSignal(() => uploads.promise, ['SIGTERM'], proc)
+    onShutdownSignal(optimizations, ['SIGTERM'], proc)
+
+    proc.emit('SIGTERM', 'SIGTERM')
+    await settle()
+    // The quick handler finishing must not end the process under the slow one.
+    expect(optimizations).toHaveBeenCalledTimes(1)
+    expect(proc.kill).not.toHaveBeenCalled()
+
+    uploads.resolve()
+    await settle()
+    expect(proc.kill).toHaveBeenCalledTimes(1)
+    expect(proc.kill).toHaveBeenCalledWith(4242, 'SIGTERM')
+  })
+
+  it('still leaves exiting to the existing shutdown handler with several registered', async () => {
+    const proc = fakeProcess()
+    onShutdownSignal(async () => undefined, ['SIGTERM'], proc)
+    onShutdownSignal(async () => undefined, ['SIGTERM'], proc)
+    const nitro = vi.fn()
+    proc.on('SIGTERM', nitro)
+
+    proc.emit('SIGTERM', 'SIGTERM')
+    await settle()
+
+    expect(nitro).toHaveBeenCalledTimes(1)
+    expect(proc.kill).not.toHaveBeenCalled()
+  })
+
   it('can be removed before any signal arrives', () => {
     const proc = fakeProcess()
     const handler = vi.fn(async () => undefined)
@@ -79,6 +116,28 @@ describe('onShutdownSignal', () => {
     expect(handler).not.toHaveBeenCalled()
     expect(proc.listenerCount('SIGTERM')).toBe(0)
     expect(proc.listenerCount('SIGINT')).toBe(0)
+  })
+})
+
+describe('settledOrTimeout', () => {
+  it('resolves as soon as the work settles, rejections included', async () => {
+    const work = deferred()
+    let done = false
+    const waiting = settledOrTimeout([work.promise, Promise.reject(new Error('x'))], 60_000).then(
+      () => (done = true)
+    )
+    await settle()
+    expect(done).toBe(false)
+
+    work.resolve()
+    await waiting
+    expect(done).toBe(true)
+  })
+
+  it('stops waiting at the deadline', async () => {
+    const startedAt = Date.now()
+    await settledOrTimeout([new Promise(() => {})], 20)
+    expect(Date.now() - startedAt).toBeLessThan(1_000)
   })
 })
 
