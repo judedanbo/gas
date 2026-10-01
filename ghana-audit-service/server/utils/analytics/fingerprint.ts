@@ -58,9 +58,7 @@ export function isIpAnonymizedRoute(routePattern: string): boolean {
   const p = routePattern.startsWith('/[locale]/')
     ? routePattern.slice('/[locale]'.length)
     : routePattern
-  return ANONYMIZED_IP_ROUTE_PREFIXES.some(
-    (prefix) => p === prefix || p.startsWith(`${prefix}/`)
-  )
+  return ANONYMIZED_IP_ROUTE_PREFIXES.some((prefix) => p === prefix || p.startsWith(`${prefix}/`))
 }
 
 export function hashUa(ua: string): string {
@@ -106,6 +104,19 @@ export function classifyUa(ua: string | null | undefined): {
     return { family: 'browser', isKnownBot: false }
   }
   return { family: 'unknown', isKnownBot: false }
+}
+
+/**
+ * Kubelet startup/readiness/liveness probes hit `/` straight from the node,
+ * every few seconds per pod. They aren't visits, and their node-local source
+ * IP can never resolve to a country, so the capture middleware skips them
+ * rather than flooding the analytics views (the Geo page especially, as
+ * "Unknown"). Real traffic always arrives through ingress-nginx, which sets
+ * X-Forwarded-For — requiring that header to be absent stops an outside client
+ * hiding behind a spoofed probe User-Agent.
+ */
+export function isKubeletProbe(ua: string, forwardedFor: string | undefined): boolean {
+  return ua.startsWith('kube-probe/') && !forwardedFor
 }
 
 // ---------------------------------------------------------------------------
