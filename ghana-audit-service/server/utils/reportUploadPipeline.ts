@@ -59,8 +59,8 @@ export const DRAIN_GRACE_MS = 20_000
 
 /**
  * Upload runs this process may already be carrying and still claim
- * interrupted jobs to resume — the optimizer runs two at a time per process,
- * so a busier pod leaves resumes to an idler replica.
+ * interrupted jobs to resume, so a busier pod leaves resumes to an idler
+ * replica.
  */
 const RESUME_CAPACITY = 2
 
