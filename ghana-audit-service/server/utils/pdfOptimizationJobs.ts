@@ -67,11 +67,26 @@ function getEmitter(id: string): EventEmitter {
   return em
 }
 
+// One pending wipe per terminal job, so it can be called off if the job
+// becomes active again (see updateJob).
+const cleanupTimers = new Map<string, ReturnType<typeof setTimeout>>()
+
 function scheduleCleanup(id: string): void {
-  setTimeout(() => {
+  cancelCleanup(id)
+  const timer = setTimeout(() => {
+    cleanupTimers.delete(id)
     jobs.delete(id)
     emitters.delete(id)
-  }, COMPLETED_TTL_MS).unref?.()
+  }, COMPLETED_TTL_MS)
+  timer.unref?.()
+  cleanupTimers.set(id, timer)
+}
+
+function cancelCleanup(id: string): void {
+  const timer = cleanupTimers.get(id)
+  if (!timer) return
+  clearTimeout(timer)
+  cleanupTimers.delete(id)
 }
 
 async function mirrorToRedis(state: JobState): Promise<void> {
@@ -196,6 +211,13 @@ export function updateJob(id: string, patch: Partial<JobState>): JobState | unde
   void mirrorToRedis(state)
   if (state.status === 'success' || state.status === 'error') {
     scheduleCleanup(id)
+  } else {
+    // The watchdog flips a job that merely waited 30 min for a scheduler slot
+    // to QUEUE_TIMEOUT, but the scheduler still runs it — this update is it
+    // coming back. Without cancelling the wipe that flip armed, the job was
+    // dropped mid-run and its real outcome lost: the upload pipeline then
+    // recorded "Optimization failed" for a file that had been optimized.
+    cancelCleanup(id)
   }
   return state
 }
