@@ -20,7 +20,9 @@ resources:
   - redis/service.yaml
   - redis/deployment.yaml
   - storage/public-files-pvc.yaml
+  - storage/geoip-pvc.yaml
   - frontend/service.yaml
   - frontend/deployment.yaml
   - frontend/hpa.yaml
   - backup/mysql-backup-cronjob.yaml
+  - geoip/geoip-update-cronjob.yaml

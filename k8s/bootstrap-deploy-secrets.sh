@@ -90,6 +90,10 @@ set_secret NUXT_SMTP_USER "${NUXT_SMTP_USER:-}"
 set_secret NUXT_SMTP_PASS "${NUXT_SMTP_PASS:-}"
 set_secret NUXT_SMTP_FROM "${NUXT_SMTP_FROM:-}"
 set_secret YOUTUBE_API_KEY "${YOUTUBE_API_KEY:-}"
+# MaxMind GeoLite2 account for the geoip-update CronJob (visitor geolocation).
+# Free signup at https://www.maxmind.com/en/geolite2/signup. See k8s/README.md.
+set_secret MAXMIND_ACCOUNT_ID "${MAXMIND_ACCOUNT_ID:-}"
+set_secret MAXMIND_LICENSE_KEY "${MAXMIND_LICENSE_KEY:-}"
 
 echo
 echo "Done. Generated DB/root passwords are now only in GitHub + (after deploy) the"

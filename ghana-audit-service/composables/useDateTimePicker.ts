@@ -32,7 +32,7 @@ export function useDateTimePicker() {
         day: d,
         month: month === 0 ? 11 : month - 1,
         year: month === 0 ? year - 1 : year,
-        isCurrentMonth: false,
+        isCurrentMonth: false
       })
     }
 
@@ -48,7 +48,7 @@ export function useDateTimePicker() {
         day: d,
         month: month === 11 ? 0 : month + 1,
         year: month === 11 ? year + 1 : year,
-        isCurrentMonth: false,
+        isCurrentMonth: false
       })
     }
 
@@ -78,7 +78,7 @@ export function useDateTimePicker() {
     return {
       date: parsed,
       hours: parsed.getUTCHours(),
-      minutes: parsed.getUTCMinutes(),
+      minutes: parsed.getUTCMinutes()
     }
   }
 
@@ -86,14 +86,14 @@ export function useDateTimePicker() {
     date: Date | null,
     hours: number,
     minutes: number,
-    mode: PickerMode,
+    mode: PickerMode
   ): string {
     if (mode === 'date') {
       if (!date) return ''
       return new Intl.DateTimeFormat('en-GB', {
         day: 'numeric',
         month: 'long',
-        year: 'numeric',
+        year: 'numeric'
       }).format(date)
     }
 
@@ -109,7 +109,7 @@ export function useDateTimePicker() {
     const datePart = new Intl.DateTimeFormat('en-GB', {
       day: 'numeric',
       month: 'long',
-      year: 'numeric',
+      year: 'numeric'
     }).format(date)
     const h12 = hours % 12 || 12
     const ampm = hours < 12 ? 'AM' : 'PM'
@@ -121,7 +121,7 @@ export function useDateTimePicker() {
     date: Date | null,
     hours: number,
     minutes: number,
-    mode: PickerMode,
+    mode: PickerMode
   ): string {
     if (mode === 'time') {
       return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`
@@ -143,11 +143,7 @@ export function useDateTimePicker() {
     return `${y}-${m}-${d}T${hh}:${mm}:00.000Z`
   }
 
-  function isDateInRange(
-    date: Date,
-    min: Date | null,
-    max: Date | null,
-  ): boolean {
+  function isDateInRange(date: Date, min: Date | null, max: Date | null): boolean {
     const dayStart = new Date(date.getFullYear(), date.getMonth(), date.getDate())
     if (min) {
       const minDay = new Date(min.getFullYear(), min.getMonth(), min.getDate())
@@ -170,6 +166,6 @@ export function useDateTimePicker() {
     formatDisplay,
     toEmitValue,
     isDateInRange,
-    clampToStep,
+    clampToStep
   }
 }

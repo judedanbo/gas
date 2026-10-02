@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeAll, afterAll } from 'vitest'
 import { signToken } from '~/server/utils/jwt'
 import { signSseTicket } from '~/server/utils/sseTicket'
+import { validateSession } from '~/server/utils/sessions'
 
 const SECRET = 'test-secret-for-adminauth-middleware-tests'
 const ORIGINAL_SECRET = process.env.JWT_SECRET
@@ -78,10 +79,16 @@ interface FakeH3Event {
   context: { auth?: { user: { id: number }; token: string; sessionId: string } }
 }
 
-function makeEvent(path: string, opts: { bearer?: string; ticket?: string } = {}): FakeH3Event {
+function makeEvent(
+  path: string,
+  opts: { bearer?: string; ticket?: string; headers?: Record<string, string> } = {}
+): FakeH3Event {
   return {
     path,
-    headers: opts.bearer ? { Authorization: `Bearer ${opts.bearer}` } : {},
+    headers: {
+      ...(opts.bearer ? { Authorization: `Bearer ${opts.bearer}` } : {}),
+      ...opts.headers
+    },
     query: opts.ticket ? { ticket: opts.ticket } : {},
     context: {}
   }
@@ -142,5 +149,35 @@ describe('adminAuth middleware — SSE ticket route scoping', () => {
     const event = makeEvent('/api/news')
     await middleware(event)
     expect(event.context.auth).toBeUndefined()
+  })
+})
+
+describe('adminAuth middleware — background polling', () => {
+  const jwt = () => signToken({ userId: 7, email: ACTIVE_USER.email, role: 'admin', sid: 'sess-1' })
+
+  it('slides the idle window for normal requests', async () => {
+    vi.mocked(validateSession).mockClear()
+    await middleware(makeEvent('/api/admin/reports', { bearer: jwt() }))
+    expect(validateSession).toHaveBeenCalledWith('sess-1', { touch: true })
+  })
+
+  it('authenticates marked background polls without counting them as activity', async () => {
+    vi.mocked(validateSession).mockClear()
+    const event = makeEvent('/api/admin/reports/upload-jobs', {
+      bearer: jwt(),
+      headers: { 'X-Admin-Background': '1' }
+    })
+
+    await middleware(event)
+
+    expect(event.context.auth!.user.id).toBe(7)
+    expect(validateSession).toHaveBeenCalledWith('sess-1', { touch: false })
+  })
+
+  it('still rejects a background poll without credentials', async () => {
+    const event = makeEvent('/api/admin/reports/upload-jobs', {
+      headers: { 'X-Admin-Background': '1' }
+    })
+    await expect(middleware(event)).rejects.toMatchObject({ statusCode: 401 })
   })
 })

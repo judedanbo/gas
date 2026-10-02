@@ -9,14 +9,23 @@ export const OPTIMIZATION_ERROR_MESSAGES: Record<string, string> = {
   TIMEOUT:
     'Optimization took too long and was stopped. The original file is unchanged — you can retry.',
   QUEUE_TIMEOUT:
-    'Optimization waited too long behind other jobs. The original file is unchanged — try again shortly.'
+    'Optimization waited too long behind other jobs. The original file is unchanged — try again shortly.',
+  INSPECT_FAILED:
+    'The PDF could not be read — it may be damaged or password-protected. The original file is unchanged.',
+  INTERRUPTED:
+    'Optimization was interrupted by a server restart. The file itself is saved — you can run optimization again.',
+  SERVER_RESTARTING:
+    'The server is restarting, so optimization did not start. The original file is unchanged — try again in a moment.'
 }
 
 export function optimizationErrorMessage(code: string | null | undefined): string {
-  return (
-    (code ? OPTIMIZATION_ERROR_MESSAGES[code] : undefined) ??
-    'Optimization failed. The original file is unchanged.'
-  )
+  const known = code ? OPTIMIZATION_ERROR_MESSAGES[code] : undefined
+  if (known) return known
+  // Name the failing step (a fixed code, never internals) so a report from an
+  // admin can be matched to the server log line.
+  return code
+    ? `Optimization failed (${code}). The original file is unchanged.`
+    : 'Optimization failed. The original file is unchanged.'
 }
 
 export const OPTIMIZATION_PHASE_LABELS: Record<OptimizationPhase, string> = {
@@ -31,4 +40,46 @@ export const OPTIMIZATION_PHASE_LABELS: Record<OptimizationPhase, string> = {
 
 export function optimizationPhaseLabel(phase: OptimizationPhase | null): string {
   return (phase ? OPTIMIZATION_PHASE_LABELS[phase] : undefined) ?? 'Optimizing PDF…'
+}
+
+// Coarse 0–100 position reached at the end of each optimizer phase.
+const PHASE_PROGRESS: Record<OptimizationPhase, number> = {
+  inspect: 5,
+  split: 10,
+  classify: 25,
+  ocr: 60,
+  merge: 80,
+  compress: 95,
+  done: 100
+}
+
+/**
+ * Overall optimization progress for a phase, refined by page-of-N while
+ * inside the per-page phases (classify, ocr). 0 before the first event.
+ */
+export function optimizationProgressPercent(
+  phase: OptimizationPhase | null | undefined,
+  page = 0,
+  totalPages = 0
+): number {
+  if (!phase) return 0
+  if (phase === 'classify' || phase === 'ocr') {
+    const base = phase === 'classify' ? PHASE_PROGRESS.split : PHASE_PROGRESS.classify
+    const span = PHASE_PROGRESS[phase] - base
+    const frac = totalPages ? Math.min(1, page / totalPages) : 0
+    return Math.round(base + span * frac)
+  }
+  return PHASE_PROGRESS[phase] ?? 0
+}
+
+/** "Page x of N" while inside the per-page phases, else null. */
+export function optimizationPageLabel(
+  phase: OptimizationPhase | null | undefined,
+  page = 0,
+  totalPages = 0
+): string | null {
+  if ((phase === 'classify' || phase === 'ocr') && totalPages > 0) {
+    return `Page ${page} of ${totalPages}`
+  }
+  return null
 }

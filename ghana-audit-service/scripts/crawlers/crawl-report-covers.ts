@@ -1,6 +1,16 @@
 import { delay, sanitizeFilename, writeJson } from './utils'
 import { join } from 'node:path'
-import { mkdirSync, existsSync, readFileSync, writeFileSync, unlinkSync, readdirSync, rmdirSync, statSync, createWriteStream } from 'node:fs'
+import {
+  mkdirSync,
+  existsSync,
+  readFileSync,
+  writeFileSync,
+  unlinkSync,
+  readdirSync,
+  rmdirSync,
+  statSync,
+  createWriteStream
+} from 'node:fs'
 import { execFileSync } from 'node:child_process'
 import { pipeline } from 'node:stream/promises'
 import { Readable } from 'node:stream'
@@ -52,14 +62,23 @@ async function downloadPdf(url: string, destPath: string): Promise<DownloadResul
 
 function pdfToJpeg(pdfPath: string, outputPrefix: string): string | null {
   try {
-    execFileSync('pdftoppm', [
-      '-f', '1', '-l', '1',
-      '-jpeg',
-      '-scale-to', '800',
-      '-jpegopt', 'quality=85',
-      pdfPath,
-      outputPrefix
-    ], { timeout: 30_000, stdio: 'pipe' })
+    execFileSync(
+      'pdftoppm',
+      [
+        '-f',
+        '1',
+        '-l',
+        '1',
+        '-jpeg',
+        '-scale-to',
+        '800',
+        '-jpegopt',
+        'quality=85',
+        pdfPath,
+        outputPrefix
+      ],
+      { timeout: 30_000, stdio: 'pipe' }
+    )
 
     const candidates = ['-1.jpg', '-01.jpg', '-001.jpg']
     for (const suffix of candidates) {
@@ -129,7 +148,11 @@ async function crawlReportCovers() {
       const outputPrefix = join(TMP_DIR, 'cover')
       const jpegPath = pdfToJpeg(pdfPath, outputPrefix)
 
-      try { unlinkSync(pdfPath) } catch { /* cleanup — ignore if already removed */ }
+      try {
+        unlinkSync(pdfPath)
+      } catch {
+        /* cleanup — ignore if already removed */
+      }
 
       if (!jpegPath) {
         failed++
@@ -139,9 +162,17 @@ async function crawlReportCovers() {
 
       const data = readFileSync(jpegPath)
       writeFileSync(imgPath, data)
-      try { unlinkSync(jpegPath) } catch { /* cleanup */ }
+      try {
+        unlinkSync(jpegPath)
+      } catch {
+        /* cleanup */
+      }
     } else {
-      try { unlinkSync(pdfPath) } catch { /* cleanup */ }
+      try {
+        unlinkSync(pdfPath)
+      } catch {
+        /* cleanup */
+      }
     }
 
     report.thumbnail = `/img/reports/${imgFilename}`
@@ -162,16 +193,20 @@ async function crawlReportCovers() {
 
   try {
     if (readdirSync(TMP_DIR).length === 0) rmdirSync(TMP_DIR)
-  } catch { /* cleanup — ignore if dir already removed */ }
+  } catch {
+    /* cleanup — ignore if dir already removed */
+  }
 
   const totalBytes = reports.reduce((sum, r) => sum + (parseInt(r.fileSize) || 0), 0)
-  const withSize = reports.filter(r => r.fileSize !== '0').length
+  const withSize = reports.filter((r) => r.fileSize !== '0').length
 
   console.log(`\nDone!`)
   console.log(`  ✓ ${success} covers extracted`)
   console.log(`  ⊘ ${skipped} already existed`)
   console.log(`  ✗ ${failed} failed`)
-  console.log(`  📦 ${withSize}/${reports.length} reports have file sizes (total: ${formatBytes(totalBytes)})`)
+  console.log(
+    `  📦 ${withSize}/${reports.length} reports have file sizes (total: ${formatBytes(totalBytes)})`
+  )
 }
 
 crawlReportCovers().catch((err) => {

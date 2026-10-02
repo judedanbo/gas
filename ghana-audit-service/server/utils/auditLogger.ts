@@ -12,6 +12,25 @@ export interface AuditChanges {
 }
 
 /**
+ * Who an audit entry is attributed to. Captured from the request up front so
+ * work that outlives it (background report uploads, which may even resume on
+ * another server) can still log against the admin who started it.
+ */
+export interface AuditActor {
+  userId: number | null
+  ipAddress: string | null
+  userAgent: string | null
+}
+
+export function auditActorFromEvent(event: H3Event): AuditActor {
+  return {
+    userId: event.context.auth?.user.id || null,
+    ipAddress: getClientIP(event),
+    userAgent: getHeader(event, 'user-agent') || null
+  }
+}
+
+/**
  * Log an audit action to the database
  */
 export async function logAuditAction(
@@ -22,24 +41,46 @@ export async function logAuditAction(
   changes?: AuditChanges
 ): Promise<void> {
   try {
-    const db = getDatabase()
-    const auth = event.context.auth
-    const clientIP = getClientIP(event)
-    const userAgent = getHeader(event, 'user-agent') || null
-
-    await db.insert(schema.auditLogs).values({
-      userId: auth?.user.id || null,
-      action,
-      entityType,
-      entityId,
-      changes: changes || null,
-      ipAddress: clientIP,
-      userAgent
-    })
+    await insertAuditLog(auditActorFromEvent(event), action, entityType, entityId, changes)
   } catch (error) {
     // Log error but don't throw - audit logging should not break the main operation
     logError('AuditLogger', error)
   }
+}
+
+/** logAuditAction for work that no longer has its request (see AuditActor). */
+export async function logAuditActionAs(
+  actor: AuditActor,
+  action: AuditAction,
+  entityType: string,
+  entityId: number | null,
+  changes?: AuditChanges
+): Promise<void> {
+  try {
+    await insertAuditLog(actor, action, entityType, entityId, changes)
+  } catch (error) {
+    logError('AuditLogger', error)
+  }
+}
+
+async function insertAuditLog(
+  actor: AuditActor,
+  action: AuditAction,
+  entityType: string,
+  entityId: number | null,
+  changes?: AuditChanges
+): Promise<void> {
+  await getDatabase()
+    .insert(schema.auditLogs)
+    .values({
+      userId: actor.userId,
+      action,
+      entityType,
+      entityId,
+      changes: changes || null,
+      ipAddress: actor.ipAddress,
+      userAgent: actor.userAgent
+    })
 }
 
 /**

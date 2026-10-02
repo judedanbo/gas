@@ -11,7 +11,7 @@
 #          SKIP_MIGRATE=1                      skip the migration Job
 #
 # Order (dependency driven): config -> secrets -> policy -> database ->
-# cache-tls -> cache -> migrate Job -> storage -> app -> backup.
+# cache-tls -> cache -> migrate Job -> storage -> app -> backup -> geoip.
 set -euo pipefail
 overlay="${1:?usage: deploy.sh <overlay> [kube-context]}"
 ctx="${2:-}"
@@ -72,12 +72,53 @@ fi
 
 echo "==> storage"
 # A PVC spec is immutable once Bound: create only when absent, then assert Bound.
-k get pvc gas-public-files-pvc -n "$NAMESPACE" >/dev/null 2>&1 || apply_stage storage
-k wait --for=jsonpath='{.status.phase}'=Bound pvc/gas-public-files-pvc -n "$NAMESPACE" --timeout=180s
+for pvc in gas-public-files-pvc gas-geoip-pvc; do
+  k get pvc "$pvc" -n "$NAMESPACE" >/dev/null 2>&1 || apply_stage storage
+  k wait --for=jsonpath='{.status.phase}'=Bound "pvc/$pvc" -n "$NAMESPACE" --timeout=180s
+done
 
 echo "==> app";      apply_stage app
 echo "==> backup";   apply_stage backup
 
+echo "==> geoip"
+# Visitor geolocation (MaxMind GeoLite2). Only when the gas-maxmind Secret has
+# credentials; otherwise skip with a warning (every visit shows "Unknown").
+maxmind_id="$(k get secret gas-maxmind -n "$NAMESPACE" -o jsonpath='{.data.GEOIPUPDATE_ACCOUNT_ID}' 2>/dev/null || true)"
+if [ -z "$maxmind_id" ] || [ "$(printf '%s' "$maxmind_id" | base64 -d)" = "" ]; then
+  echo "::warning title=Visitor geolocation disabled::MAXMIND_ACCOUNT_ID / MAXMIND_LICENSE_KEY are not set; geoip-update CronJob skipped."
+else
+  apply_stage geoip
+  # The schedule only fires twice a week; run now until one run has succeeded.
+  if [ -z "$(k get cronjob geoip-update -n "$NAMESPACE" -o jsonpath='{.status.lastSuccessfulTime}')" ]; then
+    job="geoip-update-${IMAGE_TAG:0:7}"
+    k delete job "$job" -n "$NAMESPACE" --ignore-not-found
+    k create job "$job" --from=cronjob/geoip-update -n "$NAMESPACE"
+    if k wait --for=condition=complete "job/$job" -n "$NAMESPACE" --timeout=180s; then
+      k logs "job/$job" -n "$NAMESPACE" --tail=20 || true
+    else
+      k logs "job/$job" -n "$NAMESPACE" --tail=50 || true
+      echo "::warning title=GeoLite2 download failed::job/$job did not complete; check the MaxMind credentials. The frontend keeps running without geolocation."
+    fi
+  fi
+fi
+
 echo "==> verify"
-k rollout status deployment/gas-frontend -n "$NAMESPACE" --timeout=600s
+# Visitor geolocation and per-IP rate limiting need the real client IP, which
+# only survives the Azure load balancer with externalTrafficPolicy: Local.
+policy="$(k get svc -n ingress-nginx -l app.kubernetes.io/component=controller \
+  -o jsonpath='{.items[?(@.spec.type=="LoadBalancer")].spec.externalTrafficPolicy}' 2>/dev/null || true)"
+[ "$policy" = "Local" ] || echo "::warning title=Client IPs not preserved::ingress-nginx controller Service has externalTrafficPolicy='${policy:-unknown}' (want Local); visitors show as node IPs."
+# Print state either way; on failure show why (scheduling, probes, crashes,
+# OOM) — Kubernetes state only, no container logs (CI logs are public).
+status=0
+k rollout status deployment/gas-frontend -n "$NAMESPACE" --timeout=600s || status=$?
 k get pods,svc,ingress,certificate -n "$NAMESPACE"
+if [ "$status" -ne 0 ]; then
+  echo "::group::Why gas-frontend did not finish rolling out"
+  k get deployment,replicaset,hpa -n "$NAMESPACE" -o wide || true
+  k describe pods -n "$NAMESPACE" -l app.kubernetes.io/name=gas-frontend || true
+  k get events -n "$NAMESPACE" --sort-by=.lastTimestamp | tail -n 40 || true
+  echo "::endgroup::"
+  echo "::error title=gas-frontend rollout did not finish::kubectl rollout status failed (exit $status)."
+  exit "$status"
+fi

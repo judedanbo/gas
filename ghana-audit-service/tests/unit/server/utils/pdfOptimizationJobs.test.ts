@@ -3,9 +3,12 @@ import { getRedis } from '~/server/utils/redis'
 import {
   createJob,
   effectiveJobState,
+  flushJobMirrors,
   getJob,
   getJobAcrossInstances,
+  interruptJob,
   sweepStalledJobs,
+  subscribe,
   updateJob,
   pushEvent,
   type JobState
@@ -104,6 +107,69 @@ describe('pdfOptimizationJobs', () => {
     await expect(getJobAcrossInstances('ghost')).resolves.toBeUndefined()
   })
 
+  describe('shutdown', () => {
+    it('interruptJob reports a queued or running job INTERRUPTED and releases its subscribers', () => {
+      const queued = createJob('/pdf/reports/int-queued.pdf', 10)
+      const running = createJob('/pdf/reports/int-running.pdf', 11)
+      updateJob(running.id, { status: 'running' })
+      const terminal = vi.fn()
+      subscribe(running.id, ({ event }) => {
+        if (event.phase === 'done') terminal()
+      })
+
+      expect(interruptJob(queued.id)).toBe(true)
+      expect(interruptJob(running.id)).toBe(true)
+
+      for (const job of [queued, running]) {
+        expect(getJob(job.id)).toMatchObject({ status: 'error', errorCode: 'INTERRUPTED' })
+      }
+      expect(terminal).toHaveBeenCalledTimes(1)
+    })
+
+    it('interruptJob leaves a finished job with its outcome', () => {
+      const done = createJob('/pdf/reports/int-done.pdf', 12)
+      updateJob(done.id, { status: 'success' })
+      const failed = createJob('/pdf/reports/int-failed.pdf', 13)
+      updateJob(failed.id, { status: 'error', errorCode: 'HAS_BOOKMARKS' })
+
+      expect(interruptJob(done.id)).toBe(false)
+      expect(interruptJob(failed.id)).toBe(false)
+      expect(interruptJob('unknown')).toBe(false)
+      expect(getJob(done.id)?.status).toBe('success')
+      expect(getJob(failed.id)?.errorCode).toBe('HAS_BOOKMARKS')
+    })
+
+    it('flushJobMirrors waits for the mirror writes still in flight', async () => {
+      // A slow Redis: each write lands only when the test lets it.
+      const pending: Array<() => void> = []
+      const store = new Map<string, string>()
+      vi.mocked(getRedis).mockReturnValue({
+        set: (key: string, value: string) =>
+          new Promise((resolve) =>
+            pending.push(() => {
+              store.set(key, value)
+              resolve('OK')
+            })
+          )
+      } as never)
+
+      const job = createJob('/pdf/reports/flush.pdf', 14)
+      interruptJob(job.id)
+      let flushed = false
+      const flushing = flushJobMirrors().then(() => (flushed = true))
+
+      await Promise.resolve()
+      expect(flushed).toBe(false)
+
+      for (const land of pending) land()
+      await flushing
+      expect(JSON.parse(store.get(`gas:pdf-opt:${job.id}`)!)).toMatchObject({
+        status: 'error',
+        errorCode: 'INTERRUPTED'
+      })
+    })
+  })
+
   describe('watchdog', () => {
     it('times out a running job with no recent activity', () => {
       const job = createJob('/pdf/reports/stalled.pdf', 5)
@@ -130,6 +196,37 @@ describe('pdfOptimizationJobs', () => {
       sweepStalledJobs(state.startedAt + 31 * 60_000)
       expect(state.status).toBe('error')
       expect(state.errorCode).toBe('QUEUE_TIMEOUT')
+    })
+
+    it('keeps a swept queued job that the scheduler runs later, through to its real outcome', () => {
+      vi.useFakeTimers()
+      try {
+        const MIN = 60_000
+        const job = createJob('/pdf/reports/waited-long.pdf', 9)
+
+        // Waited 31 min behind other optimizations: the watchdog gives up...
+        vi.advanceTimersByTime(31 * MIN)
+        sweepStalledJobs(Date.now())
+        expect(getJob(job.id)?.errorCode).toBe('QUEUE_TIMEOUT')
+
+        // ...but the scheduler still runs it once a slot frees.
+        vi.advanceTimersByTime(9 * MIN)
+        updateJob(job.id, { status: 'running' })
+
+        // Past the wipe the sweep armed: it must not be dropped mid-run, or
+        // the upload pipeline reads getJob() === undefined as a failure.
+        vi.advanceTimersByTime(30 * MIN)
+        expect(getJob(job.id)?.status).toBe('running')
+
+        updateJob(job.id, { status: 'success' })
+        expect(getJob(job.id)?.status).toBe('success')
+
+        // Finished jobs are still wiped one TTL after their final state.
+        vi.advanceTimersByTime(30 * MIN)
+        expect(getJob(job.id)).toBeUndefined()
+      } finally {
+        vi.useRealTimers()
+      }
     })
 
     it('leaves active jobs alone', () => {

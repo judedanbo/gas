@@ -31,11 +31,14 @@ WORKFLOWS=".github/workflows/deploy.yml .github/workflows/deploy-k8s.yml .github
 #                                             to enable. See server/utils/email.ts.
 #   YOUTUBE_API_KEY                        -> /api/live-events falls back to the
 #                                             keyless channel /live probe
+#   MAXMIND_ACCOUNT_ID / MAXMIND_LICENSE_KEY -> the geoip-update CronJob is
+#                                             skipped; visitor geolocation stays
+#                                             off (every visit "Unknown" country)
 OPTIONAL="AZURE_STORAGE_ACCOUNT_NAME AZURE_STORAGE_ACCOUNT_KEY \
 AZURE_STORAGE_CONNECTION_STRING AZURE_BLOB_CONTAINER \
 ADMIN_EMAIL ADMIN_PASSWORD ADMIN_NAME REDIS_PASSWORD \
 NUXT_SMTP_HOST NUXT_SMTP_PORT NUXT_SMTP_USER NUXT_SMTP_PASS NUXT_SMTP_FROM \
-YOUTUBE_API_KEY"
+YOUTUBE_API_KEY MAXMIND_ACCOUNT_ID MAXMIND_LICENSE_KEY"
 
 for w in $WORKFLOWS; do
   [ -f "$w" ] || { echo "error: $w not found (run from anywhere inside the repo)" >&2; exit 2; }

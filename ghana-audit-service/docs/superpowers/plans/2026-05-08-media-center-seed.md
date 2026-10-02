@@ -12,25 +12,26 @@
 
 ## File Map
 
-| File | Action | Responsibility |
-|------|--------|----------------|
-| `server/database/schema/media.ts` | Modify | Add `galleryAlbums`, `galleryAlbumTranslations` tables; add `albumId` FK to `galleryImages` |
-| `scripts/crawlers/utils.ts` | Create | Shared crawler helpers: fetch HTML, parse with cheerio, download image, slugify |
-| `scripts/crawlers/crawl-news.ts` | Create | Crawl news index + detail pages → `seeds/data/news.json` + `public/img/news/` |
-| `scripts/crawlers/crawl-events.ts` | Create | Crawl events index + detail pages → `seeds/data/events.json` + `public/img/events/` |
-| `scripts/crawlers/crawl-gallery.ts` | Create | Crawl gallery index + detail pages → `seeds/data/gallery.json` + `public/img/photos/` |
-| `scripts/crawlers/crawl-videos.ts` | Create | Crawl videos index + detail pages → `seeds/data/videos.json` + `public/img/videos/` |
-| `server/database/seeds/news.ts` | Create | Read `data/news.json`, insert into `newsArticles` + `newsArticleTranslations` |
-| `server/database/seeds/events.ts` | Create | Read `data/events.json`, insert into `events` + `eventTranslations` |
-| `server/database/seeds/gallery.ts` | Create | Read `data/gallery.json`, insert into `galleryAlbums` + translations + `galleryImages` + translations |
-| `server/database/seeds/videos.ts` | Create | Read `data/videos.json`, insert into `videos` + `videoTranslations` |
-| `package.json` | Modify | Add crawl:* and db:seed:* npm scripts |
+| File                                | Action | Responsibility                                                                                        |
+| ----------------------------------- | ------ | ----------------------------------------------------------------------------------------------------- |
+| `server/database/schema/media.ts`   | Modify | Add `galleryAlbums`, `galleryAlbumTranslations` tables; add `albumId` FK to `galleryImages`           |
+| `scripts/crawlers/utils.ts`         | Create | Shared crawler helpers: fetch HTML, parse with cheerio, download image, slugify                       |
+| `scripts/crawlers/crawl-news.ts`    | Create | Crawl news index + detail pages → `seeds/data/news.json` + `public/img/news/`                         |
+| `scripts/crawlers/crawl-events.ts`  | Create | Crawl events index + detail pages → `seeds/data/events.json` + `public/img/events/`                   |
+| `scripts/crawlers/crawl-gallery.ts` | Create | Crawl gallery index + detail pages → `seeds/data/gallery.json` + `public/img/photos/`                 |
+| `scripts/crawlers/crawl-videos.ts`  | Create | Crawl videos index + detail pages → `seeds/data/videos.json` + `public/img/videos/`                   |
+| `server/database/seeds/news.ts`     | Create | Read `data/news.json`, insert into `newsArticles` + `newsArticleTranslations`                         |
+| `server/database/seeds/events.ts`   | Create | Read `data/events.json`, insert into `events` + `eventTranslations`                                   |
+| `server/database/seeds/gallery.ts`  | Create | Read `data/gallery.json`, insert into `galleryAlbums` + translations + `galleryImages` + translations |
+| `server/database/seeds/videos.ts`   | Create | Read `data/videos.json`, insert into `videos` + `videoTranslations`                                   |
+| `package.json`                      | Modify | Add crawl:* and db:seed:* npm scripts                                                                 |
 
 ---
 
 ### Task 1: Install cheerio
 
 **Files:**
+
 - Modify: `package.json`
 
 - [ ] **Step 1: Install cheerio as a devDependency**
@@ -58,6 +59,7 @@ cd /home/jude/code/gas/ghana-audit-service && git add package.json package-lock.
 ### Task 2: Add galleryAlbums schema
 
 **Files:**
+
 - Modify: `server/database/schema/media.ts`
 
 - [ ] **Step 1: Add galleryAlbums and galleryAlbumTranslations tables, and albumId FK on galleryImages**
@@ -160,6 +162,7 @@ cd /home/jude/code/gas/ghana-audit-service && git add server/database/schema/med
 ### Task 3: Create shared crawler utilities
 
 **Files:**
+
 - Create: `scripts/crawlers/utils.ts`
 
 - [ ] **Step 1: Create the crawler utilities file**
@@ -190,10 +193,7 @@ export async function fetchHtml(url: string): Promise<cheerio.CheerioAPI> {
   return cheerio.load(html)
 }
 
-export async function downloadImage(
-  imageUrl: string,
-  destDir: string
-): Promise<string | null> {
+export async function downloadImage(imageUrl: string, destDir: string): Promise<string | null> {
   try {
     const resolved = resolveUrl(imageUrl)
     const filename = sanitizeFilename(basename(new URL(resolved).pathname))
@@ -263,11 +263,13 @@ cd /home/jude/code/gas/ghana-audit-service && git add scripts/crawlers/utils.ts 
 ### Task 4: Create news crawler
 
 **Files:**
+
 - Create: `scripts/crawlers/crawl-news.ts`
 
 - [ ] **Step 1: Create the news crawler script**
 
 This script:
+
 1. Fetches `https://audit.gov.gh/6/15/news` to get all article links
 2. Visits each article detail page to extract full content
 3. Downloads thumbnail images to `public/img/news/`
@@ -295,7 +297,9 @@ interface NewsItem {
   tags: string[]
 }
 
-async function crawlIndex(): Promise<Array<{ url: string; thumbnail: string | null; date: string | null }>> {
+async function crawlIndex(): Promise<
+  Array<{ url: string; thumbnail: string | null; date: string | null }>
+> {
   const $ = await fetchHtml(INDEX_URL)
   const items: Array<{ url: string; thumbnail: string | null; date: string | null }> = []
 
@@ -343,10 +347,7 @@ async function crawlDetail(url: string): Promise<{
   const $ = await fetchHtml(url)
 
   // Extract title — typically the main heading
-  const title =
-    $('h1').first().text().trim() ||
-    $('h2').first().text().trim() ||
-    'Untitled'
+  const title = $('h1').first().text().trim() || $('h2').first().text().trim() || 'Untitled'
 
   // Extract publication date — look for date patterns in the page
   const dateEl = $('time, .date, [class*="date"], [class*="publish"]').first()
@@ -472,6 +473,7 @@ cd /home/jude/code/gas/ghana-audit-service && node -e "const d = require('./serv
 - [ ] **Step 3: Review the JSON output**
 
 Open `server/database/seeds/data/news.json` and spot-check:
+
 - Slugs are reasonable (lowercase, hyphens, no special chars)
 - Dates parse correctly
 - Content has actual HTML body text (not just navigation chrome)
@@ -490,6 +492,7 @@ cd /home/jude/code/gas/ghana-audit-service && git add scripts/crawlers/crawl-new
 ### Task 5: Create events crawler
 
 **Files:**
+
 - Create: `scripts/crawlers/crawl-events.ts`
 
 - [ ] **Step 1: Create the events crawler script**
@@ -548,7 +551,10 @@ function parseDateRange(text: string): { startDate: string; endDate: string | nu
   const tryParse = (s: string): string | null => {
     try {
       // Remove day-of-week prefixes
-      const noDow = s.replace(/^(monday|tuesday|wednesday|thursday|friday|saturday|sunday),?\s*/i, '')
+      const noDow = s.replace(
+        /^(monday|tuesday|wednesday|thursday|friday|saturday|sunday),?\s*/i,
+        ''
+      )
       const d = new Date(noDow)
       if (!isNaN(d.getTime())) return d.toISOString().split('T')[0]
     } catch {}
@@ -570,10 +576,7 @@ async function crawlDetail(url: string): Promise<{
 }> {
   const $ = await fetchHtml(url)
 
-  const title =
-    $('h1').first().text().trim() ||
-    $('h2').first().text().trim() ||
-    'Untitled'
+  const title = $('h1').first().text().trim() || $('h2').first().text().trim() || 'Untitled'
 
   // Extract date text
   const dateEl = $('time, .date, [class*="date"]').first()
@@ -600,7 +603,14 @@ async function crawlDetail(url: string): Promise<{
 
   // Extract main content
   let description = ''
-  const contentSelectors = ['article .content', '.article-content', '.post-content', 'article', '.content', 'main']
+  const contentSelectors = [
+    'article .content',
+    '.article-content',
+    '.post-content',
+    'article',
+    '.content',
+    'main'
+  ]
   for (const selector of contentSelectors) {
     const el = $(selector)
     if (el.length && el.html()?.trim()) {
@@ -705,6 +715,7 @@ cd /home/jude/code/gas/ghana-audit-service && git add scripts/crawlers/crawl-eve
 ### Task 6: Create gallery crawler
 
 **Files:**
+
 - Create: `scripts/crawlers/crawl-gallery.ts`
 
 - [ ] **Step 1: Create the gallery crawler script**
@@ -735,7 +746,9 @@ interface GalleryAlbumItem {
   }>
 }
 
-async function crawlIndex(): Promise<Array<{ url: string; title: string; thumbnail: string | null }>> {
+async function crawlIndex(): Promise<
+  Array<{ url: string; title: string; thumbnail: string | null }>
+> {
   const $ = await fetchHtml(INDEX_URL)
   const items: Array<{ url: string; title: string; thumbnail: string | null }> = []
 
@@ -763,16 +776,16 @@ async function crawlIndex(): Promise<Array<{ url: string; title: string; thumbna
   return items
 }
 
-async function crawlAlbumDetail(url: string, fallbackTitle: string): Promise<{
+async function crawlAlbumDetail(
+  url: string,
+  fallbackTitle: string
+): Promise<{
   title: string
   images: string[]
 }> {
   const $ = await fetchHtml(url)
 
-  const title =
-    $('h1').first().text().trim() ||
-    $('h2').first().text().trim() ||
-    fallbackTitle
+  const title = $('h1').first().text().trim() || $('h2').first().text().trim() || fallbackTitle
 
   // Collect all image URLs from the gallery detail page
   const images: string[] = []
@@ -871,7 +884,9 @@ async function main() {
   }
 
   writeJson(OUTPUT_PATH, galleryData)
-  console.log(`\n=== Done: ${galleryData.length} albums, ${galleryData.reduce((sum, a) => sum + a.images.length, 0)} total images ===`)
+  console.log(
+    `\n=== Done: ${galleryData.length} albums, ${galleryData.reduce((sum, a) => sum + a.images.length, 0)} total images ===`
+  )
 }
 
 main().catch((err) => {
@@ -904,6 +919,7 @@ cd /home/jude/code/gas/ghana-audit-service && git add scripts/crawlers/crawl-gal
 ### Task 7: Create videos crawler
 
 **Files:**
+
 - Create: `scripts/crawlers/crawl-videos.ts`
 
 - [ ] **Step 1: Create the videos crawler script**
@@ -978,10 +994,7 @@ async function crawlDetail(url: string): Promise<{
 }> {
   const $ = await fetchHtml(url)
 
-  const title =
-    $('h1').first().text().trim() ||
-    $('h2').first().text().trim() ||
-    'Untitled'
+  const title = $('h1').first().text().trim() || $('h2').first().text().trim() || 'Untitled'
 
   // Look for YouTube embeds
   let youtubeUrl: string | null = null
@@ -1116,6 +1129,7 @@ cd /home/jude/code/gas/ghana-audit-service && git add scripts/crawlers/crawl-vid
 ### Task 8: Create news seed script
 
 **Files:**
+
 - Create: `server/database/seeds/news.ts`
 
 - [ ] **Step 1: Create the news seed script**
@@ -1250,6 +1264,7 @@ cd /home/jude/code/gas/ghana-audit-service && git add server/database/seeds/news
 ### Task 9: Create events seed script
 
 **Files:**
+
 - Create: `server/database/seeds/events.ts`
 
 - [ ] **Step 1: Create the events seed script**
@@ -1374,6 +1389,7 @@ cd /home/jude/code/gas/ghana-audit-service && git add server/database/seeds/even
 ### Task 10: Create gallery seed script
 
 **Files:**
+
 - Create: `server/database/seeds/gallery.ts`
 
 - [ ] **Step 1: Create the gallery seed script**
@@ -1544,6 +1560,7 @@ cd /home/jude/code/gas/ghana-audit-service && git add server/database/seeds/gall
 ### Task 11: Create videos seed script
 
 **Files:**
+
 - Create: `server/database/seeds/videos.ts`
 
 - [ ] **Step 1: Create the videos seed script**
@@ -1663,6 +1680,7 @@ cd /home/jude/code/gas/ghana-audit-service && git add server/database/seeds/vide
 ### Task 12: Add NPM scripts to package.json
 
 **Files:**
+
 - Modify: `package.json`
 
 - [ ] **Step 1: Add crawler and seed scripts**

@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { getRedis } from '~/server/utils/redis'
 import { createJob, updateJob } from '~/server/utils/pdfOptimizationJobs'
 import {
@@ -6,6 +6,7 @@ import {
   getActiveJobForFile,
   getActiveJobIdLocal,
   registerActiveJob,
+  releaseActiveJob,
   __resetSchedulerForTests
 } from '~/server/utils/pdfOptimizationScheduler'
 
@@ -51,10 +52,15 @@ describe('pdfOptimizationScheduler', () => {
     vi.mocked(getRedis).mockReturnValue(null)
   })
 
-  it('runs at most two jobs concurrently, FIFO for the rest', async () => {
-    const started: string[] = []
-    const gates = [deferred(), deferred(), deferred()]
+  afterEach(() => {
+    vi.unstubAllEnvs()
+  })
 
+  // Enqueues `count` gated runs and returns the files started so far plus the
+  // gates that finish each run.
+  function enqueueGated(count: number) {
+    const started: string[] = []
+    const gates = Array.from({ length: count }, () => deferred())
     for (const [i, gate] of gates.entries()) {
       const job = createJob(`/pdf/reports/cap-${i}.pdf`)
       enqueue(job.id, job.fileUrl, () => {
@@ -62,10 +68,19 @@ describe('pdfOptimizationScheduler', () => {
         return gate.promise
       })
     }
+    return { started, gates }
+  }
 
-    expect(started).toEqual(['/pdf/reports/cap-0.pdf', '/pdf/reports/cap-1.pdf'])
+  it('runs one job at a time by default, FIFO for the rest', async () => {
+    const { started, gates } = enqueueGated(3)
+
+    expect(started).toEqual(['/pdf/reports/cap-0.pdf'])
 
     gates[0].resolve()
+    await flush()
+    expect(started).toEqual(['/pdf/reports/cap-0.pdf', '/pdf/reports/cap-1.pdf'])
+
+    gates[1].resolve()
     await flush()
     expect(started).toEqual([
       '/pdf/reports/cap-0.pdf',
@@ -73,9 +88,82 @@ describe('pdfOptimizationScheduler', () => {
       '/pdf/reports/cap-2.pdf'
     ])
 
+    gates[2].resolve()
+    await flush()
+  })
+
+  it('runs up to PDF_OPTIMIZATION_MAX_CONCURRENT jobs at once', async () => {
+    vi.stubEnv('PDF_OPTIMIZATION_MAX_CONCURRENT', '2')
+    const { started, gates } = enqueueGated(3)
+
+    expect(started).toEqual(['/pdf/reports/cap-0.pdf', '/pdf/reports/cap-1.pdf'])
+
+    gates[0].resolve()
+    await flush()
+    expect(started).toHaveLength(3)
+
     gates[1].resolve()
     gates[2].resolve()
     await flush()
+  })
+
+  it.each(['0', '-1', '1.5', 'two', ''])(
+    'falls back to one job at a time for PDF_OPTIMIZATION_MAX_CONCURRENT=%j',
+    async (value) => {
+      vi.stubEnv('PDF_OPTIMIZATION_MAX_CONCURRENT', value)
+      const { started, gates } = enqueueGated(2)
+
+      expect(started).toEqual(['/pdf/reports/cap-0.pdf'])
+
+      for (const gate of gates) gate.resolve()
+      await flush()
+    }
+  )
+
+  it('lets an aborted item through at once, without waiting for a slot, and frees its file', async () => {
+    // The only slot is busy.
+    const { started, gates } = enqueueGated(1)
+    expect(started).toHaveLength(1)
+    const waiting = createJob('/pdf/reports/aborted-in-queue.pdf')
+    registerActiveJob(waiting.fileUrl, waiting.id)
+    const controller = new AbortController()
+    const run = vi.fn(async () => {})
+    enqueue(waiting.id, waiting.fileUrl, run, controller.signal)
+    expect(run).not.toHaveBeenCalled()
+
+    controller.abort()
+
+    // The slot is still taken, yet the aborted item has run (and, doing no
+    // work, finished) — so its file is free again.
+    expect(run).toHaveBeenCalledTimes(1)
+    await flush()
+    expect(getActiveJobIdLocal(waiting.fileUrl)).toBeUndefined()
+
+    // It never held the slot: the next item still waits for the busy one.
+    const next = createJob('/pdf/reports/after-abort.pdf')
+    const nextRun = vi.fn(async () => {})
+    enqueue(next.id, next.fileUrl, nextRun)
+    expect(nextRun).not.toHaveBeenCalled()
+    gates[0].resolve()
+    await flush()
+    expect(nextRun).toHaveBeenCalledTimes(1)
+  })
+
+  it('releaseActiveJob drops the claim in Redis before resolving, but never another job’s', async () => {
+    const fake = makeFakeRedis()
+    vi.mocked(getRedis).mockReturnValue(fake.client as never)
+
+    const job = createJob('/pdf/reports/release-await.pdf')
+    registerActiveJob(job.fileUrl, job.id)
+    await flush()
+    await releaseActiveJob(job.fileUrl, job.id)
+    expect(fake.store.has('gas:pdf-opt-active:/pdf/reports/release-await.pdf')).toBe(false)
+    expect(getActiveJobIdLocal(job.fileUrl)).toBeUndefined()
+
+    // Re-claimed by another replica meanwhile: left alone.
+    fake.store.set('gas:pdf-opt-active:/pdf/reports/release-await.pdf', 'other-job')
+    await releaseActiveJob(job.fileUrl, job.id)
+    expect(fake.store.get('gas:pdf-opt-active:/pdf/reports/release-await.pdf')).toBe('other-job')
   })
 
   it('registers and resolves the active job for a file, ignoring terminal jobs', () => {

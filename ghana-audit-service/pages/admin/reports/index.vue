@@ -83,9 +83,6 @@
       </div>
     </div>
 
-    <!-- In-flight / recent background uploads (hidden when there are none) -->
-    <AdminUiAdminUploadJobsPanel hide-when-empty title="Report uploads" class="mb-6" />
-
     <!-- Filters -->
     <AdminUiAdminSearchFilter
       v-model:search="filters.search"

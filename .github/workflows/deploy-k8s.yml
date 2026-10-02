@@ -97,4 +97,7 @@ jobs:
           NUXT_SMTP_FROM: ${{ secrets.NUXT_SMTP_FROM }}
           # Optional; empty => keyless YouTube live probe.
           YOUTUBE_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}
+          # Optional; empty => geoip-update CronJob skipped, no visitor geolocation.
+          MAXMIND_ACCOUNT_ID: ${{ secrets.MAXMIND_ACCOUNT_ID }}
+          MAXMIND_LICENSE_KEY: ${{ secrets.MAXMIND_LICENSE_KEY }}
         run: k8s/scripts/deploy.sh "${{ inputs.overlay }}"

@@ -46,7 +46,10 @@ export function getRedirectAllowedHosts(siteUrl?: string | null): Set<string> {
  * (case-insensitive) match in `allowedHosts`. Relative paths, malformed URLs and
  * non-http(s) schemes return false.
  */
-export function isRedirectAllowed(targetUrl: string | null | undefined, allowedHosts: Set<string>): boolean {
+export function isRedirectAllowed(
+  targetUrl: string | null | undefined,
+  allowedHosts: Set<string>
+): boolean {
   if (!targetUrl) return false
   let url: URL
   try {

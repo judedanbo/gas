@@ -67,9 +67,7 @@ describe('useSearch', () => {
       await search({ query: 'audit report' })
 
       expect(mockFetch).toHaveBeenCalled()
-      expect(mockFetch).toHaveBeenCalledWith(
-        expect.stringContaining('/api/search?')
-      )
+      expect(mockFetch).toHaveBeenCalledWith(expect.stringContaining('/api/search?'))
     })
 
     it('should include optional filters in query', async () => {
@@ -87,12 +85,8 @@ describe('useSearch', () => {
         page: 2
       })
 
-      expect(mockFetch).toHaveBeenCalledWith(
-        expect.stringContaining('type=report')
-      )
-      expect(mockFetch).toHaveBeenCalledWith(
-        expect.stringContaining('page=2')
-      )
+      expect(mockFetch).toHaveBeenCalledWith(expect.stringContaining('type=report'))
+      expect(mockFetch).toHaveBeenCalledWith(expect.stringContaining('page=2'))
     })
   })
 })

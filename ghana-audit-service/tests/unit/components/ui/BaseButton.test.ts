@@ -38,13 +38,15 @@ const BaseButton = {
   },
   setup(props: Record<string, unknown>) {
     const buttonClasses = computed(() => {
-      const base = 'inline-flex items-center justify-center font-semibold rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed'
+      const base =
+        'inline-flex items-center justify-center font-semibold rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed'
 
       const variants: Record<string, string> = {
         primary: 'bg-primary text-white hover:bg-primary-dark focus:ring-primary',
         secondary: 'bg-secondary text-white hover:bg-secondary-dark focus:ring-secondary',
         accent: 'bg-accent text-gray-900 hover:bg-accent-dark focus:ring-accent',
-        outline: 'border-2 border-primary text-primary hover:bg-primary hover:text-white focus:ring-primary',
+        outline:
+          'border-2 border-primary text-primary hover:bg-primary hover:text-white focus:ring-primary',
         ghost: 'text-primary hover:bg-primary/10 focus:ring-primary'
       }
 

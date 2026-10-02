@@ -111,6 +111,102 @@ describe('useReportUploadJobs (list polling)', () => {
     list.stopPolling()
   })
 
+  it("asks for the caller's own jobs as background polls when configured", async () => {
+    apiGet.mockResolvedValueOnce({ data: [], activeCount: 0 })
+    const list = useReportUploadJobs({
+      autoStart: false,
+      mine: true,
+      background: true,
+      idlePollMs: 30_000
+    })
+    list.startPolling()
+    await flush()
+
+    const [endpoint, params, options] = apiGet.mock.calls[0]
+    expect(endpoint).toBe('reports/upload-jobs')
+    expect(params).toMatchObject({ mine: 'true' })
+    expect(options).toEqual({ headers: { 'X-Admin-Background': '1' } })
+
+    // Idle cadence follows the configured interval, not the default.
+    apiGet.mockResolvedValue({ data: [], activeCount: 0 })
+    await vi.advanceTimersByTimeAsync(UPLOAD_JOB_IDLE_POLL_MS)
+    expect(apiGet).toHaveBeenCalledTimes(1)
+    await vi.advanceTimersByTimeAsync(30_000 - UPLOAD_JOB_IDLE_POLL_MS)
+    await flush()
+    expect(apiGet).toHaveBeenCalledTimes(2)
+    list.stopPolling()
+  })
+
+  it('stops polling on 403 — retrying cannot grant the permission', async () => {
+    apiGet.mockRejectedValueOnce({ statusCode: 403, message: 'Forbidden' })
+    const list = useReportUploadJobs({ autoStart: false })
+    list.startPolling()
+    await flush()
+    await vi.advanceTimersByTimeAsync(UPLOAD_JOB_IDLE_POLL_MS * 4)
+    expect(apiGet).toHaveBeenCalledTimes(1)
+  })
+
+  it('keeps an upserted job when an older poll lands afterwards', async () => {
+    let resolveStale: (v: unknown) => void = () => {}
+    apiGet.mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          resolveStale = resolve
+        })
+    )
+    const list = useReportUploadJobs({ autoStart: false })
+    const pending = list.fetchJobs()
+
+    list.upsert(job({ id: 'fresh' }))
+    resolveStale({ data: [], activeCount: 0 })
+    await pending
+
+    expect(list.jobs.value.map((j) => j.id)).toEqual(['fresh'])
+
+    // Upserting a known id replaces it in place.
+    list.upsert(job({ id: 'fresh', progress: 90 }))
+    expect(list.jobs.value).toHaveLength(1)
+    expect(list.jobs.value[0].progress).toBe(90)
+  })
+
+  it('ignores a response that arrives after a newer one', async () => {
+    const resolvers: Array<(v: unknown) => void> = []
+    apiGet.mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          resolvers.push(resolve)
+        })
+    )
+    const list = useReportUploadJobs({ autoStart: false })
+    const first = list.fetchJobs()
+    const second = list.fetchJobs()
+
+    resolvers[1]({ data: [job({ id: 'new' })], activeCount: 1 })
+    await second
+    resolvers[0]({ data: [job({ id: 'old' })], activeCount: 1 })
+    await first
+
+    expect(list.jobs.value.map((j) => j.id)).toEqual(['new'])
+  })
+
+  it('dismissFinished clears every finished row but keeps running ones', async () => {
+    apiGet.mockResolvedValueOnce({
+      data: [
+        job({ id: 'done', status: 'completed', active: false }),
+        job({ id: 'failed', status: 'failed', active: false }),
+        job({ id: 'running' })
+      ],
+      activeCount: 1
+    })
+    apiPost.mockResolvedValueOnce({ success: true, dismissed: 2 })
+    const list = useReportUploadJobs({ autoStart: false })
+    await list.fetchJobs()
+
+    expect(await list.dismissFinished()).toBe(true)
+    expect(apiPost).toHaveBeenCalledWith('reports/upload-jobs/dismiss-finished')
+    expect(list.jobs.value.map((j) => j.id)).toEqual(['running'])
+  })
+
   it('dismiss posts and removes the row locally', async () => {
     apiGet.mockResolvedValueOnce({
       data: [job({ id: 'a', status: 'completed', active: false }), job({ id: 'b' })],

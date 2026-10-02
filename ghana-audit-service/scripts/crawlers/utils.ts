@@ -20,10 +20,7 @@ export async function fetchHtml(url: string): Promise<cheerio.CheerioAPI> {
   return cheerio.load(html)
 }
 
-export async function downloadImage(
-  imageUrl: string,
-  destDir: string
-): Promise<string | null> {
+export async function downloadImage(imageUrl: string, destDir: string): Promise<string | null> {
   try {
     const resolved = resolveUrl(imageUrl)
     const filename = sanitizeFilename(basename(new URL(resolved).pathname))

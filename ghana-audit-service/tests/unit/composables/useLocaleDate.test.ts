@@ -26,10 +26,7 @@ describe('useLocaleDate', () => {
       const spy = vi.spyOn(Date.prototype, 'toLocaleDateString')
       const { formatDate } = useLocaleDate()
       formatDate('2024-01-01')
-      expect(spy).toHaveBeenCalledWith(
-        'en-GB',
-        expect.objectContaining({ timeZone: 'UTC' })
-      )
+      expect(spy).toHaveBeenCalledWith('en-GB', expect.objectContaining({ timeZone: 'UTC' }))
       spy.mockRestore()
     })
 

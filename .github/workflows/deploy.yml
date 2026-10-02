@@ -59,7 +59,7 @@ jobs:
           format: table
           severity: HIGH,CRITICAL
           ignore-unfixed: true
-          exit-code: '0'
+          exit-code: "0"
 
       - name: Scan frontend image (fail on critical)
         uses: aquasecurity/trivy-action@v0.36.0
@@ -68,7 +68,7 @@ jobs:
           format: table
           severity: CRITICAL
           ignore-unfixed: true
-          exit-code: '1'
+          exit-code: "1"
 
       - name: Build and push migrate image
         run: |

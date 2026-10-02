@@ -1,6 +1,8 @@
 <template>
   <Teleport to="body">
-    <div class="fixed top-4 right-4 z-tooltip flex flex-col gap-3 max-w-[calc(100vw-2rem)]">
+    <!-- Below the admin header, so a toast never covers the notifications
+         bell it is announcing, or the account menu. -->
+    <div class="fixed top-20 right-4 z-tooltip flex flex-col gap-3 max-w-[calc(100vw-2rem)]">
       <TransitionGroup name="toast-slide">
         <div
           v-for="toast in toasts"

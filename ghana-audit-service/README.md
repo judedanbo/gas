@@ -34,22 +34,26 @@ Official website of the Ghana Audit Service - the constitutional body mandated t
 ## Installation
 
 1. Clone the repository:
+
    ```bash
    git clone https://github.com/ghana-audit-service/website.git
    cd website
    ```
 
 2. Install dependencies:
+
    ```bash
    npm install
    ```
 
 3. Copy environment variables:
+
    ```bash
    cp .env.example .env
    ```
 
 4. Start the development server:
+
    ```bash
    npm run dev
    ```
@@ -114,13 +118,13 @@ ghana-audit-service/
 
 See `.env.example` for all available environment variables:
 
-| Variable | Description |
-|----------|-------------|
-| `NUXT_PUBLIC_SITE_URL` | Production site URL |
-| `NUXT_PUBLIC_SITE_NAME` | Site name for SEO |
-| `NUXT_PUBLIC_CONTACT_EMAIL` | Contact email address |
-| `NUXT_PUBLIC_CONTACT_PHONE` | Contact phone number |
-| `NUXT_API_SECRET` | Server-side API secret |
+| Variable                    | Description            |
+| --------------------------- | ---------------------- |
+| `NUXT_PUBLIC_SITE_URL`      | Production site URL    |
+| `NUXT_PUBLIC_SITE_NAME`     | Site name for SEO      |
+| `NUXT_PUBLIC_CONTACT_EMAIL` | Contact email address  |
+| `NUXT_PUBLIC_CONTACT_PHONE` | Contact phone number   |
+| `NUXT_API_SECRET`           | Server-side API secret |
 
 ## Contributing
 

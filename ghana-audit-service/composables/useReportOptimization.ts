@@ -1,18 +1,12 @@
 import { ref, computed, watch, type Ref } from 'vue'
-import { optimizationErrorMessage } from '~/utils/reportOptimizationUi'
+import { optimizationErrorMessage, optimizationProgressPercent } from '~/utils/reportOptimizationUi'
 
 export type CompressionPreset = 'screen' | 'ebook' | 'printer'
 export type PageKind = 'native' | 'scanned'
 export type OptimizationStatus = 'idle' | 'queued' | 'running' | 'success' | 'error'
 
 export type OptimizationPhase =
-  | 'inspect'
-  | 'split'
-  | 'classify'
-  | 'ocr'
-  | 'merge'
-  | 'compress'
-  | 'done'
+  'inspect' | 'split' | 'classify' | 'ocr' | 'merge' | 'compress' | 'done'
 
 export interface OptimizationResult {
   originalSize: number
@@ -48,6 +42,8 @@ export interface OptimizationStartOptions {
   preset?: CompressionPreset
   reportId?: number | null
   allowDropBookmarks?: boolean
+  /** Called with the server job id as soon as the job is queued. */
+  onStarted?: (jobId: string) => void
 }
 
 export interface OptimizationAttachLookup {
@@ -58,7 +54,7 @@ export interface OptimizationAttachLookup {
 
 // Mirror of the server's OptimizeStatusResponse (optimize-status.get.ts) —
 // kept local so client code doesn't import from server/.
-interface StatusResponse {
+export interface OptimizationStatusResponse {
   active: boolean
   jobId: string | null
   status: 'queued' | 'running' | 'success' | 'error' | null
@@ -97,16 +93,6 @@ export function useOptimizePreset(): Ref<CompressionPreset> {
   return preset
 }
 
-const PHASE_PROGRESS: Record<OptimizationPhase, number> = {
-  inspect: 5,
-  split: 10,
-  classify: 25,
-  ocr: 60,
-  merge: 80,
-  compress: 95,
-  done: 100
-}
-
 export function useReportOptimization() {
   const status = ref<OptimizationStatus>('idle')
   const phase = ref<OptimizationPhase | null>(null)
@@ -142,17 +128,9 @@ export function useReportOptimization() {
 
   // Coarse 0-100 progress derived from the current phase, refined by the
   // page-of-N counter while we are inside classify/ocr.
-  const progress = computed(() => {
-    const p = phase.value
-    if (!p) return 0
-    if (p === 'classify' || p === 'ocr') {
-      const base = p === 'classify' ? PHASE_PROGRESS.split : PHASE_PROGRESS.classify
-      const span = PHASE_PROGRESS[p] - base
-      const frac = totalPages.value ? Math.min(1, page.value / totalPages.value) : 0
-      return Math.round(base + span * frac)
-    }
-    return PHASE_PROGRESS[p] ?? 0
-  })
+  const progress = computed(() =>
+    optimizationProgressPercent(phase.value, page.value, totalPages.value)
+  )
 
   function reset(): void {
     status.value = 'idle'
@@ -185,7 +163,7 @@ export function useReportOptimization() {
     }
   }
 
-  function applyStatusResponse(s: StatusResponse, onTerminal?: () => void): void {
+  function applyStatusResponse(s: OptimizationStatusResponse, onTerminal?: () => void): void {
     if (s.lastEvent && s.lastSeq > lastSeenSeq) {
       lastSeenSeq = s.lastSeq
       handleProgress(s.lastEvent)
@@ -220,7 +198,7 @@ export function useReportOptimization() {
         return
       }
       try {
-        const s = await api.get<StatusResponse>('reports/optimize-status', {
+        const s = await api.get<OptimizationStatusResponse>('reports/optimize-status', {
           jobId: jobId.value
         })
         pollFailures = 0
@@ -303,6 +281,7 @@ export function useReportOptimization() {
 
     jobId.value = response.jobId
     status.value = 'running'
+    opts.onStarted?.(response.jobId)
 
     // EventSource cannot set custom headers, so we attach a short-lived,
     // aud-scoped SSE ticket (minted by the optimize endpoint) as a query param.
@@ -404,9 +383,9 @@ export function useReportOptimization() {
    */
   async function attach(lookup: OptimizationAttachLookup): Promise<boolean> {
     const api = useAdminApi()
-    let s: StatusResponse
+    let s: OptimizationStatusResponse
     try {
-      s = await api.get<StatusResponse>('reports/optimize-status', {
+      s = await api.get<OptimizationStatusResponse>('reports/optimize-status', {
         jobId: lookup.jobId,
         reportId: lookup.reportId,
         fileUrl: lookup.fileUrl

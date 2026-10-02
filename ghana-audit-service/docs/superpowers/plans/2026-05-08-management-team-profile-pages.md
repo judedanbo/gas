@@ -14,20 +14,21 @@
 
 ## File Structure
 
-| Action | File | Responsibility |
-|--------|------|----------------|
-| Create | `utils/parseBioSections.ts` | Parse bio text with `##` markers into structured sections |
-| Create | `server/api/management-team/[slug].ts` | Public API: single member by slug |
-| Create | `pages/about/management-team/[slug].vue` | Profile page for individual member |
-| Modify | `pages/about/management-team.vue` | Add NuxtLinks to individual profiles |
-| Modify | `server/database/seeds/management-team.ts` | Add `##` section markers to bios |
-| Modify | `nuxt.config.ts` | Add route rule for management-team API caching |
+| Action | File                                       | Responsibility                                            |
+| ------ | ------------------------------------------ | --------------------------------------------------------- |
+| Create | `utils/parseBioSections.ts`                | Parse bio text with `##` markers into structured sections |
+| Create | `server/api/management-team/[slug].ts`     | Public API: single member by slug                         |
+| Create | `pages/about/management-team/[slug].vue`   | Profile page for individual member                        |
+| Modify | `pages/about/management-team.vue`          | Add NuxtLinks to individual profiles                      |
+| Modify | `server/database/seeds/management-team.ts` | Add `##` section markers to bios                          |
+| Modify | `nuxt.config.ts`                           | Add route rule for management-team API caching            |
 
 ---
 
 ### Task 1: Create bio section parser utility
 
 **Files:**
+
 - Create: `utils/parseBioSections.ts`
 - Create: `tests/unit/utils/parseBioSections.test.ts`
 
@@ -94,9 +95,7 @@ Joined in 2004.`
   Content with leading spaces.  `
 
     const result = parseBioSections(bio)
-    expect(result).toEqual([
-      { heading: 'Spaced Heading', content: 'Content with leading spaces.' }
-    ])
+    expect(result).toEqual([{ heading: 'Spaced Heading', content: 'Content with leading spaces.' }])
   })
 
   it('skips sections with empty content after trimming', () => {
@@ -106,9 +105,7 @@ Joined in 2004.`
 Has content.`
 
     const result = parseBioSections(bio)
-    expect(result).toEqual([
-      { heading: 'Real Section', content: 'Has content.' }
-    ])
+    expect(result).toEqual([{ heading: 'Real Section', content: 'Has content.' }])
   })
 })
 ```
@@ -178,6 +175,7 @@ git commit -m "feat: add bio section parser utility for management team profiles
 ### Task 2: Create API route for single management team member
 
 **Files:**
+
 - Create: `server/api/management-team/[slug].ts`
 
 - [ ] **Step 1: Create the API route**
@@ -293,8 +291,7 @@ export default defineEventHandler(async (event): Promise<ManagementTeamMember> =
   }
 
   let regionalOffice:
-    | { id: number; region: string; translations: Record<string, { name: string }> }
-    | undefined
+    { id: number; region: string; translations: Record<string, { name: string }> } | undefined
   if (member.regionalOfficeId) {
     const [office] = await db
       .select()
@@ -361,6 +358,7 @@ git commit -m "feat(api): add GET /api/management-team/:slug endpoint"
 ### Task 3: Add route rule for management team API caching
 
 **Files:**
+
 - Modify: `nuxt.config.ts:274`
 
 - [ ] **Step 1: Add the route rule**
@@ -389,6 +387,7 @@ git commit -m "feat(config): add cache route rule for management-team API"
 ### Task 4: Create individual profile page
 
 **Files:**
+
 - Create: `pages/about/management-team/[slug].vue`
 
 - [ ] **Step 1: Create the profile page**
@@ -427,9 +426,7 @@ Create `pages/about/management-team/[slug].vue`:
         <p class="text-gray-600 dark:text-gray-400 mb-6">
           The team member you're looking for doesn't exist or has been removed.
         </p>
-        <NuxtLink to="/about/management-team" class="btn-primary">
-          View Management Team
-        </NuxtLink>
+        <NuxtLink to="/about/management-team" class="btn-primary"> View Management Team </NuxtLink>
       </div>
     </div>
 
@@ -438,7 +435,9 @@ Create `pages/about/management-team/[slug].vue`:
       <!-- Profile Header -->
       <section class="bg-gradient-to-br from-primary to-primary-dark text-white py-12">
         <div class="container">
-          <div class="max-w-4xl mx-auto flex flex-col md:flex-row items-center md:items-start gap-8">
+          <div
+            class="max-w-4xl mx-auto flex flex-col md:flex-row items-center md:items-start gap-8"
+          >
             <div class="flex-shrink-0">
               <img
                 v-if="member.photo"
@@ -446,15 +445,8 @@ Create `pages/about/management-team/[slug].vue`:
                 :alt="member.name"
                 class="w-48 h-56 object-cover rounded-lg shadow-lg"
               />
-              <div
-                v-else
-                class="w-48 h-56 bg-white/10 rounded-lg flex items-center justify-center"
-              >
-                <Icon
-                  name="heroicons:user"
-                  class="w-20 h-20 text-white/50"
-                  aria-hidden="true"
-                />
+              <div v-else class="w-48 h-56 bg-white/10 rounded-lg flex items-center justify-center">
+                <Icon name="heroicons:user" class="w-20 h-20 text-white/50" aria-hidden="true" />
               </div>
             </div>
             <div>
@@ -463,14 +455,20 @@ Create `pages/about/management-team/[slug].vue`:
                 size="lg"
                 class="mb-3"
               >
-                {{ member.role === 'auditor-general' ? 'Auditor-General' : 'Deputy Auditor-General' }}
+                {{
+                  member.role === 'auditor-general' ? 'Auditor-General' : 'Deputy Auditor-General'
+                }}
               </UiBadge>
               <h1 class="text-3xl md:text-4xl font-heading font-bold text-white mb-2">
                 {{ member.name }}
               </h1>
               <p class="text-xl text-white/90 mb-4">{{ member.title }}</p>
               <p v-if="member.departmentName" class="text-white/80 mb-4">
-                <Icon name="heroicons:building-library" class="w-5 h-5 inline mr-1" aria-hidden="true" />
+                <Icon
+                  name="heroicons:building-library"
+                  class="w-5 h-5 inline mr-1"
+                  aria-hidden="true"
+                />
                 {{ member.departmentName }}
               </p>
               <div class="flex flex-wrap gap-4">
@@ -510,7 +508,9 @@ Create `pages/about/management-team/[slug].vue`:
                 >
                   {{ section.heading }}
                 </h2>
-                <div class="prose prose-gray dark:prose-invert max-w-none whitespace-pre-line">{{ section.content }}</div>
+                <div class="prose prose-gray dark:prose-invert max-w-none whitespace-pre-line">
+                  {{ section.content }}
+                </div>
               </div>
             </div>
 
@@ -532,32 +532,32 @@ Create `pages/about/management-team/[slug].vue`:
 </template>
 
 <script setup lang="ts">
-import type { ManagementTeamMember } from '~/types'
-import { parseBioSections } from '~/utils/parseBioSections'
+  import type { ManagementTeamMember } from '~/types'
+  import { parseBioSections } from '~/utils/parseBioSections'
 
-const route = useRoute()
+  const route = useRoute()
 
-const {
-  data: member,
-  pending,
-  error
-} = await useFetch<ManagementTeamMember>(`/api/management-team/${route.params.slug}`)
+  const {
+    data: member,
+    pending,
+    error
+  } = await useFetch<ManagementTeamMember>(`/api/management-team/${route.params.slug}`)
 
-const bioSections = computed(() => {
-  if (!member.value?.bio) return []
-  return parseBioSections(member.value.bio)
-})
+  const bioSections = computed(() => {
+    if (!member.value?.bio) return []
+    return parseBioSections(member.value.bio)
+  })
 
-useSeoMeta({
-  title: () =>
-    member.value
-      ? `${member.value.name} - ${member.value.title} | Ghana Audit Service`
-      : 'Team Member | Ghana Audit Service',
-  description: () =>
-    member.value
-      ? `Profile of ${member.value.name}, ${member.value.title} at the Ghana Audit Service.`
-      : 'Management team member profile at the Ghana Audit Service.'
-})
+  useSeoMeta({
+    title: () =>
+      member.value
+        ? `${member.value.name} - ${member.value.title} | Ghana Audit Service`
+        : 'Team Member | Ghana Audit Service',
+    description: () =>
+      member.value
+        ? `Profile of ${member.value.name}, ${member.value.title} at the Ghana Audit Service.`
+        : 'Management team member profile at the Ghana Audit Service.'
+  })
 </script>
 ```
 
@@ -583,6 +583,7 @@ git commit -m "feat(pages): add individual management team profile page"
 ### Task 5: Add NuxtLinks from list page to individual profiles
 
 **Files:**
+
 - Modify: `pages/about/management-team.vue`
 
 - [ ] **Step 1: Wrap the AG ProfileCard in a NuxtLink**
@@ -679,6 +680,7 @@ git commit -m "feat(pages): add links from management team list to individual pr
 ### Task 6: Add section markers to seed bios and re-seed
 
 **Files:**
+
 - Modify: `server/database/seeds/management-team.ts`
 
 - [ ] **Step 1: Update the Auditor-General bio with section markers**
@@ -713,6 +715,7 @@ He enjoys football, reading, and gospel preaching.
 For each DAG, add `## ` section markers at the natural paragraph break points. The sections per member are:
 
 **Eugenia Shorme Nortey:**
+
 ```
 ## Career Background
 Eugenia Shorme Nortey is a highly accomplished finance executive with over 19 years of experience in auditing, finance, and leadership. In her current position, she leverages her technical expertise, leadership acumen, and passion for excellence to drive results at the Audit Service of Ghana, focusing on Finance, Administration, and Human Resources responsibilities.
@@ -730,6 +733,7 @@ Outside work, she values family time and enjoys listening to gospel music.
 ```
 
 **Samuel Frimpong-Manso:**
+
 ```
 ## Career Background
 Mr. Samuel Frimpong-Manso held multiple positions within Ghana's Audit Service prior to his current role, including Assistant Auditor-General, Director of Audit, Assistant Director of Audit, and Principal Auditor. He joined the organization in March 2008 and has worked across several departments including the Educational Institutions and District Assemblies Department – Southern Zone (EIDA-SZ) and the District Assemblies Department (DAD).
@@ -751,6 +755,7 @@ In October 2025, he authored and launched a book on public sector auditing pract
 ```
 
 **Roberta Assiamah-Appiah:**
+
 ```
 ## Career Background
 Ms. Roberta Assiamah-Appiah joined the Audit Service in 1991. She was appointed Acting Deputy Auditor-General in 2010 and received confirmation as substantive DAG in 2012. Prior to her current role, she served as DAG for Finance and Administration Department.
@@ -769,6 +774,7 @@ She enjoys reading and watching football.
 ```
 
 **Samuel Nii Odartey Lamptey:**
+
 ```
 ## Career Background
 Samuel Nii Odartey Lamptey is a Chartered Accountant with an MBA in Banking and Finance and an MSc in Public Financial Management. His career spans over 24 years in public financial management, beginning at Accra Technical University (2001–2006) before joining Ghana Audit Service in 2006.
@@ -787,6 +793,7 @@ He served as Assistant Auditor-General and Regional Head for Western-North Regio
 ```
 
 **Judith Kwaaku:**
+
 ```
 ## Career Background
 Judith Kwaaku is a Chartered Accountant with over three decades of experience in public sector auditing. She joined the Audit Service in 1990 and has progressed through multiple leadership positions, including Assistant Auditor-General, Director of Audit, and Assistant Director. Her audit experience spans educational institutions, district assemblies, commercial entities, and central government operations.
@@ -802,6 +809,7 @@ She enjoys reading and solving puzzles.
 ```
 
 **George Swanzy Winful:**
+
 ```
 ## Career Background
 Mr. George Swanzy Winful is a seasoned auditor and finance professional with more than 34 years of service in Ghana's public sector and international audit practice.

@@ -1,18 +1,33 @@
-import { describe, it, expect, beforeEach, afterEach } from 'vitest'
-import { mkdtempSync, writeFileSync, rmSync, mkdirSync, existsSync, promises as fs } from 'node:fs'
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
+import {
+  mkdtempSync,
+  writeFileSync,
+  rmSync,
+  mkdirSync,
+  existsSync,
+  readdirSync,
+  promises as fs
+} from 'node:fs'
 import { tmpdir } from 'node:os'
-import { join } from 'node:path'
+import { dirname, join } from 'node:path'
 import {
   optimizeReportPdf,
   PdfOptimizerError,
   __setExecRunnerForTests,
-  type ExecResult
+  type ExecResult,
+  type ExecRunner
 } from '~/server/utils/pdfOptimizer'
+
+type ExecOptions = Parameters<ExecRunner>[2]
 
 // Each matcher consumes one execFile call in order. Handlers can throw, are
 // responsible for writing any files the real binary would have produced, and
 // can return either an ExecResult or a Promise<ExecResult>.
-type Matcher = (bin: string, args: string[]) => ExecResult | Promise<ExecResult>
+type Matcher = (
+  bin: string,
+  args: string[],
+  options?: ExecOptions
+) => ExecResult | Promise<ExecResult>
 
 let queue: Matcher[] = []
 let workDirs: string[] = []
@@ -30,17 +45,18 @@ function trackTmp(): string {
 beforeEach(() => {
   queue = []
   workDirs = []
-  __setExecRunnerForTests(async (bin, args) => {
+  __setExecRunnerForTests(async (bin, args, options) => {
     const handler = queue.shift()
     if (!handler) {
       throw new Error(`Unexpected execFile call: ${bin} ${args.join(' ')}`)
     }
-    const res = await handler(bin, args)
+    const res = await handler(bin, args, options)
     return { stdout: res.stdout ?? '', stderr: res.stderr ?? '' }
   })
 })
 
 afterEach(() => {
+  vi.restoreAllMocks()
   __setExecRunnerForTests(null)
   for (const d of workDirs) {
     rmSync(d, { recursive: true, force: true })
@@ -431,5 +447,192 @@ describe('optimizeReportPdf', () => {
 
     const result = await optimizeReportPdf(input, { allowDropBookmarks: true })
     expect(result.optimizedSize).toBeLessThan(result.originalSize)
+  })
+
+  // A 2-page native run whose Ghostscript output (800 bytes) is smaller than
+  // a 2048-byte input, so the replace step runs. Records every qpdf argv.
+  function nativeShrinkProgram(qpdfCalls: string[][]): Matcher[] {
+    return [
+      () => ({ stdout: pdfinfoResult(2), stderr: '' }),
+      (_b, args) => {
+        qpdfCalls.push(args)
+        return { stdout: qpdfOutlines(0), stderr: '' }
+      },
+      (_b, args) => {
+        qpdfCalls.push(args)
+        writeSplitPages(args[args.length - 1].replace(/[\\/]page-%d\.pdf$/, ''), 2)
+        return { stdout: '', stderr: '' }
+      },
+      () => ({ stdout: 'Plenty of vector text here for the classifier.', stderr: '' }),
+      (_b, args) => {
+        qpdfCalls.push(args)
+        writeFileSync(args[args.length - 1], Buffer.alloc(1500, 0x21))
+        return { stdout: '', stderr: '' }
+      },
+      (_b, args) => {
+        const out = args.find((a) => a.startsWith('-sOutputFile='))!.replace('-sOutputFile=', '')
+        writeFileSync(out, Buffer.alloc(800, 0x21))
+        return { stdout: '', stderr: '' }
+      },
+      () => ({ stdout: pdfinfoResult(2), stderr: '' })
+    ]
+  }
+
+  it('treats qpdf "succeeded with warnings" (exit 3) as success on every qpdf call', async () => {
+    // A PDF with e.g. a wrong startxref offset: qpdf repairs it, writes correct
+    // output and exits 3 — which used to fail the job with SPLIT_FAILED.
+    const input = makeInputPdf(2048)
+    const qpdfCalls: string[][] = []
+    programExec(nativeShrinkProgram(qpdfCalls))
+
+    await optimizeReportPdf(input)
+
+    expect(qpdfCalls).toHaveLength(3) // outlines, split, merge
+    for (const args of qpdfCalls) expect(args).toContain('--warning-exit-0')
+  })
+
+  it('runs Tesseract single-threaded at the render DPI and frees each page render', async () => {
+    const input = makeInputPdf(4096)
+    let renderedPath = ''
+    let pdftoppmArgs: string[] = []
+    let tesseract: { args: string[]; options?: ExecOptions } | null = null
+
+    programExec([
+      () => ({ stdout: pdfinfoResult(2), stderr: '' }),
+      () => ({ stdout: qpdfOutlines(0), stderr: '' }),
+      (_b, args) => {
+        writeSplitPages(args[args.length - 1].replace(/[\\/]page-%d\.pdf$/, ''), 2)
+        return { stdout: '', stderr: '' }
+      },
+      () => ({ stdout: '', stderr: '' }),
+      () => ({
+        stdout: 'name type encoding emb sub uni object ID\n--- --- --- --- --- --- ---',
+        stderr: ''
+      }),
+      () => ({
+        stdout:
+          'page num  type  width height\n--- ---  ---  ----- ------\n   2   0 image  2480  3508',
+        stderr: ''
+      }),
+      (_b, args) => {
+        pdftoppmArgs = args
+        const prefix = args[args.length - 1]
+        mkdirSync(dirname(prefix), { recursive: true })
+        renderedPath = `${prefix}-1.pgm`
+        writeFileSync(renderedPath, 'P5\n')
+        return { stdout: '', stderr: '' }
+      },
+      (_b, args, options) => {
+        tesseract = { args, options }
+        writeFileSync(`${args[1]}.pdf`, Buffer.alloc(256, 0xff))
+        return { stdout: '', stderr: '' }
+      },
+      (_b, args) => {
+        // By merge time the ~9MB-per-page render must already be gone.
+        expect(existsSync(renderedPath)).toBe(false)
+        writeFileSync(args[args.length - 1], Buffer.alloc(2000, 0x22))
+        return { stdout: '', stderr: '' }
+      },
+      (_b, args) => {
+        const out = args.find((a) => a.startsWith('-sOutputFile='))!.replace('-sOutputFile=', '')
+        writeFileSync(out, Buffer.alloc(1024, 0x22))
+        return { stdout: '', stderr: '' }
+      },
+      () => ({ stdout: pdfinfoResult(2), stderr: '' })
+    ])
+
+    const result = await optimizeReportPdf(input)
+
+    expect(result.scannedPages).toBe(1)
+    expect(pdftoppmArgs.slice(0, 2)).toEqual(['-r', '300'])
+    // PGM carries no DPI: without --dpi Tesseract lays the page out at 70 DPI.
+    const { args, options } = tesseract!
+    expect(args[args.indexOf('--dpi') + 1]).toBe('300')
+    expect(options?.env?.OMP_THREAD_LIMIT).toBe('1')
+  })
+
+  it('replaces a source on another filesystem (EXDEV) through a staging copy', async () => {
+    const input = makeInputPdf(2048)
+    programExec(nativeShrinkProgram([]))
+    const rename = vi.spyOn(fs, 'rename')
+    rename.mockRejectedValueOnce(
+      Object.assign(new Error('EXDEV: cross-device link not permitted, rename'), {
+        code: 'EXDEV'
+      })
+    )
+
+    const result = await optimizeReportPdf(input)
+
+    expect(result.skippedCompression).toBe(false)
+    expect((await fs.stat(input)).size).toBe(800)
+    // Second rename is staging -> target, within the target's directory.
+    expect(dirname(rename.mock.calls[1][0] as string)).toBe(dirname(input))
+    expect(rename.mock.calls[1][1]).toBe(input)
+    expect(readdirSync(dirname(input))).toEqual(['in.pdf'])
+  })
+
+  it('fails with REPLACE_FAILED and leaves the original intact when the swap fails', async () => {
+    const input = makeInputPdf(2048)
+    programExec(nativeShrinkProgram([]))
+    vi.spyOn(fs, 'rename').mockRejectedValueOnce(
+      Object.assign(new Error('EACCES: permission denied'), { code: 'EACCES' })
+    )
+
+    await expect(optimizeReportPdf(input)).rejects.toMatchObject({ code: 'REPLACE_FAILED' })
+    expect((await fs.stat(input)).size).toBe(2048)
+  })
+
+  it('never replaces the input once aborted, even with a smaller result in hand', async () => {
+    const input = makeInputPdf(2048)
+    const controller = new AbortController()
+
+    programExec([
+      () => ({ stdout: pdfinfoResult(2), stderr: '' }),
+      () => ({ stdout: qpdfOutlines(0), stderr: '' }),
+      (_b, args) => {
+        writeSplitPages(args[args.length - 1].replace(/[\\/]page-%d\.pdf$/, ''), 2)
+        return { stdout: '', stderr: '' }
+      },
+      () => ({ stdout: 'enough text to call native here.', stderr: '' }),
+      (_b, args) => {
+        writeFileSync(args[args.length - 1], Buffer.alloc(800, 0x21))
+        return { stdout: '', stderr: '' }
+      },
+      (_b, args) => {
+        const out = args.find((a) => a.startsWith('-sOutputFile='))!.replace('-sOutputFile=', '')
+        writeFileSync(out, Buffer.alloc(500, 0x21))
+        return { stdout: '', stderr: '' }
+      },
+      // The upload is handed off while the final sanity check runs.
+      () => {
+        controller.abort()
+        return { stdout: pdfinfoResult(2), stderr: '' }
+      }
+    ])
+
+    await expect(optimizeReportPdf(input, { signal: controller.signal })).rejects.toMatchObject({
+      name: 'AbortError'
+    })
+    // Another server may be resuming from this very file.
+    expect((await fs.readFile(input)).equals(Buffer.alloc(2048, 0x25))).toBe(true)
+  })
+
+  it('hands its signal to every tool and stops instead of misreading a killed one', async () => {
+    const input = makeInputPdf()
+    const controller = new AbortController()
+    const signals: Array<AbortSignal | undefined> = []
+    __setExecRunnerForTests(async (bin, _args, options) => {
+      signals.push(options?.signal)
+      if (bin === 'pdfinfo') return { stdout: pdfinfoResult(3), stderr: '' }
+      // Aborted while qpdf reads the outline: the killed tool would read as
+      // "no bookmarks" and optimization would carry on.
+      controller.abort()
+      throw Object.assign(new Error('The operation was aborted'), { code: 'ABORT_ERR' })
+    })
+
+    await expect(optimizeReportPdf(input, { signal: controller.signal })).rejects.toMatchObject({
+      name: 'AbortError'
+    })
+    expect(signals).toEqual([controller.signal, controller.signal])
   })
 })

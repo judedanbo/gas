@@ -1,22 +1,17 @@
 <template>
-  <article class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-5 hover:shadow-md hover:border-primary/30 dark:hover:border-primary-light/30 transition-all">
+  <article
+    class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-5 hover:shadow-md hover:border-primary/30 dark:hover:border-primary-light/30 transition-all"
+  >
     <div class="flex items-start gap-4">
       <div class="flex-1 min-w-0">
         <!-- Type Badge -->
         <div class="mb-2">
-          <UiBadge
-            :label="typeLabel"
-            :variant="typeVariant"
-            size="sm"
-          />
+          <UiBadge :label="typeLabel" :variant="typeVariant" size="sm" />
         </div>
 
         <!-- Title -->
         <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-          <NuxtLink
-            :to="localePath(result.url)"
-            class="hover:text-primary transition-colors"
-          >
+          <NuxtLink :to="localePath(result.url)" class="hover:text-primary transition-colors">
             {{ result.title }}
           </NuxtLink>
         </h3>
@@ -39,37 +34,37 @@
 </template>
 
 <script setup lang="ts">
-import type { SearchResult } from '~/types'
+  import type { SearchResult } from '~/types'
 
-const props = defineProps<{
-  result: SearchResult
-}>()
+  const props = defineProps<{
+    result: SearchResult
+  }>()
 
-const { t } = useI18n()
-const localePath = useLocalePath()
-const { formatDateShort } = useLocaleDate()
+  const { t } = useI18n()
+  const localePath = useLocalePath()
+  const { formatDateShort } = useLocaleDate()
 
-// Type to badge variant mapping
-const typeVariants: Record<string, 'primary' | 'secondary' | 'accent' | 'gray'> = {
-  report: 'primary',
-  publication: 'secondary',
-  news: 'accent',
-  page: 'gray'
-}
+  // Type to badge variant mapping
+  const typeVariants: Record<string, 'primary' | 'secondary' | 'accent' | 'gray'> = {
+    report: 'primary',
+    publication: 'secondary',
+    news: 'accent',
+    page: 'gray'
+  }
 
-const typeLabel = computed(() => t(`searchTypes.${props.result.type}`))
-const typeVariant = computed(() => typeVariants[props.result.type] || 'gray')
+  const typeLabel = computed(() => t(`searchTypes.${props.result.type}`))
+  const typeVariant = computed(() => typeVariants[props.result.type] || 'gray')
 
-function formatDate(dateString: string): string {
-  return formatDateShort(dateString)
-}
+  function formatDate(dateString: string): string {
+    return formatDateShort(dateString)
+  }
 </script>
 
 <style scoped>
-.line-clamp-2 {
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
+  .line-clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
 </style>

@@ -68,20 +68,11 @@
             <!-- PDF Reader -->
             <div class="lg:col-span-2">
               <template v-if="publication.fileUrl">
-                <ClientOnly>
-                  <ReportsPdfReader
-                    :file-url="publication.fileUrl"
-                    :title="publication.title"
-                    viewer-title="Bulletin Viewer"
-                  />
-                  <template #fallback>
-                    <div
-                      class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-8 min-h-[70vh] flex items-center justify-center"
-                    >
-                      <UiLoadingSpinner />
-                    </div>
-                  </template>
-                </ClientOnly>
+                <ReportsPdfReader
+                  :file-url="publication.fileUrl"
+                  :title="publication.title"
+                  viewer-title="Bulletin Viewer"
+                />
               </template>
 
               <div

@@ -21,3 +21,16 @@ spec:
         target:
           type: Utilization
           averageUtilization: 70
+  # A running PDF optimization keeps its pod far above the 70% target for
+  # minutes, so the HPA scales out on every optimization. Scaling back in
+  # terminates pods, which cuts their work short: in-flight uploads are handed
+  # off and redo their remaining steps on another pod, and explicit
+  # optimizations are reported interrupted for the admin to run again. So
+  # remove pods slowly: only after 30 min below target, at most one per 10 min.
+  behavior:
+    scaleDown:
+      stabilizationWindowSeconds: 1800
+      policies:
+        - type: Pods
+          value: 1
+          periodSeconds: 600

@@ -134,9 +134,11 @@ USER nuxtjs
 # Expose the port
 EXPOSE 3000
 
-# Health check
+# Health check — /healthz answers from the event loop alone (no SSR, DB or
+# Redis); see server/routes/healthz.ts. Kubernetes ignores this and uses the
+# probes in k8s/frontend/deployment.yaml.
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD wget --no-verbose --tries=1 --spider http://localhost:3000/ || exit 1
+    CMD wget --no-verbose --tries=1 --spider http://localhost:3000/healthz || exit 1
 
 # Start the application.
 # CMD ["npm", "run", "dev"]

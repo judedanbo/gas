@@ -182,8 +182,16 @@ describe('useNewsletter', () => {
       let resolveSubscribe: (value: unknown) => void
 
       mockFetch
-        .mockReturnValueOnce(new Promise(r => { resolveCSRF = r }))
-        .mockReturnValueOnce(new Promise(r => { resolveSubscribe = r }))
+        .mockReturnValueOnce(
+          new Promise((r) => {
+            resolveCSRF = r
+          })
+        )
+        .mockReturnValueOnce(
+          new Promise((r) => {
+            resolveSubscribe = r
+          })
+        )
 
       const { useNewsletter } = await import('../../../composables/useNewsletter')
       const { subscribe, loading } = useNewsletter()
@@ -192,7 +200,7 @@ describe('useNewsletter', () => {
 
       // Loading should be true after validation passes and fetch starts
       resolveCSRF!({ token: 'token' })
-      await new Promise(r => setTimeout(r, 0))
+      await new Promise((r) => setTimeout(r, 0))
 
       expect(loading.value).toBe(true)
 

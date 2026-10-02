@@ -8,7 +8,7 @@ This repo is a small monorepo wrapping a single application with its infrastruct
 
 - `ghana-audit-service/` — the Nuxt 3 app (frontend + Nitro server + Drizzle/MySQL data layer + admin panel). Has its own `CLAUDE.md` with app-specific guidance — **read it when working inside that directory**.
 - `docker-compose.yml` — root-level orchestration: three services (frontend, MySQL 8, Redis 7) on the `gas-network` bridge.
-- `k8s/` — Kustomize manifests for AKS: `base/` (shared, every object stage-labelled), `overlays/staging` (`gas-staging`, test.audit.gov.gh) and `overlays/production` (`gas-production`, audit.gov.gh), `templates/` (envsubst-only Secrets and Jobs — never in a kustomize build), `scripts/` (`render.sh`, ordered `deploy.sh`, data/secret copy helpers), `cluster/` (cert-manager, ingress-nginx, issuer, storage classes — plain YAML, no Helm). Both environments share the `website` cluster. See `k8s/README.md` and `k8s/cluster/README.md`.
+- `k8s/` — Kustomize manifests for AKS: `base/` (shared, every object stage-labelled), `overlays/staging` (`gas-staging`, test.audit.gov.gh) and `overlays/production` (`gas-production`, audit.gov.gh), `templates/` (envsubst-only Secrets and Jobs — never in a kustomize build), `scripts/` (`render.sh`, ordered `deploy.sh`, data/secret copy helpers), `cluster/` (cert-manager, ingress-nginx, issuer, storage classes — plain YAML, no Helm). Base also carries the GeoLite2 update CronJob + PVC for visitor geolocation. Both environments share the `website` cluster. See `k8s/README.md` and `k8s/cluster/README.md`.
 - `init-db/01-init.sql` — MySQL bootstrap (currently mounted via the commented-out volume in `docker-compose.yml`; uncomment to use).
 - `.env.example` — root-level env vars consumed by `docker-compose.yml` (DB creds, public site config, JWT secret, Redis URL, analytics salt, optional Sentry DSN and MaxMind GeoIP paths). The app has a separate `ghana-audit-service/.env.example` for local non-Docker dev.
 - `PLAN.md`, `component-reusability-plan.md` — historical planning docs, not authoritative; treat the code as the source of truth.
@@ -22,7 +22,7 @@ docker compose up --build      # frontend on :3000, MySQL on :3306, Redis on :63
 docker compose down            # stop; add -v to also wipe the mysql-data and redis-data volumes
 ```
 
-Frontend healthcheck hits `http://localhost:3000/`; MySQL healthcheck uses `mysqladmin ping`; Redis healthcheck uses `redis-cli ping`.
+Frontend healthcheck hits `http://localhost:3000/healthz` (event loop only — no SSR, DB or Redis); MySQL healthcheck uses `mysqladmin ping`; Redis healthcheck uses `redis-cli ping`.
 
 Redis is optional for local dev — if `REDIS_URL` is unset, the rate limiter and analytics buffer degrade to in-process fallbacks.
 
@@ -83,7 +83,7 @@ A server-side analytics subsystem captures per-request telemetry, rolls up route
 - **Storage**: `server/database/schema/analytics.ts` defines `request_events` (raw log with hashed IPs, never raw IPs), rollup tables, and incident records. Retention is controlled by `ANALYTICS_RETENTION_DAYS` (default 30).
 - **Scoring/detection**: `server/utils/analytics/` — fingerprinting, fuzz-pattern matching, probing-path detection, abuse scoring.
 - **Admin dashboards**: `server/api/admin/analytics/` exposes overview, route detail, bot detection, fuzz attempts, incidents. The frontend uses **ECharts** (`vue-echarts`) for visualization.
-- **Optional enrichment**: GeoIP via MaxMind (`ANALYTICS_GEOIP_DB_PATH`, `ANALYTICS_ASN_DB_PATH`) — disabled if the mmdb files aren't mounted.
+- **Optional enrichment**: GeoIP via MaxMind (`ANALYTICS_GEOIP_DB_PATH`, `ANALYTICS_ASN_DB_PATH`) — disabled if the mmdb files aren't mounted. The loader re-checks the files every 15 min, so files that appear or change later are picked up without a restart. In production the `geoip-update` CronJob (`k8s/jobs/geoip-update-cronjob.yaml`) downloads them onto `gas-geoip-pvc`; it needs the `MAXMIND_ACCOUNT_ID` / `MAXMIND_LICENSE_KEY` secrets, and lookups also need the ingress-nginx Service on `externalTrafficPolicy: Local` so real client IPs reach the app (see `k8s/README.md`). Kubelet probes (`kube-probe/*` with no `X-Forwarded-For`) are not recorded.
 
 ### Content crawlers
 
@@ -100,6 +100,8 @@ A server-side analytics subsystem captures per-request telemetry, rolls up route
 
 Pushing to `main` runs `.github/workflows/deploy.yml`: CI quality gate → build + push images (tagged with the SHA) → `deploy-k8s.yml` applies the **staging** overlay via `k8s/scripts/deploy.sh`. **Production** is a manual promotion of an already-built SHA (`deploy-production.yml`, gated by the `production` environment's reviewers). Docker Compose remains available for local development. Runbooks: `k8s/README.md`, `docs/deployment/cutover.md`.
 
+A-G report PDF optimization (Ghostscript/Tesseract) runs inside the frontend pod, and anything that kills the container cuts in-flight uploads and optimizations short. So the frontend's startup/liveness probes hit `/healthz` (event loop only) and readiness hits `/readyz` (adds a MySQL ping) — never an SSR page. The container is sized (250m/512Mi requests, 2 CPU/1Gi limits) for one optimization at a time (`PDF_OPTIMIZATION_MAX_CONCURRENT=1` in `gas-config`), and the HPA scales down slowly. Change resources and that variable together; see "Frontend probes" and "Frontend resources and PDF optimization" in `k8s/README.md`.
+
 ### Dependency management
 
 - Major version bumps (Nuxt 3→4, TypeScript 5→6, Vitest 3→4, vue-router 4→5) are intentionally deferred — don't upgrade them without explicit approval.
@@ -107,7 +109,7 @@ Pushing to `main` runs `.github/workflows/deploy.yml`: CI quality gate → build
 
 ### Pre-commit
 
-The app uses Husky + lint-staged (`*.{js,ts,vue}` → eslint --fix + prettier; `*.{json,css,md,yml,yaml}` → prettier). Don't bypass hooks unless explicitly asked.
+The app uses Husky + lint-staged (`*.{js,ts,vue}` → eslint --fix + prettier; `*.{json,css,md,yml,yaml}` → prettier). The hook is `.husky/pre-commit` at the repo root, installed by `npm install` / `npm ci` in `ghana-audit-service/` (its `prepare` script runs `cd .. && husky`). Don't bypass hooks unless explicitly asked.
 
 ## Conventions from CONTRIBUTING.md
 

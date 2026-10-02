@@ -11,10 +11,7 @@ export function useLocaleDate() {
    * @param options - Intl.DateTimeFormatOptions for customizing the format
    * @returns Formatted date string
    */
-  function formatDate(
-    date: string | Date,
-    options?: Intl.DateTimeFormatOptions
-  ): string {
+  function formatDate(date: string | Date, options?: Intl.DateTimeFormatOptions): string {
     if (!date) return ''
 
     const d = typeof date === 'string' ? new Date(date) : date

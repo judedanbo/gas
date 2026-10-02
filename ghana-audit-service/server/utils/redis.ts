@@ -41,7 +41,10 @@ export function redisTlsOptions(): RedisOptions['tls'] | undefined {
   try {
     return { ca: readFileSync(caFile), rejectUnauthorized }
   } catch (err) {
-    console.warn('[redis] failed to read REDIS_CA_FILE; proceeding without it:', (err as Error).message)
+    console.warn(
+      '[redis] failed to read REDIS_CA_FILE; proceeding without it:',
+      (err as Error).message
+    )
     return rejectUnauthorized ? undefined : { rejectUnauthorized: false }
   }
 }

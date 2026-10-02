@@ -78,6 +78,9 @@
           View Site
         </a>
 
+        <!-- Notifications: uploads, optimizations and other background work -->
+        <AdminLayoutAdminNotificationCenter />
+
         <!-- User Dropdown -->
         <div ref="userMenuRef" class="relative">
           <button
@@ -218,6 +221,7 @@
       'audit-logs': 'Audit Logs',
       newsletter: 'Newsletter',
       'contact-submissions': 'Contact Forms',
+      notifications: 'Notifications',
       create: 'Create',
       edit: 'Edit'
     }
@@ -233,6 +237,12 @@
 
       if (isId) {
         // Skip IDs in breadcrumb or show as "Edit"
+        return
+      }
+
+      // A notification's page: its id is opaque, not a title.
+      if (parts[index - 1] === 'notifications') {
+        crumbs.push({ label: 'Details', to: isLast ? undefined : currentPath })
         return
       }
 

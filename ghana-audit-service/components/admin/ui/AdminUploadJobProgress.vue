@@ -43,6 +43,9 @@
       />
     </div>
 
+    <p v-if="resumeNote" class="text-xs text-gray-500 dark:text-gray-400">
+      {{ resumeNote }}
+    </p>
     <p v-if="resultSummary" class="text-xs text-gray-600 dark:text-gray-300">
       {{ resultSummary }}
     </p>
@@ -61,8 +64,8 @@
       {{ errorMessage }}
     </p>
     <p v-if="job.active && !compact" class="text-xs text-gray-500 dark:text-gray-400">
-      This continues in the background — you can leave this page or sign out, and track it from the
-      dashboard.
+      This continues in the background — you can leave this page or sign out, and follow it from the
+      notifications bell at the top of the page.
     </p>
   </div>
 </template>
@@ -73,12 +76,13 @@
     uploadJobErrorMessage,
     uploadJobPageLabel,
     uploadJobResultSummary,
+    uploadJobResumeNote,
     uploadJobStageLabel
   } from '~/utils/reportUploadJobUi'
 
   interface Props {
     job: ReportUploadJob
-    /** Hide the "continues in the background" hint (dashboard rows). */
+    /** Hide the "continues in the background" hint. */
     compact?: boolean
   }
 
@@ -87,6 +91,7 @@
   const stageLabel = computed(() => uploadJobStageLabel(props.job))
   const pageLabel = computed(() => uploadJobPageLabel(props.job))
   const resultSummary = computed(() => uploadJobResultSummary(props.job))
+  const resumeNote = computed(() => uploadJobResumeNote(props.job))
   const errorMessage = computed(() => uploadJobErrorMessage(props.job))
   const ocrFailedPages = computed(() =>
     props.job.status === 'completed' ? (props.job.optimizationResult?.ocrFailedPages ?? 0) : 0

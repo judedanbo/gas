@@ -12,7 +12,7 @@ export default defineEventHandler(async (event): Promise<ManagementTeamMember> =
   if (!slug) {
     throw createError({
       statusCode: 400,
-      statusMessage: 'Member slug is required',
+      statusMessage: 'Member slug is required'
     })
   }
 
@@ -31,7 +31,7 @@ export default defineEventHandler(async (event): Promise<ManagementTeamMember> =
   if (!member) {
     throw createError({
       statusCode: 404,
-      statusMessage: 'Management team member not found',
+      statusMessage: 'Management team member not found'
     })
   }
 
@@ -44,7 +44,7 @@ export default defineEventHandler(async (event): Promise<ManagementTeamMember> =
     db
       .select()
       .from(schema.managementTeamResponsibilities)
-      .where(eq(schema.managementTeamResponsibilities.managementTeamId, member.id)),
+      .where(eq(schema.managementTeamResponsibilities.managementTeamId, member.id))
   ])
 
   const translationsByLocale = translations.reduce(
@@ -71,17 +71,11 @@ export default defineEventHandler(async (event): Promise<ManagementTeamMember> =
           )
       : Promise.resolve([]),
     member.departmentId
-      ? db
-          .select()
-          .from(schema.departments)
-          .where(eq(schema.departments.id, member.departmentId))
+      ? db.select().from(schema.departments).where(eq(schema.departments.id, member.departmentId))
       : Promise.resolve([]),
     member.officeId
-      ? db
-          .select()
-          .from(schema.offices)
-          .where(eq(schema.offices.id, member.officeId))
-      : Promise.resolve([]),
+      ? db.select().from(schema.offices).where(eq(schema.offices.id, member.officeId))
+      : Promise.resolve([])
   ])
 
   const respTranslationsMap = respTranslationsResult.reduce(
@@ -95,7 +89,7 @@ export default defineEventHandler(async (event): Promise<ManagementTeamMember> =
 
   const responsibilitiesWithTranslations = responsibilities.map((r) => ({
     displayOrder: r.displayOrder,
-    translations: respTranslationsMap[r.id] || {},
+    translations: respTranslationsMap[r.id] || {}
   }))
 
   // Fetch department and regional office translations in parallel
@@ -111,7 +105,7 @@ export default defineEventHandler(async (event): Promise<ManagementTeamMember> =
           .select()
           .from(schema.officeTranslations)
           .where(eq(schema.officeTranslations.officeId, officeResult[0].id))
-      : Promise.resolve([]),
+      : Promise.resolve([])
   ])
 
   let department: { id: number; translations: Record<string, { name: string }> } | undefined
@@ -127,8 +121,7 @@ export default defineEventHandler(async (event): Promise<ManagementTeamMember> =
   }
 
   let office:
-    | { id: number; region: string; translations: Record<string, { name: string }> }
-    | undefined
+    { id: number; region: string; translations: Record<string, { name: string }> } | undefined
   if (officeResult.length > 0) {
     const officeTranslationsByLocale = officeTranslations.reduce(
       (acc, t) => {
@@ -140,7 +133,7 @@ export default defineEventHandler(async (event): Promise<ManagementTeamMember> =
     office = {
       id: officeResult[0].id,
       region: officeResult[0].region,
-      translations: officeTranslationsByLocale,
+      translations: officeTranslationsByLocale
     }
   }
 
@@ -149,7 +142,7 @@ export default defineEventHandler(async (event): Promise<ManagementTeamMember> =
     translations: translationsByLocale,
     responsibilities: responsibilitiesWithTranslations,
     department,
-    regionalOffice: office,
+    regionalOffice: office
   }
 
   return transformManagementTeamMember(memberWithData, locale)

@@ -1,8 +1,9 @@
-# TODO(sizing): values below are copied from staging. Set production values
-# after measuring. Things to answer:
-#   - Peak memory while a 100 MB report PDF is validated/stored in-process?
-#   - Does Chromium (puppeteer PDF export) fit inside the memory limit?
-#   - Is requests.cpu realistic for the HPA's 70% target, or will it flap?
+# TODO(sizing): values below equal the base (measured for A-G report PDF
+# optimisation running inside the pod: ~2 cores busy while OCRing, ~330 MiB
+# peak; see k8s/README.md "Frontend probes"). Revisit with production traffic:
+#   - requests.cpu drives the HPA's 70% target — too low and it flaps.
+#   - raise PDF_OPTIMIZATION_MAX_CONCURRENT (gas-config) only together with
+#     these limits.
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -15,8 +16,8 @@ spec:
         - name: frontend
           resources:
             requests:
-              cpu: 100m
-              memory: 256Mi
-            limits:
-              cpu: 500m
+              cpu: 250m
               memory: 512Mi
+            limits:
+              cpu: "2"
+              memory: 1Gi
