@@ -1,4 +1,4 @@
-name: Deploy to AKS
+name: Deploy to staging
 
 on:
   push:
@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 concurrency:
-  group: deploy-production
+  group: build-and-deploy-staging
   cancel-in-progress: false
 
 env:
@@ -22,9 +22,8 @@ jobs:
     name: Build & Push Images
     needs: ci
     runs-on: ubuntu-latest
-    # production environment so this job can read the Azure auth + ACR secrets,
-    # which are scoped to that environment (same as the deploy job).
-    environment: production
+    # staging environment holds the Azure auth secrets used to push to ACR.
+    environment: staging
     permissions:
       contents: read
       id-token: write
@@ -46,7 +45,7 @@ jobs:
         run: |
           docker build \
             --target runner \
-            --build-arg NUXT_PUBLIC_SITE_URL=https://test.audit.gov.gh \
+            --build-arg NUXT_PUBLIC_SITE_URL=https://audit.gov.gh \
             -t ${{ env.ACR_NAME }}.azurecr.io/gas-frontend:${{ env.IMAGE_TAG }} \
             -t ${{ env.ACR_NAME }}.azurecr.io/gas-frontend:latest \
             ./ghana-audit-service
@@ -60,7 +59,7 @@ jobs:
           format: table
           severity: HIGH,CRITICAL
           ignore-unfixed: true
-          exit-code: '0'
+          exit-code: "0"
 
       - name: Scan frontend image (fail on critical)
         uses: aquasecurity/trivy-action@v0.36.0
@@ -69,7 +68,7 @@ jobs:
           format: table
           severity: CRITICAL
           ignore-unfixed: true
-          exit-code: '1'
+          exit-code: "1"
 
       - name: Build and push migrate image
         run: |
@@ -86,207 +85,15 @@ jobs:
           docker push ${{ env.ACR_NAME }}.azurecr.io/gas-migrate:${{ env.IMAGE_TAG }}
           docker push ${{ env.ACR_NAME }}.azurecr.io/gas-migrate:latest
 
-  deploy:
-    name: Deploy to AKS
+  deploy-staging:
+    name: Deploy
     needs: build-and-push
-    runs-on: ubuntu-latest
     permissions:
       contents: read
       id-token: write
-    environment: production
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v6
-
-      - name: Login to Azure
-        uses: azure/login@v3
-        with:
-          client-id: ${{ secrets.AZURE_CLIENT_ID }}
-          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
-          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-
-      - name: Set up kubectl
-        uses: azure/aks-set-context@v5
-        with:
-          cluster-name: ${{ secrets.AKS_CLUSTER_NAME }}
-          resource-group: ${{ secrets.AKS_RESOURCE_GROUP }}
-
-      - name: Apply namespace
-        run: kubectl apply -f k8s/namespace.yaml
-
-      - name: Apply ConfigMap
-        run: kubectl apply -f k8s/config/configmap.yaml
-
-      - name: Apply Secrets
-        env:
-          DB_USER: ${{ secrets.DB_USER }}
-          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
-          JWT_SECRET: ${{ secrets.JWT_SECRET }}
-          NUXT_API_SECRET: ${{ secrets.NUXT_API_SECRET }}
-          ANALYTICS_IP_SALT: ${{ secrets.ANALYTICS_IP_SALT }}
-          # Redis auth (server/utils/redis.ts via REDIS_URL). If unset, envsubst
-          # renders an empty password and Redis starts without auth — set this
-          # secret in the production environment to enable Redis authentication.
-          REDIS_PASSWORD: ${{ secrets.REDIS_PASSWORD }}
-          MYSQL_ROOT_PASSWORD: ${{ secrets.MYSQL_ROOT_PASSWORD }}
-          AZURE_STORAGE_ACCOUNT_NAME: ${{ secrets.AZURE_STORAGE_ACCOUNT_NAME }}
-          AZURE_STORAGE_ACCOUNT_KEY: ${{ secrets.AZURE_STORAGE_ACCOUNT_KEY }}
-          # Blob backend for report PDFs. Unset until cutover -> envsubst renders
-          # empty -> app stays on disk fallback. See k8s/README.md.
-          AZURE_STORAGE_CONNECTION_STRING: ${{ secrets.AZURE_STORAGE_CONNECTION_STRING }}
-          AZURE_BLOB_CONTAINER: ${{ secrets.AZURE_BLOB_CONTAINER }}
-          # Admin bootstrap — consumed by the manual seed Job (k8s/jobs/seed-job.yaml).
-          # If these GitHub secrets are unset they render empty and seeding exits 1.
-          ADMIN_EMAIL: ${{ secrets.ADMIN_EMAIL }}
-          ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD }}
-          ADMIN_NAME: ${{ secrets.ADMIN_NAME }}
-          # SMTP for invitation + contact emails (server/utils/email.ts). If unset,
-          # envsubst renders empty -> getTransporter() returns null -> email is
-          # skipped (graceful, but no mail is sent). See k8s/config/secrets.yaml.
-          NUXT_SMTP_HOST: ${{ secrets.NUXT_SMTP_HOST }}
-          NUXT_SMTP_PORT: ${{ secrets.NUXT_SMTP_PORT }}
-          NUXT_SMTP_USER: ${{ secrets.NUXT_SMTP_USER }}
-          NUXT_SMTP_PASS: ${{ secrets.NUXT_SMTP_PASS }}
-          NUXT_SMTP_FROM: ${{ secrets.NUXT_SMTP_FROM }}
-          # YouTube Data API v3 key for live-broadcast detection. If unset,
-          # envsubst renders empty -> /api/live-events falls back to the
-          # keyless channel /live probe. See k8s/config/secrets.yaml.
-          YOUTUBE_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}
-          # MaxMind GeoLite2 account for the geoip-update CronJob (visitor
-          # geolocation). Optional — if unset, the CronJob step below is skipped
-          # with a warning and every visit shows as "Unknown" country.
-          MAXMIND_ACCOUNT_ID: ${{ secrets.MAXMIND_ACCOUNT_ID }}
-          MAXMIND_LICENSE_KEY: ${{ secrets.MAXMIND_LICENSE_KEY }}
-        run: |
-          envsubst < k8s/config/secrets.yaml | kubectl apply -f -
-
-      - name: Apply MySQL
-        run: |
-          kubectl apply -f k8s/mysql/
-          kubectl rollout status statefulset/mysql -n gas --timeout=120s
-
-      - name: Apply Redis
-        run: |
-          # Provision the Redis TLS cert first; the redis pod (and frontend)
-          # mount the redis-tls secret cert-manager creates from this.
-          kubectl apply -f k8s/redis/tls.yaml
-          kubectl wait --for=condition=Ready certificate/redis-server-tls -n gas --timeout=120s
-          kubectl apply -f k8s/redis/
-          kubectl rollout status deployment/redis -n gas --timeout=60s
-
-      - name: Run migration Job
-        run: |
-          export JOB_SUFFIX=$(echo ${{ github.sha }} | cut -c1-7)
-          export ACR_REGISTRY=${{ env.ACR_NAME }}
-          export IMAGE_TAG=${{ env.IMAGE_TAG }}
-          envsubst < k8s/jobs/migrate-job.yaml | kubectl apply -f -
-          kubectl wait --for=condition=complete \
-            job/gas-migrate-${JOB_SUFFIX} \
-            -n gas \
-            --timeout=300s
-
-      - name: Apply storage (PVC)
-        run: |
-          # A PVC's spec (storageClassName, the legacy storage-class annotation,
-          # accessModes, volumeName) is immutable once Bound — re-applying a
-          # changed spec is rejected. Create it only when absent, then assert
-          # it's Bound. The PVC is provisioned once and lives across deploys.
-          kubectl get pvc gas-public-files-pvc -n gas >/dev/null 2>&1 \
-            || kubectl apply -f k8s/storage/prod-pvc.yaml
-          kubectl wait --for=jsonpath='{.status.phase}'=Bound \
-            pvc/gas-public-files-pvc -n gas --timeout=60s
-          # GeoLite2 databases (written by the geoip-update CronJob, read by
-          # the frontend). Same create-if-absent rule; the frontend mounts it,
-          # so it must be Bound before the frontend is applied.
-          kubectl get pvc gas-geoip-pvc -n gas >/dev/null 2>&1 \
-            || kubectl apply -f k8s/storage/geoip-pvc.yaml
-          kubectl wait --for=jsonpath='{.status.phase}'=Bound \
-            pvc/gas-geoip-pvc -n gas --timeout=180s
-
-      - name: Apply frontend
-        run: |
-          export ACR_REGISTRY=${{ env.ACR_NAME }}
-          export IMAGE_TAG=${{ env.IMAGE_TAG }}
-          envsubst '${ACR_REGISTRY} ${IMAGE_TAG}' < k8s/frontend/deployment.yaml | kubectl apply -f -
-          kubectl apply -f k8s/frontend/service.yaml
-          kubectl apply -f k8s/frontend/ingress.yaml
-          kubectl apply -f k8s/frontend/hpa.yaml
-
-      - name: Apply Network Policies
-        run: kubectl apply -f k8s/network/network-policies.yaml
-
-      - name: Apply backup CronJob
-        run: kubectl apply -f k8s/jobs/mysql-backup-cronjob.yaml
-
-      - name: Apply GeoIP update CronJob
-        env:
-          MAXMIND_ACCOUNT_ID: ${{ secrets.MAXMIND_ACCOUNT_ID }}
-          MAXMIND_LICENSE_KEY: ${{ secrets.MAXMIND_LICENSE_KEY }}
-        run: |
-          if [ -z "$MAXMIND_ACCOUNT_ID" ] || [ -z "$MAXMIND_LICENSE_KEY" ]; then
-            echo "::warning title=Visitor geolocation disabled::MAXMIND_ACCOUNT_ID / MAXMIND_LICENSE_KEY are not set, so no GeoLite2 databases are downloaded and every visit shows as Unknown country. See k8s/README.md (Visitor geolocation)."
-            exit 0
-          fi
-          kubectl apply -f k8s/jobs/geoip-update-cronjob.yaml
-          # The schedule only fires twice a week, so a fresh volume would stay
-          # empty for days. Run it now until one run has succeeded.
-          LAST_OK=$(kubectl get cronjob geoip-update -n gas -o jsonpath='{.status.lastSuccessfulTime}')
-          if [ -n "$LAST_OK" ]; then
-            echo "geoip-update last succeeded at $LAST_OK; leaving it to its schedule."
-            exit 0
-          fi
-          JOB=geoip-update-$(echo ${{ github.sha }} | cut -c1-7)
-          kubectl delete job "$JOB" -n gas --ignore-not-found
-          kubectl create job "$JOB" --from=cronjob/geoip-update -n gas
-          # Non-fatal: geolocation is not worth failing a deploy over, but a
-          # failure must be visible rather than silent.
-          if kubectl wait --for=condition=complete "job/$JOB" -n gas --timeout=180s; then
-            kubectl logs "job/$JOB" -n gas --tail=20 || true
-          else
-            kubectl logs "job/$JOB" -n gas --tail=50 || true
-            echo "::warning title=GeoLite2 download failed::job/$JOB did not complete; check the MaxMind credentials. The frontend keeps running without geolocation."
-          fi
-
-      - name: Check client IPs reach the app
-        run: |
-          # Visitor geolocation and per-IP rate limiting both need the real
-          # client IP. With the default externalTrafficPolicy (Cluster) the
-          # Azure load balancer replaces it with a node address before
-          # ingress-nginx sees it. The controller is installed outside this
-          # workflow, so warn rather than change it here.
-          POLICY=$(kubectl get svc -n ingress-nginx \
-            -l app.kubernetes.io/component=controller \
-            -o jsonpath='{.items[?(@.spec.type=="LoadBalancer")].spec.externalTrafficPolicy}' \
-            2>/dev/null || true)
-          if [ "$POLICY" = "Local" ]; then
-            echo "ingress-nginx externalTrafficPolicy=Local — client IPs preserved."
-          else
-            echo "::warning title=Client IPs not preserved::ingress-nginx controller Service has externalTrafficPolicy='${POLICY:-unknown}' (want 'Local'), so visitors show as an internal node IP: no country, and rate limits shared per node. See k8s/README.md (Preserving client IPs)."
-          fi
-
-      - name: Verify rollout
-        run: |
-          # Don't let `bash -e` stop at a failed rollout: print the pod status
-          # either way, and on failure show why (scheduling, probes, crashes,
-          # OOM) instead of only "timed out waiting for the condition".
-          STATUS=0
-          kubectl rollout status deployment/gas-frontend -n gas --timeout=180s || STATUS=$?
-          echo "--- Pod status ---"
-          kubectl get pods -n gas -o wide
-          echo "--- Service endpoints ---"
-          kubectl get svc -n gas
-          echo "--- Ingress ---"
-          kubectl get ingress -n gas
-          if [ "$STATUS" -ne 0 ]; then
-            # Kubernetes state only, no container logs: this repo's Actions
-            # logs are public and app logs can carry visitor and admin data.
-            # Use `kubectl logs` locally for those.
-            echo "::group::Why gas-frontend did not finish rolling out"
-            kubectl get deployment,replicaset,hpa -n gas -o wide || true
-            kubectl describe pods -n gas -l app.kubernetes.io/name=gas-frontend || true
-            echo "--- Recent events in gas ---"
-            kubectl get events -n gas --sort-by=.lastTimestamp | tail -n 40 || true
-            echo "::endgroup::"
-            echo "::error title=gas-frontend rollout did not finish::kubectl rollout status failed (exit $STATUS). This step's log has the pod status, pod descriptions and recent events."
-            exit "$STATUS"
-          fi
+    uses: ./.github/workflows/deploy-k8s.yml
+    with:
+      environment: staging
+      overlay: staging
+      image_tag: ${{ github.sha }}
+    secrets: inherit

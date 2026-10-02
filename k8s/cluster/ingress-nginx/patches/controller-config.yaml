@@ -1,0 +1,25 @@
+# Controller-wide settings (ConfigMap keys are documented at
+# https://kubernetes.github.io/ingress-nginx/user-guide/nginx-configuration/configmap/).
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ingress-nginx-controller
+  namespace: ingress-nginx
+data:
+  # from-to-www-redirect uses this code; default is 308. We want a permanent
+  # 301 for www.audit.gov.gh -> audit.gov.gh.
+  http-redirect-code: "301"
+  # HSTS: the app itself sends `max-age=31536000; includeSubDomains`
+  # (nuxt.config.ts). Served from the apex that would pin EVERY
+  # *.audit.gov.gh subdomain to HTTPS for a year and make a DNS rollback to
+  # the old host depend on it having valid TLS. Hide the app's header and
+  # let the controller send a short one; raise it in steps after go-live.
+  hide-headers: Strict-Transport-Security
+  hsts: "true"
+  hsts-max-age: "300"
+  hsts-include-subdomains: "false"
+  # Needed for the `custom-headers` annotation used by the pre-launch
+  # ingress (X-Robots-Tag: noindex).
+  global-allowed-response-headers: X-Robots-Tag
+  # Snippet annotations let any Ingress author inject raw nginx config.
+  allow-snippet-annotations: "false"

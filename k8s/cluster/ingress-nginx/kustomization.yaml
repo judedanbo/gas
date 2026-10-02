@@ -1,0 +1,18 @@
+# ingress-nginx for the `website` AKS cluster, installed from the upstream
+# static manifest (no Helm). To upgrade: download the new
+# deploy/static/provider/cloud/deploy.yaml, replace the vendored file, update
+# the resource name below, re-render with `kubectl kustomize` and apply.
+#
+# NOTE: upstream ingress-nginx is retired (maintenance ended March 2026).
+# This is a launch-time choice for parity with staging; a migration to
+# Gateway API is scheduled follow-up work.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - deploy-v1.15.1.yaml
+
+patches:
+  - path: patches/service-static-ip.yaml
+  - path: patches/controller-config.yaml
+  - path: patches/controller-deployment.yaml

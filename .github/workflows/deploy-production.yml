@@ -1,0 +1,69 @@
+name: Promote to production
+run-name: Promote ${{ inputs.image_tag }} to production
+
+# Manual promotion of an image that staging already runs. The `production`
+# GitHub Environment's required reviewers gate the deploy job.
+on:
+  workflow_dispatch:
+    inputs:
+      image_tag:
+        description: Full 40-character commit SHA that has been deployed to staging
+        required: true
+        type: string
+
+permissions: {}
+
+concurrency:
+  group: promote-production
+  cancel-in-progress: false
+
+jobs:
+  validate:
+    name: Validate promotion
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      actions: read
+    env:
+      IMAGE_TAG: ${{ inputs.image_tag }}
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - name: Must be dispatched from main
+        if: github.ref != 'refs/heads/main'
+        run: |
+          echo "::error::dispatch this workflow from main"
+          exit 1
+
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: SHA is on main and carries the production overlay
+        run: |
+          set -euo pipefail
+          [[ "$IMAGE_TAG" =~ ^[0-9a-f]{40}$ ]] || { echo "::error::image_tag must be a full commit SHA"; exit 1; }
+          git merge-base --is-ancestor "$IMAGE_TAG" origin/main
+          git cat-file -e "$IMAGE_TAG:k8s/overlays/production/kustomization.yaml"
+          git cat-file -e "$IMAGE_TAG:k8s/scripts/deploy.sh"
+
+      - name: SHA had a successful staging deploy
+        run: |
+          set -euo pipefail
+          n="$(gh run list --repo "$GITHUB_REPOSITORY" --workflow deploy.yml \
+                --commit "$IMAGE_TAG" --status success --json databaseId --jq length)"
+          [ "$n" -gt 0 ] || { echo "::error::no successful staging deploy of $IMAGE_TAG"; exit 1; }
+
+  deploy:
+    name: Deploy
+    needs: validate
+    permissions:
+      contents: read
+      id-token: write
+    uses: ./.github/workflows/deploy-k8s.yml
+    with:
+      environment: production
+      overlay: production
+      image_tag: ${{ inputs.image_tag }}
+    secrets: inherit

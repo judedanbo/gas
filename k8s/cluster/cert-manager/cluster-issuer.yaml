@@ -1,0 +1,20 @@
+# Public TLS for audit.gov.gh / test.audit.gov.gh via Let's Encrypt.
+# HTTP-01: a certificate for a hostname can only be issued once that
+# hostname's DNS A record points at the ingress IP (40.89.171.199).
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: letsencrypt-prod
+  labels:
+    app.kubernetes.io/part-of: ghana-audit-service
+spec:
+  acme:
+    server: https://acme-v02.api.letsencrypt.org/directory
+    # Receives expiry / policy notices from Let's Encrypt.
+    email: administrator@audit.gov.gh
+    privateKeySecretRef:
+      name: letsencrypt-prod-account-key
+    solvers:
+      - http01:
+          ingress:
+            ingressClassName: nginx

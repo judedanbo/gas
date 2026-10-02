@@ -8,7 +8,7 @@ This repo is a small monorepo wrapping a single application with its infrastruct
 
 - `ghana-audit-service/` — the Nuxt 3 app (frontend + Nitro server + Drizzle/MySQL data layer + admin panel). Has its own `CLAUDE.md` with app-specific guidance — **read it when working inside that directory**.
 - `docker-compose.yml` — root-level orchestration: three services (frontend, MySQL 8, Redis 7) on the `gas-network` bridge.
-- `k8s/` — Kubernetes manifests for AKS production deployment: namespace, frontend (Deployment + Service + Ingress + HPA), MySQL (StatefulSet), Redis (Deployment), migration Job, backup CronJob, GeoLite2 update CronJob, ConfigMap/Secrets, TLS (cert-manager ClusterIssuer), and Network Policies. See `k8s/README.md` for cluster prerequisites and manual deploy instructions.
+- `k8s/` — Kustomize manifests for AKS: `base/` (shared, every object stage-labelled), `overlays/staging` (`gas-staging`, test.audit.gov.gh) and `overlays/production` (`gas-production`, audit.gov.gh), `templates/` (envsubst-only Secrets and Jobs — never in a kustomize build), `scripts/` (`render.sh`, ordered `deploy.sh`, data/secret copy helpers), `cluster/` (cert-manager, ingress-nginx, issuer, storage classes — plain YAML, no Helm). Base also carries the GeoLite2 update CronJob + PVC for visitor geolocation. Both environments share the `website` cluster. See `k8s/README.md` and `k8s/cluster/README.md`.
 - `init-db/01-init.sql` — MySQL bootstrap (currently mounted via the commented-out volume in `docker-compose.yml`; uncomment to use).
 - `.env.example` — root-level env vars consumed by `docker-compose.yml` (DB creds, public site config, JWT secret, Redis URL, analytics salt, optional Sentry DSN and MaxMind GeoIP paths). The app has a separate `ghana-audit-service/.env.example` for local non-Docker dev.
 - `PLAN.md`, `component-reusability-plan.md` — historical planning docs, not authoritative; treat the code as the source of truth.
@@ -16,16 +16,20 @@ This repo is a small monorepo wrapping a single application with its infrastruct
 ## Common Commands
 
 ### Running the full stack via Docker
+
 ```bash
 docker compose up --build      # frontend on :3000, MySQL on :3306, Redis on :6379
 docker compose down            # stop; add -v to also wipe the mysql-data and redis-data volumes
 ```
+
 Frontend healthcheck hits `http://localhost:3000/healthz` (event loop only — no SSR, DB or Redis); MySQL healthcheck uses `mysqladmin ping`; Redis healthcheck uses `redis-cli ping`.
 
 Redis is optional for local dev — if `REDIS_URL` is unset, the rate limiter and analytics buffer degrade to in-process fallbacks.
 
 ### Running the app locally (most day-to-day work)
+
 All app commands run from `ghana-audit-service/`. See that directory's `CLAUDE.md` for the full list. The most common:
+
 ```bash
 cd ghana-audit-service
 npm run dev                    # http://localhost:3000
@@ -48,26 +52,33 @@ The app expects a reachable MySQL. Easiest path: `docker compose up mysql -d` fr
 ## Architecture (cross-cutting)
 
 ### Two env-var surfaces
+
 There are two `.env` files and they are **not** interchangeable:
+
 - Root `.env` — read by `docker-compose.yml` to template container env. Variables here flow into the frontend container as `DB_*`, `NUXT_PUBLIC_*`, `JWT_SECRET`, etc.
 - `ghana-audit-service/.env` — read directly by Nuxt/Nitro and `drizzle-kit` when running outside Docker. `drizzle.config.ts` and `server/database/index.ts` both fall back to `localhost:3306` / `root` if unset.
 
 When changing DB connectivity or JWT, update the relevant file (or both, if you run in both modes).
 
 ### Data layer
+
 - ORM: **Drizzle** targeting **MySQL 2** (`drizzle-orm/mysql2`). Schema lives in `ghana-audit-service/server/database/schema/` split by domain (`audit-reports`, `news`, `media`, `careers`, `events`, `publications`, `offices`, `tenders`, `users`, `organization`, `analytics`). The aggregated export is `schema/index.ts`.
 - Connection: singleton pool in `server/database/index.ts` (`getDatabase()` / `getPool()` / `closeDatabase()`).
 - Migrations: `drizzle-kit generate` writes to `server/database/migrations/`; `drizzle-kit push` applies. `drizzle.config.ts` is the source of truth for credentials during migration commands.
 - Despite `better-sqlite3` being in dependencies, the live config is MySQL — don't get misled by stale references in older docs.
 
 ### API surface
+
 Nitro routes under `ghana-audit-service/server/api/`:
+
 - **Public** routes (e.g. `news`, `publications`, `reports`, `vacancies`, `gallery`, `events`, `tenders`, `regional-offices`, `management-team`, `videos`, `search`, `contact.post`, `newsletter.post`, `csrf.get`) — open, no auth.
 - **Admin** routes under `server/api/admin/**` — gated by `server/middleware/adminAuth.ts`, which requires a `Bearer` JWT (verified via `server/utils/jwt.ts`) and looks up the user in `schema.users` to confirm they are still active and not soft-deleted (`isActive=true AND deletedAt IS NULL`). The authenticated user is attached to `event.context.auth`. Only `/api/admin/auth/login` is exempt.
 - DTO shaping happens in `server/utils/transform*.ts` files — keep DB rows out of API responses; route handlers should return transformed objects.
 
 ### Analytics & abuse detection
+
 A server-side analytics subsystem captures per-request telemetry, rolls up route stats, and scores suspicious traffic:
+
 - **Capture**: `server/middleware/00-analytics.ts` logs every non-static request into a Redis-backed buffer (falls back to in-process if Redis is absent).
 - **Storage**: `server/database/schema/analytics.ts` defines `request_events` (raw log with hashed IPs, never raw IPs), rollup tables, and incident records. Retention is controlled by `ANALYTICS_RETENTION_DAYS` (default 30).
 - **Scoring/detection**: `server/utils/analytics/` — fingerprinting, fuzz-pattern matching, probing-path detection, abuse scoring.
@@ -75,24 +86,29 @@ A server-side analytics subsystem captures per-request telemetry, rolls up route
 - **Optional enrichment**: GeoIP via MaxMind (`ANALYTICS_GEOIP_DB_PATH`, `ANALYTICS_ASN_DB_PATH`) — disabled if the mmdb files aren't mounted. The loader re-checks the files every 15 min, so files that appear or change later are picked up without a restart. In production the `geoip-update` CronJob (`k8s/jobs/geoip-update-cronjob.yaml`) downloads them onto `gas-geoip-pvc`; it needs the `MAXMIND_ACCOUNT_ID` / `MAXMIND_LICENSE_KEY` secrets, and lookups also need the ingress-nginx Service on `externalTrafficPolicy: Local` so real client IPs reach the app (see `k8s/README.md`). Kubelet probes (`kube-probe/*` with no `X-Forwarded-For`) are not recorded.
 
 ### Content crawlers
+
 `ghana-audit-service/scripts/crawlers/` contains `cheerio`-based scrapers (`crawl-news.ts`, `crawl-events.ts`, `crawl-gallery.ts`, `crawl-videos.ts`, `crawl-publications.ts`, `crawl-report-covers.ts`) for bootstrapping the DB from the existing live site. Run individual crawlers or `npm run crawl:all`.
 
 ### Frontend conventions (summary — see inner CLAUDE.md for details)
+
 - Nuxt 3 + `<script setup lang="ts">`, auto-imported components prefixed by their folder (`<UiBaseCard />`, `<CommonAppHeader />`, `<AdminLayout... />`).
 - Composables in `composables/` are the data-fetching layer (e.g., `useReports`, `usePublications`, `useAdminApi`, `useAdminAuth`, `useAdminCrud`).
 - i18n via `@nuxtjs/i18n` with `prefix_except_default` (English at `/`, Akan at `/ak/`). When adding user-facing copy, update **both** `i18n/locales/en.json` and `i18n/locales/ak.json`.
 - Tailwind theme uses Ghana flag colors (`primary`/`ghana-green` `#006B3F`, `secondary`/`ghana-red` `#CE1126`, `accent`/`ghana-gold` `#FCD116`).
 
 ### Deployment
-Production deploys to AKS via GitHub Actions (`.github/workflows/deploy.yml`). Pushing to `main` triggers: CI quality gate → build + push images to ACR → apply K8s manifests (MySQL → Redis → migration Job → frontend). Docker Compose remains available for local development. See `k8s/README.md` for cluster prerequisites and manual deploy runbook.
+
+Pushing to `main` runs `.github/workflows/deploy.yml`: CI quality gate → build + push images (tagged with the SHA) → `deploy-k8s.yml` applies the **staging** overlay via `k8s/scripts/deploy.sh`. **Production** is a manual promotion of an already-built SHA (`deploy-production.yml`, gated by the `production` environment's reviewers). Docker Compose remains available for local development. Runbooks: `k8s/README.md`, `docs/deployment/cutover.md`.
 
 A-G report PDF optimization (Ghostscript/Tesseract) runs inside the frontend pod, and anything that kills the container cuts in-flight uploads and optimizations short. So the frontend's startup/liveness probes hit `/healthz` (event loop only) and readiness hits `/readyz` (adds a MySQL ping) — never an SSR page. The container is sized (250m/512Mi requests, 2 CPU/1Gi limits) for one optimization at a time (`PDF_OPTIMIZATION_MAX_CONCURRENT=1` in `gas-config`), and the HPA scales down slowly. Change resources and that variable together; see "Frontend probes" and "Frontend resources and PDF optimization" in `k8s/README.md`.
 
 ### Dependency management
+
 - Major version bumps (Nuxt 3→4, TypeScript 5→6, Vitest 3→4, vue-router 4→5) are intentionally deferred — don't upgrade them without explicit approval.
 - `npm update` within semver range is safe and should be run periodically. Always run the full quality gate (`typecheck`, `lint`, `test:run`) after updates — semver-compatible type changes can still break `vue-tsc`.
 
 ### Pre-commit
+
 The app uses Husky + lint-staged (`*.{js,ts,vue}` → eslint --fix + prettier; `*.{json,css,md,yml,yaml}` → prettier). The hook is `.husky/pre-commit` at the repo root, installed by `npm install` / `npm ci` in `ghana-audit-service/` (its `prepare` script runs `cd .. && husky`). Don't bypass hooks unless explicitly asked.
 
 ## Conventions from CONTRIBUTING.md

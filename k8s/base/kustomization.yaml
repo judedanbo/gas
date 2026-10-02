@@ -1,0 +1,28 @@
+# Shared manifests for every environment. Overlays set the namespace, the
+# public hostname (Ingress) and NUXT_PUBLIC_SITE_URL, and add environment
+# hardening. Every object carries a `deploy.audit.gov.gh/stage` label that
+# scripts/deploy.sh uses to apply in dependency order; scripts/render.sh
+# refuses to render an object without one.
+#
+# Secrets and Jobs are NOT here: they are envsubst templates in ../templates
+# (so a stray `kubectl apply -k` can never write literal ${PLACEHOLDER}s into
+# a live Secret).
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - namespace.yaml
+  - config/configmap.yaml
+  - network/network-policies.yaml
+  - mysql/service.yaml
+  - mysql/statefulset.yaml
+  - redis/tls.yaml
+  - redis/service.yaml
+  - redis/deployment.yaml
+  - storage/public-files-pvc.yaml
+  - storage/geoip-pvc.yaml
+  - frontend/service.yaml
+  - frontend/deployment.yaml
+  - frontend/hpa.yaml
+  - backup/mysql-backup-cronjob.yaml
+  - geoip/geoip-update-cronjob.yaml

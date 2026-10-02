@@ -1,0 +1,10 @@
+# Temporary pre-launch hostname for production smoke tests before the apex
+# DNS cutover. Its own Ingress + TLS secret, so a pending apex certificate
+# never blocks it. Production-only (hardcodes the gas-production namespace in
+# the custom-headers annotation, which kustomize cannot rewrite).
+apiVersion: kustomize.config.k8s.io/v1alpha1
+kind: Component
+
+resources:
+  - headers.yaml
+  - ingress.yaml

@@ -18,7 +18,8 @@ set -euo pipefail
 cd "$(git rev-parse --show-toplevel)"
 
 ENV_NAME="${1:-production}"
-WORKFLOW=".github/workflows/deploy.yml"
+# Every workflow that reads secrets.* (the reusable deploy workflow carries most of them).
+WORKFLOWS=".github/workflows/deploy.yml .github/workflows/deploy-k8s.yml .github/workflows/deploy-production.yml .github/workflows/seed.yml"
 
 # Intentionally optional — the app degrades gracefully if these are unset:
 #   AZURE_STORAGE_* / AZURE_BLOB_CONTAINER -> PDF Blob backend falls back to disk
@@ -39,14 +40,13 @@ ADMIN_EMAIL ADMIN_PASSWORD ADMIN_NAME REDIS_PASSWORD \
 NUXT_SMTP_HOST NUXT_SMTP_PORT NUXT_SMTP_USER NUXT_SMTP_PASS NUXT_SMTP_FROM \
 YOUTUBE_API_KEY MAXMIND_ACCOUNT_ID MAXMIND_LICENSE_KEY"
 
-if [ ! -f "$WORKFLOW" ]; then
-  echo "error: $WORKFLOW not found (run from anywhere inside the repo)" >&2
-  exit 2
-fi
+for w in $WORKFLOWS; do
+  [ -f "$w" ] || { echo "error: $w not found (run from anywhere inside the repo)" >&2; exit 2; }
+done
 
 # Required = every secrets.* the workflow references, minus the optional set and
 # the auto-provided GITHUB_TOKEN.
-mapfile -t REFERENCED < <(grep -oE 'secrets\.[A-Z_]+' "$WORKFLOW" \
+mapfile -t REFERENCED < <(cat $WORKFLOWS | grep -oE 'secrets\.[A-Z_]+' \
   | sed 's/secrets\.//' | sort -u)
 
 # Existing secret names: union of the environment and the repo (empty if the

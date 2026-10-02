@@ -1,0 +1,12 @@
+# Redis keeps its AOF on a ReadWriteOnce Azure Disk. RollingUpdate would try
+# to start the new pod while the old one still holds the disk and stall on a
+# multi-attach error; Recreate stops the old pod first (seconds of cache loss,
+# which only degrades rate limiting to per-pod until it is back).
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: redis
+  namespace: gas # base namespace; the overlay's `namespace:` renames it
+spec:
+  strategy:
+    type: Recreate
