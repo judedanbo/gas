@@ -25,7 +25,8 @@
 set -euo pipefail
 cd "$(git rev-parse --show-toplevel)"
 
-ENV_NAME="${ENV_NAME:-production}"
+# Environment name: first argument, else $ENV_NAME, else production.
+ENV_NAME="${1:-${ENV_NAME:-production}}"
 REPO="$(gh repo view --json nameWithOwner -q .nameWithOwner)"
 
 # Values you must supply by exporting them before running.
@@ -69,6 +70,8 @@ set_secret MYSQL_ROOT_PASSWORD "${MYSQL_ROOT_PASSWORD:-$(openssl rand -base64 24
 set_secret JWT_SECRET "${JWT_SECRET:-$(openssl rand -base64 48)}"
 set_secret NUXT_API_SECRET "${NUXT_API_SECRET:-$(openssl rand -base64 48)}"
 set_secret ANALYTICS_IP_SALT "${ANALYTICS_IP_SALT:-$(openssl rand -hex 32)}"
+# Must be URL-safe: it is embedded in REDIS_URL (rediss://:<password>@redis:6379).
+set_secret REDIS_PASSWORD "${REDIS_PASSWORD:-$(openssl rand -hex 32)}"
 
 echo "Optional (set only if exported):"
 set_secret ADMIN_EMAIL "${ADMIN_EMAIL:-}"
@@ -86,9 +89,10 @@ set_secret NUXT_SMTP_PORT "${NUXT_SMTP_PORT:-}"
 set_secret NUXT_SMTP_USER "${NUXT_SMTP_USER:-}"
 set_secret NUXT_SMTP_PASS "${NUXT_SMTP_PASS:-}"
 set_secret NUXT_SMTP_FROM "${NUXT_SMTP_FROM:-}"
+set_secret YOUTUBE_API_KEY "${YOUTUBE_API_KEY:-}"
 
 echo
 echo "Done. Generated DB/root passwords are now only in GitHub + (after deploy) the"
 echo "cluster Secret. Retrieve later with:"
-echo "  kubectl get secret gas-db-credentials -n gas -o jsonpath='{.data.MYSQL_PASSWORD}' | base64 -d"
+echo "  kubectl get secret gas-db-credentials -n gas-$ENV_NAME -o jsonpath='{.data.MYSQL_PASSWORD}' | base64 -d"
 echo "Verify coverage:  k8s/check-deploy-secrets.sh $ENV_NAME"

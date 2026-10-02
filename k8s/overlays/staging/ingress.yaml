@@ -1,0 +1,38 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: gas-frontend
+  namespace: gas
+  labels:
+    deploy.audit.gov.gh/stage: app
+    app.kubernetes.io/name: gas-frontend
+    app.kubernetes.io/part-of: ghana-audit-service
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    # Must cover the largest app-side upload limit (report PDFs: 100MB in
+    # server/utils/fileUpload.ts) plus multipart overhead, so oversize files
+    # get the app's friendly validation error instead of a raw nginx 413.
+    nginx.ingress.kubernetes.io/proxy-body-size: "105m"
+    # The controller buffers the whole upload before handing it to the pod, so
+    # the read timeout has to cover the app streaming a 100MB PDF on to Azure
+    # Blob (the default 60s is tight under the pod's CPU limit).
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "300"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "300"
+    # nginx.ingress.kubernetes.io/ssl-redirect: "true"
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts:
+        - test.audit.gov.gh
+      secretName: gas-tls
+  rules:
+    - host: test.audit.gov.gh
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: gas-frontend
+                port:
+                  number: 80

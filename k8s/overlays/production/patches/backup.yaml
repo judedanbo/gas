@@ -1,0 +1,16 @@
+# Keep 30 daily dumps in production (base default is 7).
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: mysql-backup
+  namespace: gas # base namespace; the overlay's `namespace:` renames it
+spec:
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+            - name: backup
+              env:
+                - name: RETENTION_DAYS
+                  value: "30"

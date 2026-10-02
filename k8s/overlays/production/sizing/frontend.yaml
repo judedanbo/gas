@@ -1,0 +1,22 @@
+# TODO(sizing): values below are copied from staging. Set production values
+# after measuring. Things to answer:
+#   - Peak memory while a 100 MB report PDF is validated/stored in-process?
+#   - Does Chromium (puppeteer PDF export) fit inside the memory limit?
+#   - Is requests.cpu realistic for the HPA's 70% target, or will it flap?
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gas-frontend
+  namespace: gas # base namespace; the overlay's `namespace:` renames it
+spec:
+  template:
+    spec:
+      containers:
+        - name: frontend
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi

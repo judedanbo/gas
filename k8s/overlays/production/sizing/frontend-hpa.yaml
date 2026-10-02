@@ -1,0 +1,10 @@
+# TODO(sizing): staging bounds. maxReplicas is capped by node capacity
+# (2x DS2_v2 today) and by MySQL's max_connections.
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: gas-frontend
+  namespace: gas # base namespace; the overlay's `namespace:` renames it
+spec:
+  minReplicas: 2
+  maxReplicas: 5

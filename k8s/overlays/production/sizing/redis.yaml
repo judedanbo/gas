@@ -1,0 +1,20 @@
+# TODO(sizing): staging values. NOTE the memory limit (256Mi) equals Redis's
+# --maxmemory 256mb, which leaves no headroom for the process itself; raise
+# the limit above maxmemory or lower maxmemory.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: redis
+  namespace: gas # base namespace; the overlay's `namespace:` renames it
+spec:
+  template:
+    spec:
+      containers:
+        - name: redis
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 100m
+              memory: 256Mi

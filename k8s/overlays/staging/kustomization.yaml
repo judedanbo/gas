@@ -1,0 +1,24 @@
+# Staging: https://test.audit.gov.gh — namespace gas-staging on the `website` cluster.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: gas-staging
+
+resources:
+  - ../../base
+  - ingress.yaml
+
+patches:
+  - path: patches/configmap.yaml
+  # Staging may run the destructive reset Job (templates/reset-job.staging-only.yaml),
+  # so its pods are allowed to reach MySQL here. Production never adds this.
+  - target:
+      kind: NetworkPolicy
+      name: allow-mysql-ingress
+    patch: |-
+      - op: add
+        path: /spec/ingress/0/from/-
+        value:
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/name: gas-reset
