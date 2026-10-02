@@ -146,3 +146,31 @@ jobs:
           name: playwright-report-csp
           path: ghana-audit-service/playwright-report/
           retention-days: 7
+
+  k8s-manifests:
+    name: Kubernetes manifests
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    env:
+      ACR_REGISTRY: regisry
+      IMAGE_TAG: ci-render-check
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Render every overlay
+        run: |
+          set -euo pipefail
+          for dir in k8s/overlays/*/; do
+            k8s/scripts/render.sh "$(basename "$dir")" > /dev/null
+          done
+
+      - name: Templates substitute cleanly
+        run: |
+          set -euo pipefail
+          export NAMESPACE=ci JOB_SUFFIX=ci SEED_SCRIPT=db:seed:all
+          for f in k8s/templates/*.yaml; do
+            envsubst < "$f" | python3 -c 'import sys, yaml; list(yaml.safe_load_all(sys.stdin))'
+          done
