@@ -6,7 +6,8 @@
 #   usage: scripts/copy-secrets.sh <src-context> <src-ns> <dst-context> <dst-ns> [secret ...]
 #   default secrets: gas-secrets gas-db-credentials azure-storage-secret gas-tls
 set -euo pipefail
-SRC_CTX="${1:?}"; SRC_NS="${2:?}"; DST_CTX="${3:?}"; DST_NS="${4:?}"; shift 4
+if [ "$#" -lt 4 ]; then echo "usage: copy-secrets.sh <src-context> <src-ns> <dst-context> <dst-ns> [secret ...]" >&2; exit 2; fi
+SRC_CTX="$1"; SRC_NS="$2"; DST_CTX="$3"; DST_NS="$4"; shift 4
 SECRETS=("$@"); [ ${#SECRETS[@]} -gt 0 ] || SECRETS=(gas-secrets gas-db-credentials azure-storage-secret gas-tls)
 for s in "${SECRETS[@]}"; do
   kubectl --context "$SRC_CTX" -n "$SRC_NS" get secret "$s" -o json | python3 -c '

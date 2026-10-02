@@ -16,7 +16,8 @@
 # Run from a machine with both kube contexts. Needs ~2x the DB dump size free
 # in $TMPDIR.
 set -euo pipefail
-SRC_CTX="${1:?}"; SRC_NS="${2:?}"; DST_CTX="${3:?}"; DST_NS="${4:?}"; MODE="${5:-full}"
+if [ "$#" -lt 4 ]; then echo "usage: copy-data.sh <src-context> <src-ns> <dst-context> <dst-ns> [full|production]" >&2; exit 2; fi
+SRC_CTX="$1"; SRC_NS="$2"; DST_CTX="$3"; DST_NS="$4"; MODE="${5:-full}"
 DB=ghana_audit_service
 umask 077
 WORK="$(mktemp -d)"; trap 'rm -rf "$WORK"' EXIT

@@ -10,7 +10,8 @@
 #
 #   usage: scripts/make-production-secrets.sh <src-context> <src-ns> <dst-context> <dst-ns>
 set -euo pipefail
-SRC_CTX="${1:?}"; SRC_NS="${2:?}"; DST_CTX="${3:?}"; DST_NS="${4:?}"
+if [ "$#" -lt 4 ]; then echo "usage: make-production-secrets.sh <src-context> <src-ns> <dst-context> <dst-ns>" >&2; exit 2; fi
+SRC_CTX="$1"; SRC_NS="$2"; DST_CTX="$3"; DST_NS="$4"
 root="$(cd "$(dirname "$0")/.." && pwd)"
 umask 077
 ENVFILE="$root/.env.production"

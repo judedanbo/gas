@@ -10,7 +10,8 @@
 # Also sets the non-secret identifiers (Azure tenant/subscription, the
 # gas-github-deploy client ID, the website cluster + resource group).
 set -euo pipefail
-CTX="${1:?}"; NS="${2:?}"; ENV_NAME="${3:?}"
+if [ "$#" -lt 3 ]; then echo "usage: github-env-from-cluster.sh <kube-context> <namespace> <github-env>" >&2; exit 2; fi
+CTX="$1"; NS="$2"; ENV_NAME="$3"
 root="$(cd "$(dirname "$0")/.." && pwd)"
 
 val() { # secret, key -> decoded value ("" if absent)
