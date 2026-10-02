@@ -7,3 +7,8 @@ node_modules
 coverage
 .nitro
 .cache
+
+# drizzle-kit output (`npm run db:generate`): machine-written with JSON.stringify,
+# so Prettier would flag every new snapshot and journal update
+server/database/migrations/meta
+server/database/migrations_archive_pre_squash/meta
