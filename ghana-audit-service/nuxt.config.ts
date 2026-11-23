@@ -564,7 +564,10 @@ export default defineNuxtConfig({
         // Removing it blocks ~40 icons site-wide (see SECURITY-ASSESSMENT.md L-4). Guarded by
         // tests/e2e/csp.spec.ts. Negligible XSS risk: data: in img-src is not a script vector;
         // script execution is constrained by the nonce-only script-src above.
-        'img-src': ["'self'", 'https:', 'data:'],
+        // blob: is for the admin upload fields (AdminFileUpload, AdminBulkFileUpload), which
+        // preview the picked image from an object URL. As with frame-src below, only
+        // same-origin script can mint blob: URLs, so this admits no outside content.
+        'img-src': ["'self'", 'https:', 'data:', 'blob:'],
         'connect-src': ["'self'"],
         // blob: lets the PDF reader (components/reports/PdfReader.vue) frame the file it
         // has already downloaded with progress, instead of downloading it a second time.
