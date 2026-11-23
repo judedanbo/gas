@@ -26,6 +26,12 @@ export * from './auditor-general'
 // Site Statistics (editable public figures)
 export * from './site-stats'
 
+// Site pop-ups (scheduled image + link shown on page load)
+export * from './popups'
+
+// Home page carousel (settings + per-item overrides)
+export * from './carousel'
+
 // Career & Procurement Tables
 export * from './careers'
 export * from './tenders'

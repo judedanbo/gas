@@ -1,3 +1,5 @@
+import type { HeroSlide } from './index'
+
 // Admin Dashboard Types
 
 /**
@@ -840,6 +842,111 @@ export interface BoardMemberInput {
   phone?: string | null
   displayOrder: number
   isActive: boolean
+}
+
+export interface AdminPopup {
+  id: number
+  title: string
+  imageUrl: string
+  altText: string | null
+  linkUrl: string | null
+  openInNewTab: boolean
+  startsAt: string | null
+  endsAt: string | null
+  displaySeconds: number
+  isDismissible: boolean
+  isActive: boolean
+  createdBy: number | null
+  createdAt: string
+  updatedAt: string
+  deletedAt: string | null
+}
+
+export interface PopupInput {
+  title: string
+  imageUrl: string
+  altText?: string | null
+  linkUrl?: string | null
+  openInNewTab: boolean
+  startsAt?: string | null
+  endsAt?: string | null
+  displaySeconds: number
+  isDismissible: boolean
+  isActive: boolean
+}
+
+// Home page carousel (/admin/carousel)
+export type CarouselItemType = 'news' | 'event' | 'report' | 'gallery'
+
+export interface CarouselSettings {
+  newsCount: number
+  eventsCount: number
+  reportsCount: number
+}
+
+/** A stored override: an item the admin keeps (pinned) or removed (hidden). */
+export interface CarouselItemConfig {
+  type: CarouselItemType
+  refId: number
+  mode: 'pinned' | 'hidden'
+  /** Last day (YYYY-MM-DD) a kept item stays; null = until removed. */
+  pinnedUntil: string | null
+  /** Gallery only */
+  imageCount: number | null
+  imageIds: number[]
+}
+
+export interface CarouselConfigInput {
+  settings: CarouselSettings
+  items: CarouselItemConfig[]
+}
+
+/** A content item as shown in pickers and lists. */
+export interface AdminCarouselCandidate {
+  type: CarouselItemType
+  refId: number
+  title: string
+  image: string | null
+  date: string | null
+  /** Published and not deleted */
+  available: boolean
+}
+
+export interface AdminCarouselItem extends CarouselItemConfig {
+  title: string
+  image: string | null
+  date: string | null
+  available: boolean
+  /** A kept item whose keep-until date has passed */
+  expired: boolean
+}
+
+/** One slide currently on the home page. */
+export interface AdminCarouselSlide {
+  id: string
+  type: CarouselItemType
+  /** Article / event / report id, or the album id for gallery slides */
+  refId: number
+  source: 'pinned' | 'auto'
+  title: string
+  image: string
+  date: string | null
+  pinnedUntil: string | null
+}
+
+export interface AdminCarousel extends CarouselConfigInput {
+  /** True until the carousel is saved for the first time */
+  isDefault: boolean
+  items: AdminCarouselItem[]
+  slides: AdminCarouselSlide[]
+  /** Exactly what the public carousel renders for this configuration */
+  preview: HeroSlide[]
+}
+
+export interface AdminCarouselAlbumImage {
+  id: number
+  url: string
+  alt: string
 }
 
 export type SiteStatSection = 'home' | 'about_service' | 'about_legacy'

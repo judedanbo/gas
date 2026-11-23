@@ -488,6 +488,10 @@ export default defineNuxtConfig({
       '/api/management-team/**': { cache: isDev ? false : { maxAge: 3600, staleMaxAge: 7200 } },
       '/api/board-members': { cache: isDev ? false : { maxAge: 3600, staleMaxAge: 7200 } },
       '/api/board-members/**': { cache: isDev ? false : { maxAge: 3600, staleMaxAge: 7200 } },
+      // The pop-up lookup runs on every public page load (client-side, since
+      // cached pages can't carry it), so share one query per pod per 30s.
+      // No stale window: schedules and admin edits take effect within ~30s.
+      '/api/announcement': { cache: isDev ? false : { maxAge: 30, swr: false } },
       // /api/site-stats and /api/auditor-general are intentionally NOT
       // edge-cached: both are tiny indexed SELECTs consumed by cached pages, so
       // full loads are already shielded by the page cache. An edge cache here would
@@ -560,7 +564,10 @@ export default defineNuxtConfig({
         // Removing it blocks ~40 icons site-wide (see SECURITY-ASSESSMENT.md L-4). Guarded by
         // tests/e2e/csp.spec.ts. Negligible XSS risk: data: in img-src is not a script vector;
         // script execution is constrained by the nonce-only script-src above.
-        'img-src': ["'self'", 'https:', 'data:'],
+        // blob: is for the admin upload fields (AdminFileUpload, AdminBulkFileUpload), which
+        // preview the picked image from an object URL. As with frame-src below, only
+        // same-origin script can mint blob: URLs, so this admits no outside content.
+        'img-src': ["'self'", 'https:', 'data:', 'blob:'],
         'connect-src': ["'self'"],
         // blob: lets the PDF reader (components/reports/PdfReader.vue) frame the file it
         // has already downloaded with progress, instead of downloading it a second time.

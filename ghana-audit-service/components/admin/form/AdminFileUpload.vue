@@ -1,6 +1,6 @@
 <template>
   <AdminFormGroup
-    :id="id"
+    :id="inputId"
     :label="label"
     :required="required"
     :error="error || uploadError || undefined"
@@ -202,10 +202,9 @@
     preset: 'ebook'
   })
 
-  // Generate a unique ID if not provided
-  const inputId = computed(
-    () => props.id || `file-upload-${Math.random().toString(36).slice(2, 9)}`
-  )
+  // Generate a unique ID if not provided, so the label is tied to the input
+  const fallbackId = useId()
+  const inputId = computed(() => props.id || `file-upload-${fallbackId}`)
 
   // Convert null to empty string
   const fileUrl = computed(() => props.modelValue ?? '')
