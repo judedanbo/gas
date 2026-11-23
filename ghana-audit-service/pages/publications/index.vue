@@ -229,10 +229,10 @@
       path: '/publications/guidelines'
     },
     {
-      title: 'PFM Strategy',
-      description: 'Public Financial Management Strategy 2022-2026.',
-      icon: 'heroicons:chart-bar',
-      path: '/publications/pfm-strategy'
+      title: 'Strategic Plan',
+      description: 'Ghana Audit Service Strategic Plan 2026-2030.',
+      icon: 'heroicons:flag',
+      path: '/publications/strategic-plan'
     },
     {
       title: 'Applicable Laws',

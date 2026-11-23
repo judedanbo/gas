@@ -225,10 +225,10 @@
           description: 'Audit management manuals'
         },
         {
-          label: 'PFM Strategy',
-          href: '/publications/pfm-strategy',
+          label: 'Strategic Plan',
+          href: '/publications/strategic-plan',
           icon: 'heroicons:flag',
-          description: '2022-2026 strategic plan'
+          description: '2026-2030 goals and targets'
         },
         {
           label: 'Applicable Laws',

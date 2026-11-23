@@ -119,7 +119,7 @@ const PUBLICATION_TYPE_PATHS: Record<string, string> = {
   bulletin: 'bulletins',
   guideline: 'guidelines',
   manual: 'amis-manuals',
-  strategy: 'pfm-strategy',
+  strategy: 'strategic-plan',
   law: 'applicable-laws'
 }
 

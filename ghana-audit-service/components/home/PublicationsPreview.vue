@@ -237,7 +237,7 @@
       bulletin: '/publications/bulletins',
       guideline: '/publications/guidelines',
       manual: '/publications/amis-manuals',
-      strategy: '/publications/pfm-strategy',
+      strategy: '/publications/strategic-plan',
       law: '/publications/applicable-laws'
     }
     return `${typeToPath[publication.type]}/${publication.slug}`

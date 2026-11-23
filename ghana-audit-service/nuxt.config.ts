@@ -392,6 +392,13 @@ export default defineNuxtConfig({
       '/': cachedPage(600),
       '/reports': cachedPage(600),
       '/reports/**': cachedPage(600),
+      // The PFM Strategy page was replaced by the 2026-2030 Strategic Plan.
+      '/publications/pfm-strategy': {
+        redirect: { to: '/publications/strategic-plan', statusCode: 301 }
+      },
+      '/ak/publications/pfm-strategy': {
+        redirect: { to: '/ak/publications/strategic-plan', statusCode: 301 }
+      },
       '/publications': cachedPage(600),
       '/publications/**': cachedPage(3600),
       '/media': cachedPage(600),

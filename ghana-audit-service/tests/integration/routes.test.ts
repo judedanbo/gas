@@ -33,7 +33,7 @@ const staticRoutes = [
   { path: 'pages/publications/amis-manuals/index.vue', name: 'AMIS Manuals' },
   { path: 'pages/publications/amis-manuals/[slug].vue', name: 'AMIS Manual Detail' },
   { path: 'pages/publications/applicable-laws.vue', name: 'Applicable Laws' },
-  { path: 'pages/publications/pfm-strategy.vue', name: 'PFM Strategy' },
+  { path: 'pages/publications/strategic-plan.vue', name: 'Strategic Plan' },
   { path: 'pages/media/index.vue', name: 'Media Index' },
   { path: 'pages/media/news/index.vue', name: 'News Index' },
   { path: 'pages/media/news/[slug].vue', name: 'News Detail' },
