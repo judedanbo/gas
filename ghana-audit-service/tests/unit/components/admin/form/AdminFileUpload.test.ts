@@ -1,12 +1,13 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { flushPromises, mount } from '@vue/test-utils'
-import { ref, computed, onUnmounted } from 'vue'
+import { ref, computed, onUnmounted, useId } from 'vue'
 import AdminFileUpload from '~/components/admin/form/AdminFileUpload.vue'
 
 // Auto-imported in Nuxt; absent under plain Vitest.
 vi.stubGlobal('ref', ref)
 vi.stubGlobal('computed', computed)
 vi.stubGlobal('onUnmounted', onUnmounted)
+vi.stubGlobal('useId', useId)
 
 const upload = vi.fn()
 vi.stubGlobal('useAdminApi', () => ({ upload, uploadReport: vi.fn() }))
