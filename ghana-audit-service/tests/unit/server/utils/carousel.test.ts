@@ -4,6 +4,8 @@ import {
   pickGalleryImages,
   planCarousel,
   todayUtc,
+  withCarouselFallback,
+  CAROUSEL_FALLBACK_SLIDE,
   type CarouselItemConfig
 } from '../../../../server/utils/carousel'
 import { carouselConfigSchema } from '../../../../server/utils/validation'
@@ -103,6 +105,17 @@ describe('pickGalleryImages', () => {
   it('never returns more than the requested number or than the album holds', () => {
     expect(pickGalleryImages(album, [10, 11, 12], 2)).toEqual([10, 11])
     expect(pickGalleryImages([10], [], 4)).toEqual([10])
+  })
+})
+
+describe('withCarouselFallback', () => {
+  it('returns the slides untouched when there are any', () => {
+    const slides = [{ ...CAROUSEL_FALLBACK_SLIDE, id: 'news-1' }]
+    expect(withCarouselFallback(slides)).toBe(slides)
+  })
+
+  it('shows the single fallback slide when nothing is selected', () => {
+    expect(withCarouselFallback([])).toEqual([CAROUSEL_FALLBACK_SLIDE])
   })
 })
 

@@ -51,6 +51,38 @@
         The carousel is using its default settings. Nothing is changed until you make an edit.
       </p>
 
+      <!-- Preview -->
+      <section
+        aria-labelledby="carousel-preview-heading"
+        class="overflow-hidden rounded-lg bg-white shadow dark:bg-gray-800"
+      >
+        <div class="flex items-center justify-between gap-4 px-6 py-4">
+          <div>
+            <h2
+              id="carousel-preview-heading"
+              class="text-lg font-semibold text-gray-900 dark:text-white"
+            >
+              Preview
+            </h2>
+            <p class="text-sm text-gray-500 dark:text-gray-400">
+              The carousel as visitors will see it, updated as soon as you make a change.
+            </p>
+          </div>
+          <button
+            type="button"
+            class="btn btn-ghost btn-sm flex-none whitespace-nowrap"
+            :aria-expanded="previewOpen"
+            aria-controls="carousel-preview"
+            @click="previewOpen = !previewOpen"
+          >
+            {{ previewOpen ? 'Hide preview' : 'Show preview' }}
+          </button>
+        </div>
+        <div v-if="previewOpen" id="carousel-preview">
+          <HomeHeroSlideshow :slides="carousel.preview" embedded />
+        </div>
+      </section>
+
       <!-- Current slides -->
       <section
         aria-labelledby="carousel-slides-heading"
@@ -382,6 +414,8 @@
   const toast = useToast()
 
   const canEdit = computed(() => hasPermission('update'))
+
+  const previewOpen = ref(true)
 
   const key = (type: CarouselItemType, refId: number) => `${type}:${refId}`
 

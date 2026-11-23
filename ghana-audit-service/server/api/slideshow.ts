@@ -1,20 +1,8 @@
 import type { HeroSlide } from '~/types'
 import { getLocaleFromRequest } from '../utils/locale'
-import { DEFAULT_CAROUSEL_SETTINGS } from '../utils/carousel'
+import { DEFAULT_CAROUSEL_SETTINGS, withCarouselFallback } from '../utils/carousel'
 import { loadCarouselConfig, resolveCarousel } from '../utils/carouselStore'
 import { logError } from '../utils/logger'
-
-const STATIC_FALLBACK: HeroSlide = {
-  id: 'fallback-1',
-  type: 'news',
-  image: '/images/hero/default-news.svg',
-  imageAlt: 'Ghana Audit Service',
-  title: 'Ghana Audit Service',
-  excerpt: 'Protecting the Public Purse Through Accountability and Transparency',
-  linkUrl: '/reports',
-  linkLabel: 'slideshow.viewReport',
-  categoryLabel: 'slideshow.news'
-}
 
 /**
  * Home page carousel feed. What it contains is managed at /admin/carousel:
@@ -36,5 +24,5 @@ export default defineEventHandler(async (event) => {
     logError('carousel', error)
   }
 
-  return { slides: slides.length > 0 ? slides : [STATIC_FALLBACK] }
+  return { slides: withCarouselFallback(slides) }
 })

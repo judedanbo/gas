@@ -22,6 +22,7 @@ import {
   pickGalleryImages,
   planCarousel,
   todayUtc,
+  withCarouselFallback,
   type CarouselConfig,
   type CarouselItemConfig,
   type CarouselItemType
@@ -663,6 +664,7 @@ export async function buildAdminCarousel(now: Date = new Date()): Promise<AdminC
         expired: item.mode === 'pinned' && !isPinActive(item, today)
       }
     }),
-    slides
+    slides,
+    preview: withCarouselFallback(resolved.map(({ slide }) => slide))
   }
 }

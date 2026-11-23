@@ -1,3 +1,5 @@
+import type { HeroSlide } from './index'
+
 // Admin Dashboard Types
 
 /**
@@ -906,6 +908,8 @@ export interface AdminCarousel extends CarouselConfigInput {
   isDefault: boolean
   items: AdminCarouselItem[]
   slides: AdminCarouselSlide[]
+  /** Exactly what the public carousel renders for this configuration */
+  preview: HeroSlide[]
 }
 
 export interface AdminCarouselAlbumImage {

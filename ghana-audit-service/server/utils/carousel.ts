@@ -11,6 +11,8 @@
  *  - gallery albums are always pinned and carry their own photo selection.
  */
 
+import type { HeroSlide } from '~/types'
+
 export type CarouselItemType = 'news' | 'event' | 'report' | 'gallery'
 export type CarouselItemMode = 'pinned' | 'hidden'
 
@@ -65,6 +67,24 @@ export const DEFAULT_FEATURED_ALBUMS: ReadonlyArray<{ slug: string; positions: n
     positions: [3, 4]
   }
 ]
+
+/** Shown alone when the configuration produces no slide at all. */
+export const CAROUSEL_FALLBACK_SLIDE: HeroSlide = {
+  id: 'fallback-1',
+  type: 'news',
+  image: '/images/hero/default-news.svg',
+  imageAlt: 'Ghana Audit Service',
+  title: 'Ghana Audit Service',
+  excerpt: 'Protecting the Public Purse Through Accountability and Transparency',
+  linkUrl: '/reports',
+  linkLabel: 'slideshow.viewReport',
+  categoryLabel: 'slideshow.news'
+}
+
+/** What the public carousel renders for a resolved list of slides. */
+export function withCarouselFallback(slides: HeroSlide[]): HeroSlide[] {
+  return slides.length > 0 ? slides : [CAROUSEL_FALLBACK_SLIDE]
+}
 
 export function todayUtc(now: Date = new Date()): string {
   return now.toISOString().slice(0, 10)
