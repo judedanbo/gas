@@ -19,11 +19,11 @@
       @drop.prevent="handleDrop"
     >
       <!-- Preview -->
-      <div v-if="previewUrl || fileUrl" class="relative p-4">
+      <div v-if="fileUrl" class="relative p-4">
         <!-- Image Preview -->
         <div v-if="isImage" class="flex items-center gap-4">
           <UiBaseImage
-            :src="previewUrl || fileUrl"
+            :src="fileUrl"
             :alt="fileName || 'Preview'"
             class="w-20 h-20 object-cover rounded-lg"
           />
@@ -97,7 +97,15 @@
         />
 
         <label :for="inputId" class="cursor-pointer">
+          <!-- Local preview of the image being sent (a data: URL — see readPreview) -->
+          <img
+            v-if="uploading && previewUrl"
+            :src="previewUrl"
+            alt=""
+            class="mx-auto w-20 h-20 object-cover rounded-lg mb-3"
+          />
           <div
+            v-else
             class="mx-auto w-12 h-12 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mb-3"
           >
             <svg
@@ -218,7 +226,12 @@
   // Byte-transfer progress (0–100) while the request body is being sent.
   const uploadProgress = ref<number | null>(null)
   const uploadError = ref<string | null>(null)
+  // Local preview shown only while an image is uploading; afterwards the
+  // preview is the server URL in modelValue. Always a data: URL — the CSP's
+  // img-src (nuxt.config.ts) does not allow blob: object URLs.
   const previewUrl = ref<string | null>(null)
+  // Bumped per upload so a slow FileReader can't set a preview for a finished one.
+  let previewToken = 0
   const fileName = ref<string | null>(null)
   const fileSize = ref<number | null>(null)
   // Set once this field leaves the page; uploads still in flight then report
@@ -275,6 +288,18 @@
     }
   }
 
+  // Read the picked image as a data: URL for the in-flight preview.
+  function readPreview(file: File) {
+    const token = ++previewToken
+    const reader = new FileReader()
+    reader.onload = () => {
+      if (token === previewToken && uploading.value && typeof reader.result === 'string') {
+        previewUrl.value = reader.result
+      }
+    }
+    reader.readAsDataURL(file)
+  }
+
   // Upload file
   async function uploadFile(file: File) {
     uploadError.value = null
@@ -293,6 +318,7 @@
 
     uploading.value = true
     uploadProgress.value = 0
+    if (isImage.value) readPreview(file)
 
     // A-G reports run to 100MB: follow the transfer in the notification
     // center too, so it stays visible if the admin closes the dialog or
@@ -326,11 +352,6 @@
         response = await api.upload(file, props.type, { onProgress })
       }
 
-      // Set preview
-      if (isImage.value) {
-        previewUrl.value = URL.createObjectURL(file)
-      }
-
       fileName.value = response.originalName
       fileSize.value = response.size
 
@@ -354,15 +375,14 @@
     } finally {
       uploading.value = false
       uploadProgress.value = null
+      // From here the preview is the server URL just emitted.
+      previewToken++
+      previewUrl.value = null
     }
   }
 
   // Clear file
   function clearFile() {
-    if (previewUrl.value) {
-      URL.revokeObjectURL(previewUrl.value)
-    }
-    previewUrl.value = null
     fileName.value = null
     fileSize.value = null
     uploadError.value = null
@@ -380,8 +400,6 @@
   // the notification center from then on.
   onUnmounted(() => {
     unmounted = true
-    if (previewUrl.value) {
-      URL.revokeObjectURL(previewUrl.value)
-    }
+    previewToken++
   })
 </script>
