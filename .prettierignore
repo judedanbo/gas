@@ -1,0 +1,3 @@
+# vendored upstream manifests — keep byte-identical to the release assets
+k8s/cluster/cert-manager/cert-manager-v*.yaml
+k8s/cluster/ingress-nginx/deploy-v*.yaml

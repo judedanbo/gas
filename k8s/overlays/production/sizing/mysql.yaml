@@ -1,0 +1,20 @@
+# TODO(sizing): staging values. InnoDB buffer pool defaults to 128 MB; with a
+# 1Gi limit there is room to raise it via --innodb-buffer-pool-size once the
+# real dataset size is known.
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: mysql
+  namespace: gas # base namespace; the overlay's `namespace:` renames it
+spec:
+  template:
+    spec:
+      containers:
+        - name: mysql
+          resources:
+            requests:
+              cpu: 250m
+              memory: 512Mi
+            limits:
+              cpu: "1"
+              memory: 1Gi

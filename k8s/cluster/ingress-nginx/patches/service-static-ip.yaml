@@ -1,0 +1,20 @@
+# Bind the controller to the pre-created static IP `pip-website-ingress`
+# (40.89.171.199). The IP lives in `website_group`, NOT the cluster's MC_
+# resource group, so it survives a cluster rebuild. Both annotations are
+# required: without the resource-group one the cloud provider only searches
+# MC_website_group_* and silently allocates a random IP instead.
+#
+# Prerequisite: the cluster's control-plane identity needs the Network
+# Contributor role on `website_group` (see ../README.md).
+apiVersion: v1
+kind: Service
+metadata:
+  name: ingress-nginx-controller
+  namespace: ingress-nginx
+  annotations:
+    service.beta.kubernetes.io/azure-load-balancer-resource-group: website_group
+    service.beta.kubernetes.io/azure-pip-name: pip-website-ingress
+spec:
+  # Keep the upstream default of Local: preserves the real client IP, which
+  # the app's rate limiter and analytics (TRUSTED_PROXIES) depend on.
+  externalTrafficPolicy: Local

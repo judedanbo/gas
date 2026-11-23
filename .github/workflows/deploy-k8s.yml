@@ -1,0 +1,103 @@
+name: Deploy to Kubernetes (reusable)
+
+# Called by deploy.yml (staging, every push to main) and deploy-production.yml
+# (manual promotion by SHA). Manifests and k8s/scripts are checked out AT THE
+# IMAGE TAG, so a promotion deploys exactly what staging ran.
+on:
+  workflow_call:
+    inputs:
+      environment:
+        description: GitHub Environment holding the secrets (staging | production)
+        required: true
+        type: string
+      overlay:
+        description: Kustomize overlay under k8s/overlays
+        required: true
+        type: string
+      image_tag:
+        description: Image tag (commit SHA) already pushed to ACR
+        required: true
+        type: string
+      acr_name:
+        required: false
+        type: string
+        default: regisry
+
+jobs:
+  deploy:
+    name: Deploy (${{ inputs.environment }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment: ${{ inputs.environment }}
+    concurrency:
+      group: deploy-${{ inputs.environment }}
+      cancel-in-progress: false
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      ACR_REGISTRY: ${{ inputs.acr_name }}
+      IMAGE_TAG: ${{ inputs.image_tag }}
+    steps:
+      - name: Checkout manifests at the deployed SHA
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ inputs.image_tag }}
+
+      - name: Render overlay (fails on unlabelled objects or unsubstituted images)
+        run: k8s/scripts/render.sh "${{ inputs.overlay }}" > /dev/null
+
+      - name: Login to Azure
+        uses: azure/login@v3
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Verify images exist in ACR
+        run: |
+          set -euo pipefail
+          az acr login --name "$ACR_REGISTRY"
+          for repo in gas-frontend gas-migrate; do
+            docker manifest inspect "$ACR_REGISTRY.azurecr.io/$repo:$IMAGE_TAG" > /dev/null
+          done
+
+      - name: Set up kubectl
+        uses: azure/aks-set-context@v5
+        with:
+          cluster-name: ${{ secrets.AKS_CLUSTER_NAME }}
+          resource-group: ${{ secrets.AKS_RESOURCE_GROUP }}
+
+      - name: Deploy
+        env:
+          SECRETS_SOURCE: env
+          DB_USER: ${{ secrets.DB_USER }}
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          MYSQL_ROOT_PASSWORD: ${{ secrets.MYSQL_ROOT_PASSWORD }}
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
+          NUXT_API_SECRET: ${{ secrets.NUXT_API_SECRET }}
+          ANALYTICS_IP_SALT: ${{ secrets.ANALYTICS_IP_SALT }}
+          # Unset => Redis starts without auth (degrades, does not fail).
+          REDIS_PASSWORD: ${{ secrets.REDIS_PASSWORD }}
+          # Legacy static Azure Files PV — unused by the active PVC; may be empty.
+          AZURE_STORAGE_ACCOUNT_NAME: ${{ secrets.AZURE_STORAGE_ACCOUNT_NAME }}
+          AZURE_STORAGE_ACCOUNT_KEY: ${{ secrets.AZURE_STORAGE_ACCOUNT_KEY }}
+          # Blob backend for report PDFs; empty => on-disk fallback.
+          AZURE_STORAGE_CONNECTION_STRING: ${{ secrets.AZURE_STORAGE_CONNECTION_STRING }}
+          AZURE_BLOB_CONTAINER: ${{ secrets.AZURE_BLOB_CONTAINER }}
+          # Admin bootstrap, consumed only by the manual seed Job.
+          ADMIN_EMAIL: ${{ secrets.ADMIN_EMAIL }}
+          ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD }}
+          ADMIN_NAME: ${{ secrets.ADMIN_NAME }}
+          # SMTP; empty => email is skipped with a startup warning.
+          NUXT_SMTP_HOST: ${{ secrets.NUXT_SMTP_HOST }}
+          NUXT_SMTP_PORT: ${{ secrets.NUXT_SMTP_PORT }}
+          NUXT_SMTP_USER: ${{ secrets.NUXT_SMTP_USER }}
+          NUXT_SMTP_PASS: ${{ secrets.NUXT_SMTP_PASS }}
+          NUXT_SMTP_FROM: ${{ secrets.NUXT_SMTP_FROM }}
+          # Optional; empty => keyless YouTube live probe.
+          YOUTUBE_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}
+          # Optional; empty => geoip-update CronJob skipped, no visitor geolocation.
+          MAXMIND_ACCOUNT_ID: ${{ secrets.MAXMIND_ACCOUNT_ID }}
+          MAXMIND_LICENSE_KEY: ${{ secrets.MAXMIND_LICENSE_KEY }}
+        run: k8s/scripts/deploy.sh "${{ inputs.overlay }}"

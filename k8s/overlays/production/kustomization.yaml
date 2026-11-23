@@ -1,0 +1,56 @@
+# Production: https://audit.gov.gh — namespace gas-production on the `website` cluster.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: gas-production
+
+resources:
+  - ../../base
+  - ingress.yaml
+  - pdb.yaml
+
+# TEMPORARY pre-launch hostname (prelaunch.audit.gov.gh) for smoke testing with
+# valid TLS before the apex DNS record moves. Remove this block after cutover
+# and delete the Ingress/Secret/ConfigMap by hand (apply does not prune).
+components:
+  - ../../components/prelaunch
+
+# Pin third-party images to the exact tags verified on staging before the
+# data copy; bump deliberately, never by a floating tag moving underneath.
+images:
+  - name: mysql
+    newTag: "8.0"
+  - name: redis
+    newTag: 7-alpine
+
+patches:
+  - path: patches/configmap.yaml
+  - path: patches/redis-strategy.yaml
+  - path: patches/backup.yaml
+  - path: sizing/frontend.yaml
+  - path: sizing/frontend-hpa.yaml
+  - path: sizing/mysql.yaml
+  - path: sizing/redis.yaml
+  # Retain storage classes (k8s/cluster/storage-classes.yaml): deleting a
+  # claim must never delete production data. Immutable after first apply.
+  - target:
+      kind: StatefulSet
+      name: mysql
+    patch: |-
+      - op: replace
+        path: /spec/volumeClaimTemplates/0/spec/storageClassName
+        value: gas-disk-retain
+  - target:
+      kind: PersistentVolumeClaim
+      name: (redis-data|mysql-backups)
+    patch: |-
+      - op: replace
+        path: /spec/storageClassName
+        value: gas-disk-retain
+  - target:
+      kind: PersistentVolumeClaim
+      name: gas-public-files-pvc
+    patch: |-
+      - op: replace
+        path: /spec/storageClassName
+        value: gas-blob-nfs-retain

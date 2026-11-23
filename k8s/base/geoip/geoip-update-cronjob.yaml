@@ -1,0 +1,94 @@
+# Keeps the MaxMind GeoLite2 Country + ASN databases on gas-geoip-pvc current.
+# The frontend mounts that volume read-only at /app/data/geoip and re-checks the
+# files every 15 minutes (server/utils/analytics/geoip.ts), so a download here
+# reaches every pod without a restart.
+#
+# GeoLite2 is released every Tuesday and Friday; running early the next day
+# keeps the data well inside MaxMind's licence requirement to stay current.
+# geoipupdate only downloads an edition when it differs from the local copy,
+# and writes to a temp file then renames, so readers never see a partial file.
+#
+# Credentials come from the gas-maxmind Secret (k8s/templates/secrets.yaml),
+# rendered from the MAXMIND_ACCOUNT_ID / MAXMIND_LICENSE_KEY GitHub secrets.
+# scripts/deploy.sh only applies this CronJob when both are set, and starts
+# an immediate run until one has succeeded (so a fresh volume isn't empty for
+# days). Run it by hand with:
+#   kubectl create job geoip-update-manual --from=cronjob/geoip-update -n <namespace>
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: geoip-update
+  namespace: gas
+  labels:
+    deploy.audit.gov.gh/stage: geoip
+    app.kubernetes.io/name: geoip-update
+    app.kubernetes.io/part-of: ghana-audit-service
+spec:
+  schedule: "17 5 * * 3,6"
+  timeZone: "Etc/UTC"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 2
+      activeDeadlineSeconds: 900
+      ttlSecondsAfterFinished: 86400
+      template:
+        metadata:
+          labels:
+            app.kubernetes.io/name: geoip-update
+            app.kubernetes.io/part-of: ghana-audit-service
+        spec:
+          restartPolicy: Never
+          securityContext:
+            runAsUser: 1001
+            runAsGroup: 1001
+            runAsNonRoot: true
+            fsGroup: 1001
+            seccompProfile:
+              type: RuntimeDefault
+          containers:
+            - name: geoipupdate
+              image: ghcr.io/maxmind/geoipupdate:v8.0.0
+              # Call the binary directly rather than the image's entry.sh, which
+              # redirects geoipupdate's output into a file inside the container
+              # and would leave `kubectl logs` empty.
+              command: ["/usr/bin/geoipupdate", "--verbose"]
+              env:
+                - name: GEOIPUPDATE_EDITION_IDS
+                  value: "GeoLite2-Country GeoLite2-ASN"
+                - name: GEOIPUPDATE_DB_DIR
+                  value: /geoip
+                # Keep the flock() off the SMB share; concurrencyPolicy: Forbid
+                # already prevents overlapping runs.
+                - name: GEOIPUPDATE_LOCK_FILE
+                  value: /tmp/.geoipupdate.lock
+              envFrom:
+                # GEOIPUPDATE_ACCOUNT_ID + GEOIPUPDATE_LICENSE_KEY
+                - secretRef:
+                    name: gas-maxmind
+              resources:
+                requests:
+                  cpu: 25m
+                  memory: 64Mi
+                limits:
+                  cpu: 250m
+                  memory: 128Mi
+              volumeMounts:
+                - name: geoip
+                  mountPath: /geoip
+                - name: tmp
+                  mountPath: /tmp
+              securityContext:
+                allowPrivilegeEscalation: false
+                readOnlyRootFilesystem: true
+                capabilities:
+                  drop:
+                    - ALL
+          volumes:
+            - name: geoip
+              persistentVolumeClaim:
+                claimName: gas-geoip-pvc
+            - name: tmp
+              emptyDir: {}

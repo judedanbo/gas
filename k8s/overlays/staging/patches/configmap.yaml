@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: gas-config
+  namespace: gas # base namespace; the overlay's `namespace:` renames it
+data:
+  NUXT_PUBLIC_SITE_URL: "https://test.audit.gov.gh"

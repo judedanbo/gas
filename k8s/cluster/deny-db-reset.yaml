@@ -1,0 +1,33 @@
+# Hard guard: the database reset Job (templates/reset-job.staging-only.yaml)
+# bypasses the app's own NODE_ENV safety check by setting DB_RESET_ALLOW. Deny
+# any Job carrying that variable in the production namespace, whatever
+# kube context or script tries to create it.
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingAdmissionPolicy
+metadata:
+  name: gas-deny-db-reset
+spec:
+  failurePolicy: Fail
+  matchConstraints:
+    resourceRules:
+      - apiGroups: ["batch"]
+        apiVersions: ["v1"]
+        operations: ["CREATE", "UPDATE"]
+        resources: ["jobs"]
+  validations:
+    - expression: >-
+        object.spec.template.spec.containers.all(c,
+        !has(c.env) || c.env.all(e, e.name != 'DB_RESET_ALLOW'))
+      message: Database reset Jobs are forbidden in the production namespace.
+---
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingAdmissionPolicyBinding
+metadata:
+  name: gas-deny-db-reset
+spec:
+  policyName: gas-deny-db-reset
+  validationActions: ["Deny"]
+  matchResources:
+    namespaceSelector:
+      matchLabels:
+        kubernetes.io/metadata.name: gas-production

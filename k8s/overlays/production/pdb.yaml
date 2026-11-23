@@ -1,0 +1,15 @@
+# Keep at least one frontend pod serving during node drains and upgrades.
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: gas-frontend
+  labels:
+    app.kubernetes.io/name: gas-frontend
+    app.kubernetes.io/part-of: ghana-audit-service
+    deploy.audit.gov.gh/stage: app
+spec:
+  maxUnavailable: 1
+  unhealthyPodEvictionPolicy: AlwaysAllow
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: gas-frontend

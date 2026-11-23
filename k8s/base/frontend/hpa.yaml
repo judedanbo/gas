@@ -1,0 +1,36 @@
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: gas-frontend
+  namespace: gas
+  labels:
+    deploy.audit.gov.gh/stage: app
+    app.kubernetes.io/name: gas-frontend
+    app.kubernetes.io/part-of: ghana-audit-service
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: gas-frontend
+  minReplicas: 2
+  maxReplicas: 5
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70
+  # A running PDF optimization keeps its pod far above the 70% target for
+  # minutes, so the HPA scales out on every optimization. Scaling back in
+  # terminates pods, which cuts their work short: in-flight uploads are handed
+  # off and redo their remaining steps on another pod, and explicit
+  # optimizations are reported interrupted for the admin to run again. So
+  # remove pods slowly: only after 30 min below target, at most one per 10 min.
+  behavior:
+    scaleDown:
+      stabilizationWindowSeconds: 1800
+      policies:
+        - type: Pods
+          value: 1
+          periodSeconds: 600

@@ -1,0 +1,28 @@
+# Retain variants of the cluster's built-in classes, used by the production
+# overlay. Retain protects data against PVC deletion (a PV is left behind and
+# must be cleaned up or re-bound by hand); it does NOT protect against the
+# cluster itself being deleted — the backing disks/accounts live in the
+# MC_website_group_* resource group.
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: gas-disk-retain
+provisioner: disk.csi.azure.com
+parameters:
+  skuname: StandardSSD_LRS
+reclaimPolicy: Retain
+volumeBindingMode: WaitForFirstConsumer
+allowVolumeExpansion: true
+---
+# Same parameters as the built-in azureblob-nfs-premium.
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: gas-blob-nfs-retain
+provisioner: blob.csi.azure.com
+parameters:
+  protocol: nfs
+  skuName: Premium_LRS
+reclaimPolicy: Retain
+volumeBindingMode: Immediate
+allowVolumeExpansion: true

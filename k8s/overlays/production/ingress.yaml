@@ -1,0 +1,36 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: gas-frontend
+  labels:
+    app.kubernetes.io/name: gas-frontend
+    app.kubernetes.io/part-of: ghana-audit-service
+    deploy.audit.gov.gh/stage: app
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    # Must cover the largest app-side upload limit (report PDFs: 100MB in
+    # server/utils/fileUpload.ts) plus multipart overhead.
+    nginx.ingress.kubernetes.io/proxy-body-size: "105m"
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    # www.audit.gov.gh -> audit.gov.gh. The redirect only fires for hosts that
+    # are NOT listed under rules, so www appears in tls.hosts only. The status
+    # code (301) is set controller-wide in k8s/cluster/ingress-nginx.
+    nginx.ingress.kubernetes.io/from-to-www-redirect: "true"
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts:
+        - audit.gov.gh
+        - www.audit.gov.gh
+      secretName: gas-tls
+  rules:
+    - host: audit.gov.gh
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: gas-frontend
+                port:
+                  number: 80

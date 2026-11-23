@@ -1,0 +1,124 @@
+# Default: deny all ingress in the app namespace (overlay sets which).
+# Each service then explicitly opens the ports it needs.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny-ingress
+  namespace: gas
+  labels:
+    deploy.audit.gov.gh/stage: policy
+    app.kubernetes.io/part-of: ghana-audit-service
+spec:
+  podSelector: {}
+  policyTypes:
+    - Ingress
+---
+# Frontend: allow ingress from the NGINX Ingress Controller.
+# The ingress-nginx namespace label must match your cluster's Ingress
+# Controller installation — "ingress-nginx" is the Helm default.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-frontend-ingress
+  namespace: gas
+  labels:
+    deploy.audit.gov.gh/stage: policy
+    app.kubernetes.io/part-of: ghana-audit-service
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: gas-frontend
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: ingress-nginx
+      ports:
+        - port: 3000
+          protocol: TCP
+---
+# MySQL: allow ingress only from frontend, migrate, backup and seed pods.
+# (The staging overlay additionally admits the gas-reset Job; production never does.)
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-mysql-ingress
+  namespace: gas
+  labels:
+    deploy.audit.gov.gh/stage: policy
+    app.kubernetes.io/part-of: ghana-audit-service
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: mysql
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: gas-frontend
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: gas-migrate
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: mysql-backup
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: gas-seed
+      ports:
+        - port: 3306
+          protocol: TCP
+---
+# Redis: allow ingress only from frontend pods.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-redis-ingress
+  namespace: gas
+  labels:
+    deploy.audit.gov.gh/stage: policy
+    app.kubernetes.io/part-of: ghana-audit-service
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: redis
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: gas-frontend
+      ports:
+        - port: 6379
+          protocol: TCP
+---
+# cert-manager HTTP-01 solver pods are created in this namespace and must be
+# reachable from the ingress controller on 8089, or default-deny blocks every
+# Let's Encrypt challenge once a network policy engine is enabled.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-acme-http01-solver
+  namespace: gas
+  labels:
+    app.kubernetes.io/part-of: ghana-audit-service
+    deploy.audit.gov.gh/stage: policy
+spec:
+  podSelector:
+    matchLabels:
+      acme.cert-manager.io/http01-solver: "true"
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: ingress-nginx
+      ports:
+        - port: 8089
+          protocol: TCP

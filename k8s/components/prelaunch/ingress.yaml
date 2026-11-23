@@ -1,0 +1,32 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: gas-frontend-prelaunch
+  labels:
+    app.kubernetes.io/name: gas-frontend
+    app.kubernetes.io/part-of: ghana-audit-service
+    deploy.audit.gov.gh/stage: app
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    nginx.ingress.kubernetes.io/proxy-body-size: "105m"
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    # Do NOT use basic auth here: it occupies the Authorization header that
+    # the admin API needs for Bearer tokens.
+    nginx.ingress.kubernetes.io/custom-headers: gas-production/gas-prelaunch-headers
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts:
+        - prelaunch.audit.gov.gh
+      secretName: gas-prelaunch-tls
+  rules:
+    - host: prelaunch.audit.gov.gh
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: gas-frontend
+                port:
+                  number: 80
