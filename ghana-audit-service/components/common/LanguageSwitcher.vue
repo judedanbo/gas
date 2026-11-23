@@ -1,5 +1,9 @@
 <template>
-  <nav class="flex items-center gap-1" :aria-label="$t('common.language')">
+  <nav
+    v-if="availableLocales.length > 1"
+    class="flex items-center gap-1"
+    :aria-label="$t('common.language')"
+  >
     <Icon name="heroicons:language" :class="iconClasses" class="w-4 h-4" aria-hidden="true" />
     <NuxtLink
       v-for="loc in availableLocales"
@@ -18,7 +22,8 @@
 
 <script setup lang="ts">
   /**
-   * Links to the same page in each configured locale.
+   * Links to the same page in each language switched on at /admin/languages.
+   * Hidden while English is the only one.
    * Uses real links (not `setLocale`) so the switch works without JavaScript
    * and search engines can discover the alternate-language URLs.
    */
@@ -30,16 +35,14 @@
     variant: 'default'
   })
 
-  const { locale, locales } = useI18n()
+  const { locale } = useI18n()
+  const { languages } = useSiteLanguages()
   const switchLocalePath = useSwitchLocalePath()
 
   type LocaleCode = typeof locale.value
 
   const availableLocales = computed(() =>
-    (locales.value as Array<{ code: string; name?: string }>).map((l) => ({
-      code: l.code,
-      name: l.name ?? l.code.toUpperCase()
-    }))
+    languages.value.map((language) => ({ code: language.code, name: language.nativeName }))
   )
 
   const iconClasses = computed(() =>

@@ -982,3 +982,59 @@ export interface SiteStatUpdateInput {
   displayOrder: number
   isActive: boolean
 }
+
+// ── Site languages (/admin/languages) ────────────────────────────────────
+
+export interface AdminLanguage {
+  code: string
+  /** English name */
+  name: string
+  /** The language's own name, shown in the public language switcher */
+  nativeName: string
+  dir: 'ltr' | 'rtl'
+  /** English — always on, cannot be changed or removed */
+  isDefault: boolean
+  isEnabled: boolean
+  /** Ships with translations of its own (Akan) */
+  hasBundledMessages: boolean
+  /** Messages that have a translation */
+  translated: number
+  /** Messages in total */
+  total: number
+  /** Translations entered in the admin panel */
+  overrides: number
+  updatedAt: string | null
+}
+
+/** A language that can still be added */
+export interface AvailableLanguage {
+  code: string
+  name: string
+  nativeName: string
+}
+
+export interface AdminLanguages {
+  languages: AdminLanguage[]
+  available: AvailableLanguage[]
+}
+
+/** One interface message and its translation into a language */
+export interface TranslationEntry {
+  key: string
+  /** English text */
+  source: string
+  /** Translation that ships with the site, if any */
+  bundled: string | null
+  /** Translation entered in the admin panel; wins over `bundled` */
+  override: string | null
+}
+
+export interface AdminTranslations {
+  language: AdminLanguage
+  entries: TranslationEntry[]
+}
+
+export interface AdminTranslationsSaved extends AdminTranslations {
+  saved: number
+  cleared: number
+}

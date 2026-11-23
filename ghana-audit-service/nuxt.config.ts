@@ -2,6 +2,7 @@
 import { resolve, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { pageCacheRule } from './server/utils/pageCache'
+import { CATALOG_CODES, DEFAULT_LANGUAGE, LANGUAGE_CATALOG } from './utils/languageCatalog'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const isDev = process.env.NODE_ENV !== 'production'
@@ -9,6 +10,94 @@ const isDev = process.env.NODE_ENV !== 'production'
 // Route rule for a cached public page (see "Page caching" in routeRules). Off in
 // dev, like the public API caches, so SSR changes show up on reload.
 const cachedPage = (ttlSeconds: number) => (isDev ? {} : pageCacheRule(ttlSeconds))
+
+// English plus every language the site can be switched to (see
+// utils/languageCatalog.ts). All of them get routes at build time; which ones
+// visitors can actually reach is decided at runtime from the admin panel
+// (/admin/languages, enforced by server/middleware/01-locale-gate.ts).
+const i18nLocales = [DEFAULT_LANGUAGE, ...LANGUAGE_CATALOG].map((language) => ({
+  code: language.code,
+  name: language.nativeName,
+  language: language.language,
+  dir: language.dir,
+  // English is the source text. Every other language loads its bundled file
+  // (if it ships one) and then the translations entered in the admin panel,
+  // which win — see i18n/locales/overrides.ts.
+  files:
+    language.code === DEFAULT_LANGUAGE.code
+      ? [language.file as string]
+      : [...(language.file ? [language.file] : []), 'overrides.ts']
+}))
+
+// Page-cache TTLs (seconds) for DB-backed public pages, by English path. See
+// "Page caching" in routeRules for what the rule does.
+const CACHED_PAGE_TTLS: Record<string, number> = {
+  '/': 600,
+  '/reports': 600,
+  '/reports/**': 600,
+  '/publications': 600,
+  '/publications/**': 3600,
+  '/media': 600,
+  '/media/**': 600,
+  '/careers': 600,
+  '/careers/**': 600,
+  '/contact': 3600,
+  // DB-backed site statistics (useSiteStats) — render at runtime so admin
+  // edits appear; these are not in prerender.routes.
+  '/about/the-service': 3600,
+  '/about/auditor-general': 3600,
+  '/about/past-auditors-general': 3600,
+  '/about/management-team': 3600,
+  '/about/management-team/**': 3600,
+  '/about/board-members': 3600,
+  '/about/board-members/**': 3600,
+
+  // Payload routes for the exact-match cached pages above. A cached page
+  // doesn't inline its data: the HTML points at <page>/_payload.json, which
+  // is rendered (and cached) like a page and must carry the same rule —
+  // Nuxt only extracts payloads on routes with a `cache`/`isr` rule. Nuxt
+  // should generate these automatically, but in the production build the
+  // generated rules land after routeRules is snapshotted into runtime
+  // config (Nuxt 3.21.8, still so in 3.21.10), so /_payload.json 404s and
+  // the client hydrates without SSR data. Keep each TTL in sync with its
+  // page rule. Pages with a same-TTL `/**` sibling (reports, media,
+  // careers, …) are already covered by the wildcard and need no entry here.
+  '/_payload.json': 600,
+  '/publications/_payload.json': 600, // page is 600; /publications/** would give 3600
+  '/contact/_payload.json': 3600,
+  '/about/the-service/_payload.json': 3600,
+  '/about/auditor-general/_payload.json': 3600,
+  '/about/past-auditors-general/_payload.json': 3600
+}
+
+const cachedPageRules = {
+  ...Object.fromEntries(
+    Object.entries(CACHED_PAGE_TTLS).map(([path, ttl]) => [path, cachedPage(ttl)])
+  ),
+  // The PFM Strategy page was replaced by the 2026-2030 Strategic Plan.
+  '/publications/pfm-strategy': {
+    redirect: { to: '/publications/strategic-plan', statusCode: 301 }
+  }
+}
+
+/**
+ * Repeat a set of English-path route rules under every catalogue language
+ * prefix (`/reports` → `/ak/reports`, `/` → `/ak`), so each language gets the
+ * same caching and redirects as English.
+ */
+function localizedRules<T extends { redirect?: { to: string; statusCode: number } }>(
+  rules: Record<string, T>
+): Record<string, T> {
+  const out: Record<string, T> = { ...rules }
+  for (const code of CATALOG_CODES) {
+    for (const [path, rule] of Object.entries(rules)) {
+      out[path === '/' ? `/${code}` : `/${code}${path}`] = rule.redirect
+        ? { ...rule, redirect: { ...rule.redirect, to: `/${code}${rule.redirect.to}` } }
+        : rule
+    }
+  }
+  return out
+}
 
 export default defineNuxtConfig({
   compatibilityDate: '2025-07-15',
@@ -192,11 +281,9 @@ export default defineNuxtConfig({
 
   // i18n Configuration
   i18n: {
-    locales: [
-      { code: 'en', name: 'English', file: 'en.json', language: 'en-GH' },
-      { code: 'ak', name: 'Akan', file: 'ak.json', language: 'ak-GH' }
-    ],
+    locales: i18nLocales,
     defaultLocale: 'en',
+    vueI18n: 'i18n.config.ts',
     bundle: {
       fullInstall: false
     },
@@ -368,7 +455,12 @@ export default defineNuxtConfig({
         '/accessibility',
         '/search'
       ],
-      ignore: ['/admin', '/admin/**', '/ak/admin', '/ak/admin/**', '/_ipx/**', '/api/downloads/**']
+      // '/_i18n' — the i18n module's locale message routes. Prerendered pages
+      // would otherwise pull them into the build as static files, which shadow
+      // the live route and freeze every language's messages at build time;
+      // they must stay dynamic so translations entered in the admin panel
+      // (i18n/locales/overrides.ts) are served.
+      ignore: ['/admin', '/admin/**', '/_ipx/**', '/api/downloads/**', '/_i18n']
     },
     // Route rules
     routeRules: {
@@ -389,73 +481,9 @@ export default defineNuxtConfig({
       // response a fresh CSP nonce, keeps it out of shared caches, and won't
       // store a render that set a cookie or hit a failed data fetch
       // (plugins/page-cache.server.ts). See server/utils/pageCache.ts.
-      '/': cachedPage(600),
-      '/reports': cachedPage(600),
-      '/reports/**': cachedPage(600),
-      // The PFM Strategy page was replaced by the 2026-2030 Strategic Plan.
-      '/publications/pfm-strategy': {
-        redirect: { to: '/publications/strategic-plan', statusCode: 301 }
-      },
-      '/ak/publications/pfm-strategy': {
-        redirect: { to: '/ak/publications/strategic-plan', statusCode: 301 }
-      },
-      '/publications': cachedPage(600),
-      '/publications/**': cachedPage(3600),
-      '/media': cachedPage(600),
-      '/media/**': cachedPage(600),
-      '/careers': cachedPage(600),
-      '/careers/**': cachedPage(600),
-      '/contact': cachedPage(3600),
-      // DB-backed site statistics (useSiteStats) — render at runtime so admin
-      // edits appear; these were removed from prerender.routes above.
-      '/about/the-service': cachedPage(3600),
-      '/about/auditor-general': cachedPage(3600),
-      '/about/past-auditors-general': cachedPage(3600),
-      '/about/management-team': cachedPage(3600),
-      '/about/management-team/**': cachedPage(3600),
-      '/about/board-members': cachedPage(3600),
-      '/about/board-members/**': cachedPage(3600),
-      // Akan locale variants (i18n prefix_except_default) — mirror the TTLs above.
-      '/ak': cachedPage(600),
-      '/ak/reports': cachedPage(600),
-      '/ak/reports/**': cachedPage(600),
-      '/ak/publications': cachedPage(600),
-      '/ak/publications/**': cachedPage(3600),
-      '/ak/media': cachedPage(600),
-      '/ak/media/**': cachedPage(600),
-      '/ak/careers': cachedPage(600),
-      '/ak/careers/**': cachedPage(600),
-      '/ak/contact': cachedPage(3600),
-      '/ak/about/the-service': cachedPage(3600),
-      '/ak/about/auditor-general': cachedPage(3600),
-      '/ak/about/past-auditors-general': cachedPage(3600),
-      '/ak/about/management-team': cachedPage(3600),
-      '/ak/about/management-team/**': cachedPage(3600),
-      '/ak/about/board-members': cachedPage(3600),
-      '/ak/about/board-members/**': cachedPage(3600),
-
-      // Payload routes for the exact-match cached pages above. A cached page
-      // doesn't inline its data: the HTML points at <page>/_payload.json, which
-      // is rendered (and cached) like a page and must carry the same rule —
-      // Nuxt only extracts payloads on routes with a `cache`/`isr` rule. Nuxt
-      // should generate these automatically, but in the production build the
-      // generated rules land after routeRules is snapshotted into runtime
-      // config (Nuxt 3.21.8, still so in 3.21.10), so /_payload.json 404s and
-      // the client hydrates without SSR data. Keep each TTL in sync with its
-      // page rule. Pages with a same-TTL `/**` sibling (reports, media,
-      // careers, …) are already covered by the wildcard and need no entry here.
-      '/_payload.json': cachedPage(600),
-      '/publications/_payload.json': cachedPage(600), // page is 600; /publications/** would give 3600
-      '/contact/_payload.json': cachedPage(3600),
-      '/about/the-service/_payload.json': cachedPage(3600),
-      '/about/auditor-general/_payload.json': cachedPage(3600),
-      '/about/past-auditors-general/_payload.json': cachedPage(3600),
-      '/ak/_payload.json': cachedPage(600),
-      '/ak/publications/_payload.json': cachedPage(600),
-      '/ak/contact/_payload.json': cachedPage(3600),
-      '/ak/about/the-service/_payload.json': cachedPage(3600),
-      '/ak/about/auditor-general/_payload.json': cachedPage(3600),
-      '/ak/about/past-auditors-general/_payload.json': cachedPage(3600),
+      // The rules themselves are in `cachedPageRules` at the top of this file,
+      // generated for English and for every catalogue language prefix.
+      ...localizedRules(cachedPageRules),
 
       // Exclude image optimization and download routes from prerendering —
       // the crawler discovers every srcset breakpoint, adding 90+ routes at
@@ -506,14 +534,9 @@ export default defineNuxtConfig({
       // /api/auditor-general varies by Accept-Language, which the route-rule
       // cache does not key on), so admin changes surface promptly instead.
 
-      // Admin routes - hidden from SEO, cached only in production
+      // Admin routes - hidden from SEO, cached only in production. The admin is
+      // English-only: modules/admin-routes.ts drops its per-language copies.
       '/admin/**': {
-        ssr: false,
-        prerender: false,
-        headers: { 'X-Robots-Tag': 'noindex, nofollow' },
-        cache: isDev ? false : { maxAge: 60, staleMaxAge: 120 }
-      },
-      '/ak/admin/**': {
         ssr: false,
         prerender: false,
         headers: { 'X-Robots-Tag': 'noindex, nofollow' },
