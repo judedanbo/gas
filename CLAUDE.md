@@ -89,7 +89,8 @@ Production deploys to AKS via GitHub Actions (`.github/workflows/deploy.yml`). P
 A-G report PDF optimization (Ghostscript/Tesseract) runs inside the frontend pod, and anything that kills the container cuts in-flight uploads and optimizations short. So the frontend's startup/liveness probes hit `/healthz` (event loop only) and readiness hits `/readyz` (adds a MySQL ping) — never an SSR page. The container is sized (250m/512Mi requests, 2 CPU/1Gi limits) for one optimization at a time (`PDF_OPTIMIZATION_MAX_CONCURRENT=1` in `gas-config`), and the HPA scales down slowly. Change resources and that variable together; see "Frontend probes" and "Frontend resources and PDF optimization" in `k8s/README.md`.
 
 ### Dependency management
-- Major version bumps (Nuxt 3→4, TypeScript 5→6, Vitest 3→4, vue-router 4→5) are intentionally deferred — don't upgrade them without explicit approval.
+- Major version bumps (Nuxt 3→4, TypeScript 5→6, vue-router 4→5) are intentionally deferred — don't upgrade them without explicit approval.
+- Vitest is on 5 (with `@nuxt/test-utils` 4). `vite` is a direct devDependency pinned to 7 so tests run on the same Vite major as Nuxt 3's builder — without it npm hoists Vite 8 for Vitest. Move it only together with Nuxt.
 - `npm update` within semver range is safe and should be run periodically. Always run the full quality gate (`typecheck`, `lint`, `test:run`) after updates — semver-compatible type changes can still break `vue-tsc`.
 
 ### Pre-commit
