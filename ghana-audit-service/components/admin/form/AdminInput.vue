@@ -1,6 +1,6 @@
 <template>
   <AdminFormGroup
-    :id="id"
+    :id="controlId"
     :label="label"
     :required="required"
     :error="error"
@@ -9,7 +9,7 @@
   >
     <div class="relative">
       <input
-        :id="id"
+        :id="controlId"
         :type="type"
         :value="inputValue"
         :placeholder="placeholder"
@@ -61,6 +61,11 @@
     helpText: undefined,
     hint: undefined
   })
+
+  // Fall back to a generated id so the label is always tied to its control,
+  // even when the caller doesn't pass one.
+  const fallbackId = useId()
+  const controlId = computed(() => props.id || fallbackId)
 
   const emit = defineEmits<{
     'update:modelValue': [value: string | number]

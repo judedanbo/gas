@@ -1,7 +1,11 @@
 <template>
   <div class="flex items-center justify-between">
     <div>
-      <label v-if="label" :for="id" class="text-sm font-medium text-gray-700 dark:text-gray-300">
+      <label
+        v-if="label"
+        :for="controlId"
+        class="text-sm font-medium text-gray-700 dark:text-gray-300"
+      >
         {{ label }}
       </label>
       <p v-if="description" class="text-sm text-gray-500 dark:text-gray-400">
@@ -9,7 +13,7 @@
       </p>
     </div>
     <button
-      :id="id"
+      :id="controlId"
       type="button"
       role="switch"
       :aria-checked="modelValue"
@@ -48,6 +52,11 @@
     id: undefined,
     disabled: false
   })
+
+  // Fall back to a generated id so the label is always tied to its control,
+  // even when the caller doesn't pass one.
+  const fallbackId = useId()
+  const controlId = computed(() => props.id || fallbackId)
 
   const emit = defineEmits<{
     'update:modelValue': [value: boolean]

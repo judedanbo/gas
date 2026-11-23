@@ -50,6 +50,8 @@ test.describe('Content Security Policy', () => {
       // L-4 — icons depend on data: URIs
       expect(directives['img-src'], 'img-src directive should be present').toBeTruthy()
       expect(directives['img-src']).toContain('data:')
+      // Admin upload fields preview the picked image from a blob: object URL
+      expect(directives['img-src']).toContain('blob:')
 
       // M-1 — nonce-based, no unsafe-inline / unsafe-eval
       expect(directives['script-src'], 'script-src directive should be present').toBeTruthy()

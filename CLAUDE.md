@@ -104,7 +104,8 @@ A-G report PDF optimization (Ghostscript/Tesseract) runs inside the frontend pod
 
 ### Dependency management
 
-- Major version bumps (Nuxt 3→4, TypeScript 5→6, Vitest 3→4, vue-router 4→5) are intentionally deferred — don't upgrade them without explicit approval.
+- Major version bumps (Nuxt 3→4, TypeScript 5→6, vue-router 4→5) are intentionally deferred — don't upgrade them without explicit approval.
+- Vitest is on 5 (with `@nuxt/test-utils` 4). `vite` is a direct devDependency pinned to 7 so tests run on the same Vite major as Nuxt 3's builder — without it npm hoists Vite 8 for Vitest. Move it only together with Nuxt.
 - `npm update` within semver range is safe and should be run periodically. Always run the full quality gate (`typecheck`, `lint`, `test:run`) after updates — semver-compatible type changes can still break `vue-tsc`.
 
 ### Pre-commit

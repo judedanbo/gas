@@ -80,7 +80,7 @@
         :key="slide.id"
         :slide="slide"
         :is-active="i === currentIndex"
-        :is-first="i === 0"
+        :is-first="!embedded && i === 0"
         :index="i"
         :total-slides="slideCount"
       />
@@ -148,6 +148,18 @@
 </template>
 
 <script setup lang="ts">
+  import type { HeroSlide } from '~/types'
+
+  const props = defineProps<{
+    /** Slides to show instead of fetching the public feed (admin preview) */
+    slides?: HeroSlide[]
+    /**
+     * Embedded in another page rather than leading the home page: no slide
+     * claims the page's <h1> and no image is fetched eagerly.
+     */
+    embedded?: boolean
+  }>()
+
   const { t } = useI18n()
 
   const {
@@ -163,7 +175,7 @@
     pauseAutoplay,
     resumeAutoplay,
     toggleAutoplay
-  } = useHeroSlideshow()
+  } = useHeroSlideshow(props.slides ? () => props.slides : undefined)
 
   const slideshowRef = ref<HTMLElement | null>(null)
 
