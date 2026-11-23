@@ -1,11 +1,18 @@
+import { getQuery } from 'h3'
 import {
   checkRateLimit,
   checkMultiWindowRateLimit,
+  consumeMultiWindowRateLimit,
   createRateLimitKey,
   getClientIP,
   RATE_LIMITS,
   type RateLimitConfig
 } from '../utils/rateLimiter'
+import {
+  BULK_REPORT_DOWNLOAD_PATH,
+  isBulkCheck,
+  parseBulkReportIds
+} from '~/utils/bulkReportDownload'
 import { isStaticAsset, BLOCKED_DIRECT_PATHS } from '../utils/staticAssets'
 import { isHealthProbePath } from '../utils/healthProbes'
 import { recordIncident } from '../utils/analytics/recordIncident'
@@ -76,6 +83,68 @@ export default defineEventHandler(async (event): Promise<undefined | object> => 
 
   // Downloads: stricter dual-window limit (per-minute and per-hour).
   if (isDownload) {
+    // A bulk ZIP is one request but many files. It takes one unit from the
+    // per-minute (burst) window and one per report from the hourly (bandwidth)
+    // window, the same budget single downloads draw on, so zipping reports
+    // is never a way around the limit.
+    if (path === BULK_REPORT_DOWNLOAD_PATH) {
+      const query = getQuery(event)
+      // An unreadable selection is rejected by the handler; meter it as one file.
+      const files = parseBulkReportIds(query.ids)?.length ?? 1
+      const isCheck = isBulkCheck(query.check)
+
+      // A check ("would this download go through?") spends no download
+      // allowance, so meter it as an ordinary API call: it still costs a
+      // database query and a storage lookup per report.
+      if (isCheck) {
+        const { limit, windowMs } = RATE_LIMITS.api
+        const api = await checkRateLimit(createRateLimitKey(clientIP, path), limit, windowMs)
+        if (api.isLimited) {
+          applyRateLimitHeaders(event, limit, api.remaining, api.resetTime)
+          recordRateLimitHit(event, 'rate_limit_api', rawPath)
+          const retryAfter = Math.max(1, Math.ceil((api.resetTime - Date.now()) / 1000))
+          setHeader(event, 'Retry-After', retryAfter)
+          setResponseStatus(event, 429)
+          return {
+            statusCode: 429,
+            statusMessage: 'Too Many Requests',
+            message: 'Rate limit exceeded. Please try again later.',
+            retryAfter
+          }
+        }
+      }
+
+      const result = await consumeMultiWindowRateLimit(
+        clientIP,
+        [
+          { name: 'download:minute', config: RATE_LIMITS.download },
+          { name: 'download:hour', config: RATE_LIMITS.downloadHourly, cost: files }
+        ],
+        { dryRun: isCheck }
+      )
+
+      applyRateLimitHeaders(event, result.limit, result.remaining, result.resetTime)
+
+      if (result.isLimited) {
+        // Asking is not abuse: only a refused download counts as a hit.
+        if (!isCheck) recordRateLimitHit(event, 'rate_limit_download', rawPath)
+        setHeader(event, 'Retry-After', result.retryAfterSeconds)
+        setResponseStatus(event, 429)
+        return {
+          statusCode: 429,
+          statusMessage: 'Too Many Requests',
+          message:
+            'Download limit reached. Please wait before downloading more reports. This limit helps us keep the site reliable for everyone.',
+          retryAfter: result.retryAfterSeconds,
+          // Reports that would still fit this hour, so the page can suggest a
+          // smaller selection. Zero when the per-minute window is the blocker.
+          remaining: result.limitedBy === 'download:hour' ? result.remaining : 0
+        }
+      }
+
+      return
+    }
+
     const result = await checkMultiWindowRateLimit(clientIP, [
       { name: 'download:minute', config: RATE_LIMITS.download },
       { name: 'download:hour', config: RATE_LIMITS.downloadHourly }

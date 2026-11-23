@@ -1,6 +1,11 @@
 <template>
   <article
-    class="group relative bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl overflow-hidden transition-all duration-200 hover:border-primary/40 hover:shadow-[0_1px_1px_rgba(0,107,63,0.06),0_2px_2px_rgba(0,107,63,0.06),0_4px_4px_rgba(0,107,63,0.06),0_8px_8px_rgba(0,107,63,0.06)]"
+    class="group relative bg-white dark:bg-gray-800 border rounded-2xl overflow-hidden transition-all duration-200 hover:shadow-[0_1px_1px_rgba(0,107,63,0.06),0_2px_2px_rgba(0,107,63,0.06),0_4px_4px_rgba(0,107,63,0.06),0_8px_8px_rgba(0,107,63,0.06)]"
+    :class="
+      selected
+        ? 'border-primary ring-2 ring-primary dark:border-primary-200 dark:ring-primary-200'
+        : 'border-gray-200 dark:border-gray-700 hover:border-primary/40'
+    "
     :aria-labelledby="`featured-report-title-${report.id}`"
   >
     <div class="grid grid-cols-1 lg:grid-cols-5">
@@ -97,6 +102,16 @@
             :label="$t('reports.featured.viewReport')"
             variant="text"
           />
+          <ReportsSelectToggle
+            v-if="selectable"
+            class="sm:ml-auto"
+            long
+            :title="report.title"
+            :selected="selected"
+            :disabled="selectionDisabled"
+            :disabled-reason="selectionDisabledReason"
+            @toggle="emit('toggle-select', report)"
+          />
         </div>
       </div>
     </div>
@@ -109,9 +124,22 @@
 
   interface Props {
     report: AuditReport
+    /** Show the checkbox that adds this report to a bulk (ZIP) download. */
+    selectable?: boolean
+    selected?: boolean
+    /** The selection is full and this report is not part of it. */
+    selectionDisabled?: boolean
+    selectionDisabledReason?: string
   }
 
-  const props = defineProps<Props>()
+  const props = withDefaults(defineProps<Props>(), {
+    selectable: false,
+    selected: false,
+    selectionDisabled: false,
+    selectionDisabledReason: undefined
+  })
+
+  const emit = defineEmits<{ 'toggle-select': [report: AuditReport] }>()
 
   // Report summaries are authored in the admin rich-text editor, so they arrive as
   // HTML. This teaser is clamped plain text — flatten rather than render the markup.

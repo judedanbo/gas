@@ -258,7 +258,9 @@ export const RATE_LIMITS: Record<string, RateLimitConfig> = {
     windowMs: 60 * 1000
   },
   // Report/publication downloads (per-hour window): 50 per hour.
-  // Bandwidth/cost guard against sustained abuse.
+  // Bandwidth/cost guard against sustained abuse. Counted in files: a bulk
+  // ZIP takes one unit per report it contains, so keep this at or above
+  // BULK_REPORT_MAX_FILES (utils/bulkReportDownload.ts).
   downloadHourly: {
     limit: 50,
     windowMs: 60 * 60 * 1000
@@ -315,5 +317,184 @@ export async function checkMultiWindowRateLimit(
     remaining: tightest.remaining,
     resetTime: tightest.resetTime,
     retryAfterSeconds: 0
+  }
+}
+
+// ---------------------------------------------------------------------------
+// All-or-nothing consumption (requests that cost more than one unit)
+// ---------------------------------------------------------------------------
+
+export interface RateLimitWindow {
+  name: string
+  config: RateLimitConfig
+  /** Units this request takes from the window. Defaults to 1. */
+  cost?: number
+}
+
+export interface ConsumeResult extends MultiWindowResult {
+  /** Name of the window that turned the request away, or null if it fits. */
+  limitedBy: string | null
+}
+
+interface WindowState {
+  /** Units used in the window: after consuming if the request fit, else as found. */
+  count: number
+  ttlMs: number
+}
+
+interface ConsumeOutcome {
+  fits: boolean
+  states: WindowState[]
+}
+
+// KEYS: one per window. ARGV: cost, limit, windowMs per window, then '1' for a
+// dry run. Returns { fits, count1, ttl1, count2, ttl2, ... }. Runs as one
+// atomic step, so racing requests cannot both squeeze into the last few units,
+// and a request that does not fit leaves every counter untouched.
+const CONSUME_SCRIPT = `
+local dryRun = ARGV[#ARGV] == '1'
+local fits = 1
+local state = {}
+for i, key in ipairs(KEYS) do
+  local count = tonumber(redis.call('GET', key) or '0')
+  if count + tonumber(ARGV[i * 3 - 2]) > tonumber(ARGV[i * 3 - 1]) then fits = 0 end
+  state[i * 2 - 1] = count
+  state[i * 2] = redis.call('PTTL', key)
+end
+if fits == 1 and not dryRun then
+  for i, key in ipairs(KEYS) do
+    state[i * 2 - 1] = redis.call('INCRBY', key, ARGV[i * 3 - 2])
+    redis.call('PEXPIRE', key, ARGV[i * 3], 'NX')
+    state[i * 2] = redis.call('PTTL', key)
+  end
+end
+return { fits, unpack(state) }
+`
+
+function memoryConsume(
+  keys: string[],
+  windows: RateLimitWindow[],
+  dryRun: boolean
+): ConsumeOutcome {
+  const now = Date.now()
+  if (now - lastCleanup > CLEANUP_INTERVAL) cleanupExpiredEntries()
+
+  const live = keys.map((key) => {
+    const entry = memoryStore.get(key)
+    return entry && entry.resetTime >= now ? entry : null
+  })
+  const fits = windows.every(
+    ({ config, cost = 1 }, i) => (live[i]?.count ?? 0) + cost <= config.limit
+  )
+
+  const states = windows.map(({ config, cost = 1 }, i) => {
+    let entry = live[i]
+    if (fits && !dryRun) {
+      if (entry) {
+        entry.count += cost
+      } else {
+        entry = { count: cost, resetTime: now + config.windowMs }
+        memoryStore.set(keys[i], entry)
+      }
+    }
+    return entry
+      ? { count: entry.count, ttlMs: Math.max(0, entry.resetTime - now) }
+      : { count: 0, ttlMs: config.windowMs }
+  })
+
+  return { fits, states }
+}
+
+async function redisConsume(
+  keys: string[],
+  windows: RateLimitWindow[],
+  dryRun: boolean
+): Promise<ConsumeOutcome | null> {
+  const redis = getRedis()
+  if (!redis) return null
+  try {
+    const args = windows.flatMap(({ config, cost = 1 }) => [cost, config.limit, config.windowMs])
+    const reply = (await redis.eval(
+      CONSUME_SCRIPT,
+      keys.length,
+      ...keys,
+      ...args,
+      dryRun ? '1' : '0'
+    )) as number[]
+
+    const states = windows.map(({ config }, i) => {
+      const ttlMs = Number(reply[2 + i * 2])
+      // PTTL is negative for a key that does not exist yet (or has no expiry):
+      // the window has not started, so a full one lies ahead.
+      return { count: Number(reply[1 + i * 2]), ttlMs: ttlMs >= 0 ? ttlMs : config.windowMs }
+    })
+    return { fits: Number(reply[0]) === 1, states }
+  } catch (err) {
+    if (!redisFailWarned) {
+      console.warn('[rateLimit] Redis op failed, falling back to memory:', (err as Error).message)
+      redisFailWarned = true
+    }
+    return null
+  }
+}
+
+/**
+ * Take `cost` units from several windows at once, but only if the request
+ * fits in every one of them.
+ *
+ * Unlike checkRateLimit(), which counts every attempt, a request that is
+ * turned away here costs nothing. That matters once a request can cost many
+ * units (a ZIP of 20 reports): refusing it must not also eat what is left of
+ * the visitor's allowance. `dryRun` answers "would this fit right now?"
+ * without taking anything.
+ *
+ * Shares counters with checkMultiWindowRateLimit() when given the same
+ * identifier and window names, so both draw on one budget. When refused,
+ * `remaining` is what is still free in the blocking window (it may be above
+ * zero but below the cost) and the window reported is the one that takes
+ * longest to clear.
+ */
+export async function consumeMultiWindowRateLimit(
+  baseIdentifier: string,
+  windows: RateLimitWindow[],
+  options: { dryRun?: boolean } = {}
+): Promise<ConsumeResult> {
+  const dryRun = options.dryRun === true
+  const keys = windows.map(({ name }) => `${baseIdentifier}:${name}`)
+  const { fits, states } =
+    (await redisConsume(keys, windows, dryRun)) ?? memoryConsume(keys, windows, dryRun)
+
+  const now = Date.now()
+  const views = windows.map(({ name, config, cost = 1 }, i) => ({
+    name,
+    limit: config.limit,
+    free: Math.max(0, config.limit - states[i].count),
+    resetTime: now + states[i].ttlMs,
+    blocks: !fits && states[i].count + cost > config.limit
+  }))
+
+  if (!fits) {
+    const blocking = views
+      .filter((view) => view.blocks)
+      .reduce((a, b) => (b.resetTime > a.resetTime ? b : a))
+    return {
+      isLimited: true,
+      limit: blocking.limit,
+      remaining: blocking.free,
+      resetTime: blocking.resetTime,
+      retryAfterSeconds: Math.max(1, Math.ceil((blocking.resetTime - now) / 1000)),
+      limitedBy: blocking.name
+    }
+  }
+
+  // Surface the tightest window in the headers, as checkMultiWindowRateLimit does.
+  const tightest = views.reduce((a, b) => (a.free <= b.free ? a : b))
+  return {
+    isLimited: false,
+    limit: tightest.limit,
+    remaining: tightest.free,
+    resetTime: tightest.resetTime,
+    retryAfterSeconds: 0,
+    limitedBy: null
   }
 }
