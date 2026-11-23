@@ -1,6 +1,9 @@
+import { readdirSync } from 'node:fs'
+import { resolve } from 'node:path'
 import { describe, it, expect, vi, beforeAll } from 'vitest'
 import {
   moduleForPath,
+  PATH_MODULE_MAP,
   resolveUserModules,
   userHasModule,
   requireModuleAccess,
@@ -24,6 +27,31 @@ describe('moduleForPath', () => {
     expect(moduleForPath('/api/admin/videos')).toBe('media')
     expect(moduleForPath('/api/admin/audit-logs')).toBe('analytics')
     expect(moduleForPath('/api/admin/newsletter')).toBe('communications')
+  })
+
+  it('gates the home carousel and site statistics on the content module', () => {
+    expect(moduleForPath('/api/admin/carousel')).toBe('content')
+    expect(moduleForPath('/api/admin/carousel/candidates')).toBe('content')
+    expect(moduleForPath('/api/admin/carousel/albums/2/images')).toBe('content')
+    expect(moduleForPath('/api/admin/site-stats')).toBe('content')
+    expect(moduleForPath('/api/admin/site-stats/sync')).toBe('content')
+  })
+
+  it('gates the auditor-general profile on the organization module', () => {
+    expect(moduleForPath('/api/admin/auditor-general')).toBe('organization')
+  })
+
+  // A new folder under server/api/admin is reachable by every signed-in user
+  // until it is added to PATH_MODULE_MAP. Make that an explicit decision.
+  it('has a module for every admin API folder, bar the deliberately un-gated ones', () => {
+    const ungated = ['auth', 'upload', 'users']
+    const adminApiDir = resolve(process.cwd(), 'server/api/admin')
+    const folders = readdirSync(adminApiDir, { withFileTypes: true })
+      .filter((entry) => entry.isDirectory())
+      .map((entry) => entry.name)
+
+    const unmapped = folders.filter((name) => !(name in PATH_MODULE_MAP) && !ungated.includes(name))
+    expect(unmapped).toEqual([])
   })
 
   it('resolves nested and dynamic routes on the first segment', () => {

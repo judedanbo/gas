@@ -22,6 +22,8 @@ const ADMIN_PAGE_MODULES: Array<{ prefix: string; module: ModuleKey }> = [
   { prefix: '/admin/events', module: 'content' },
   { prefix: '/admin/tags', module: 'content' },
   { prefix: '/admin/popups', module: 'content' },
+  { prefix: '/admin/site-stats', module: 'content' },
+  { prefix: '/admin/carousel', module: 'content' },
   { prefix: '/admin/vacancies', module: 'careers' },
   { prefix: '/admin/tenders', module: 'careers' },
   { prefix: '/admin/auditor-general', module: 'organization' },
