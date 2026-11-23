@@ -471,7 +471,7 @@ describe('Search API', () => {
 
       const result = await handler(createMockEvent())
 
-      expect(result.data[0].url).toBe('/publications/pfm-strategy')
+      expect(result.data[0].url).toBe('/publications/strategic-plan')
     })
 
     it('builds a /media/news/:slug URL for news', async () => {

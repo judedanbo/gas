@@ -118,9 +118,9 @@
               </li>
               <li>
                 <NuxtLink
-                  to="/publications/pfm-strategy"
+                  to="/publications/strategic-plan"
                   class="text-gray-600 dark:text-gray-400 no-underline hover:text-primary dark:hover:text-accent transition-colors"
-                  >{{ $t('nav.pfmStrategy') }}</NuxtLink
+                  >{{ $t('nav.strategicPlan') }}</NuxtLink
                 >
               </li>
               <li>

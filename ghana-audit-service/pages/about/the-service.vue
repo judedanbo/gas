@@ -189,12 +189,12 @@
               Strategic Direction
             </h2>
             <p class="text-gray-600 dark:text-gray-400 leading-relaxed mb-6">
-              Our current Strategic Plan (2022-2026) outlines our commitment to becoming a
-              world-class Supreme Audit Institution. Key strategic objectives include:
+              Our Strategic Plan 2026-2030 charts the course towards a modern, technology-enabled
+              and world-class Supreme Audit Institution. It is built on four strategic goals:
             </p>
             <UiCheckList :items="strategicObjectives" icon="check" divided />
-            <NuxtLink to="/publications/pfm-strategy" class="btn-primary mt-6 inline-block">
-              View PFM Strategy 2022-2026
+            <NuxtLink to="/publications/strategic-plan" class="btn-primary mt-6 inline-block">
+              View Strategic Plan 2026-2030
             </NuxtLink>
           </div>
           <div>
@@ -434,11 +434,10 @@
 
   // Strategic objectives
   const strategicObjectives = [
-    'Enhancing audit quality and impact',
-    'Strengthening institutional capacity',
-    'Improving stakeholder engagement',
-    'Leveraging technology for efficient auditing',
-    'Promoting transparency and good governance'
+    'Demonstrating value to stakeholders through enhanced audit quality and operational efficiency',
+    'Enhanced accountability of audited entities',
+    'Improved public awareness of the audit mandate and outcomes',
+    'Integrating Environmental, Social and Governance (ESG) principles in our operations'
   ]
 </script>
 

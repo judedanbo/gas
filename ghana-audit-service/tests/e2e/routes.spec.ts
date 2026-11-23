@@ -19,7 +19,7 @@ const staticRoutes = [
   { path: '/publications/guidelines', name: 'Guidelines' },
   { path: '/publications/amis-manuals', name: 'AMIS Manuals' },
   { path: '/publications/applicable-laws', name: 'Applicable Laws' },
-  { path: '/publications/pfm-strategy', name: 'PFM Strategy' },
+  { path: '/publications/strategic-plan', name: 'Strategic Plan' },
   { path: '/media', name: 'Media Index' },
   { path: '/media/news', name: 'News Index' },
   { path: '/media/events', name: 'Events' },
