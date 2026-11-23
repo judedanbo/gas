@@ -71,6 +71,20 @@
       "when": 1790856228098,
       "tag": "0009_report_upload_job_resume",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "5",
+      "when": 1795459259233,
+      "tag": "0010_carousel",
+      "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "5",
+      "when": 1795462996174,
+      "tag": "0011_popups",
+      "breakpoints": true
     }
   ]
 }

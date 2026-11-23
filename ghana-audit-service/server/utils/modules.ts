@@ -29,6 +29,7 @@ export const PATH_MODULE_MAP: Record<string, ModuleKey> = {
   news: 'content',
   events: 'content',
   tags: 'content',
+  popups: 'content',
   vacancies: 'careers',
   tenders: 'careers',
   'management-team': 'organization',

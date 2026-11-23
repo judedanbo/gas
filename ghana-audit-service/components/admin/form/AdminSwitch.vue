@@ -53,9 +53,10 @@
     disabled: false
   })
 
-  // Fall back to a generated id so the label is always associated with the control
-  const generatedId = useId()
-  const controlId = computed(() => props.id || generatedId)
+  // Fall back to a generated id so the label is always tied to its control,
+  // even when the caller doesn't pass one.
+  const fallbackId = useId()
+  const controlId = computed(() => props.id || fallbackId)
 
   const emit = defineEmits<{
     'update:modelValue': [value: boolean]

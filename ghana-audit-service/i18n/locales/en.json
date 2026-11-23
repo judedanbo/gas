@@ -528,5 +528,10 @@
     "vacanciesDescription": "Explore current job openings and career opportunities at the Ghana Audit Service.",
     "tenders": "Tenders & Procurement",
     "tendersDescription": "View active tenders, procurement notices, and bidding opportunities."
+  },
+  "announcement": {
+    "closesIn": "Closes in {seconds}s",
+    "autoCloseHint": "This notice closes automatically after {seconds} seconds.",
+    "opensInNewTab": "(opens in a new tab)"
   }
 }

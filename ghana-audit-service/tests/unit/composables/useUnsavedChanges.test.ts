@@ -183,18 +183,28 @@ describe('useUnsavedChanges', () => {
       expect(mockOnBeforeRouteLeave).toHaveBeenCalledWith(expect.any(Function))
     })
 
-    it('should not register beforeunload handler on the server (import.meta.client is falsy)', async () => {
-      // In the test environment import.meta.client is undefined/falsy,
-      // so the beforeunload handler and its onBeforeUnmount cleanup are skipped.
+    it('should warn on browser close/refresh and remove the handler on unmount', async () => {
+      // vitest.config.ts defines import.meta.client as true (Vitest 5 applies
+      // `define` to import.meta.*), so the client-only branch runs here.
       const mockOnBeforeUnmount = vi.fn()
       vi.stubGlobal('onBeforeUnmount', mockOnBeforeUnmount)
+      const addSpy = vi.spyOn(window, 'addEventListener')
+      const removeSpy = vi.spyOn(window, 'removeEventListener')
 
       const { useUnsavedChanges } = await import('../../../composables/useUnsavedChanges')
       const formData = () => ({ name: 'test' })
       useUnsavedChanges(formData)
 
-      // onBeforeUnmount is inside `if (import.meta.client)` — not called on server
-      expect(mockOnBeforeUnmount).not.toHaveBeenCalled()
+      expect(addSpy).toHaveBeenCalledWith('beforeunload', expect.any(Function))
+      const handler = addSpy.mock.calls.find(([type]) => String(type) === 'beforeunload')![1]
+
+      // The cleanup registered for unmount removes that same handler
+      expect(mockOnBeforeUnmount).toHaveBeenCalledTimes(1)
+      mockOnBeforeUnmount.mock.calls[0][0]()
+      expect(removeSpy).toHaveBeenCalledWith('beforeunload', handler)
+
+      addSpy.mockRestore()
+      removeSpy.mockRestore()
     })
   })
 })

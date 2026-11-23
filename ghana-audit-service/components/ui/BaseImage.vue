@@ -3,8 +3,8 @@
     Only root-relative paths go through NuxtImg. IPX cannot handle anything else:
     remote hosts are rejected unless listed in `image.domains` (nuxt.config.ts
     sets none), which would break the i.ytimg.com covers synthesised for live
-    broadcasts in utils/liveVideos.ts, and blob:/data: URLs — the client-side
-    upload previews in AdminFileUpload — are not fetchable server-side at all.
+    broadcasts in utils/liveVideos.ts, and blob:/data: URLs are not fetchable
+    server-side at all.
   -->
   <img
     v-if="displaySrc && isRaw"

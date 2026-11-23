@@ -12,6 +12,9 @@
 
     <!-- Footer Component -->
     <CommonAppFooter />
+
+    <!-- Scheduled pop-up (admin: /admin/popups); loads client-side -->
+    <CommonSiteAnnouncement />
   </div>
 </template>
 

@@ -215,6 +215,7 @@
       'team-members': 'Team Members',
       offices: 'Offices',
       gallery: 'Gallery',
+      carousel: 'Home Carousel',
       videos: 'Videos',
       tags: 'Tags',
       users: 'Users',
