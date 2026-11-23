@@ -185,6 +185,26 @@ export interface AuditorGeneralMessage {
 }
 
 // ============================================
+// Site Pop-up Types
+// ============================================
+
+/** Public shape of the pop-up shown on page load (/api/announcement). */
+export interface SitePopup {
+  id: number
+  title: string
+  imageUrl: string
+  altText: string
+  linkUrl?: string
+  openInNewTab: boolean
+  displaySeconds: number
+  isDismissible: boolean
+}
+
+export interface SitePopupResponse {
+  popup: SitePopup | null
+}
+
+// ============================================
 // Site Statistics Types
 // ============================================
 

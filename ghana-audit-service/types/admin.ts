@@ -844,6 +844,37 @@ export interface BoardMemberInput {
   isActive: boolean
 }
 
+export interface AdminPopup {
+  id: number
+  title: string
+  imageUrl: string
+  altText: string | null
+  linkUrl: string | null
+  openInNewTab: boolean
+  startsAt: string | null
+  endsAt: string | null
+  displaySeconds: number
+  isDismissible: boolean
+  isActive: boolean
+  createdBy: number | null
+  createdAt: string
+  updatedAt: string
+  deletedAt: string | null
+}
+
+export interface PopupInput {
+  title: string
+  imageUrl: string
+  altText?: string | null
+  linkUrl?: string | null
+  openInNewTab: boolean
+  startsAt?: string | null
+  endsAt?: string | null
+  displaySeconds: number
+  isDismissible: boolean
+  isActive: boolean
+}
+
 // Home page carousel (/admin/carousel)
 export type CarouselItemType = 'news' | 'event' | 'report' | 'gallery'
 

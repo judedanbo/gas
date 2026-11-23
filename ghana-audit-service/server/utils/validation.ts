@@ -406,6 +406,75 @@ export const siteStatUpdateSchema = z.object({
   isActive: z.boolean().default(true)
 })
 
+// Site pop-ups
+export const POPUP_DEFAULT_DISPLAY_SECONDS = 30
+export const POPUP_MAX_DISPLAY_SECONDS = 300
+
+/** Root-relative path ("/about", not "//host") or an absolute http(s) URL. */
+function isSafeUrl(value: string, { allowHttp }: { allowHttp: boolean }): boolean {
+  if (value.startsWith('/')) return !value.startsWith('//') && !value.includes('\\')
+  try {
+    const { protocol } = new URL(value)
+    return protocol === 'https:' || (allowHttp && protocol === 'http:')
+  } catch {
+    return false
+  }
+}
+
+const popupDateSchema = z.preprocess(
+  (val) => (val === '' ? null : val),
+  z
+    .string()
+    .refine((val) => !isNaN(Date.parse(val)), 'Invalid date')
+    .optional()
+    .nullable()
+)
+
+export const popupSchema = z
+  .object({
+    title: z.string().trim().min(1).max(255),
+    // Uploaded images are root-relative (/uploads/images/…); the CSP only
+    // allows https for remote ones.
+    imageUrl: z
+      .string()
+      .trim()
+      .min(1, 'An image is required')
+      .max(500)
+      .refine(
+        (val) => isSafeUrl(val, { allowHttp: false }),
+        'Must be an uploaded image or an https URL'
+      ),
+    altText: z.string().trim().max(500).optional().nullable(),
+    linkUrl: z.preprocess(
+      (val) => (typeof val === 'string' && val.trim() === '' ? null : val),
+      z
+        .string()
+        .trim()
+        .max(500)
+        .refine(
+          (val) => isSafeUrl(val, { allowHttp: true }),
+          'Must be a path on this site (e.g. /reports) or a full http(s) URL'
+        )
+        .optional()
+        .nullable()
+    ),
+    openInNewTab: z.boolean().default(false),
+    startsAt: popupDateSchema,
+    endsAt: popupDateSchema,
+    displaySeconds: z.coerce
+      .number()
+      .int('Must be a whole number of seconds')
+      .min(1, 'Must be at least 1 second')
+      .max(POPUP_MAX_DISPLAY_SECONDS, `Must be at most ${POPUP_MAX_DISPLAY_SECONDS} seconds`)
+      .default(POPUP_DEFAULT_DISPLAY_SECONDS),
+    isDismissible: z.boolean().default(false),
+    isActive: z.boolean().default(true)
+  })
+  .refine(
+    (val) => !val.startsAt || !val.endsAt || Date.parse(val.endsAt) > Date.parse(val.startsAt),
+    { path: ['endsAt'], message: 'End must be after the start' }
+  )
+
 // Auditor-General message (singleton, edit-only)
 export const auditorGeneralMessageSchema = z.object({
   photo: z.string().max(500).optional().nullable().or(z.literal('')),
@@ -600,6 +669,7 @@ export type PastAGInput = z.infer<typeof pastAGSchema>
 export type ManagementTeamInput = z.infer<typeof managementTeamSchema>
 export type BoardMemberInput = z.infer<typeof boardMemberSchema>
 export type SiteStatUpdateInput = z.infer<typeof siteStatUpdateSchema>
+export type PopupInput = z.infer<typeof popupSchema>
 export type AuditorGeneralMessageInput = z.infer<typeof auditorGeneralMessageSchema>
 export type OfficeInput = z.infer<typeof officeSchema>
 export type GalleryImageInput = z.infer<typeof galleryImageSchema>
