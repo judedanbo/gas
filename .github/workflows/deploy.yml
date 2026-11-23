@@ -186,6 +186,7 @@ jobs:
             --timeout=300s
 
       - name: Apply storage (PVC)
+        id: storage
         run: |
           # A PVC's spec (storageClassName, the legacy storage-class annotation,
           # accessModes, volumeName) is immutable once Bound — re-applying a
@@ -202,6 +203,19 @@ jobs:
             || kubectl apply -f k8s/storage/geoip-pvc.yaml
           kubectl wait --for=jsonpath='{.status.phase}'=Bound \
             pvc/gas-geoip-pvc -n gas --timeout=180s
+
+      - name: Show why a PVC did not bind
+        if: failure() && steps.storage.conclusion == 'failure'
+        run: |
+          # Kubernetes state only (no container logs — these logs are public).
+          # A Pending claim's events name the cause: missing StorageClass,
+          # provisioner error, or WaitForFirstConsumer binding.
+          kubectl get pvc -n gas -o wide || true
+          kubectl get storageclass || true
+          kubectl describe pvc gas-public-files-pvc gas-geoip-pvc -n gas || true
+          echo "--- Recent events in gas ---"
+          kubectl get events -n gas --sort-by=.lastTimestamp | tail -n 40 || true
+          echo "::error title=PVC not Bound::A persistent volume claim did not bind. This step's log has the claims, storage classes and events."
 
       - name: Apply frontend
         run: |
