@@ -1,6 +1,6 @@
 <template>
   <AdminFormGroup
-    :id="id"
+    :id="controlId"
     :label="label"
     :required="required"
     :error="error"
@@ -8,7 +8,7 @@
     :hint="hint"
   >
     <textarea
-      :id="id"
+      :id="controlId"
       :value="textValue"
       :placeholder="placeholder"
       :disabled="disabled"
@@ -52,6 +52,10 @@
     helpText: undefined,
     hint: undefined
   })
+
+  // Fall back to a generated id so the label is always associated with the control
+  const generatedId = useId()
+  const controlId = computed(() => props.id || generatedId)
 
   const emit = defineEmits<{
     'update:modelValue': [value: string]

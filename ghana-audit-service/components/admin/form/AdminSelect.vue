@@ -1,7 +1,13 @@
 <template>
-  <AdminFormGroup :id="id" :label="label" :required="required" :error="error" :help-text="helpText">
+  <AdminFormGroup
+    :id="controlId"
+    :label="label"
+    :required="required"
+    :error="error"
+    :help-text="helpText"
+  >
     <select
-      :id="id"
+      :id="controlId"
       :value="selectValue"
       :disabled="disabled"
       :class="[
@@ -48,6 +54,10 @@
     error: undefined,
     helpText: undefined
   })
+
+  // Fall back to a generated id so the label is always associated with the control
+  const generatedId = useId()
+  const controlId = computed(() => props.id || generatedId)
 
   const emit = defineEmits<{
     'update:modelValue': [value: string | number]

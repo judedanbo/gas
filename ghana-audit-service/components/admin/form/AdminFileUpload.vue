@@ -1,6 +1,6 @@
 <template>
   <AdminFormGroup
-    :id="id"
+    :id="inputId"
     :label="label"
     :required="required"
     :error="error || uploadError || undefined"
