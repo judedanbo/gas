@@ -518,6 +518,45 @@ export const galleryImageSchema = z.object({
   })
 })
 
+// Home page carousel (whole configuration, replaced on every save)
+const carouselItemSchema = z
+  .object({
+    type: z.enum(['news', 'event', 'report', 'gallery']),
+    refId: z.coerce.number().int().positive(),
+    mode: z.enum(['pinned', 'hidden']),
+    pinnedUntil: z
+      .string()
+      .regex(/^\d{4}-\d{2}-\d{2}$/, 'Use the format YYYY-MM-DD')
+      .refine((value) => !Number.isNaN(Date.parse(value)), 'Invalid date')
+      .nullable()
+      .default(null),
+    imageCount: z.coerce.number().int().min(1).max(10).nullable().default(null),
+    imageIds: z.array(z.coerce.number().int().positive()).max(10).default([])
+  })
+  .refine((item) => item.type !== 'gallery' || (item.mode === 'pinned' && item.imageCount), {
+    message: 'Gallery albums need a number of photos to show',
+    path: ['imageCount']
+  })
+  .refine((item) => item.imageIds.length <= (item.imageCount ?? 0) || item.type !== 'gallery', {
+    message: 'More photos selected than the number to show',
+    path: ['imageIds']
+  })
+
+export const carouselConfigSchema = z.object({
+  settings: z.object({
+    newsCount: z.coerce.number().int().min(0).max(10),
+    eventsCount: z.coerce.number().int().min(0).max(10),
+    reportsCount: z.coerce.number().int().min(0).max(10)
+  }),
+  items: z
+    .array(carouselItemSchema)
+    .max(100)
+    .refine(
+      (items) => new Set(items.map((i) => `${i.type}:${i.refId}`)).size === items.length,
+      'Each item can only be listed once'
+    )
+})
+
 // Gallery Albums
 export const galleryAlbumSchema = z.object({
   slug: slugSchema,

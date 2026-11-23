@@ -129,6 +129,12 @@
             label="Site Statistics"
             :collapsed="isCollapsed"
           />
+          <SidebarLink
+            to="/admin/carousel"
+            icon="photograph"
+            label="Home Carousel"
+            :collapsed="isCollapsed"
+          />
         </template>
       </SidebarSection>
 

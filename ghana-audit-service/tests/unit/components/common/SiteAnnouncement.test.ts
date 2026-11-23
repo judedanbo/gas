@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach, afterEach, type Mock } from 'vitest'
 import { flushPromises, mount } from '@vue/test-utils'
 import {
   ref,
@@ -49,8 +49,12 @@ class FakeImage {
   }
 }
 
+// tests/setup.ts stubs $fetch with vi.fn(). Cast rather than vi.mocked(): Nitro's
+// typed-route $fetch is too deep for TypeScript to wrap in a mock type.
+const fetchMock = $fetch as unknown as Mock
+
 function mockApi(value: SitePopup | null) {
-  vi.mocked($fetch).mockResolvedValue({ popup: value })
+  fetchMock.mockResolvedValue({ popup: value })
 }
 
 async function mountAnnouncement() {
@@ -86,7 +90,7 @@ describe('CommonSiteAnnouncement', () => {
   it('renders nothing when no pop-up is live', async () => {
     mockApi(null)
     const wrapper = await mountAnnouncement()
-    expect($fetch).toHaveBeenCalledWith('/api/announcement')
+    expect(fetchMock).toHaveBeenCalledWith('/api/announcement')
     expect(wrapper.find('[role="dialog"]').exists()).toBe(false)
     wrapper.unmount()
   })
@@ -184,7 +188,7 @@ describe('CommonSiteAnnouncement', () => {
   })
 
   it('stays hidden when the request fails', async () => {
-    vi.mocked($fetch).mockRejectedValue(new Error('offline'))
+    fetchMock.mockRejectedValue(new Error('offline'))
     const wrapper = await mountAnnouncement()
     expect(wrapper.find('[role="dialog"]').exists()).toBe(false)
     wrapper.unmount()
@@ -199,7 +203,7 @@ describe('CommonSiteAnnouncement', () => {
     // Same page load (no reset): e.g. the layout remounting after navigation
     const second = await mountAnnouncement()
     expect(second.find('[role="dialog"]').exists()).toBe(false)
-    expect($fetch).toHaveBeenCalledTimes(1)
+    expect(fetchMock).toHaveBeenCalledTimes(1)
     second.unmount()
   })
 

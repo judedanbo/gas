@@ -1,7 +1,7 @@
 {
   "version": "5",
   "dialect": "mysql",
-  "id": "c7c0911f-c822-42f5-8ee8-bfc0d6a7c5ad",
+  "id": "f3545c65-c0b0-4f25-a11a-6ad5e8291b27",
   "prevId": "dfedc96e-29af-4d88-b79f-5fc6ce9b4b76",
   "tables": {
     "audit_logs": {
@@ -3625,8 +3625,8 @@
       },
       "checkConstraint": {}
     },
-    "popups": {
-      "name": "popups",
+    "carousel_items": {
+      "name": "carousel_items",
       "columns": {
         "id": {
           "name": "id",
@@ -3635,79 +3635,56 @@
           "notNull": true,
           "autoincrement": true
         },
-        "title": {
-          "name": "title",
-          "type": "varchar(255)",
+        "item_type": {
+          "name": "item_type",
+          "type": "enum('news','event','report','gallery')",
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false
         },
-        "image_url": {
-          "name": "image_url",
-          "type": "varchar(500)",
+        "ref_id": {
+          "name": "ref_id",
+          "type": "int",
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false
         },
-        "alt_text": {
-          "name": "alt_text",
-          "type": "varchar(500)",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "link_url": {
-          "name": "link_url",
-          "type": "varchar(500)",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "open_in_new_tab": {
-          "name": "open_in_new_tab",
-          "type": "boolean",
+        "mode": {
+          "name": "mode",
+          "type": "enum('pinned','hidden')",
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false,
-          "default": false
+          "default": "'pinned'"
         },
-        "starts_at": {
-          "name": "starts_at",
-          "type": "datetime",
+        "pinned_until": {
+          "name": "pinned_until",
+          "type": "date",
           "primaryKey": false,
           "notNull": false,
           "autoincrement": false
         },
-        "ends_at": {
-          "name": "ends_at",
-          "type": "datetime",
+        "image_count": {
+          "name": "image_count",
+          "type": "int",
           "primaryKey": false,
           "notNull": false,
           "autoincrement": false
         },
-        "display_seconds": {
-          "name": "display_seconds",
+        "image_ids": {
+          "name": "image_ids",
+          "type": "json",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "display_order": {
+          "name": "display_order",
           "type": "int",
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false,
-          "default": 30
-        },
-        "is_dismissible": {
-          "name": "is_dismissible",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": false
-        },
-        "is_active": {
-          "name": "is_active",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": true
+          "default": 0
         },
         "created_at": {
           "name": "created_at",
@@ -3716,6 +3693,77 @@
           "notNull": true,
           "autoincrement": false,
           "default": "(CURRENT_TIMESTAMP)"
+        }
+      },
+      "indexes": {
+        "idx_carousel_items_ref": {
+          "name": "idx_carousel_items_ref",
+          "columns": [
+            "item_type",
+            "ref_id"
+          ],
+          "isUnique": true
+        },
+        "idx_carousel_items_order": {
+          "name": "idx_carousel_items_order",
+          "columns": [
+            "display_order"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {
+        "carousel_items_id": {
+          "name": "carousel_items_id",
+          "columns": [
+            "id"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "checkConstraint": {}
+    },
+    "carousel_settings": {
+      "name": "carousel_settings",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "news_count": {
+          "name": "news_count",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": 2
+        },
+        "events_count": {
+          "name": "events_count",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": 2
+        },
+        "reports_count": {
+          "name": "reports_count",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": 2
+        },
+        "updated_by": {
+          "name": "updated_by",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
         },
         "updated_at": {
           "name": "updated_at",
@@ -3724,40 +3772,16 @@
           "notNull": true,
           "autoincrement": false,
           "default": "CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP"
-        },
-        "created_by": {
-          "name": "created_by",
-          "type": "int",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "deleted_at": {
-          "name": "deleted_at",
-          "type": "datetime",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
         }
       },
-      "indexes": {
-        "idx_popups_live": {
-          "name": "idx_popups_live",
-          "columns": [
-            "is_active",
-            "starts_at",
-            "ends_at"
-          ],
-          "isUnique": false
-        }
-      },
+      "indexes": {},
       "foreignKeys": {
-        "popups_created_by_users_id_fk": {
-          "name": "popups_created_by_users_id_fk",
-          "tableFrom": "popups",
+        "carousel_settings_updated_by_users_id_fk": {
+          "name": "carousel_settings_updated_by_users_id_fk",
+          "tableFrom": "carousel_settings",
           "tableTo": "users",
           "columnsFrom": [
-            "created_by"
+            "updated_by"
           ],
           "columnsTo": [
             "id"
@@ -3767,8 +3791,8 @@
         }
       },
       "compositePrimaryKeys": {
-        "popups_id": {
-          "name": "popups_id",
+        "carousel_settings_id": {
+          "name": "carousel_settings_id",
           "columns": [
             "id"
           ]
