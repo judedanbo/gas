@@ -842,6 +842,78 @@ export interface BoardMemberInput {
   isActive: boolean
 }
 
+// Home page carousel (/admin/carousel)
+export type CarouselItemType = 'news' | 'event' | 'report' | 'gallery'
+
+export interface CarouselSettings {
+  newsCount: number
+  eventsCount: number
+  reportsCount: number
+}
+
+/** A stored override: an item the admin keeps (pinned) or removed (hidden). */
+export interface CarouselItemConfig {
+  type: CarouselItemType
+  refId: number
+  mode: 'pinned' | 'hidden'
+  /** Last day (YYYY-MM-DD) a kept item stays; null = until removed. */
+  pinnedUntil: string | null
+  /** Gallery only */
+  imageCount: number | null
+  imageIds: number[]
+}
+
+export interface CarouselConfigInput {
+  settings: CarouselSettings
+  items: CarouselItemConfig[]
+}
+
+/** A content item as shown in pickers and lists. */
+export interface AdminCarouselCandidate {
+  type: CarouselItemType
+  refId: number
+  title: string
+  image: string | null
+  date: string | null
+  /** Published and not deleted */
+  available: boolean
+}
+
+export interface AdminCarouselItem extends CarouselItemConfig {
+  title: string
+  image: string | null
+  date: string | null
+  available: boolean
+  /** A kept item whose keep-until date has passed */
+  expired: boolean
+}
+
+/** One slide currently on the home page. */
+export interface AdminCarouselSlide {
+  id: string
+  type: CarouselItemType
+  /** Article / event / report id, or the album id for gallery slides */
+  refId: number
+  source: 'pinned' | 'auto'
+  title: string
+  image: string
+  date: string | null
+  pinnedUntil: string | null
+}
+
+export interface AdminCarousel extends CarouselConfigInput {
+  /** True until the carousel is saved for the first time */
+  isDefault: boolean
+  items: AdminCarouselItem[]
+  slides: AdminCarouselSlide[]
+}
+
+export interface AdminCarouselAlbumImage {
+  id: number
+  url: string
+  alt: string
+}
+
 export type SiteStatSection = 'home' | 'about_service' | 'about_legacy'
 export type SiteStatSource = 'manual' | 'hr_api'
 
