@@ -32,6 +32,9 @@ export * from './popups'
 // Home page carousel (settings + per-item overrides)
 export * from './carousel'
 
+// Site languages + admin-entered interface translations
+export * from './languages'
+
 // Career & Procurement Tables
 export * from './careers'
 export * from './tenders'

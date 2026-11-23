@@ -5,6 +5,8 @@
 export function useSchemaOrg() {
   const config = useRuntimeConfig()
   const siteUrl = config.public.siteUrl || 'https://audit.gov.gh'
+  // Only the languages switched on at /admin/languages.
+  const { languages } = useSiteLanguages()
 
   /**
    * Government Organization schema
@@ -61,7 +63,7 @@ export function useSchemaOrg() {
         },
         'query-input': 'required name=search_term_string'
       },
-      inLanguage: ['en', 'ak']
+      inLanguage: languages.value.map((language) => language.code)
     }
   }
 
