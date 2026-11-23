@@ -528,5 +528,10 @@
     "vacanciesDescription": "Hwɛ adwuma beae a ɛwɔ Ghana Nsɛm Hwɛfo.",
     "tenders": "Adetɔ",
     "tendersDescription": "Hwɛ adetɔ ne procurement nsɛm a ɛwɔ hɔ."
+  },
+  "announcement": {
+    "closesIn": "Ɛbɛto mu wɔ sɛkɛn {seconds} mu",
+    "autoCloseHint": "Nkaebɔ yi bɛto mu ankasa wɔ sɛkɛn {seconds} akyi.",
+    "opensInNewTab": "(ɛbue wɔ tab foforɔ mu)"
   }
 }

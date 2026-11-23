@@ -842,6 +842,37 @@ export interface BoardMemberInput {
   isActive: boolean
 }
 
+export interface AdminPopup {
+  id: number
+  title: string
+  imageUrl: string
+  altText: string | null
+  linkUrl: string | null
+  openInNewTab: boolean
+  startsAt: string | null
+  endsAt: string | null
+  displaySeconds: number
+  isDismissible: boolean
+  isActive: boolean
+  createdBy: number | null
+  createdAt: string
+  updatedAt: string
+  deletedAt: string | null
+}
+
+export interface PopupInput {
+  title: string
+  imageUrl: string
+  altText?: string | null
+  linkUrl?: string | null
+  openInNewTab: boolean
+  startsAt?: string | null
+  endsAt?: string | null
+  displaySeconds: number
+  isDismissible: boolean
+  isActive: boolean
+}
+
 export type SiteStatSection = 'home' | 'about_service' | 'about_legacy'
 export type SiteStatSource = 'manual' | 'hr_api'
 

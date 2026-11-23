@@ -488,6 +488,10 @@ export default defineNuxtConfig({
       '/api/management-team/**': { cache: isDev ? false : { maxAge: 3600, staleMaxAge: 7200 } },
       '/api/board-members': { cache: isDev ? false : { maxAge: 3600, staleMaxAge: 7200 } },
       '/api/board-members/**': { cache: isDev ? false : { maxAge: 3600, staleMaxAge: 7200 } },
+      // The pop-up lookup runs on every public page load (client-side, since
+      // cached pages can't carry it), so share one query per pod per 30s.
+      // No stale window: schedules and admin edits take effect within ~30s.
+      '/api/announcement': { cache: isDev ? false : { maxAge: 30, swr: false } },
       // /api/site-stats and /api/auditor-general are intentionally NOT
       // edge-cached: both are tiny indexed SELECTs consumed by cached pages, so
       // full loads are already shielded by the page cache. An edge cache here would
