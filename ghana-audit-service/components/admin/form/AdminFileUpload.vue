@@ -153,9 +153,7 @@
               or drag and drop
             </span>
           </p>
-          <p class="text-xs text-gray-500 mt-1">
-            {{ acceptLabel }} (max {{ formatFileSize(maxSize) }})
-          </p>
+          <p class="text-xs text-gray-500 mt-1">{{ uploadHint }}</p>
           <div
             v-if="uploading && uploadProgress !== null"
             class="mt-3 w-full bg-gray-200 dark:bg-gray-600 rounded-full h-2 overflow-hidden"
@@ -178,12 +176,20 @@
 
 <script setup lang="ts">
   import type { ReportUploadJob, UploadResponse } from '~/types/admin'
+  import { POPUP_IMAGE_HEIGHT, POPUP_IMAGE_WIDTH } from '~/utils/popupImage'
+
+  type UploadType = 'report' | 'publication' | 'image' | 'thumbnail' | 'popup'
+
+  interface ImageSize {
+    width: number
+    height: number
+  }
 
   interface Props {
     modelValue?: string | null
     label?: string
     id?: string
-    type?: 'report' | 'publication' | 'image' | 'thumbnail'
+    type?: UploadType
     required?: boolean
     error?: string
     helpText?: string
@@ -237,8 +243,12 @@
   // only through the notification center.
   let unmounted = false
 
-  // File type configurations
-  const typeConfig: Record<string, { accept: string[]; label: string; maxSize: number }> = {
+  // File type configurations. Keep in step with uploadConfigs in
+  // server/utils/fileUpload.ts, which enforces the same limits.
+  const typeConfig: Record<
+    UploadType,
+    { accept: string[]; label: string; maxSize: number; dimensions?: ImageSize }
+  > = {
     report: {
       accept: ['application/pdf'],
       label: 'PDF files',
@@ -258,6 +268,12 @@
       accept: ['image/jpeg', 'image/png', 'image/webp'],
       label: 'JPG, PNG or WebP',
       maxSize: 2 * 1024 * 1024
+    },
+    popup: {
+      accept: ['image/jpeg', 'image/png', 'image/webp', 'image/gif'],
+      label: 'JPG, PNG, WebP or GIF',
+      maxSize: 5 * 1024 * 1024,
+      dimensions: { width: POPUP_IMAGE_WIDTH, height: POPUP_IMAGE_HEIGHT }
     }
   }
 
@@ -265,7 +281,13 @@
   const acceptedTypes = computed(() => config.value.accept.join(','))
   const acceptLabel = computed(() => config.value.label)
   const maxSize = computed(() => config.value.maxSize)
-  const isImage = computed(() => props.type === 'image' || props.type === 'thumbnail')
+  const isImage = computed(() => props.type !== 'report' && props.type !== 'publication')
+  // e.g. "JPG, PNG, WebP or GIF, exactly 1600 × 800 pixels (max 5.0 MB)"
+  const uploadHint = computed(() => {
+    const size = config.value.dimensions
+    const pixels = size ? `, exactly ${size.width} × ${size.height} pixels` : ''
+    return `${acceptLabel.value}${pixels} (max ${formatFileSize(maxSize.value)})`
+  })
 
   // Handle file selection
   async function handleFileSelect(event: Event) {
@@ -299,6 +321,29 @@
     reader.readAsDataURL(file)
   }
 
+  // Pixel size of a picked image as the browser shows it, or null when it can't
+  // be decoded here (the server measures it again either way). Decoded from a
+  // data: URL, like the preview: the CSP's img-src does not allow blob: URLs.
+  function readImageSize(file: File): Promise<ImageSize | null> {
+    return new Promise((resolve) => {
+      const reader = new FileReader()
+      reader.onerror = () => resolve(null)
+      reader.onload = () => {
+        if (typeof reader.result !== 'string') return resolve(null)
+        const image = new Image()
+        image.onload = () =>
+          resolve(
+            image.naturalWidth && image.naturalHeight
+              ? { width: image.naturalWidth, height: image.naturalHeight }
+              : null
+          )
+        image.onerror = () => resolve(null)
+        image.src = reader.result
+      }
+      reader.readAsDataURL(file)
+    })
+  }
+
   // Upload file
   async function uploadFile(file: File) {
     uploadError.value = null
@@ -313,6 +358,18 @@
     if (file.size > maxSize.value) {
       uploadError.value = `File is too large. Maximum size is ${formatFileSize(maxSize.value)}`
       return
+    }
+
+    // Validate pixel size before sending 5MB the server would turn away
+    const required = config.value.dimensions
+    if (required) {
+      const actual = await readImageSize(file)
+      if (actual && (actual.width !== required.width || actual.height !== required.height)) {
+        uploadError.value =
+          `The image must be exactly ${required.width} × ${required.height} pixels. ` +
+          `This one is ${actual.width} × ${actual.height}.`
+        return
+      }
     }
 
     uploading.value = true

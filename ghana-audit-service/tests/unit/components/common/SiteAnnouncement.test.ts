@@ -109,6 +109,9 @@ describe('CommonSiteAnnouncement', () => {
     expect(link.attributes('target')).toBeUndefined()
     expect(link.find('img').attributes('src')).toBe('/uploads/images/audit-week.png')
     expect(link.find('img').attributes('alt')).toBe('Audit Week runs 1–5 December')
+    // Pop-up images are always 1600 × 800: the box is reserved before it loads.
+    expect(link.find('img').attributes('width')).toBe('1600')
+    expect(link.find('img').attributes('height')).toBe('800')
     expect(document.body.style.overflow).toBe('hidden')
     wrapper.unmount()
   })

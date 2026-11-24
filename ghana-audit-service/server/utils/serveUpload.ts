@@ -8,7 +8,7 @@ import { getUploadBaseDir } from './fileUpload'
 import { resolvePublicAsset } from './publicFiles'
 
 /**
- * Serving for runtime-uploaded images (`/uploads/{images,thumbnails}/*`).
+ * Serving for runtime-uploaded images (`/uploads/{images,thumbnails,popups}/*`).
  *
  * Nitro's static handler resolves assets against a manifest generated at BUILD
  * time (`#nitro-internal-virtual/public-assets`), so a file written after
@@ -22,7 +22,7 @@ import { resolvePublicAsset } from './publicFiles'
  * ever runs for manifest misses.
  */
 
-/** MIME types for the extensions `uploadConfigs.image`/`.thumbnail` accept. */
+/** MIME types for the extensions `uploadConfigs.image`/`.thumbnail`/`.popup` accept. */
 const IMAGE_CONTENT_TYPES: Record<string, string> = {
   '.jpg': 'image/jpeg',
   '.jpeg': 'image/jpeg',
@@ -54,7 +54,7 @@ const notFound = () => createError({ statusCode: 404, statusMessage: 'Not Found'
  */
 export async function serveUploadedImage(
   event: H3Event,
-  directory: 'images' | 'thumbnails',
+  directory: 'images' | 'thumbnails' | 'popups',
   name: string
 ) {
   if (!UPLOAD_NAME_PATTERN.test(name)) {

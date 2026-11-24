@@ -3,7 +3,12 @@ import { and, eq, isNull } from 'drizzle-orm'
 import { getDatabase, schema } from '../../../database'
 import { requirePermission } from '../../../utils/adminHelpers'
 import { logAuditAction, createChangesObject, sanitizeForAudit } from '../../../utils/auditLogger'
-import { popupSchema, validateBody } from '../../../utils/validation'
+import {
+  createValidationError,
+  popupImageError,
+  popupSchema,
+  validateBody
+} from '../../../utils/validation'
 import { safeError } from '../../../utils/errors'
 
 export default defineEventHandler(async (event) => {
@@ -42,6 +47,8 @@ async function handleUpdate(event: H3Event, id: number) {
 
   const existing = await findPopup(id)
   const input = validateBody(popupSchema, await readBody(event))
+  const imageError = popupImageError(input.imageUrl, existing.imageUrl)
+  if (imageError) throw createValidationError({ imageUrl: imageError })
 
   try {
     await getDatabase()
