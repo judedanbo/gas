@@ -25,6 +25,14 @@ metadata:
     app.kubernetes.io/part-of: ghana-audit-service
 spec:
   replicas: 1
+  # redis-data is a ReadWriteOnce disk: a rolling update starts the new pod
+  # while the old one still holds the disk, and hangs on Multi-Attach whenever
+  # the two land on different nodes. Stop the old pod first. The explicit null
+  # clears the defaulted rollingUpdate block on an existing Deployment, which
+  # the API otherwise rejects alongside Recreate.
+  strategy:
+    type: Recreate
+    rollingUpdate: null
   selector:
     matchLabels:
       app.kubernetes.io/name: redis

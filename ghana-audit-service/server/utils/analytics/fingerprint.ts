@@ -1,4 +1,5 @@
 import { createHash } from 'node:crypto'
+import { splitLocalePrefix } from '../../../utils/languageCatalog'
 
 /**
  * Privacy-preserving fingerprint utilities for the analytics pipeline.
@@ -165,9 +166,10 @@ export function normaliseRoutePattern(path: string): string {
   // Detach the locale prefix so the slug-route regexes match the bare path,
   // then re-prepend at the end.
   let localePrefix = ''
-  if (/^\/ak(\/|$)/.test(p)) {
+  const locale = splitLocalePrefix(p)
+  if (locale.code) {
     localePrefix = '/[locale]'
-    p = p.slice(3) || '/'
+    p = locale.rest
   }
 
   // ID-shaped segments first; this turns numeric/UUID trailing segments into

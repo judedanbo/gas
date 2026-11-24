@@ -52,6 +52,17 @@ case "$SECRETS_SOURCE" in
   *) echo "deploy.sh: SECRETS_SOURCE must be env or existing" >&2; exit 1 ;;
 esac
 
+# Pods read gas-secrets only when they start (envFrom / secretKeyRef), so a
+# changed Secret reaches nothing until its consumers restart — and Redis and the
+# frontend must change REDIS_PASSWORD together. Stamp the Secret's checksum on
+# their pod templates: it changes only when the Secret does, so a deploy with
+# unchanged secrets restarts nothing extra.
+secrets_sum="$(k get secret gas-secrets -n "$NAMESPACE" -o jsonpath='{.data}' | sha256sum | cut -c1-16)"
+stamp_secrets() { # <deployment>
+  k patch deployment "$1" -n "$NAMESPACE" --type merge -p \
+    "{\"spec\":{\"template\":{\"metadata\":{\"annotations\":{\"deploy.audit.gov.gh/secrets-checksum\":\"$secrets_sum\"}}}}}"
+}
+
 echo "==> policy";   apply_stage policy
 
 echo "==> database"; apply_stage database
@@ -60,6 +71,7 @@ k rollout status statefulset/mysql -n "$NAMESPACE" --timeout=300s
 echo "==> cache";    apply_stage cache-tls
 k wait --for=condition=Ready certificate/redis-server-tls -n "$NAMESPACE" --timeout=120s
 apply_stage cache
+stamp_secrets redis
 k rollout status deployment/redis -n "$NAMESPACE" --timeout=180s
 
 if [ "${SKIP_MIGRATE:-0}" != "1" ]; then
@@ -78,6 +90,7 @@ for pvc in gas-public-files-pvc gas-geoip-pvc; do
 done
 
 echo "==> app";      apply_stage app
+stamp_secrets gas-frontend
 echo "==> backup";   apply_stage backup
 
 echo "==> geoip"

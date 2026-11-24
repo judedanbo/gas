@@ -97,6 +97,13 @@ deployment branch policy on the `production` environment.
 `bootstrap-deploy-secrets.sh <environment>` and `check-deploy-secrets.sh
 <environment>` manage/verify the secret set.
 
+Changing a secret takes effect on the next deploy: `deploy.sh` stamps a checksum
+of `gas-secrets` on the Redis and frontend pod templates, so both restart when
+(and only when) the Secret changed. That is what keeps `REDIS_PASSWORD` in step
+on both sides. Redis uses the `Recreate` strategy because its disk is
+single-attach, so a secret change means a short Redis outage; the app falls
+back to in-process rate limiting and analytics buffering until it reconnects.
+
 ## One-time runbooks
 
 **First production credentials**

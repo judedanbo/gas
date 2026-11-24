@@ -93,7 +93,7 @@ A server-side analytics subsystem captures per-request telemetry, rolls up route
 
 - Nuxt 3 + `<script setup lang="ts">`, auto-imported components prefixed by their folder (`<UiBaseCard />`, `<CommonAppHeader />`, `<AdminLayout... />`).
 - Composables in `composables/` are the data-fetching layer (e.g., `useReports`, `usePublications`, `useAdminApi`, `useAdminAuth`, `useAdminCrud`).
-- i18n via `@nuxtjs/i18n` with `prefix_except_default` (English at `/`, Akan at `/ak/`). When adding user-facing copy, update **both** `i18n/locales/en.json` and `i18n/locales/ak.json`.
+- i18n via `@nuxtjs/i18n` with `prefix_except_default` (English at `/`, other languages under their code, e.g. `/ak/`). Languages other than English are **off until an admin enables them** at `/admin/languages`, where interface text is also translated (tables `languages`, `ui_translations`; catalogue of offerable languages in `utils/languageCatalog.ts`). When adding user-facing copy, update **both** `i18n/locales/en.json` and `i18n/locales/ak.json`. Details in the inner CLAUDE.md, "i18n".
 - Tailwind theme uses Ghana flag colors (`primary`/`ghana-green` `#006B3F`, `secondary`/`ghana-red` `#CE1126`, `accent`/`ghana-gold` `#FCD116`).
 
 ### Deployment

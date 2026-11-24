@@ -558,6 +558,39 @@ export const carouselConfigSchema = z.object({
 })
 
 // Gallery Albums
+// Site languages (/admin/languages). `code` is checked against the language
+// catalogue in the handler.
+const languageNameSchema = z.string().trim().min(1, 'Required').max(100, 'Too long')
+
+export const languageCreateSchema = z.object({
+  code: z.string().regex(/^[a-z]{2,3}$/, 'Invalid language code'),
+  name: languageNameSchema.optional(),
+  nativeName: languageNameSchema.optional()
+})
+
+export const languageUpdateSchema = z
+  .object({
+    name: languageNameSchema.optional(),
+    nativeName: languageNameSchema.optional(),
+    isEnabled: z.boolean().optional()
+  })
+  .refine((value) => Object.values(value).some((field) => field !== undefined), {
+    message: 'Nothing to update'
+  })
+
+// Interface translations: message key → text, or null to remove the entry.
+// Keys and message syntax are checked against en.json in the handler.
+export const TRANSLATION_MAX_LENGTH = 2000
+
+export const translationsUpdateSchema = z.object({
+  translations: z
+    .record(
+      z.string().min(1).max(191),
+      z.string().max(TRANSLATION_MAX_LENGTH, 'Too long').nullable()
+    )
+    .refine((value) => Object.keys(value).length <= 2000, { message: 'Too many entries' })
+})
+
 export const galleryAlbumSchema = z.object({
   slug: slugSchema,
   coverImageId: z.number().int().positive().optional().nullable(),
