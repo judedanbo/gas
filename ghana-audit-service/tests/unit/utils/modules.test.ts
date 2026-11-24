@@ -29,6 +29,12 @@ describe('moduleForPath', () => {
     expect(moduleForPath('/api/admin/newsletter')).toBe('communications')
   })
 
+  it('gates the apps (CitizensEye, Tracker, …) on the content module', () => {
+    expect(moduleForPath('/api/admin/apps')).toBe('content')
+    expect(moduleForPath('/api/admin/apps/2')).toBe('content')
+    expect(moduleForPath('/api/admin/apps/check-slug?slug=tracker')).toBe('content')
+  })
+
   it('gates the home carousel and site statistics on the content module', () => {
     expect(moduleForPath('/api/admin/carousel')).toBe('content')
     expect(moduleForPath('/api/admin/carousel/candidates')).toBe('content')

@@ -35,6 +35,9 @@ export * from './carousel'
 // Site languages + admin-entered interface translations
 export * from './languages'
 
+// Audit Service apps and websites (CitizensEye, Tracker, …)
+export * from './service-apps'
+
 // Career & Procurement Tables
 export * from './careers'
 export * from './tenders'

@@ -71,7 +71,7 @@ When changing DB connectivity or JWT, update the relevant file (or both, if you 
 
 Nitro routes under `ghana-audit-service/server/api/`:
 
-- **Public** routes (e.g. `news`, `publications`, `reports`, `vacancies`, `gallery`, `events`, `tenders`, `regional-offices`, `management-team`, `videos`, `search`, `contact.post`, `newsletter.post`, `csrf.get`) — open, no auth.
+- **Public** routes (e.g. `news`, `publications`, `reports`, `vacancies`, `apps`, `gallery`, `events`, `tenders`, `regional-offices`, `management-team`, `videos`, `search`, `contact.post`, `newsletter.post`, `csrf.get`) — open, no auth.
 - **Admin** routes under `server/api/admin/**` — gated by `server/middleware/adminAuth.ts`, which requires a `Bearer` JWT (verified via `server/utils/jwt.ts`) and looks up the user in `schema.users` to confirm they are still active and not soft-deleted (`isActive=true AND deletedAt IS NULL`). The authenticated user is attached to `event.context.auth`. Only `/api/admin/auth/login` is exempt.
 - DTO shaping happens in `server/utils/transform*.ts` files — keep DB rows out of API responses; route handlers should return transformed objects.
 
@@ -84,6 +84,10 @@ A server-side analytics subsystem captures per-request telemetry, rolls up route
 - **Scoring/detection**: `server/utils/analytics/` — fingerprinting, fuzz-pattern matching, probing-path detection, abuse scoring.
 - **Admin dashboards**: `server/api/admin/analytics/` exposes overview, route detail, bot detection, fuzz attempts, incidents. The frontend uses **ECharts** (`vue-echarts`) for visualization.
 - **Optional enrichment**: GeoIP via MaxMind (`ANALYTICS_GEOIP_DB_PATH`, `ANALYTICS_ASN_DB_PATH`) — disabled if the mmdb files aren't mounted. The loader re-checks the files every 15 min, so files that appear or change later are picked up without a restart. In production the `geoip-update` CronJob (`k8s/jobs/geoip-update-cronjob.yaml`) downloads them onto `gas-geoip-pvc`; it needs the `MAXMIND_ACCOUNT_ID` / `MAXMIND_LICENSE_KEY` secrets, and lookups also need the ingress-nginx Service on `externalTrafficPolicy: Local` so real client IPs reach the app (see `k8s/README.md`). Kubelet probes (`kube-probe/*` with no `X-Forwarded-For`) are not recorded.
+
+### Audit Service apps (CitizensEye, Tracker, …)
+
+The Service's other apps and websites are admin-managed at `/admin/apps` (tables `service_apps` + `service_app_translations`). Each gets a landing page at a top-level address (`/citizenseye`, `/tracker`) via the catch-all `pages/[slug].vue`, and a card on the `/apps` hub, which the header, footer, mobile menu and home page link to. Adding a top-level page means reserving its name in `RESERVED_APP_SLUGS` (`utils/serviceApps.ts`). Details in the inner CLAUDE.md, "Audit Service apps".
 
 ### Content crawlers
 

@@ -62,13 +62,15 @@ export const STATIC_SEARCHABLE_PAGES: ReadonlyArray<StaticSearchablePage> = [
       ak: 'Bɔ yɛn amaneɛ wɔ Ghana Nsɛm Hwɛfo dwumayɛbea kɛse anaa ɔmantam adwumayɛbea biara so.'
     }
   },
+  // Each app (CitizensEye, the Tracker, …) is searched from the database —
+  // see searchServiceApps() in searchService.ts.
   {
-    id: 'citizenseye',
-    path: '/citizenseye',
-    title: { en: 'CitizensEye', ak: 'Ɔmanfoɔ Ani' },
+    id: 'apps',
+    path: '/apps',
+    title: { en: 'Our Apps', ak: 'Yɛn Apps' },
     description: {
-      en: 'Report concerns and engage with the Ghana Audit Service through our citizen reporting platform.',
-      ak: 'Bɔ amaneɛ na yɛ adwuma ne Ghana Nsɛm Hwɛfo wɔ ɔmanfoɔ amaneɛbɔ dwumadie yi so.'
+      en: 'Apps and websites from the Ghana Audit Service, including CitizensEye and the Audit Recommendations Tracker.',
+      ak: 'Apps ne wɛbsaet ahodoɔ a ɛfiri Ghana Nsɛm Hwɛfo hɔ, te sɛ CitizensEye ne Audit Recommendations Tracker.'
     }
   },
   {

@@ -20,7 +20,7 @@
             </a>
           </div>
 
-          <!-- Right: Accessibility + Language + CitizensEye -->
+          <!-- Right: Accessibility + Language + Our Apps -->
           <div class="flex items-center gap-2 md:gap-3">
             <!-- Accessibility Controls (desktop; also available inside the mobile menu) -->
             <CommonAccessibilityControls variant="on-brand" class="hidden lg:flex" />
@@ -28,15 +28,13 @@
             <!-- Language Switcher -->
             <CommonLanguageSwitcher variant="on-brand" />
 
-            <!-- CitizensEye App -->
-            <a
-              href="https://www.appsheet.com/start/5b1b9364-12e7-4613-a082-26cebb71f29f"
-              target="_blank"
-              rel="noopener noreferrer"
+            <!-- Our Apps (CitizensEye, Tracker, …) -->
+            <NuxtLink
+              :to="localePath('/apps')"
               class="bg-accent text-gray-900 px-3 md:px-4 py-1 rounded-full font-semibold no-underline hover:bg-accent-dark transition-colors text-xs md:text-sm"
             >
-              {{ $t('common.citizensEyeApp') }}
-            </a>
+              {{ $t('apps.navLabel') }}
+            </NuxtLink>
           </div>
         </div>
       </div>
@@ -117,6 +115,7 @@
 </template>
 
 <script setup lang="ts">
+  const localePath = useLocalePath()
   const isScrolled = ref(false)
   const isSearchPaletteOpen = useState('searchPalette', () => false)
   const isMobileMenuOpen = ref(false)

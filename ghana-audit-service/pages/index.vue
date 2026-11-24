@@ -40,25 +40,33 @@
       </div>
     </section>
 
-    <!-- CTA Section -->
-    <section class="section bg-gradient-to-br from-primary to-primary-dark">
+    <!-- Our Apps (CitizensEye, Tracker, … — managed at /admin/apps) -->
+    <section
+      class="section bg-gradient-to-br from-primary to-primary-dark"
+      aria-labelledby="home-apps-heading"
+    >
       <div class="container">
-        <div class="text-center max-w-[600px] mx-auto">
-          <h3 class="text-2xl md:text-3xl font-heading font-bold text-white mb-4">
-            CitizensEye App
-          </h3>
-          <p class="text-white/90 text-lg mb-6">
-            Report concerns and engage with the Ghana Audit Service through our citizen engagement
-            platform.
-          </p>
-          <a
-            href="https://www.appsheet.com/start/5b1b9364-12e7-4613-a082-26cebb71f29f"
-            target="_blank"
-            rel="noopener noreferrer"
-            class="btn-accent btn-lg"
+        <div class="text-center max-w-[640px] mx-auto mb-10">
+          <h2
+            id="home-apps-heading"
+            class="text-2xl md:text-3xl font-heading font-bold text-white mb-4"
           >
-            Launch CitizensEye
-          </a>
+            {{ $t('apps.homeTitle') }}
+          </h2>
+          <p class="text-white/90 text-lg">{{ $t('apps.homeDescription') }}</p>
+        </div>
+        <ul
+          v-if="homeApps.length"
+          class="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-5xl mx-auto list-none p-0 m-0"
+        >
+          <li v-for="app in homeApps" :key="app.slug">
+            <AppsAppCard :app="app" heading-tag="h3" />
+          </li>
+        </ul>
+        <div class="on-brand text-center mt-10">
+          <NuxtLink :to="localePath('/apps')" class="btn-accent btn-lg">
+            {{ $t('apps.seeAll') }}
+          </NuxtLink>
         </div>
       </div>
     </section>
@@ -66,6 +74,12 @@
 </template>
 
 <script setup lang="ts">
+  const localePath = useLocalePath()
+
+  // Audit Service apps — the first four; the rest are on /apps.
+  const { data: apps } = await useServiceApps()
+  const homeApps = computed(() => (apps.value ?? []).slice(0, 4))
+
   // Live YouTube broadcast status — fetched client-side (the page is ISR
   // cached, so SSR output must not bake in a stale live state).
   const { liveEvents } = useLiveEvents()

@@ -131,14 +131,11 @@
                 >
               </li>
               <li>
-                <a
-                  href="https://www.appsheet.com/start/5b1b9364-12e7-4613-a082-26cebb71f29f"
-                  target="_blank"
-                  rel="noopener noreferrer"
+                <NuxtLink
+                  :to="localePath('/apps')"
                   class="text-gray-600 dark:text-gray-400 no-underline hover:text-primary dark:hover:text-accent transition-colors"
+                  >{{ $t('apps.navLabel') }}</NuxtLink
                 >
-                  CitizensEye App
-                </a>
               </li>
             </ul>
           </div>
@@ -285,6 +282,7 @@
 </template>
 
 <script setup lang="ts">
+  const localePath = useLocalePath()
   const { contact, socialLinks } = useSiteContact()
 
   // useState serializes the server-computed year into the payload, so the

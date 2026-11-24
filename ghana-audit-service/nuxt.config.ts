@@ -221,6 +221,11 @@ export default defineNuxtConfig({
     url: 'https://audit.gov.gh'
   },
 
+  sitemap: {
+    // App pages (/citizenseye, /tracker, …) live in the database.
+    sources: ['/api/__sitemap__/apps']
+  },
+
   // Color mode (dark mode) configuration
   colorMode: {
     classSuffix: '',

@@ -124,7 +124,7 @@ const AppHeader = {
               <a href="mailto:info@audit.gov.gh" class="email-link">info@audit.gov.gh</a>
             </div>
             <div>
-              <a href="#" class="citizens-eye-link">CitizensEye App</a>
+              <a href="/apps" class="apps-link">Our Apps</a>
             </div>
           </div>
         </div>
@@ -247,11 +247,12 @@ describe('AppHeader', () => {
       expect(wrapper.find('.email-link').exists()).toBe(true)
     })
 
-    it('should render CitizensEye App link', () => {
+    it('should render the Our Apps link', () => {
       const wrapper = mount(AppHeader)
 
-      expect(wrapper.find('.citizens-eye-link').exists()).toBe(true)
-      expect(wrapper.find('.citizens-eye-link').text()).toBe('CitizensEye App')
+      expect(wrapper.find('.apps-link').exists()).toBe(true)
+      expect(wrapper.find('.apps-link').text()).toBe('Our Apps')
+      expect(wrapper.find('.apps-link').attributes('href')).toBe('/apps')
     })
   })
 

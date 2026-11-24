@@ -116,6 +116,29 @@ vi.stubGlobal('defineEventHandler', <T>(handler: T) => handler)
 const createMockEvent = () =>
   ({ node: { req: {}, res: {} } }) as unknown as H3Event<EventHandlerRequest>
 
+// Apps (CitizensEye, …) are searched from the app store's per-pod cache, not
+// the database — stub the store so page searches stay query-free.
+vi.mock('../../../server/utils/serviceAppStore', async () => {
+  const { emptyAppContent } = await import('../../../utils/serviceApps')
+  const english = {
+    name: 'CitizensEye',
+    tagline: 'Citizen Engagement Platform for Public Accountability',
+    summary: 'Report concerns and engage with the Ghana Audit Service.',
+    headline: '',
+    body: '',
+    launchLabel: '',
+    imageAlt: '',
+    ctaTitle: '',
+    ctaText: '',
+    content: emptyAppContent()
+  }
+  return {
+    getPublishedServiceApps: vi.fn(async () => [
+      { id: 1, slug: 'citizenseye', isActive: true, translations: { en: english } }
+    ])
+  }
+})
+
 async function importHandler() {
   vi.resetModules()
   const mod = await import('../../../server/api/search')
@@ -688,7 +711,10 @@ describe('Search API', () => {
       const result = await handler(createMockEvent())
 
       const ids = result.data.map((r) => r.id)
-      expect(ids).toContain('page-citizenseye')
+      expect(ids).toContain('page-app-citizenseye')
+      expect(result.data.find((r) => r.id === 'page-app-citizenseye')?.url).toBe('/citizenseye')
+      // The apps hub mentions CitizensEye too.
+      expect(ids).toContain('page-apps')
       // No DB lookup should have been issued for a page-only search.
       expect(queryLog).toEqual([])
     })

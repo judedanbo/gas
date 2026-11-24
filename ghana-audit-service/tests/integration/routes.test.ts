@@ -44,7 +44,9 @@ const staticRoutes = [
   { path: 'pages/careers/index.vue', name: 'Careers Index' },
   { path: 'pages/careers/[slug].vue', name: 'Career Detail' },
   { path: 'pages/careers/tenders.vue', name: 'Tenders' },
-  { path: 'pages/citizenseye/index.vue', name: 'CitizensEye Index' },
+  // App pages (/citizenseye, /tracker, …) come from the database via [slug].vue.
+  { path: 'pages/[slug].vue', name: 'App Landing Page' },
+  { path: 'pages/apps.vue', name: 'Apps Hub' },
   { path: 'pages/citizenseye/privacy.vue', name: 'CitizensEye Privacy' },
   { path: 'pages/contact.vue', name: 'Contact' },
   { path: 'pages/search.vue', name: 'Search' },

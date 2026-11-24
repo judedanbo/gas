@@ -21,7 +21,6 @@
     "success": "Ɛyɛ",
     "menu": "Menu",
     "closeMenu": "To menu no mu",
-    "launchCitizensEye": "Bue CitizensEye",
     "previous": "Ɛkan",
     "next": "Ɛdi akyiri",
     "clearAll": "Yi nyinaa",
@@ -36,7 +35,6 @@
     "openSearch": "Open search (Ctrl+K)",
     "openMenu": "Bue menu no",
     "mobileNavigation": "Mobile navigation",
-    "citizensEyeApp": "CitizensEye App",
     "toggleSubmenu": "Toggle {item} submenu"
   },
   "nav": {
@@ -565,5 +563,48 @@
     "closesIn": "Ɛbɛto mu wɔ sɛkɛn {seconds} mu",
     "autoCloseHint": "Nkaebɔ yi bɛto mu ankasa wɔ sɛkɛn {seconds} akyi.",
     "opensInNewTab": "(ɛbue wɔ tab foforɔ mu)"
+  },
+  "apps": {
+    "navLabel": "Yɛn Apps",
+    "title": "Yɛn Apps",
+    "subtitle": "Apps ne wɛbsaet ahodoɔ a ɛfiri Ghana Nsɛm Hwɛfo hɔ",
+    "intro": "Bɔ amaneɛ, di audit akwankyerɛ akyi, na yɛ nneɛma foforɔ wɔ Ghana Nsɛm Hwɛfo intanɛt so nnwuma mu.",
+    "empty": "Apps biara nni hɔ seesei. Yɛsrɛ wo, san bra akyiri yi.",
+    "loadError": "Yɛantumi amfa apps no amma. Yɛsrɛ wo bɔ mmɔden bio akyiri yi.",
+    "learnMore": "Sua pii",
+    "learnMoreAbout": "Sua pii fa {name} ho",
+    "open": "Bue {name}",
+    "opensInNewTab": "(ɛbue wɔ tab foforɔ mu)",
+    "seeAll": "Hwɛ yɛn apps nyinaa",
+    "homeTitle": "Yɛn Apps",
+    "homeDescription": "Bɔ amaneɛ, di audit akwankyerɛ akyi, na wo ne Ghana Nsɛm Hwɛfo nni nkitaho wɔ intanɛt so.",
+    "explore": "Hwɛ yɛn apps",
+    "privacyNotice": "Kokoamsɛm Ho Nsɛm",
+    "ctaDefaultTitle": "Woasiesie wo ho sɛ wobɛfiri aseɛ?",
+    "quickLinks": "Nkitahodi foforɔ",
+    "allApps": "Yɛn apps nyinaa",
+    "aboutGas": "Fa GAS Ho",
+    "sections": {
+      "features": {
+        "badge": "Nneɛma a ɛwom",
+        "title": "Deɛ Wobɛtumi Ayɛ Wɔ {name} So"
+      },
+      "steps": {
+        "badge": "Sɛdeɛ ɛyɛ adwuma",
+        "title": "Sɛdeɛ {name} Yɛ Adwuma"
+      },
+      "audiences": {
+        "badge": "Mfasoɔ",
+        "title": "Adɛn Nti Na Ɛsɛ Sɛ Wode {name} Di Dwuma?"
+      },
+      "highlights": {
+        "badge": "Nsɛm titiriw",
+        "title": "Nsɛm Titiriw"
+      },
+      "faqs": {
+        "badge": "Nsɛmmisa",
+        "title": "Nsɛmmisa A Wɔtaa Bisa"
+      }
+    }
   }
 }
