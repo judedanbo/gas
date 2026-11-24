@@ -30,8 +30,9 @@ export const serviceApps = mysqlTable(
     slug: varchar('slug', { length: 60 }).notNull(),
     // Where the app itself lives (opened in a new tab).
     url: varchar('url', { length: 500 }).notNull(),
-    icon: varchar('icon', { length: 100 }).notNull().default('heroicons:squares-2x2'),
-    // Optional screenshot or logo shown on the landing page.
+    // Uploaded logo; null shows the GAS logo (DEFAULT_APP_LOGO).
+    logoUrl: varchar('logo_url', { length: 500 }),
+    // Optional screenshot shown on the landing page (the logo shows otherwise).
     imageUrl: varchar('image_url', { length: 500 }),
     // The app's privacy notice: a page on this site or an external URL.
     privacyUrl: varchar('privacy_url', { length: 500 }),

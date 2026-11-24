@@ -132,9 +132,9 @@
                 v-if="form.imageUrl"
                 :id="`app-${locale}-image-alt`"
                 v-model="form.translations[locale].imageAlt"
-                label="Image description"
+                label="Screenshot description"
                 :rows="2"
-                help-text="Describe the image for visitors who cannot see it. Defaults to the app's name."
+                help-text="Describe the screenshot for visitors who cannot see it. Defaults to the app's name."
                 :error="errors[`translations.${locale}.imageAlt`]"
               />
               <AdminFormAdminInput
@@ -211,14 +211,33 @@
                 Changing the address breaks links to {{ siteHost }}/{{ initial?.slug }}.
               </p>
             </div>
-            <AdminFormAdminIconSelect
-              id="app-icon"
-              v-model="form.icon"
-              label="Icon"
-              required
-              help-text="Shown on the app's card and page when there is no image."
-              :error="errors.icon"
-            />
+            <div>
+              <AdminFormAdminFileUpload
+                v-model="form.logoUrl"
+                type="image"
+                label="Logo"
+                help-text="Shown on the app's card and page. PNG with a transparent background works best; JPEG, WebP or GIF, up to 5MB."
+                :error="errors.logoUrl"
+              />
+              <!-- Loads the file directly: the upload field's own thumbnail goes
+                   through the image optimiser, which can't see runtime uploads. -->
+              <div class="mt-2 flex items-center gap-3 text-sm text-gray-600 dark:text-gray-400">
+                <span
+                  class="w-14 h-14 flex-shrink-0 flex items-center justify-center rounded-xl bg-white border border-gray-200 dark:border-gray-600 p-1.5"
+                >
+                  <img
+                    :src="appLogoUrl(form.logoUrl)"
+                    alt=""
+                    class="max-w-full max-h-full object-contain"
+                  />
+                </span>
+                {{
+                  form.logoUrl
+                    ? "How the logo looks on the app's card."
+                    : 'No logo uploaded — the GAS logo is shown instead.'
+                }}
+              </div>
+            </div>
             <AdminFormAdminInput
               id="app-sort-order"
               v-model="form.sortOrder"
@@ -242,8 +261,8 @@
             <AdminFormAdminFileUpload
               v-model="form.imageUrl"
               type="image"
-              label="Image"
-              help-text="Optional screenshot or logo for the page. JPEG, PNG, WebP or GIF, up to 5MB."
+              label="Screenshot"
+              help-text="Optional picture of the app for its page; without one, the page shows the logo. JPEG, PNG, WebP or GIF, up to 5MB."
               :error="errors.imageUrl"
             />
             <AdminFormAdminInput
@@ -274,7 +293,7 @@
   import type { AdminServiceApp, ServiceAppInput } from '~/types/admin'
   import {
     APP_SECTION_LIMITS,
-    DEFAULT_APP_ICON,
+    appLogoUrl,
     appSlugProblem,
     emptyAppTranslation,
     isEmptyAppTranslation,
@@ -389,7 +408,7 @@
   const form = reactive({
     slug: props.initial?.slug ?? '',
     url: props.initial?.url ?? '',
-    icon: props.initial?.icon ?? DEFAULT_APP_ICON,
+    logoUrl: props.initial?.logoUrl ?? '',
     imageUrl: props.initial?.imageUrl ?? '',
     privacyUrl: props.initial?.privacyUrl ?? '',
     sortOrder: props.initial?.sortOrder ?? 0,
@@ -567,7 +586,6 @@
               .toLowerCase()
           ) ?? true
       ],
-      icon: [rules.required],
       privacyUrl: [
         linkRule(true, 'Enter a path on this site (e.g. /citizenseye/privacy) or a full URL')
       ],
@@ -627,7 +645,7 @@
     emit('submit', {
       slug: form.slug.trim().toLowerCase(),
       url: form.url.trim(),
-      icon: form.icon,
+      logoUrl: form.logoUrl || null,
       imageUrl: form.imageUrl || null,
       privacyUrl: form.privacyUrl.trim() || null,
       sortOrder: Number(form.sortOrder) || 0,

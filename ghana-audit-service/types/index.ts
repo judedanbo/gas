@@ -217,7 +217,8 @@ export interface ServiceAppSummary {
   path: string
   /** Where the app itself lives (opened in a new tab). */
   url: string
-  icon: string
+  /** The app's logo, or the GAS logo when it has none. */
+  logoUrl: string
   name: string
   tagline: string | null
   summary: string

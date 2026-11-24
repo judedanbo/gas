@@ -63,7 +63,7 @@ async function handleUpdate(event: H3Event, id: number) {
         .set({
           slug: input.slug,
           url: input.url,
-          icon: input.icon,
+          logoUrl: input.logoUrl ?? null,
           imageUrl: input.imageUrl ?? null,
           privacyUrl: input.privacyUrl ?? null,
           sortOrder: input.sortOrder,

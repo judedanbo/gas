@@ -1,6 +1,7 @@
 import type { ServiceApp, ServiceAppSummary } from '~/types'
 import type { AdminServiceApp } from '~/types/admin'
 import {
+  appLogoUrl,
   appPath,
   emptyAppTranslation,
   mergeAppTranslation,
@@ -34,7 +35,7 @@ export function transformServiceAppSummary(
     slug: app.slug,
     path: appPath(app.slug),
     url: app.url,
-    icon: app.icon,
+    logoUrl: appLogoUrl(app.logoUrl),
     name: text.name,
     tagline: orNull(text.tagline),
     summary: text.summary,
@@ -69,7 +70,7 @@ export function transformAdminServiceApp(app: StoredServiceApp): AdminServiceApp
     id: app.id,
     slug: app.slug,
     url: app.url,
-    icon: app.icon,
+    logoUrl: app.logoUrl,
     imageUrl: app.imageUrl,
     privacyUrl: app.privacyUrl,
     sortOrder: app.sortOrder,

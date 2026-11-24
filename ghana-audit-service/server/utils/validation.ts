@@ -3,7 +3,6 @@ import {
   APP_AUDIENCE_MAX_POINTS,
   APP_SECTION_LIMITS,
   APP_TEXT_LIMITS,
-  DEFAULT_APP_ICON,
   appSlugProblem,
   isAppIcon,
   isEmptyAppTranslation
@@ -604,9 +603,12 @@ export const serviceAppSchema = z.object({
     .min(1, "Enter the app's web address")
     .max(500)
     .refine(isWebAddress, 'Enter a full web address, e.g. https://tracker.audit.gov.gh'),
-  icon: z.preprocess((val) => (val == null || val === '' ? DEFAULT_APP_ICON : val), appIconSchema),
   // Uploaded images are root-relative (/uploads/images/…); the CSP only
-  // allows https for remote ones.
+  // allows https for remote ones. No logo shows the GAS logo.
+  logoUrl: optionalUrl(
+    (val) => isSafeUrl(val, { allowHttp: false }),
+    'Must be an uploaded image or an https URL'
+  ),
   imageUrl: optionalUrl(
     (val) => isSafeUrl(val, { allowHttp: false }),
     'Must be an uploaded image or an https URL'

@@ -80,12 +80,22 @@ export function appPath(slug: string): string {
   return `/${slug}`
 }
 
+// ── Logos ──────────────────────────────────────────────────────────────────
+
+/** Shown for an app that has no logo of its own: the Ghana Audit Service seal. */
+export const DEFAULT_APP_LOGO = '/images/logo-no-bg.png'
+
+/** The logo to show for an app: its own when uploaded, otherwise the GAS logo. */
+export function appLogoUrl(logoUrl: string | null | undefined): string {
+  return logoUrl?.trim() || DEFAULT_APP_LOGO
+}
+
 // ── Icons ──────────────────────────────────────────────────────────────────
 
 /**
- * Icons an admin can pick for an app or a section item. A fixed list keeps the
- * choice to icons that are bundled with the site (the names below are plain
- * literals, so the client icon bundle picks them up).
+ * Icons an admin can pick for a section item (a feature, a step, …). A fixed
+ * list keeps the choice to icons that are bundled with the site (the names
+ * below are plain literals, so the client icon bundle picks them up).
  */
 export const APP_ICON_OPTIONS: ReadonlyArray<{ value: string; label: string }> = [
   { value: 'heroicons:eye', label: 'Eye' },
@@ -129,8 +139,6 @@ export const APP_ICON_OPTIONS: ReadonlyArray<{ value: string; label: string }> =
   { value: 'heroicons:question-mark-circle', label: 'Question mark' },
   { value: 'heroicons:exclamation-triangle', label: 'Warning' }
 ]
-
-export const DEFAULT_APP_ICON = 'heroicons:squares-2x2'
 
 export function isAppIcon(value: string): boolean {
   return APP_ICON_OPTIONS.some((option) => option.value === value)

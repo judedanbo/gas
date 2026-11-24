@@ -850,7 +850,8 @@ export interface AdminServiceApp {
   id: number
   slug: string
   url: string
-  icon: string
+  /** Uploaded logo; null means the GAS logo is shown (DEFAULT_APP_LOGO). */
+  logoUrl: string | null
   imageUrl: string | null
   privacyUrl: string | null
   sortOrder: number
@@ -865,7 +866,7 @@ export interface AdminServiceApp {
 export interface ServiceAppInput {
   slug: string
   url: string
-  icon: string
+  logoUrl: string | null
   imageUrl: string | null
   privacyUrl: string | null
   sortOrder: number

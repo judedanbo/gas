@@ -51,10 +51,13 @@
       <template #cell-name="{ row }">
         <div class="flex items-center gap-3 max-w-sm">
           <span
-            class="w-10 h-10 flex-shrink-0 flex items-center justify-center rounded-lg bg-primary/10 dark:bg-primary/20"
-            aria-hidden="true"
+            class="w-10 h-10 flex-shrink-0 flex items-center justify-center rounded-lg bg-white border border-gray-200 dark:border-gray-600 p-1"
           >
-            <Icon :name="row.icon" class="w-6 h-6 text-primary dark:text-primary-200" />
+            <img
+              :src="appLogoUrl(row.logoUrl)"
+              :alt="row.logoUrl ? '' : 'GAS logo (no app logo uploaded)'"
+              class="max-w-full max-h-full object-contain"
+            />
           </span>
           <div class="min-w-0">
             <p class="font-medium text-gray-900 dark:text-white truncate">
@@ -173,6 +176,7 @@
 
 <script setup lang="ts">
   import type { AdminServiceApp } from '~/types/admin'
+  import { appLogoUrl } from '~/utils/serviceApps'
   definePageMeta({ layout: 'admin' })
 
   const { items, loading, deleting, meta, fetchAll, remove } = useAdminCrud<AdminServiceApp>('apps')

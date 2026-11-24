@@ -19,7 +19,7 @@ function seedInput(index: number) {
   return {
     slug: app.slug,
     url: app.url,
-    icon: app.icon,
+    logoUrl: app.logoUrl,
     privacyUrl: app.privacyUrl,
     sortOrder: app.sortOrder,
     isActive: true,
@@ -61,7 +61,7 @@ describe('serviceAppSchema', () => {
   it('fills defaults and normalises the address', () => {
     const parsed = serviceAppSchema.parse(minimal)
     expect(parsed.slug).toBe('tracker')
-    expect(parsed.icon).toBe('heroicons:squares-2x2')
+    expect(parsed.logoUrl ?? null).toBeNull()
     expect(parsed.isActive).toBe(true)
     expect(parsed.sortOrder).toBe(0)
     expect(parsed.imageUrl ?? null).toBeNull()
@@ -89,7 +89,7 @@ describe('serviceAppSchema', () => {
     const parsed = serviceAppSchema.safeParse({
       slug: 'contact',
       url: 'javascript:alert(1)',
-      icon: 'mdi:eye',
+      logoUrl: 'javascript:alert(1)',
       privacyUrl: '//evil.example',
       translations: {
         en: {
@@ -105,12 +105,22 @@ describe('serviceAppSchema', () => {
       expect.arrayContaining([
         'slug',
         'url',
-        'icon',
+        'logoUrl',
         'privacyUrl',
         'translations.en.name',
         'translations.en.content.faqs.items.0.answer'
       ])
     )
+  })
+
+  it('takes an uploaded or https logo, and none at all', () => {
+    for (const logoUrl of ['/uploads/images/tracker-logo.png', 'https://cdn.audit.gov.gh/l.png']) {
+      expect(serviceAppSchema.parse({ ...minimal, logoUrl }).logoUrl).toBe(logoUrl)
+    }
+    expect(serviceAppSchema.parse({ ...minimal, logoUrl: '' }).logoUrl ?? null).toBeNull()
+    expect(
+      serviceAppSchema.safeParse({ ...minimal, logoUrl: 'http://x.example/l.png' }).success
+    ).toBe(false)
   })
 
   it('only takes absolute web addresses for the app itself', () => {
@@ -152,7 +162,7 @@ function storedApp(overrides: Partial<StoredServiceApp> = {}): StoredServiceApp 
     id: 2,
     slug: 'tracker',
     url: 'https://tracker.audit.gov.gh',
-    icon: 'heroicons:clipboard-document-check',
+    logoUrl: null,
     imageUrl: null,
     privacyUrl: null,
     sortOrder: 2,
@@ -175,17 +185,23 @@ describe('transformServiceApp', () => {
     expect(resolveAppTranslation(app, 'ak')).toEqual(app.translations.en)
   })
 
-  it('builds the card', () => {
+  it('builds the card, with the GAS logo for an app without one', () => {
     expect(transformServiceAppSummary(storedApp())).toEqual({
       slug: 'tracker',
       path: '/tracker',
       url: 'https://tracker.audit.gov.gh',
-      icon: 'heroicons:clipboard-document-check',
+      logoUrl: '/images/logo-no-bg.png',
       name: 'Audit Recommendations Tracker',
       tagline: 'Follow the action taken',
       summary: 'Follow audit recommendations.',
       launchLabel: null
     })
+  })
+
+  it("uses the app's own logo when it has one", () => {
+    const app = storedApp({ logoUrl: '/uploads/images/tracker-logo.png' })
+    expect(transformServiceAppSummary(app).logoUrl).toBe('/uploads/images/tracker-logo.png')
+    expect(transformServiceApp(app).logoUrl).toBe('/uploads/images/tracker-logo.png')
   })
 
   it('builds the landing page, mixing in Akan where it was entered', () => {
@@ -208,6 +224,8 @@ describe('transformServiceApp', () => {
 
   it('gives the admin panel both languages as entered', () => {
     const admin = transformAdminServiceApp(storedApp())
+    // The admin sees what was uploaded — nothing — not the fallback.
+    expect(admin.logoUrl).toBeNull()
     expect(admin.translations.ak).toBeUndefined()
     expect(admin.createdAt).toBe('2026-11-24T10:00:00.000Z')
     expect(admin.translations.en.name).toBe('Audit Recommendations Tracker')

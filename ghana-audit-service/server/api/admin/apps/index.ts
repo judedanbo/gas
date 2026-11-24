@@ -70,7 +70,7 @@ async function handleCreate(event: H3Event) {
       const [result] = await tx.insert(schema.serviceApps).values({
         slug: input.slug,
         url: input.url,
-        icon: input.icon,
+        logoUrl: input.logoUrl ?? null,
         imageUrl: input.imageUrl ?? null,
         privacyUrl: input.privacyUrl ?? null,
         sortOrder: input.sortOrder,

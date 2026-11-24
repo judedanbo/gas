@@ -13,7 +13,8 @@ import type { AppContent, AppTranslation } from '../../../../utils/serviceApps'
 export interface SeedServiceApp {
   slug: string
   url: string
-  icon: string
+  /** null shows the GAS logo until one is uploaded at /admin/apps. */
+  logoUrl: string | null
   privacyUrl: string | null
   sortOrder: number
   en: AppTranslation
@@ -250,7 +251,7 @@ export const SEED_SERVICE_APPS: readonly SeedServiceApp[] = [
   {
     slug: 'citizenseye',
     url: 'https://www.appsheet.com/start/5b1b9364-12e7-4613-a082-26cebb71f29f',
-    icon: 'heroicons:eye',
+    logoUrl: null,
     privacyUrl: '/citizenseye/privacy',
     sortOrder: 1,
     en: {
@@ -273,7 +274,7 @@ export const SEED_SERVICE_APPS: readonly SeedServiceApp[] = [
   {
     slug: 'tracker',
     url: 'https://tracker.audit.gov.gh',
-    icon: 'heroicons:clipboard-document-check',
+    logoUrl: null,
     privacyUrl: null,
     sortOrder: 2,
     en: {
@@ -302,11 +303,11 @@ export function seedServiceAppsSql(): string {
   const statements: string[] = []
   for (const app of SEED_SERVICE_APPS) {
     statements.push(
-      'INSERT INTO `service_apps` (`slug`, `url`, `icon`, `privacy_url`, `sort_order`, `is_active`) VALUES (' +
+      'INSERT INTO `service_apps` (`slug`, `url`, `logo_url`, `privacy_url`, `sort_order`, `is_active`) VALUES (' +
         [
           quote(app.slug),
           quote(app.url),
-          quote(app.icon),
+          quote(app.logoUrl),
           quote(app.privacyUrl),
           app.sortOrder,
           'true'

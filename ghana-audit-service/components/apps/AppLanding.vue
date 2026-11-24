@@ -63,11 +63,18 @@
               v-else
               class="bg-gradient-to-br from-primary/10 to-accent/10 dark:from-primary/20 dark:to-accent/20 rounded-2xl p-8 text-center"
             >
-              <Icon
-                :name="app.icon"
-                class="w-20 h-20 text-primary dark:text-primary-200 mb-4 mx-auto"
-                aria-hidden="true"
-              />
+              <span
+                class="w-28 h-28 mx-auto mb-4 flex items-center justify-center rounded-2xl bg-white shadow-sm p-3"
+              >
+                <!-- Decorative: the app's name follows. -->
+                <img
+                  :src="app.logoUrl"
+                  alt=""
+                  width="112"
+                  height="112"
+                  class="max-w-full max-h-full object-contain"
+                />
+              </span>
               <p class="text-xl font-semibold text-gray-900 dark:text-white mb-2">
                 {{ app.name }}
               </p>

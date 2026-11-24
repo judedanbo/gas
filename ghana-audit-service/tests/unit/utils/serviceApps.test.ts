@@ -3,7 +3,9 @@ import { resolve } from 'node:path'
 import { describe, it, expect } from 'vitest'
 import {
   APP_ICON_OPTIONS,
+  DEFAULT_APP_LOGO,
   RESERVED_APP_SLUGS,
+  appLogoUrl,
   appPath,
   appSlugProblem,
   emptyAppContent,
@@ -85,6 +87,15 @@ describe('RESERVED_APP_SLUGS', () => {
   it('lists every top-level page, server route and public folder', () => {
     const missing = topLevelNames().filter((name) => !RESERVED_APP_SLUGS.includes(name))
     expect(missing).toEqual([])
+  })
+})
+
+describe('appLogoUrl', () => {
+  it('falls back to the GAS logo, which ships with the site', () => {
+    expect(appLogoUrl(null)).toBe(DEFAULT_APP_LOGO)
+    expect(appLogoUrl('  ')).toBe(DEFAULT_APP_LOGO)
+    expect(appLogoUrl('/uploads/images/logo.png')).toBe('/uploads/images/logo.png')
+    expect(existsSync(resolve(root, 'public', DEFAULT_APP_LOGO.slice(1)))).toBe(true)
   })
 })
 

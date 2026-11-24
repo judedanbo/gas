@@ -46,7 +46,7 @@ vi.mock('~/server/database', () => ({
 }))
 
 function appRow(id: number, slug: string) {
-  return { id, slug, url: `https://${slug}.audit.gov.gh`, icon: 'heroicons:eye', isActive: true }
+  return { id, slug, url: `https://${slug}.audit.gov.gh`, logoUrl: null, isActive: true }
 }
 
 function englishRow(appId: number, name: string) {

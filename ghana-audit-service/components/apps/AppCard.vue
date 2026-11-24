@@ -3,11 +3,18 @@
     class="h-full flex flex-col bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700 hover:shadow-lg transition-shadow"
   >
     <div class="flex items-start gap-4 mb-4">
+      <!-- Decorative: the app's name follows. White behind it so any logo shows in dark mode. -->
       <span
-        class="w-14 h-14 flex-shrink-0 flex items-center justify-center rounded-xl bg-primary/10 dark:bg-primary/20"
-        aria-hidden="true"
+        class="w-14 h-14 flex-shrink-0 flex items-center justify-center rounded-xl bg-white border border-gray-200 dark:border-gray-600 p-1.5"
       >
-        <Icon :name="app.icon" class="w-8 h-8 text-primary dark:text-primary-200" />
+        <img
+          :src="app.logoUrl"
+          alt=""
+          width="56"
+          height="56"
+          loading="lazy"
+          class="max-w-full max-h-full object-contain"
+        />
       </span>
       <div class="min-w-0">
         <component

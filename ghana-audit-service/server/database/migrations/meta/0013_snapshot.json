@@ -1,7 +1,7 @@
 {
   "version": "5",
   "dialect": "mysql",
-  "id": "22d83390-565e-4677-a159-3ccf77b640b5",
+  "id": "383eb06a-942b-46f7-8f4d-2d614bcf8d2a",
   "prevId": "b078c82b-e4d3-4675-90a0-2e3bf46c28cb",
   "tables": {
     "audit_logs": {
@@ -4295,13 +4295,12 @@
           "notNull": true,
           "autoincrement": false
         },
-        "icon": {
-          "name": "icon",
-          "type": "varchar(100)",
+        "logo_url": {
+          "name": "logo_url",
+          "type": "varchar(500)",
           "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": "'heroicons:squares-2x2'"
+          "notNull": false,
+          "autoincrement": false
         },
         "image_url": {
           "name": "image_url",
