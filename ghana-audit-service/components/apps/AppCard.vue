@@ -7,12 +7,10 @@
       <span
         class="w-14 h-14 flex-shrink-0 flex items-center justify-center rounded-xl bg-white border border-gray-200 dark:border-gray-600 p-1.5"
       >
-        <img
+        <UiBaseImage
           :src="app.logoUrl"
+          :fallback-src="DEFAULT_APP_LOGO"
           alt=""
-          width="56"
-          height="56"
-          loading="lazy"
           class="max-w-full max-h-full object-contain"
         />
       </span>
@@ -53,6 +51,7 @@
 
 <script setup lang="ts">
   import type { ServiceAppSummary } from '~/types'
+  import { DEFAULT_APP_LOGO } from '~/utils/serviceApps'
 
   withDefaults(
     defineProps<{

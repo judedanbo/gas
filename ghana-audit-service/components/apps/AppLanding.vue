@@ -52,12 +52,11 @@
             </div>
           </div>
           <div class="mt-10 lg:mt-0">
-            <img
+            <UiBaseImage
               v-if="app.imageUrl"
               :src="app.imageUrl"
               :alt="app.imageAlt"
               class="w-full rounded-2xl shadow-lg"
-              loading="lazy"
             />
             <div
               v-else
@@ -67,11 +66,11 @@
                 class="w-28 h-28 mx-auto mb-4 flex items-center justify-center rounded-2xl bg-white shadow-sm p-3"
               >
                 <!-- Decorative: the app's name follows. -->
-                <img
+                <UiBaseImage
                   :src="app.logoUrl"
+                  :fallback-src="DEFAULT_APP_LOGO"
                   alt=""
-                  width="112"
-                  height="112"
+                  loading="eager"
                   class="max-w-full max-h-full object-contain"
                 />
               </span>
@@ -283,7 +282,7 @@
 <script setup lang="ts">
   import { NuxtLink } from '#components'
   import type { ServiceApp } from '~/types'
-  import { APP_SECTION_KEYS, type AppSectionKey } from '~/utils/serviceApps'
+  import { APP_SECTION_KEYS, DEFAULT_APP_LOGO, type AppSectionKey } from '~/utils/serviceApps'
   import { sanitizeHtml } from '~/utils/sanitizeHtml'
 
   const props = defineProps<{ app: ServiceApp }>()

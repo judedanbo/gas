@@ -53,8 +53,9 @@
           <span
             class="w-10 h-10 flex-shrink-0 flex items-center justify-center rounded-lg bg-white border border-gray-200 dark:border-gray-600 p-1"
           >
-            <img
+            <UiBaseImage
               :src="appLogoUrl(row.logoUrl)"
+              :fallback-src="DEFAULT_APP_LOGO"
               :alt="row.logoUrl ? '' : 'GAS logo (no app logo uploaded)'"
               class="max-w-full max-h-full object-contain"
             />
@@ -176,7 +177,7 @@
 
 <script setup lang="ts">
   import type { AdminServiceApp } from '~/types/admin'
-  import { appLogoUrl } from '~/utils/serviceApps'
+  import { DEFAULT_APP_LOGO, appLogoUrl } from '~/utils/serviceApps'
   definePageMeta({ layout: 'admin' })
 
   const { items, loading, deleting, meta, fetchAll, remove } = useAdminCrud<AdminServiceApp>('apps')

@@ -219,14 +219,14 @@
                 help-text="Shown on the app's card and page. PNG with a transparent background works best; JPEG, WebP or GIF, up to 5MB."
                 :error="errors.logoUrl"
               />
-              <!-- Loads the file directly: the upload field's own thumbnail goes
-                   through the image optimiser, which can't see runtime uploads. -->
+              <!-- The logo as the app's card shows it, GAS fallback included. -->
               <div class="mt-2 flex items-center gap-3 text-sm text-gray-600 dark:text-gray-400">
                 <span
                   class="w-14 h-14 flex-shrink-0 flex items-center justify-center rounded-xl bg-white border border-gray-200 dark:border-gray-600 p-1.5"
                 >
-                  <img
+                  <UiBaseImage
                     :src="appLogoUrl(form.logoUrl)"
+                    :fallback-src="DEFAULT_APP_LOGO"
                     alt=""
                     class="max-w-full max-h-full object-contain"
                   />
@@ -293,6 +293,7 @@
   import type { AdminServiceApp, ServiceAppInput } from '~/types/admin'
   import {
     APP_SECTION_LIMITS,
+    DEFAULT_APP_LOGO,
     appLogoUrl,
     appSlugProblem,
     emptyAppTranslation,
