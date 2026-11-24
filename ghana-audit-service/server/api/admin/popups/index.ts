@@ -8,7 +8,12 @@ import {
   buildPaginationMeta
 } from '../../../utils/adminHelpers'
 import { logAuditAction, sanitizeForAudit } from '../../../utils/auditLogger'
-import { popupSchema, validateBody } from '../../../utils/validation'
+import {
+  createValidationError,
+  popupImageError,
+  popupSchema,
+  validateBody
+} from '../../../utils/validation'
 import { safeError } from '../../../utils/errors'
 
 export default defineEventHandler(async (event) => {
@@ -57,6 +62,8 @@ async function handleCreate(event: H3Event) {
 
   const user = getCurrentUser(event)
   const input = validateBody(popupSchema, await readBody(event))
+  const imageError = popupImageError(input.imageUrl)
+  if (imageError) throw createValidationError({ imageUrl: imageError })
   const db = getDatabase()
 
   try {

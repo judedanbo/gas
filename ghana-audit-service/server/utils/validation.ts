@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { POPUP_IMAGE_SIZE_LABEL } from '~/utils/popupImage'
 
 /**
  * Collect all Zod issues into dot-path keyed errors, preserving nested paths.
@@ -433,8 +434,9 @@ const popupDateSchema = z.preprocess(
 export const popupSchema = z
   .object({
     title: z.string().trim().min(1).max(255),
-    // Uploaded images are root-relative (/uploads/images/…); the CSP only
-    // allows https for remote ones.
+    // Uploaded images are root-relative (/uploads/popups/…); the CSP only
+    // allows https for remote ones. Which images a pop-up may use is
+    // popupImageError()'s call: it needs the pop-up's current image.
     imageUrl: z
       .string()
       .trim()
@@ -474,6 +476,24 @@ export const popupSchema = z
     (val) => !val.startsAt || !val.endsAt || Date.parse(val.endsAt) > Date.parse(val.startsAt),
     { path: ['endsAt'], message: 'End must be after the start' }
   )
+
+/**
+ * Where `popup` uploads land: /uploads/popups/<generated name> (see
+ * uploadConfigs.popup and serveUpload's name pattern).
+ */
+const POPUP_UPLOAD_URL = /^\/uploads\/popups\/[A-Za-z0-9-]+\.(?:jpe?g|png|webp|gif)$/i
+
+/**
+ * Pop-up images are always exactly 1600 × 800. Only the `popup` upload type
+ * checks the pixels, so a pop-up may only be saved with an image uploaded
+ * through it. One saved before the rule existed keeps the image it has
+ * (`currentImageUrl`) until that image is replaced, so an old pop-up can still
+ * be edited or switched off. Returns the field error, or null when allowed.
+ */
+export function popupImageError(imageUrl: string, currentImageUrl?: string): string | null {
+  if (imageUrl === currentImageUrl || POPUP_UPLOAD_URL.test(imageUrl)) return null
+  return `Upload an image of exactly ${POPUP_IMAGE_SIZE_LABEL} pixels`
+}
 
 // Auditor-General message (singleton, edit-only)
 export const auditorGeneralMessageSchema = z.object({
