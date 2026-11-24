@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { transformPopup } from '../../../../server/utils/transformPopup'
-import { popupSchema } from '../../../../server/utils/validation'
+import { popupImageError, popupSchema } from '../../../../server/utils/validation'
 
 const row = {
   id: 7,
@@ -115,5 +115,38 @@ describe('popupSchema', () => {
 
   it('rejects unparseable dates', () => {
     expect(popupSchema.safeParse({ ...valid, startsAt: 'next tuesday-ish' }).success).toBe(false)
+  })
+})
+
+describe('popupImageError', () => {
+  const NEEDS_SIZE = 'Upload an image of exactly 1600 × 800 pixels'
+
+  it.each([
+    '/uploads/popups/20261124-0b9f6c1e-1d2a-4c3b-9e8f-7a6b5c4d3e2f.png',
+    '/uploads/popups/20261124-abc.JPG',
+    '/uploads/popups/20261124-abc.jpeg',
+    '/uploads/popups/20261124-abc.webp',
+    '/uploads/popups/20261124-abc.gif'
+  ])('accepts a pop-up upload: %s', (imageUrl) => {
+    expect(popupImageError(imageUrl)).toBeNull()
+  })
+
+  it.each([
+    // Uploaded as a general image, so its size was never checked
+    '/uploads/images/20261123-abc.png',
+    'https://example.com/banner.png',
+    '/uploads/popups/../images/20261123-abc.png',
+    '/uploads/popups/sub/20261123-abc.png',
+    '/uploads/popups/20261123-abc.svg',
+    '/uploads/popups/20261123-abc.png?x=1'
+  ])('rejects an image the size check never saw: %s', (imageUrl) => {
+    expect(popupImageError(imageUrl)).toBe(NEEDS_SIZE)
+  })
+
+  it('lets a pop-up keep the image it already has, but not swap in another unchecked one', () => {
+    const legacy = '/uploads/images/20261123-abc.png'
+    expect(popupImageError(legacy, legacy)).toBeNull()
+    expect(popupImageError('/uploads/images/20261123-other.png', legacy)).toBe(NEEDS_SIZE)
+    expect(popupImageError('/uploads/popups/20261124-new.png', legacy)).toBeNull()
   })
 })

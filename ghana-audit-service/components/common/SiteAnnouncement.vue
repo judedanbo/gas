@@ -21,7 +21,7 @@
           tabindex="-1"
           :aria-label="popup.title"
           :aria-describedby="hintId"
-          class="relative flex max-h-full w-auto max-w-3xl flex-col overflow-hidden rounded-lg bg-white shadow-2xl focus:outline-none dark:bg-gray-800"
+          class="relative flex max-h-full w-full max-w-[min(48rem,150vh)] flex-col overflow-hidden rounded-lg bg-white shadow-2xl focus:outline-none dark:bg-gray-800"
         >
           <button
             v-if="popup.isDismissible"
@@ -41,12 +41,25 @@
             class="block min-h-0 focus:outline-none focus-visible:ring-4 focus-visible:ring-inset focus-visible:ring-accent"
             @click="follow"
           >
-            <img :src="popup.imageUrl" :alt="popup.altText" :class="imageClasses" />
+            <img
+              :src="popup.imageUrl"
+              :alt="popup.altText"
+              :width="POPUP_IMAGE_WIDTH"
+              :height="POPUP_IMAGE_HEIGHT"
+              :class="imageClasses"
+            />
             <span v-if="popup.openInNewTab" class="sr-only">
               {{ $t('announcement.opensInNewTab') }}
             </span>
           </a>
-          <img v-else :src="popup.imageUrl" :alt="popup.altText" :class="imageClasses" />
+          <img
+            v-else
+            :src="popup.imageUrl"
+            :alt="popup.altText"
+            :width="POPUP_IMAGE_WIDTH"
+            :height="POPUP_IMAGE_HEIGHT"
+            :class="imageClasses"
+          />
 
           <div class="flex-shrink-0">
             <p
@@ -75,6 +88,8 @@
 </template>
 
 <script setup lang="ts">
+  import { POPUP_IMAGE_HEIGHT, POPUP_IMAGE_WIDTH } from '~/utils/popupImage'
+
   /**
    * The pop-up managed at /admin/popups: an image (optionally a link) shown
    * once per page load, closing itself when its countdown ends. Visitors can
@@ -85,7 +100,11 @@
   const hintId = `${useId()}-hint`
   const dialogRef = ref<HTMLElement | null>(null)
 
-  const imageClasses = 'mx-auto block max-h-[75vh] w-auto max-w-full object-contain'
+  // Pop-up images are always 1600 × 800, so the width/height attributes let
+  // the dialog open at its final size before the image arrives. The dialog is
+  // at most 150vh wide, which keeps a 2:1 image within 75vh of height; the cap
+  // and object-contain only matter for images uploaded before the size rule.
+  const imageClasses = 'block h-auto w-full max-h-[75vh] object-contain'
 
   const progress = computed(() => {
     const total = popup.value?.displaySeconds || 1

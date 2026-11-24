@@ -8,6 +8,10 @@ import { pipeline } from 'stream/promises'
 import Busboy from 'busboy'
 import { createError, type H3Error, type H3Event } from 'h3'
 import { blobKeyFromFileUrl, getContainerClient, uploadBlobFromFile } from './blobStorage'
+import { assertImageDimensions, type ImageDimensions } from './imageDimensions'
+import { POPUP_IMAGE_HEIGHT, POPUP_IMAGE_WIDTH } from '~/utils/popupImage'
+
+export type UploadType = 'report' | 'publication' | 'image' | 'thumbnail' | 'popup'
 
 export interface UploadConfig {
   allowedTypes: string[]
@@ -21,6 +25,11 @@ export interface UploadConfig {
    * to the local filesystem.
    */
   backend?: 'blob' | 'disk'
+  /**
+   * Exact pixel size an image upload must have, read from the spooled file's
+   * header before anything is persisted. Omitted: any size.
+   */
+  dimensions?: ImageDimensions
 }
 
 export interface UploadResult {
@@ -42,7 +51,7 @@ export interface ReceivedFile {
   size: number
 }
 
-export const uploadConfigs: Record<string, UploadConfig> = {
+export const uploadConfigs: Record<UploadType, UploadConfig> = {
   report: {
     allowedTypes: ['application/pdf'],
     maxSize: 100 * 1024 * 1024, // 100MB
@@ -70,6 +79,15 @@ export const uploadConfigs: Record<string, UploadConfig> = {
     allowedTypes: ['image/jpeg', 'image/png', 'image/webp'],
     maxSize: 2 * 1024 * 1024, // 2MB
     directory: 'thumbnails'
+  },
+  // Site pop-up images: always exactly 1600 × 800. Kept in their own directory
+  // so a pop-up can only be saved with an image that passed this check
+  // (popupImageError() in validation.ts).
+  popup: {
+    allowedTypes: ['image/jpeg', 'image/png', 'image/webp', 'image/gif'],
+    maxSize: 5 * 1024 * 1024, // 5MB
+    directory: 'popups',
+    dimensions: { width: POPUP_IMAGE_WIDTH, height: POPUP_IMAGE_HEIGHT }
   }
 }
 
@@ -321,10 +339,7 @@ export async function persistUpload(
 /**
  * Handle file upload
  */
-export async function handleFileUpload(
-  event: H3Event,
-  type: 'report' | 'publication' | 'image' | 'thumbnail'
-): Promise<UploadResult> {
+export async function handleFileUpload(event: H3Event, type: UploadType): Promise<UploadResult> {
   const config = uploadConfigs[type]
   if (!config) {
     throw createError({
@@ -337,6 +352,10 @@ export async function handleFileUpload(
   const received = await receiveMultipartFile(req, req.headers, config)
 
   try {
+    if (config.dimensions) {
+      await assertImageDimensions(received.tempPath, config.dimensions)
+    }
+
     const filename = generateFilename(received.originalName)
 
     // Persist to the configured backend (Blob for reports, disk otherwise)
@@ -367,12 +386,12 @@ export async function handleFileUpload(
  * Get allowed file types for a category
  */
 export function getAllowedTypes(type: string): string[] {
-  return uploadConfigs[type]?.allowedTypes || []
+  return uploadConfigs[type as UploadType]?.allowedTypes || []
 }
 
 /**
  * Get max file size for a category
  */
 export function getMaxFileSize(type: string): number {
-  return uploadConfigs[type]?.maxSize || 0
+  return uploadConfigs[type as UploadType]?.maxSize || 0
 }

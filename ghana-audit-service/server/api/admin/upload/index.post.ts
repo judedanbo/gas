@@ -1,5 +1,11 @@
 import { requirePermission } from '../../../utils/adminHelpers'
-import { handleFileUpload, getAllowedTypes, getMaxFileSize } from '../../../utils/fileUpload'
+import {
+  handleFileUpload,
+  getAllowedTypes,
+  getMaxFileSize,
+  uploadConfigs,
+  type UploadType
+} from '../../../utils/fileUpload'
 import { logAuditAction } from '../../../utils/auditLogger'
 import { internalError } from '../../../utils/errors'
 
@@ -10,7 +16,7 @@ export default defineEventHandler(async (event) => {
   const type = (query.type as string) || 'image'
 
   // Validate upload type
-  const validTypes = ['report', 'publication', 'image', 'thumbnail']
+  const validTypes = Object.keys(uploadConfigs)
   if (!validTypes.includes(type)) {
     throw createError({
       statusCode: 400,
@@ -20,10 +26,7 @@ export default defineEventHandler(async (event) => {
   }
 
   try {
-    const result = await handleFileUpload(
-      event,
-      type as 'report' | 'publication' | 'image' | 'thumbnail'
-    )
+    const result = await handleFileUpload(event, type as UploadType)
 
     // Log upload action
     await logAuditAction(event, 'create', 'file_upload', null, {
@@ -78,6 +81,12 @@ export const get = defineEventHandler(async (event) => {
         allowedTypes: getAllowedTypes('thumbnail'),
         maxSize: getMaxFileSize('thumbnail'),
         maxSizeMB: getMaxFileSize('thumbnail') / (1024 * 1024)
+      },
+      popup: {
+        allowedTypes: getAllowedTypes('popup'),
+        maxSize: getMaxFileSize('popup'),
+        maxSizeMB: getMaxFileSize('popup') / (1024 * 1024),
+        dimensions: uploadConfigs.popup.dimensions
       }
     }
   }

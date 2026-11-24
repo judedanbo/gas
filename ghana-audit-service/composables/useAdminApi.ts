@@ -191,10 +191,10 @@ export function useAdminApi() {
   }
 
   // File upload (synchronous server-side persistence; images, thumbnails,
-  // publications).
+  // pop-up images, publications).
   async function upload(
     file: File,
-    type: 'report' | 'publication' | 'image' | 'thumbnail',
+    type: 'report' | 'publication' | 'image' | 'thumbnail' | 'popup',
     opts: UploadOptions = {}
   ): Promise<UploadResponse> {
     const formData = new FormData()

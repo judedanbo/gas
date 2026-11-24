@@ -23,10 +23,10 @@
             />
             <AdminFormAdminFileUpload
               v-model="form.imageUrl"
-              type="image"
+              type="popup"
               label="Image"
               required
-              help-text="JPEG, PNG, WebP or GIF, up to 5MB. Shown at up to 768px wide."
+              :help-text="`Must be exactly ${POPUP_IMAGE_SIZE_LABEL} pixels. JPEG, PNG, WebP or GIF, up to 5MB.`"
               :error="errors.imageUrl"
             />
             <AdminFormAdminTextarea
@@ -129,6 +129,7 @@
 
 <script setup lang="ts">
   import type { AdminPopup, PopupInput } from '~/types/admin'
+  import { POPUP_IMAGE_SIZE_LABEL } from '~/utils/popupImage'
 
   // Keep in step with popupSchema in server/utils/validation.ts
   const DEFAULT_DISPLAY_SECONDS = 30

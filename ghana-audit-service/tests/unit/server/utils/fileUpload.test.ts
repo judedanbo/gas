@@ -1,15 +1,18 @@
-import { describe, it, expect, afterEach } from 'vitest'
+import { describe, it, expect, afterEach, beforeEach } from 'vitest'
 import { mkdtempSync, existsSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { Readable } from 'node:stream'
+import type { H3Event } from 'h3'
 import {
+  handleFileUpload,
   persistUpload,
   receiveMultipartFile,
   uploadConfigs,
   type UploadConfig
 } from '~/server/utils/fileUpload'
 import { __resetBlobForTests, __setContainerClientForTests } from '~/server/utils/blobStorage'
+import { pngHeader } from '../../../helpers/images'
 
 const reportBlobConfig: UploadConfig = {
   allowedTypes: ['application/pdf'],
@@ -149,39 +152,39 @@ describe('persistUpload', () => {
   })
 })
 
+const BOUNDARY = '----gasTestBoundary'
+
+interface Part {
+  name: string
+  data: Buffer | string
+  filename?: string
+  contentType?: string
+}
+
+/** Build a multipart/form-data body the way a browser would. */
+function multipart(parts: Part[]): { body: Readable; headers: Record<string, string> } {
+  const chunks: Buffer[] = []
+  for (const part of parts) {
+    let head = `--${BOUNDARY}\r\nContent-Disposition: form-data; name="${part.name}"`
+    if (part.filename !== undefined) head += `; filename="${part.filename}"`
+    head += '\r\n'
+    if (part.contentType) head += `Content-Type: ${part.contentType}\r\n`
+    head += '\r\n'
+    chunks.push(Buffer.from(head, 'utf8'), Buffer.from(part.data), Buffer.from('\r\n'))
+  }
+  chunks.push(Buffer.from(`--${BOUNDARY}--\r\n`))
+  const full = Buffer.concat(chunks)
+  // Feed the body in small chunks so boundary detection across chunk edges
+  // is exercised, as it would be over a real socket.
+  const pieces: Buffer[] = []
+  for (let i = 0; i < full.length; i += 7) pieces.push(full.subarray(i, i + 7))
+  return {
+    body: Readable.from(pieces),
+    headers: { 'content-type': `multipart/form-data; boundary=${BOUNDARY}` }
+  }
+}
+
 describe('receiveMultipartFile', () => {
-  const BOUNDARY = '----gasTestBoundary'
-
-  interface Part {
-    name: string
-    data: Buffer | string
-    filename?: string
-    contentType?: string
-  }
-
-  /** Build a multipart/form-data body the way a browser would. */
-  function multipart(parts: Part[]): { body: Readable; headers: Record<string, string> } {
-    const chunks: Buffer[] = []
-    for (const part of parts) {
-      let head = `--${BOUNDARY}\r\nContent-Disposition: form-data; name="${part.name}"`
-      if (part.filename !== undefined) head += `; filename="${part.filename}"`
-      head += '\r\n'
-      if (part.contentType) head += `Content-Type: ${part.contentType}\r\n`
-      head += '\r\n'
-      chunks.push(Buffer.from(head, 'utf8'), Buffer.from(part.data), Buffer.from('\r\n'))
-    }
-    chunks.push(Buffer.from(`--${BOUNDARY}--\r\n`))
-    const full = Buffer.concat(chunks)
-    // Feed the body in small chunks so boundary detection across chunk edges
-    // is exercised, as it would be over a real socket.
-    const pieces: Buffer[] = []
-    for (let i = 0; i < full.length; i += 7) pieces.push(full.subarray(i, i + 7))
-    return {
-      body: Readable.from(pieces),
-      headers: { 'content-type': `multipart/form-data; boundary=${BOUNDARY}` }
-    }
-  }
-
   const pdfConfig: UploadConfig = {
     allowedTypes: ['application/pdf'],
     maxSize: 1024,
@@ -305,5 +308,72 @@ describe('receiveMultipartFile', () => {
       )
     ).rejects.toMatchObject({ statusCode: 400, statusMessage: 'Malformed upload' })
     expect(readdirSync(tmp)).toEqual([])
+  })
+})
+
+describe('handleFileUpload: pop-up images', () => {
+  /** An H3 event whose request is a browser-style multipart upload. */
+  function uploadEvent(data: Buffer, filename = 'banner.png'): H3Event {
+    const { body, headers } = multipart([
+      { name: 'file', data, filename, contentType: 'image/png' }
+    ])
+    return { node: { req: Object.assign(body, { headers }) } } as unknown as H3Event
+  }
+
+  let uploadDir: string
+  let spoolDir: string
+
+  beforeEach(() => {
+    __setContainerClientForTests(null)
+    uploadDir = makeTmpDir()
+    spoolDir = makeTmpDir()
+    process.env.UPLOAD_DIRECTORY = uploadDir
+    process.env.UPLOAD_TMP_DIR = spoolDir
+  })
+
+  afterEach(() => {
+    delete process.env.UPLOAD_DIRECTORY
+  })
+
+  it('requires exactly 1600 × 800, disk-backed under /uploads/popups/', () => {
+    expect(uploadConfigs.popup).toMatchObject({
+      directory: 'popups',
+      dimensions: { width: 1600, height: 800 }
+    })
+    expect(uploadConfigs.popup.backend).toBeUndefined()
+  })
+
+  it('stores a 1600 × 800 image', async () => {
+    const data = pngHeader(1600, 800)
+
+    const result = await handleFileUpload(uploadEvent(data), 'popup')
+
+    expect(result.url).toMatch(/^\/uploads\/popups\/\d{8}-[0-9a-f-]+\.png$/)
+    expect(readFileSync(join(uploadDir, 'popups', result.filename))).toEqual(data)
+    expect(readdirSync(spoolDir)).toEqual([])
+  })
+
+  it('rejects any other size with a 400, stores nothing and removes the spool file', async () => {
+    await expect(
+      handleFileUpload(uploadEvent(pngHeader(1200, 600)), 'popup')
+    ).rejects.toMatchObject({
+      statusCode: 400,
+      message: 'The image must be exactly 1600 × 800 pixels. This one is 1200 × 600.'
+    })
+
+    expect(existsSync(join(uploadDir, 'popups'))).toBe(false)
+    expect(readdirSync(spoolDir)).toEqual([])
+  })
+
+  it('rejects a file that only claims to be an image', async () => {
+    await expect(
+      handleFileUpload(uploadEvent(Buffer.from('not really a png')), 'popup')
+    ).rejects.toMatchObject({ statusCode: 400 })
+    expect(existsSync(join(uploadDir, 'popups'))).toBe(false)
+  })
+
+  it('leaves other image uploads at any size', async () => {
+    const result = await handleFileUpload(uploadEvent(pngHeader(1200, 600)), 'image')
+    expect(result.url).toMatch(/^\/uploads\/images\//)
   })
 })
