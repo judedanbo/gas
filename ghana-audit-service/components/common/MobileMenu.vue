@@ -139,14 +139,9 @@
             >
           </a>
         </div>
-        <a
-          href="https://www.appsheet.com/start/5b1b9364-12e7-4613-a082-26cebb71f29f"
-          target="_blank"
-          rel="noopener noreferrer"
-          class="btn-accent w-full"
-        >
-          {{ $t('common.launchCitizensEye') }}
-        </a>
+        <NuxtLink :to="localePath('/apps')" class="btn-accent w-full" @click="$emit('close')">
+          {{ $t('apps.explore') }}
+        </NuxtLink>
       </div>
     </nav>
   </div>
@@ -170,6 +165,7 @@
     close: []
   }>()
 
+  const localePath = useLocalePath()
   const { t } = useI18n()
 
   // Dialog behaviour: trap focus while open, restore it to the toggle on close,

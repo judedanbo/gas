@@ -3,6 +3,10 @@ import { getDatabase, schema } from '../database'
 import type { PaginatedResponse, SearchResult } from '~/types'
 import type { SupportedLocale } from './locale'
 import { STATIC_SEARCHABLE_PAGES } from './staticSearchablePages'
+import { getPublishedServiceApps } from './serviceAppStore'
+import { resolveAppTranslation } from './transformServiceApp'
+import { appPath } from '../../utils/serviceApps'
+import { logError } from './logger'
 
 export const MIN_QUERY_LENGTH = 2
 export const MAX_PER_PAGE = 50
@@ -689,6 +693,41 @@ function searchStaticPages(opts: SearchOptions): RawHit[] {
   return hits
 }
 
+/**
+ * Published apps (CitizensEye, the Tracker, …) as pages. Read from the app
+ * store's cache, not the database; search still works if it can't be read.
+ */
+async function searchServiceApps(opts: SearchOptions): Promise<RawHit[]> {
+  let apps
+  try {
+    apps = await getPublishedServiceApps()
+  } catch (error) {
+    logError('search:apps', error)
+    return []
+  }
+  const termLower = opts.query.toLowerCase()
+  const hits: RawHit[] = []
+  for (const app of apps) {
+    const local = resolveAppTranslation(app, opts.locale === 'ak' ? 'ak' : 'en')
+    const english = resolveAppTranslation(app, 'en')
+    const includes = (...values: string[]) =>
+      values.some((value) => value.toLowerCase().includes(termLower))
+    // As for static pages, an English term still finds the app in Akan.
+    const titleHit = includes(local.name, english.name, app.slug)
+    const bodyHit = includes(local.tagline, local.summary, english.tagline, english.summary)
+    if (!titleHit && !bodyHit) continue
+    hits.push({
+      id: `page-app-${app.slug}`,
+      type: 'page',
+      title: local.name,
+      body: [local.tagline, local.summary].filter(Boolean).join(' — '),
+      url: appPath(app.slug),
+      score: (titleHit ? 3 : 0) + (bodyHit ? 1 : 0)
+    })
+  }
+  return hits
+}
+
 function sortHits(hits: RawHit[]): RawHit[] {
   return hits.sort((a, b) => {
     if (b.score !== a.score) return b.score - a.score
@@ -747,6 +786,7 @@ export async function runGlobalSearch(
   if (activeTypes.includes('gallery')) tasks.push(searchGallery(db, sharedOpts, pattern))
   if (activeTypes.includes('team')) tasks.push(searchTeam(db, sharedOpts, pattern))
   if (activeTypes.includes('office')) tasks.push(searchOffices(db, sharedOpts, pattern))
+  if (activeTypes.includes('page')) tasks.push(searchServiceApps(sharedOpts))
 
   const domainHits = await Promise.all(tasks)
   const staticHits = activeTypes.includes('page') ? searchStaticPages(sharedOpts) : []

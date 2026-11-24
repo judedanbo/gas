@@ -49,7 +49,13 @@ export function hashIp(ip: string): string {
  * scoring, dedup, and unique-visitor counts keep working (a salted hash is a
  * pseudonymous identifier, consistent with the "anonymized" promise).
  */
-export const ANONYMIZED_IP_ROUTE_PREFIXES = ['/citizenseye']
+export const ANONYMIZED_IP_ROUTE_PREFIXES = [
+  '/citizenseye',
+  // The CitizensEye page loads its content from here on in-app navigation
+  // (pages/[slug].vue → /api/apps/[slug]). The app's address is set at
+  // /admin/apps; if it ever moves, move both entries with it.
+  '/api/apps/citizenseye'
+]
 
 /**
  * True when a normalised route pattern is IP-anonymised. Handles the locale

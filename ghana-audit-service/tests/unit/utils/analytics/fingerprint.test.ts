@@ -202,6 +202,16 @@ describe('analytics/fingerprint', () => {
       expect(isIpAnonymizedRoute('/[locale]/citizenseye/privacy')).toBe(true)
     })
 
+    it('matches the API the CitizensEye page loads its content from', () => {
+      expect(isIpAnonymizedRoute(normaliseRoutePattern('/api/apps/citizenseye?locale=ak'))).toBe(
+        true
+      )
+      // Other apps and the app list keep the raw IP like the rest of the site.
+      expect(isIpAnonymizedRoute(normaliseRoutePattern('/api/apps/tracker'))).toBe(false)
+      expect(isIpAnonymizedRoute(normaliseRoutePattern('/api/apps'))).toBe(false)
+      expect(isIpAnonymizedRoute(normaliseRoutePattern('/tracker'))).toBe(false)
+    })
+
     it('does not match unrelated routes (raw IP must be stored)', () => {
       expect(isIpAnonymizedRoute('/')).toBe(false)
       expect(isIpAnonymizedRoute('/contact')).toBe(false)

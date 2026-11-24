@@ -1,14 +1,15 @@
 <template>
   <!--
-    Only root-relative paths go through NuxtImg. IPX cannot handle anything else:
-    remote hosts are rejected unless listed in `image.domains` (nuxt.config.ts
-    sets none), which would break the i.ytimg.com covers synthesised for live
-    broadcasts in utils/liveVideos.ts, and blob:/data: URLs are not fetchable
-    server-side at all.
+    Each source is tried through NuxtImg (IPX) first when it is root-relative,
+    then as a plain <img>. IPX cannot handle anything else: remote hosts are
+    rejected unless listed in `image.domains` (nuxt.config.ts sets none), which
+    would break the i.ytimg.com covers synthesised for live broadcasts in
+    utils/liveVideos.ts, and blob:/data: URLs are not fetchable server-side.
   -->
   <img
-    v-if="displaySrc && isRaw"
-    :src="displaySrc"
+    v-if="attempt && !attempt.optimise"
+    ref="plainEl"
+    :src="attempt.src"
     :alt="alt"
     :width="width"
     :height="height"
@@ -16,8 +17,9 @@
     @error="onError"
   />
   <NuxtImg
-    v-else-if="displaySrc"
-    :src="displaySrc"
+    v-else-if="attempt"
+    ref="optimisedImg"
+    :src="attempt.src"
     :alt="alt"
     :width="width"
     :height="height"
@@ -41,9 +43,24 @@
    * Image with a real failure path.
    *
    * Every other image site in this app guards only on the URL being non-empty,
-   * so a truthy-but-404 src renders the browser's broken-image box. This
-   * listens for the load error and swaps in `fallbackSrc` (once) and then a
-   * placeholder icon, so a missing file degrades instead of breaking.
+   * so a truthy-but-404 src renders the browser's broken-image box. This works
+   * through a list of attempts instead and ends on a placeholder icon, so a
+   * missing file degrades instead of breaking:
+   *
+   *   1. `src` through IPX (root-relative only), for resizing and caching;
+   *   2. `src` as a plain <img>. IPX only reads files present in the build's
+   *      public dir, so it 404s on runtime uploads it can't see — thumbnails
+   *      kept in Azure Blob, and any `/uploads/**` file when the uploads
+   *      folder isn't mounted into `.output/public` (Docker Compose, a plain
+   *      `node .output/server/index.mjs`). The direct URL is served by
+   *      server/routes/uploads/** from disk or Blob, so it still loads;
+   *   3. and 4. the same for `fallbackSrc`;
+   *   5. the placeholder.
+   *
+   * An image can also fail before the page hydrates, when no Vue listener is
+   * attached yet. NuxtImg's server-rendered `onerror` attribute would flag
+   * that, but the CSP (no inline handlers) blocks it — so on mount the
+   * rendered element is checked and a broken one moves on to the next attempt.
    *
    * Layout classes land on whichever element renders — img, NuxtImg or the
    * placeholder — via attribute fallthrough, so callers style it exactly as
@@ -56,7 +73,7 @@
     height?: number | string
     sizes?: string
     loading?: 'lazy' | 'eager'
-    /** Tried once when `src` fails. Must be a build-time asset, or it can fail too. */
+    /** Tried when `src` fails. Must be a build-time asset, or it can fail too. */
     fallbackSrc?: string
     fallbackIcon?: string
   }
@@ -72,34 +89,58 @@
     fallbackIcon: 'heroicons:photo'
   })
 
-  const failed = ref(false)
-  const usingFallback = ref(false)
+  interface Attempt {
+    src: string
+    /** Through NuxtImg/IPX rather than a plain <img>. */
+    optimise: boolean
+  }
 
-  const displaySrc = computed(() => {
-    if (failed.value) return undefined
-    if (usingFallback.value) return props.fallbackSrc
-    return props.src || props.fallbackSrc || undefined
+  /** IPX only takes paths on this site; `//host/x` is another host. */
+  function isOptimisable(src: string): boolean {
+    return src.startsWith('/') && !src.startsWith('//')
+  }
+
+  const attempts = computed<Attempt[]>(() => {
+    const list: Attempt[] = []
+    const sources = [props.src, props.fallbackSrc].filter(
+      (source, index, all): source is string => !!source && all.indexOf(source) === index
+    )
+    for (const src of sources) {
+      if (isOptimisable(src)) list.push({ src, optimise: true })
+      list.push({ src, optimise: false })
+    }
+    return list
   })
 
-  /** Anything not root-relative (https:, blob:, data:) must skip IPX. */
-  const isRaw = computed(() => !displaySrc.value?.startsWith('/'))
+  const attemptIndex = ref(0)
+  const attempt = computed<Attempt | undefined>(() => attempts.value[attemptIndex.value])
 
   function onError() {
-    // Only worth retrying if there is a distinct fallback we have not shown yet.
-    if (!usingFallback.value && props.fallbackSrc && props.src && props.src !== props.fallbackSrc) {
-      usingFallback.value = true
-      return
-    }
-    failed.value = true
+    if (attemptIndex.value < attempts.value.length) attemptIndex.value++
   }
+
+  const plainEl = ref<HTMLImageElement | null>(null)
+  const optimisedImg = ref<{ imgEl?: HTMLImageElement | null } | null>(null)
+
+  /** Finished loading with nothing to show: the request failed. */
+  function isBroken(el: HTMLImageElement): boolean {
+    const src = el.getAttribute('src') || ''
+    // An SVG without intrinsic dimensions also reports naturalWidth 0.
+    return !!src && el.complete && el.naturalWidth === 0 && !/\.svg(?:$|[?#])/i.test(src)
+  }
+
+  // Catch a failure that happened before hydration attached @error.
+  onMounted(() => {
+    const el = plainEl.value ?? optimisedImg.value?.imgEl ?? null
+    if (el && isBroken(el)) onError()
+  })
 
   // Lists reuse component instances across items; without this a card that
   // failed once would keep showing the placeholder for the next article.
   watch(
-    () => props.src,
+    () => [props.src, props.fallbackSrc],
     () => {
-      failed.value = false
-      usingFallback.value = false
+      attemptIndex.value = 0
     }
   )
 </script>

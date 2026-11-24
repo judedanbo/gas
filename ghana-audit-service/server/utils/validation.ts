@@ -1,4 +1,12 @@
 import { z } from 'zod'
+import {
+  APP_AUDIENCE_MAX_POINTS,
+  APP_SECTION_LIMITS,
+  APP_TEXT_LIMITS,
+  appSlugProblem,
+  isAppIcon,
+  isEmptyAppTranslation
+} from '../../utils/serviceApps'
 import { POPUP_IMAGE_SIZE_LABEL } from '~/utils/popupImage'
 
 /**
@@ -477,6 +485,151 @@ export const popupSchema = z
     { path: ['endsAt'], message: 'End must be after the start' }
   )
 
+// Audit Service apps and websites (/admin/apps). Shape and limits live in
+// utils/serviceApps.ts, shared with the admin form.
+
+/** Optional text: null/undefined become '' so stored rows are uniform. */
+const appText = (max: number) =>
+  z.preprocess((val) => (val == null ? '' : val), z.string().trim().max(max))
+
+const appRequiredText = (max: number, message: string) =>
+  z.preprocess((val) => (val == null ? '' : val), z.string().trim().min(1, message).max(max))
+
+const appIconSchema = z.string().refine(isAppIcon, 'Pick an icon from the list')
+
+const appOptionalIconSchema = z.preprocess(
+  (val) => (val == null ? '' : val),
+  z.string().refine((val) => val === '' || isAppIcon(val), 'Pick an icon from the list')
+)
+
+function appSectionSchema<T extends z.ZodTypeAny>(item: T, max: number) {
+  return z.preprocess(
+    (val) => (val == null ? {} : val),
+    z.object({
+      title: appText(APP_TEXT_LIMITS.sectionTitle),
+      intro: appText(APP_TEXT_LIMITS.sectionIntro),
+      items: z.preprocess(
+        (val) => (val == null ? [] : val),
+        z.array(item).max(max, `Add at most ${max} items`)
+      )
+    })
+  )
+}
+
+const appItemTitle = appRequiredText(APP_TEXT_LIMITS.itemTitle, 'Enter a title')
+
+const appContentSchema = z.preprocess(
+  (val) => (val == null ? {} : val),
+  z.object({
+    features: appSectionSchema(
+      z.object({
+        icon: appIconSchema,
+        title: appItemTitle,
+        description: appText(APP_TEXT_LIMITS.itemText)
+      }),
+      APP_SECTION_LIMITS.features
+    ),
+    steps: appSectionSchema(
+      z.object({
+        icon: appOptionalIconSchema,
+        title: appItemTitle,
+        description: appText(APP_TEXT_LIMITS.itemText)
+      }),
+      APP_SECTION_LIMITS.steps
+    ),
+    audiences: appSectionSchema(
+      z.object({
+        icon: appIconSchema,
+        title: appItemTitle,
+        points: z
+          .array(z.string().trim().min(1, 'Remove empty points').max(APP_TEXT_LIMITS.point))
+          .max(APP_AUDIENCE_MAX_POINTS, `Add at most ${APP_AUDIENCE_MAX_POINTS} points`)
+      }),
+      APP_SECTION_LIMITS.audiences
+    ),
+    highlights: appSectionSchema(
+      z.object({ icon: appIconSchema, title: appItemTitle }),
+      APP_SECTION_LIMITS.highlights
+    ),
+    faqs: appSectionSchema(
+      z.object({
+        question: appRequiredText(APP_TEXT_LIMITS.question, 'Enter the question'),
+        answer: appRequiredText(APP_TEXT_LIMITS.answer, 'Enter the answer')
+      }),
+      APP_SECTION_LIMITS.faqs
+    )
+  })
+)
+
+function appTranslationSchema(isDefaultLanguage: boolean) {
+  return z.object({
+    name: isDefaultLanguage
+      ? appRequiredText(APP_TEXT_LIMITS.name, 'Enter the name of the app')
+      : appText(APP_TEXT_LIMITS.name),
+    tagline: appText(APP_TEXT_LIMITS.tagline),
+    summary: isDefaultLanguage
+      ? appRequiredText(APP_TEXT_LIMITS.summary, 'Enter a short summary')
+      : appText(APP_TEXT_LIMITS.summary),
+    headline: appText(APP_TEXT_LIMITS.headline),
+    body: appText(APP_TEXT_LIMITS.body),
+    launchLabel: appText(APP_TEXT_LIMITS.launchLabel),
+    imageAlt: appText(APP_TEXT_LIMITS.imageAlt),
+    ctaTitle: appText(APP_TEXT_LIMITS.ctaTitle),
+    ctaText: appText(APP_TEXT_LIMITS.ctaText),
+    content: appContentSchema
+  })
+}
+
+/** An absolute http(s) URL — where an app lives. */
+function isWebAddress(value: string): boolean {
+  return !value.startsWith('/') && isSafeUrl(value, { allowHttp: true })
+}
+
+const optionalUrl = (refine: (val: string) => boolean, message: string) =>
+  z.preprocess(
+    (val) => (typeof val === 'string' && val.trim() === '' ? null : val),
+    z.string().trim().max(500).refine(refine, message).optional().nullable()
+  )
+
+export const serviceAppSchema = z.object({
+  slug: z.preprocess(
+    (val) => (typeof val === 'string' ? val.trim().toLowerCase() : val),
+    z.string().superRefine((val, ctx) => {
+      const problem = appSlugProblem(val)
+      if (problem) ctx.addIssue({ code: 'custom', message: problem })
+    })
+  ),
+  url: z
+    .string()
+    .trim()
+    .min(1, "Enter the app's web address")
+    .max(500)
+    .refine(isWebAddress, 'Enter a full web address, e.g. https://tracker.audit.gov.gh'),
+  // Uploaded images are root-relative (/uploads/images/…); the CSP only
+  // allows https for remote ones. No logo shows the GAS logo.
+  logoUrl: optionalUrl(
+    (val) => isSafeUrl(val, { allowHttp: false }),
+    'Must be an uploaded image or an https URL'
+  ),
+  imageUrl: optionalUrl(
+    (val) => isSafeUrl(val, { allowHttp: false }),
+    'Must be an uploaded image or an https URL'
+  ),
+  privacyUrl: optionalUrl(
+    (val) => isSafeUrl(val, { allowHttp: true }),
+    'Must be a path on this site (e.g. /citizenseye/privacy) or a full http(s) URL'
+  ),
+  sortOrder: z.coerce.number().int('Enter a whole number').min(0).max(9999).default(0),
+  isActive: z.boolean().default(true),
+  translations: z.object({
+    en: appTranslationSchema(true),
+    ak: appTranslationSchema(false)
+      .optional()
+      .nullable()
+      .transform((ak) => (ak && !isEmptyAppTranslation(ak) ? ak : undefined))
+  })
+})
+
 /**
  * Where `popup` uploads land: /uploads/popups/<generated name> (see
  * uploadConfigs.popup and serveUpload's name pattern).
@@ -723,6 +876,7 @@ export type ManagementTeamInput = z.infer<typeof managementTeamSchema>
 export type BoardMemberInput = z.infer<typeof boardMemberSchema>
 export type SiteStatUpdateInput = z.infer<typeof siteStatUpdateSchema>
 export type PopupInput = z.infer<typeof popupSchema>
+export type ServiceAppInput = z.infer<typeof serviceAppSchema>
 export type AuditorGeneralMessageInput = z.infer<typeof auditorGeneralMessageSchema>
 export type OfficeInput = z.infer<typeof officeSchema>
 export type GalleryImageInput = z.infer<typeof galleryImageSchema>

@@ -9,7 +9,7 @@ Official website of the Ghana Audit Service - the constitutional body mandated t
 - **Media Centre**: News articles and photo gallery
 - **Careers**: Job vacancies and recruitment information
 - **Contact**: Regional office locations and contact details
-- **CitizensEye**: Citizen engagement platform integration
+- **Our Apps**: admin-managed pages for the Service's apps and websites (CitizensEye, the Audit Recommendations Tracker, …) at `/apps` and `/<app>`
 - **Multilingual**: English and Akan (Twi) language support
 - **Accessibility**: WCAG 2.1 AA compliant with skip links, ARIA labels, and keyboard navigation
 - **PWA**: Installable as a Progressive Web App with offline support

@@ -33,6 +33,7 @@ export const PATH_MODULE_MAP: Record<string, ModuleKey> = {
   'site-stats': 'content',
   carousel: 'content',
   languages: 'content',
+  apps: 'content',
   vacancies: 'careers',
   tenders: 'careers',
   'auditor-general': 'organization',

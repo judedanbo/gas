@@ -1,4 +1,5 @@
 import type { HeroSlide } from './index'
+import type { AppTranslation } from '../utils/serviceApps'
 
 // Admin Dashboard Types
 
@@ -842,6 +843,35 @@ export interface BoardMemberInput {
   phone?: string | null
   displayOrder: number
   isActive: boolean
+}
+
+/** An app as the admin panel edits it (/api/admin/apps). */
+export interface AdminServiceApp {
+  id: number
+  slug: string
+  url: string
+  /** Uploaded logo; null means the GAS logo is shown (DEFAULT_APP_LOGO). */
+  logoUrl: string | null
+  imageUrl: string | null
+  privacyUrl: string | null
+  sortOrder: number
+  isActive: boolean
+  createdBy: number | null
+  updatedBy: number | null
+  createdAt: string
+  updatedAt: string
+  translations: Translations<AppTranslation>
+}
+
+export interface ServiceAppInput {
+  slug: string
+  url: string
+  logoUrl: string | null
+  imageUrl: string | null
+  privacyUrl: string | null
+  sortOrder: number
+  isActive: boolean
+  translations: Translations<AppTranslation>
 }
 
 export interface AdminPopup {

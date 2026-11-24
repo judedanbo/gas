@@ -21,7 +21,6 @@
     "success": "Success",
     "menu": "Menu",
     "closeMenu": "Close menu",
-    "launchCitizensEye": "Launch CitizensEye",
     "previous": "Previous",
     "next": "Next",
     "clearAll": "Clear all",
@@ -36,7 +35,6 @@
     "openSearch": "Open search (Ctrl+K)",
     "openMenu": "Open menu",
     "mobileNavigation": "Mobile navigation",
-    "citizensEyeApp": "CitizensEye App",
     "toggleSubmenu": "Toggle {item} submenu"
   },
   "nav": {
@@ -565,5 +563,48 @@
     "closesIn": "Closes in {seconds}s",
     "autoCloseHint": "This notice closes automatically after {seconds} seconds.",
     "opensInNewTab": "(opens in a new tab)"
+  },
+  "apps": {
+    "navLabel": "Our Apps",
+    "title": "Our Apps",
+    "subtitle": "Apps and websites from the Ghana Audit Service",
+    "intro": "Report concerns, follow up on audit recommendations and more with the Ghana Audit Service's online services.",
+    "empty": "No apps are available right now. Please check back later.",
+    "loadError": "We couldn't load the apps. Please try again later.",
+    "learnMore": "Learn more",
+    "learnMoreAbout": "Learn more about {name}",
+    "open": "Open {name}",
+    "opensInNewTab": "(opens in a new tab)",
+    "seeAll": "See all our apps",
+    "homeTitle": "Our Apps",
+    "homeDescription": "Report concerns, follow up on audit recommendations and engage with the Ghana Audit Service online.",
+    "explore": "Explore our apps",
+    "privacyNotice": "Privacy Notice",
+    "ctaDefaultTitle": "Ready to get started?",
+    "quickLinks": "More links",
+    "allApps": "All our apps",
+    "aboutGas": "About GAS",
+    "sections": {
+      "features": {
+        "badge": "Features",
+        "title": "What You Can Do with {name}"
+      },
+      "steps": {
+        "badge": "How it works",
+        "title": "How {name} Works"
+      },
+      "audiences": {
+        "badge": "Benefits",
+        "title": "Why Use {name}?"
+      },
+      "highlights": {
+        "badge": "At a glance",
+        "title": "At a Glance"
+      },
+      "faqs": {
+        "badge": "FAQ",
+        "title": "Frequently Asked Questions"
+      }
+    }
   }
 }

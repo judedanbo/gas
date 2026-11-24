@@ -1,3 +1,5 @@
+import type { AppContent } from '../utils/serviceApps'
+
 /**
  * Ghana Audit Service - TypeScript Type Definitions
  */
@@ -202,6 +204,39 @@ export interface SitePopup {
 
 export interface SitePopupResponse {
   popup: SitePopup | null
+}
+
+// ============================================
+// Audit Service Apps (CitizensEye, Tracker, …)
+// ============================================
+
+/** An app as listed on the /apps hub and the home page (/api/apps). */
+export interface ServiceAppSummary {
+  slug: string
+  /** Landing page on this site, e.g. /citizenseye. */
+  path: string
+  /** Where the app itself lives (opened in a new tab). */
+  url: string
+  /** The app's logo, or the GAS logo when it has none. */
+  logoUrl: string
+  name: string
+  tagline: string | null
+  summary: string
+  /** Button text for opening the app; null means the default "Open {name}". */
+  launchLabel: string | null
+}
+
+/** Everything the landing page needs (/api/apps/[slug]). */
+export interface ServiceApp extends ServiceAppSummary {
+  headline: string | null
+  /** Rich text HTML — sanitize before rendering. */
+  body: string | null
+  imageUrl: string | null
+  imageAlt: string
+  privacyUrl: string | null
+  ctaTitle: string | null
+  ctaText: string | null
+  content: AppContent
 }
 
 // ============================================
