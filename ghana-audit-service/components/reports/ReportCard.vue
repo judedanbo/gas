@@ -1,6 +1,11 @@
 <template>
   <article
-    class="group relative bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden flex flex-col transition-all duration-200 hover:border-primary/40 hover:shadow-[0_1px_1px_rgba(0,107,63,0.06),0_2px_2px_rgba(0,107,63,0.06),0_4px_4px_rgba(0,107,63,0.06),0_8px_8px_rgba(0,107,63,0.06)]"
+    class="group relative bg-white dark:bg-gray-800 border rounded-xl overflow-hidden flex flex-col transition-all duration-200 hover:shadow-[0_1px_1px_rgba(0,107,63,0.06),0_2px_2px_rgba(0,107,63,0.06),0_4px_4px_rgba(0,107,63,0.06),0_8px_8px_rgba(0,107,63,0.06)]"
+    :class="
+      selected
+        ? 'border-primary ring-2 ring-primary dark:border-primary-200 dark:ring-primary-200'
+        : 'border-gray-200 dark:border-gray-700 hover:border-primary/40'
+    "
     :aria-labelledby="`report-title-${report.id}`"
   >
     <!-- Thumbnail -->
@@ -21,6 +26,17 @@
           {{ getAuditCategoryLabel(report.category) }}
         </UiBadge>
       </div>
+
+      <!-- Bulk-download selection (above the pseudo-element overlay) -->
+      <ReportsSelectToggle
+        v-if="selectable"
+        class="absolute bottom-2 right-2 z-10"
+        :title="report.title"
+        :selected="selected"
+        :disabled="selectionDisabled"
+        :disabled-reason="selectionDisabledReason"
+        @toggle="emit('toggle-select', report)"
+      />
     </div>
 
     <!-- Content -->
@@ -82,9 +98,22 @@
 
   interface Props {
     report: AuditReport
+    /** Show the checkbox that adds this report to a bulk (ZIP) download. */
+    selectable?: boolean
+    selected?: boolean
+    /** The selection is full and this report is not part of it. */
+    selectionDisabled?: boolean
+    selectionDisabledReason?: string
   }
 
-  defineProps<Props>()
+  withDefaults(defineProps<Props>(), {
+    selectable: false,
+    selected: false,
+    selectionDisabled: false,
+    selectionDisabledReason: undefined
+  })
+
+  const emit = defineEmits<{ 'toggle-select': [report: AuditReport] }>()
 
   const { getAuditCategoryVariant, getAuditCategoryLabel } = useCategoryBadge()
   const { formatDateShort } = useLocaleDate()

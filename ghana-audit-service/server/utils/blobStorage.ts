@@ -149,6 +149,24 @@ export async function tryBlobSource(
 }
 
 /**
+ * Size in bytes of the blob at `key`, or null when Blob storage is
+ * unconfigured or the blob does not exist. A metadata request only; no body is
+ * transferred. Other storage errors propagate, like downloadBlob().
+ */
+export async function getBlobSize(key: string): Promise<number | null> {
+  const client = getContainerClient()
+  if (!client) return null
+
+  try {
+    const properties = await client.getBlobClient(key).getProperties()
+    return typeof properties.contentLength === 'number' ? properties.contentLength : null
+  } catch (err) {
+    if ((err as { statusCode?: number }).statusCode === 404) return null
+    throw err
+  }
+}
+
+/**
  * Whether `key` exists in the container. False when unconfigured.
  */
 export async function blobExists(key: string): Promise<boolean> {
