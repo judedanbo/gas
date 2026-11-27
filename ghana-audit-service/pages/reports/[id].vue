@@ -94,8 +94,7 @@
               </dl>
 
               <div class="flex flex-wrap gap-3">
-                <!-- Inline reading needs a tablet-sized screen; phones get the download -->
-                <button type="button" class="btn-accent hidden sm:inline-flex" @click="readOnline">
+                <button type="button" class="btn-accent" @click="readOnline">
                   <Icon name="heroicons:book-open" class="w-5 h-5" aria-hidden="true" />
                   {{ $t('reports.reader.readOnline') }}
                 </button>

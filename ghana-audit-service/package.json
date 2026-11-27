@@ -81,6 +81,7 @@
     "nodemailer": "^9.0.3",
     "nuxt": "^3.20.2",
     "nuxt-security": "^2.5.1",
+    "pdfjs-dist": "^6.5.438",
     "puppeteer-core": "^25.0.4",
     "validator": "^13.15.23",
     "vue": "^3.5.40",

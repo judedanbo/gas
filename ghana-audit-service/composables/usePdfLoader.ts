@@ -1,8 +1,10 @@
 import {
+  computed,
   getCurrentScope,
   onScopeDispose,
   readonly,
   ref,
+  shallowRef,
   toValue,
   watch,
   type MaybeRefOrGetter
@@ -73,8 +75,8 @@ function retryAfter(headers: Headers): number | null {
  * Nothing is requested until `load()` is called, so opening a report page
  * costs readers no data for a file they may never read. The file is streamed
  * once with fetch() — giving byte-level progress, transfer rate and an ETA —
- * and handed to the viewer as a blob: URL, so the iframe doesn't download it
- * a second time.
+ * and handed to the viewer as a Blob (and a blob: URL), so nothing downloads
+ * it a second time.
  */
 export function usePdfLoader(url: MaybeRefOrGetter<string>, options: UsePdfLoaderOptions = {}) {
   const tickMs = options.tickMs ?? 250
@@ -83,6 +85,7 @@ export function usePdfLoader(url: MaybeRefOrGetter<string>, options: UsePdfLoade
   const status = ref<PdfLoadStatus>('idle')
   const errorKind = ref<PdfLoadErrorKind | null>(null)
   const retryAfterSeconds = ref<number | null>(null)
+  const blob = shallowRef<Blob | null>(null)
   const objectUrl = ref<string | null>(null)
   const progress = ref<PdfLoadProgress>(emptyProgress())
 
@@ -103,6 +106,7 @@ export function usePdfLoader(url: MaybeRefOrGetter<string>, options: UsePdfLoade
   function revokeObjectUrl() {
     if (objectUrl.value) URL.revokeObjectURL(objectUrl.value)
     objectUrl.value = null
+    blob.value = null
   }
 
   function fail(kind: PdfLoadErrorKind) {
@@ -203,7 +207,9 @@ export function usePdfLoader(url: MaybeRefOrGetter<string>, options: UsePdfLoade
         bytesPerSecond: meter.rate(),
         secondsRemaining: 0
       }
-      objectUrl.value = URL.createObjectURL(new Blob(chunks, { type: 'application/pdf' }))
+      const file = new Blob(chunks, { type: 'application/pdf' })
+      blob.value = file
+      objectUrl.value = URL.createObjectURL(file)
       status.value = 'ready'
     } catch {
       // Aborted by cancel()/reset()/unmount — state was already settled there.
@@ -250,6 +256,8 @@ export function usePdfLoader(url: MaybeRefOrGetter<string>, options: UsePdfLoade
     status: readonly(status),
     errorKind: readonly(errorKind),
     retryAfterSeconds: readonly(retryAfterSeconds),
+    /** The downloaded file, once `status` is 'ready'. */
+    blob: computed(() => blob.value),
     objectUrl: readonly(objectUrl),
     progress: readonly(progress),
     load,

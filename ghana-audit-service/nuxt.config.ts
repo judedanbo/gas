@@ -173,6 +173,10 @@ export default defineNuxtConfig({
       // go to the network on this site; only static assets are precached.
       navigateFallback: null,
       globPatterns: ['**/*.{js,css,html,png,svg,ico,woff,woff2}'],
+      // pdf.js (the report reader's engine, served by modules/pdfjs-assets.ts)
+      // is ~2 MB that only visitors who read a report online need; the browser
+      // caches it for a year. Keep it out of the precache every visitor pays for.
+      globIgnores: ['pdfjs/**'],
       // Some report cover images exceed workbox's 2 MiB default and would
       // abort the service-worker build; raise the precache size ceiling.
       maximumFileSizeToCacheInBytes: 6 * 1024 * 1024,
@@ -600,14 +604,19 @@ export default defineNuxtConfig({
         // tests/e2e/csp.spec.ts. Negligible XSS risk: data: in img-src is not a script vector;
         // script execution is constrained by the nonce-only script-src above.
         // blob: is for the admin upload fields (AdminFileUpload, AdminBulkFileUpload), which
-        // preview the picked image from an object URL. As with frame-src below, only
-        // same-origin script can mint blob: URLs, so this admits no outside content.
+        // preview the picked image from an object URL. Only same-origin script can mint
+        // blob: URLs, so this admits no outside content.
         'img-src': ["'self'", 'https:', 'data:', 'blob:'],
         'connect-src': ["'self'"],
-        // blob: lets the PDF reader (components/reports/PdfReader.vue) frame the file it
-        // has already downloaded with progress, instead of downloading it a second time.
-        // Only same-origin script can mint blob: URLs, so this admits no outside content.
-        'frame-src': ["'self'", 'blob:', 'https://www.youtube.com', 'https://audit.gov.gh'],
+        // The PDF reader (components/reports/PdfViewer.vue) parses files in a pdf.js
+        // Web Worker served from /pdfjs/<version>/ (modules/pdfjs-assets.ts). Spelled
+        // out rather than left to the script-src fallback, so a later script-src
+        // change can't silently break the reader.
+        'worker-src': ["'self'"],
+        // audit.gov.gh: publications whose file still lives on the previous site are
+        // framed by the reader (components/reports/PdfReader.vue) on browsers with a
+        // desktop PDF viewer.
+        'frame-src': ["'self'", 'https://www.youtube.com', 'https://audit.gov.gh'],
         'base-uri': ["'self'"],
         'object-src': ["'none'"]
       },
