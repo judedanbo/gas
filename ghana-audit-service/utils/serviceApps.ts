@@ -54,7 +54,9 @@ export const RESERVED_APP_SLUGS: readonly string[] = [
   'images',
   'img',
   'pwa-icons',
-  'pdf'
+  'pdf',
+  // /pdfjs/<version>/ — pdf.js, served from .nuxt by modules/pdfjs-assets.ts
+  'pdfjs'
 ]
 
 /** Why `slug` can't be used as an app address, or null when it can. */

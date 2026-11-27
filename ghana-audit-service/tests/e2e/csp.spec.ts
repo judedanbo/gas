@@ -59,9 +59,14 @@ test.describe('Content Security Policy', () => {
       expect(directives['script-src']).not.toContain("'unsafe-inline'")
       expect(directives['script-src']).not.toContain("'unsafe-eval'")
 
-      // The PDF reader frames the file it downloaded (with progress) via a blob: URL
+      // The PDF reader parses files in a pdf.js Web Worker served from /pdfjs/<version>/
+      expect(directives['worker-src'], 'worker-src directive should be present').toBeTruthy()
+      expect(directives['worker-src']).toContain("'self'")
+
+      // Publications still hosted on the previous site are framed by the reader
       expect(directives['frame-src'], 'frame-src directive should be present').toBeTruthy()
-      expect(directives['frame-src']).toContain('blob:')
+      expect(directives['frame-src']).toContain('https://audit.gov.gh')
+      expect(directives['frame-src']).not.toContain('blob:')
     })
 
     // Production serves these pages from the page cache (server/plugins/pageCache.ts):

@@ -7,7 +7,7 @@
   >
     <!-- Toolbar -->
     <div
-      class="flex items-center justify-between gap-3 px-4 py-2.5 bg-gray-50 dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700"
+      class="flex items-center justify-between gap-3 px-3 sm:px-4 py-2.5 bg-gray-50 dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700"
     >
       <h2
         :id="headingId"
@@ -31,8 +31,11 @@
         <button
           v-if="isViewing"
           type="button"
-          class="hidden sm:inline-flex"
+          class="inline-flex"
           :class="toolbarButtonClass"
+          :aria-label="
+            expanded ? $t('reports.reader.exitFullScreen') : $t('reports.reader.fullScreen')
+          "
           @click="toggleExpand"
         >
           <Icon
@@ -42,22 +45,25 @@
             aria-hidden="true"
           />
           <Icon v-else name="heroicons:arrows-pointing-out" class="w-4 h-4" aria-hidden="true" />
-          {{ expanded ? $t('reports.reader.exitFullScreen') : $t('reports.reader.fullScreen') }}
+          <span class="hidden sm:inline">
+            {{ expanded ? $t('reports.reader.exitFullScreen') : $t('reports.reader.fullScreen') }}
+          </span>
         </button>
       </div>
     </div>
 
+    <!-- min-height, not height: this is a flex item (it fills the screen in full-screen
+         mode), and a flex item's basis would override a height but not a min-height. -->
     <div
       class="relative flex-1 flex flex-col"
-      :class="expanded ? 'min-h-0' : isViewing ? 'sm:min-h-[80vh]' : 'min-h-[22rem]'"
+      :class="expanded ? 'min-h-0' : isViewing ? 'min-h-[80vh]' : 'min-h-[22rem]'"
     >
       <!-- Opt-in prompt: nothing is downloaded until the reader asks for it -->
       <div
         v-if="status === 'idle'"
         class="flex-1 flex items-center justify-center p-6 sm:p-10 bg-gradient-to-b from-primary/[0.04] to-transparent dark:from-primary/10"
       >
-        <!-- Tablet / desktop: read inline -->
-        <div class="hidden sm:block text-center max-w-lg">
+        <div class="text-center max-w-lg">
           <div class="relative mx-auto mb-6 w-20 h-20" aria-hidden="true">
             <div class="absolute inset-0 rounded-2xl bg-primary/10 dark:bg-primary/20 rotate-6" />
             <div
@@ -89,32 +95,13 @@
             </button>
             <a :href="fileUrl" download class="btn-outline">
               <Icon name="heroicons:arrow-down-tray" class="w-5 h-5" aria-hidden="true" />
-              {{ $t('common.downloadPdf') }}
+              {{
+                sizeLabel
+                  ? $t('reports.reader.downloadWithSize', { size: sizeLabel })
+                  : $t('common.downloadPdf')
+              }}
             </a>
           </div>
-        </div>
-
-        <!-- Phones can't show PDFs inline, so offer the download instead -->
-        <div class="sm:hidden text-center max-w-sm">
-          <Icon
-            name="heroicons:device-phone-mobile"
-            class="w-12 h-12 text-primary dark:text-primary-200 mx-auto mb-4"
-            aria-hidden="true"
-          />
-          <h3 class="text-lg font-heading font-semibold text-gray-900 dark:text-white mb-2">
-            {{ $t('reports.reader.mobileTitle') }}
-          </h3>
-          <p class="text-gray-600 dark:text-gray-300 mb-5 leading-relaxed">
-            {{ $t('reports.reader.mobileBody') }}
-          </p>
-          <a :href="fileUrl" download class="btn-primary btn-sm">
-            <Icon name="heroicons:arrow-down-tray" class="w-4 h-4" aria-hidden="true" />
-            {{
-              sizeLabel
-                ? $t('reports.reader.downloadWithSize', { size: sizeLabel })
-                : $t('common.downloadPdf')
-            }}
-          </a>
         </div>
       </div>
 
@@ -248,39 +235,103 @@
         </div>
       </div>
 
-      <!-- Viewer -->
-      <template v-else>
-        <iframe
-          ref="frameEl"
-          :src="frameSrc"
+      <!-- Viewer: the downloaded file, rendered by pdf.js on every kind of device -->
+      <template v-else-if="status === 'ready'">
+        <LazyReportsPdfViewer
+          v-if="!viewerFailed && blob"
+          ref="viewerRef"
+          :key="objectUrl ?? ''"
+          :source="blob"
           :title="title"
-          class="w-full flex-1 bg-gray-100 dark:bg-gray-700 hidden sm:block"
-          @load="frameLoaded = true"
+          @ready="onViewerReady"
+          @error="onViewerError"
         />
-        <!-- A cross-origin file is fetched by the iframe itself; cover it until it arrives -->
-        <div
-          v-if="status === 'external' && !frameLoaded"
-          class="absolute inset-0 hidden sm:flex items-center justify-center bg-gray-50 dark:bg-gray-900"
-        >
-          <UiLoadingSpinner />
-        </div>
-
-        <div
-          class="flex-1 flex sm:hidden items-center justify-center p-8 bg-gray-50 dark:bg-gray-900"
-        >
-          <div class="text-center max-w-sm">
+        <!-- pdf.js itself failed (very old browser, blocked script): the download still works -->
+        <div v-else class="flex-1 flex items-center justify-center p-8 bg-gray-50 dark:bg-gray-900">
+          <div class="text-center max-w-md">
             <Icon
               name="heroicons:document-arrow-down"
               class="w-12 h-12 text-gray-400 mx-auto mb-4"
               aria-hidden="true"
             />
-            <p class="text-gray-600 dark:text-gray-400 mb-4">
-              {{ $t('reports.reader.mobileBody') }}
+            <h3
+              ref="fallbackHeadingEl"
+              tabindex="-1"
+              class="text-lg font-heading font-semibold text-gray-900 dark:text-white mb-2 focus:outline-none"
+            >
+              {{ $t('reports.reader.viewerFailedTitle') }}
+            </h3>
+            <p class="text-gray-600 dark:text-gray-400 mb-6 leading-relaxed">
+              {{ $t('reports.reader.viewerFailedBody') }}
             </p>
-            <a :href="fileUrl" download class="btn-primary btn-sm">
-              <Icon name="heroicons:arrow-down-tray" class="w-4 h-4" aria-hidden="true" />
-              {{ $t('common.downloadPdf') }}
-            </a>
+            <div class="flex flex-wrap justify-center gap-3">
+              <a :href="fileUrl" download class="btn-primary btn-sm">
+                <Icon name="heroicons:arrow-down-tray" class="w-4 h-4" aria-hidden="true" />
+                {{ $t('common.downloadPdf') }}
+              </a>
+              <button type="button" class="btn-outline btn-sm" @click="retryViewer">
+                <Icon name="heroicons:arrow-path" class="w-4 h-4" aria-hidden="true" />
+                {{ $t('errors.tryAgain') }}
+              </button>
+            </div>
+          </div>
+        </div>
+      </template>
+
+      <!-- A file on another origin: pdf.js can't fetch it, so frame it where the
+           browser has a desktop PDF viewer and open it in a new tab elsewhere -->
+      <template v-else>
+        <template v-if="canFrameExternal">
+          <iframe
+            ref="frameEl"
+            :src="viewUrl"
+            :title="title"
+            class="w-full flex-1 bg-gray-100 dark:bg-gray-700"
+            @load="frameLoaded = true"
+          />
+          <div
+            v-if="!frameLoaded"
+            class="absolute inset-0 flex items-center justify-center bg-gray-50 dark:bg-gray-900"
+          >
+            <UiLoadingSpinner />
+          </div>
+        </template>
+        <div v-else class="flex-1 flex items-center justify-center p-8 bg-gray-50 dark:bg-gray-900">
+          <div class="text-center max-w-md">
+            <Icon
+              name="heroicons:arrow-top-right-on-square"
+              class="w-12 h-12 text-gray-400 mx-auto mb-4"
+              aria-hidden="true"
+            />
+            <h3
+              ref="externalHeadingEl"
+              tabindex="-1"
+              class="text-lg font-heading font-semibold text-gray-900 dark:text-white mb-2 focus:outline-none"
+            >
+              {{ $t('reports.reader.externalTitle') }}
+            </h3>
+            <p class="text-gray-600 dark:text-gray-400 mb-6 leading-relaxed">
+              {{ $t('reports.reader.externalBody') }}
+            </p>
+            <div class="flex flex-wrap justify-center gap-3">
+              <a
+                :href="viewUrl"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="btn-primary btn-sm"
+              >
+                <Icon
+                  name="heroicons:arrow-top-right-on-square"
+                  class="w-4 h-4"
+                  aria-hidden="true"
+                />
+                {{ $t('reports.reader.openPdf') }}
+              </a>
+              <a :href="fileUrl" download class="btn-outline btn-sm">
+                <Icon name="heroicons:arrow-down-tray" class="w-4 h-4" aria-hidden="true" />
+                {{ $t('common.downloadPdf') }}
+              </a>
+            </div>
           </div>
         </div>
       </template>
@@ -292,6 +343,7 @@
 
 <script setup lang="ts">
   import { formatBytes } from '~/utils/formatBytes'
+  import { detectPdfFramingSupport } from '~/utils/pdfViewer'
   import { splitDuration } from '~/utils/transferProgress'
 
   interface Props {
@@ -323,14 +375,10 @@
     return `${props.fileUrl}${separator}view=1`
   })
 
-  const { status, errorKind, retryAfterSeconds, objectUrl, progress, load, cancel } =
+  const { status, errorKind, retryAfterSeconds, blob, objectUrl, progress, load, cancel } =
     usePdfLoader(viewUrl)
 
   const isViewing = computed(() => status.value === 'ready' || status.value === 'external')
-  const frameSrc = computed(() =>
-    status.value === 'ready' && objectUrl.value ? objectUrl.value : viewUrl.value
-  )
-  const frameLoaded = ref(false)
 
   const sizeLabel = computed(() =>
     props.fileSize && props.fileSize !== 'N/A' ? props.fileSize : null
@@ -403,6 +451,44 @@
     return { title: t('reports.reader.errorTitle'), body: t('reports.reader.errorBody') }
   })
 
+  // ── Viewer ────────────────────────────────────────────────────
+
+  const viewerRef = ref<{ focus: () => void } | null>(null)
+  const viewerFailed = ref(false)
+  const fallbackHeadingEl = ref<HTMLElement | null>(null)
+
+  // Whether a cross-origin file can be framed; decided in the browser, since it
+  // depends on the visitor's browser and pointer (see detectPdfFramingSupport).
+  const canFrameExternal = ref(false)
+  const frameEl = ref<HTMLIFrameElement | null>(null)
+  const frameLoaded = ref(false)
+  const externalHeadingEl = ref<HTMLElement | null>(null)
+
+  onMounted(() => {
+    canFrameExternal.value = detectPdfFramingSupport()
+  })
+
+  let focusViewerWhenReady = false
+
+  function onViewerReady() {
+    if (!focusViewerWhenReady) return
+    focusViewerWhenReady = false
+    viewerRef.value?.focus()
+  }
+
+  async function onViewerError(error: unknown) {
+    console.warn('[PdfReader] the inline viewer could not display the file', error)
+    viewerFailed.value = true
+    announcement.value = t('reports.reader.viewerFailedTitle')
+    await nextTick()
+    focusIfVisible(fallbackHeadingEl.value)
+  }
+
+  function retryViewer() {
+    focusViewerWhenReady = true
+    viewerFailed.value = false
+  }
+
   // ── Full screen ───────────────────────────────────────────────
 
   const expanded = ref(false)
@@ -418,7 +504,6 @@
   const readButtonEl = ref<HTMLButtonElement | null>(null)
   const loadingHeadingEl = ref<HTMLElement | null>(null)
   const errorHeadingEl = ref<HTMLElement | null>(null)
-  const frameEl = ref<HTMLIFrameElement | null>(null)
 
   const announcement = ref('')
   let lastMilestone = 0
@@ -448,9 +533,9 @@
   defineExpose({ read, status })
 
   /**
-   * Focus `el` only if it's actually displayed (phone layouts hide some states).
-   * Without scrolling: the new state replaces the one the reader was looking at,
-   * and a tall viewer would otherwise yank the page down to fit it.
+   * Focus `el` only if it's actually displayed. Without scrolling: the new
+   * state replaces the one the reader was looking at, and a tall viewer would
+   * otherwise yank the page down to fit it.
    */
   function focusIfVisible(el: HTMLElement | null) {
     if (el && el.getClientRects().length > 0) el.focus({ preventScroll: true })
@@ -460,6 +545,7 @@
   // the reader — the element holding it (e.g. "Read online") is about to go.
   watch(status, async (next, prev) => {
     frameLoaded.value = false
+    viewerFailed.value = false
 
     if (next === 'loading') {
       lastMilestone = 0
@@ -479,11 +565,17 @@
     focusOnNextState = false
     if (!shouldFocus) return
 
+    if (next === 'ready') {
+      // The viewer loads pdf.js first; it reports back when the pages exist.
+      focusViewerWhenReady = true
+      return
+    }
+
     await nextTick()
     if (next === 'loading') focusIfVisible(loadingHeadingEl.value)
     else if (next === 'error') focusIfVisible(errorHeadingEl.value)
     else if (next === 'idle') focusIfVisible(readButtonEl.value)
-    else focusIfVisible(frameEl.value)
+    else focusIfVisible(canFrameExternal.value ? frameEl.value : externalHeadingEl.value)
   })
 
   // Milestone announcements; announcing every tick would drown out a screen reader.
